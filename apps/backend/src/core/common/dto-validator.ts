@@ -21,9 +21,10 @@ export class DtoValidator {
         throw new Error(`Validation failed: ${JSON.stringify(validationErrors)}`);
       }
       return dto;
-    } catch (error) {
-      this.logger.error(`Validation exception: ${error.message}`);
-      throw new Error(`Validation exception: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Validation exception: ${errorMessage}`);
+      throw new Error(`Validation exception: ${errorMessage}`);
     }
   }
 }
