@@ -1,0 +1,18 @@
+{
+    "extends": "@una-gc/typescript-config/react-library.json",
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@una-gc/database/*": [
+                "./src/*"
+            ],
+        }
+    },
+    "include": [
+        "."
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}
