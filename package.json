@@ -10,7 +10,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "ui": "pnpm --filter @una-gc/ui ui",
     "prisma": "pnpm --filter @una-gc/database db:generate",
-    "prepare": "husky"
+    "prepare": "husky",
+    "docs": "pnpm --filter @una-gc/docs start"
   },
   "devDependencies": {
     "@una-gc/eslint-config": "workspace:*",
