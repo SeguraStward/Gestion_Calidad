@@ -32,11 +32,10 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle('Agro Brus API')
-    .setDescription('API documentation for the Billing and Inventory system')
+    .setTitle('Quality Management API')
+    .setDescription('API for Quality Management System')
     .setVersion('1.0')
-    .addTag('billing')
-    .addTag('inventory')
+    .addTag('Quality Management System')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

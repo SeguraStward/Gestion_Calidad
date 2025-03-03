@@ -11,11 +11,13 @@
     "ui": "pnpm --filter @una-gc/ui ui",
     "prisma": "pnpm --filter @una-gc/database db:generate",
     "prepare": "husky",
-    "docs": "pnpm --filter @una-gc/docs start"
+    "docs": "pnpm --filter @una-gc/docs start",
+    "spell": "cspell --config cspell.config.yaml \"**/*\""
   },
   "devDependencies": {
     "@una-gc/eslint-config": "workspace:*",
     "@una-gc/typescript-config": "workspace:*",
+    "cspell": "^8.17.5",
     "husky": "^9.1.7",
     "lint-staged": "^15.4.3",
     "prettier": "^3.2.5",

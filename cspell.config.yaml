@@ -1,0 +1,39 @@
+version: "0.2"
+language: en
+ignorePaths:
+  # ----------------------------
+  # Remove these ones when ready
+  # ----------------------------
+  - "**/*.yml"
+  - "**/*.md"
+  - "**/*.mdx"
+  # ----------------------------
+  - node_modules
+  - dist
+  - build
+  - coverage
+  - .git
+  - "*.min.*"
+  - "**/*.js"
+  - "**/*.jsx"
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.svg"
+  - "**/*.css"
+  - "**/*package.json"
+  - "package-lock.json"
+  - "pnpm-workspace.yaml"
+  - "pnpm-lock.yaml"
+  - "yarn.lock"
+  - "./project-words.txt"
+  - "./packages/database/prisma/generated/*"
+dictionaryDefinitions:
+  - name: project-words
+    path: ./project-words.txt
+    addWords: true
+dictionaries:
+  - en_US
+  - project-words
+words: []
+ignoreWords: []
+import: []
