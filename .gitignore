@@ -35,4 +35,4 @@ npm-debug.log*
 .DS_Store
 *.pem
 
-packages/database/prisma/generated
+/packages/database/prisma/generated
