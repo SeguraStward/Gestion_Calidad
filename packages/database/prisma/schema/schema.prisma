@@ -1,10 +1,329 @@
 generator client {
     provider        = "prisma-client-js"
+    output          = "./../generated/client"
     previewFeatures = ["multiSchema", "prismaSchemaFolder"]
-    output = "./../generated/client"
 }
 
 datasource db {
     provider = "mongodb"
     url      = env("DATABASE_URL")
+}
+
+type ExperienciaLaboralsEvidencia {
+    download String
+    idFile   String
+    link     String
+    name     String
+    tipo     String
+    uri      String
+}
+
+type FormacionAcademicasEvidencia {
+    download String
+    idFile   String
+    link     String?
+    name     String?
+    tipo     String
+    uri      String
+}
+
+type InformeFinalesEstadistica {
+    aprobaron         Int
+    desaprobaron      Int
+    desertores        Int
+    total_estudiantes Int
+}
+
+type InformeFinalesEvaluacion {
+    grupo_pregunta     String
+    idPregunta         String
+    opciones           InformeFinalesEvaluacionOpciones[]
+    otra_respuesta     String
+    pregunta           String
+    respuesta          String
+    respuesta_multiple String[]
+    tipo_respuesta     String
+}
+
+type InformeFinalesEvaluacionOpciones {
+    category String
+    label    String
+    value    String
+}
+
+type InformeFinalesInformacionEstudiante {
+    ajuste      InformeFinalesInformacionEstudianteAjuste[]
+    salvaguarda InformeFinalesInformacionEstudianteSalvaguarda[]
+}
+
+type InformeFinalesInformacionEstudianteAjuste {
+    apoyo       String
+    cedula      String
+    nombre      String
+    nota        String
+    observacion String
+}
+
+type InformeFinalesInformacionEstudianteSalvaguarda {
+    cedula      String
+    nombre      String
+    nota        String
+    observacion String
+}
+
+type LenguasEvidencia {
+    download String
+    idFile   String
+    link     String
+    name     String
+    tipo     String
+    uri      String
+}
+
+type PpaasEvidencia {
+    download String
+    idFile   String
+    link     String
+    name     String
+    tipo     String
+    uri      String
+}
+
+type PreguntasOpciones {
+    category String
+    label    String
+    value    String
+}
+
+type ProduccionIntelectualsEvidencia {
+    download String
+    idFile   String
+    link     String
+    name     String
+    tipo     String
+    uri      String
+}
+
+type TrabajoFinalesEvidencia {
+    download String
+    idFile   String
+    link     String?
+    name     String?
+    tipo     String
+    uri      String
+}
+
+type UsuariosEmails {
+    email String
+}
+
+type UsuariosTelefonos {
+    telefono String
+}
+
+model campus {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    v           Int    @map("__v")
+    codigo      String
+    descripcion String
+    estado      String
+}
+
+model cargas_academicas {
+    id              String  @id @default(auto()) @map("_id") @db.ObjectId
+    aula_id         String  @db.ObjectId
+    campus_id       String  @db.ObjectId
+    ciclo_id        String  @db.ObjectId
+    cupo_disponible Int
+    cupo_matricula  Int
+    cupo_maximo     Int
+    curso_id        String  @db.ObjectId
+    estado          String
+    fecha           String?
+    grupo_id        String  @db.ObjectId
+    horario_id      String  @db.ObjectId
+    nrc             String
+    profesor_id     String  @db.ObjectId
+}
+
+model ciclos {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    v           Int    @map("__v")
+    codigo      String
+    descripcion String
+    estado      String
+}
+
+model cursos {
+    id             String @id @default(auto()) @map("_id") @db.ObjectId
+    v              Int?   @map("__v")
+    codigo         String
+    creditos       Int
+    estado         String
+    horas_contacto Int
+    idEscuela      String @db.ObjectId
+    /// Multiple data types found: String: 0.6%, Int: 99.4% out of 164 sampled entries
+    nivel          Json
+    nombre         String
+}
+
+model escuelas {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    codigo      String
+    descripcion String
+    estado      String
+    idFacultad  String @db.ObjectId
+}
+
+model experiencia_laborals {
+    id                String                         @id @default(auto()) @map("_id") @db.ObjectId
+    v                 Int                            @map("__v")
+    empresa           String
+    estado            String
+    evidencia         ExperienciaLaboralsEvidencia[]
+    fechaFinal        String
+    fechaInicio       String
+    /// Multiple data types found: String: 33.3%, String (ObjectId): 66.7% out of 3 sampled entries
+    idUsuario         Json
+    puesto            String
+    responsabilidades String
+    tipoExperiencia   String
+}
+
+model facultades {
+    id          String @id @default(auto()) @map("_id") @db.ObjectId
+    codigo      String
+    descripcion String
+    estado      String
+}
+
+model formacion_academicas {
+    id              String                         @id @default(auto()) @map("_id") @db.ObjectId
+    v               Int                            @map("__v")
+    estado          String
+    evidencia       FormacionAcademicasEvidencia[]
+    fecha           String
+    /// Multiple data types found: String: 11.1%, String (ObjectId): 88.9% out of 9 sampled entries
+    idUsuario       Json
+    institucion     String
+    observaciones   String
+    tipoInstitucion String
+    titulo          String
+}
+
+model grupo_preguntas {
+    id       String @id @default(auto()) @map("_id") @db.ObjectId
+    v        Int    @map("__v")
+    estado   String
+    pregunta String
+}
+
+model grupos {
+    id     String @id @default(auto()) @map("_id") @db.ObjectId
+    v      Int    @map("__v")
+    estado String
+    numero String
+}
+
+model informe_finales {
+    id                     String                              @id @default(auto()) @map("_id") @db.ObjectId
+    v                      Int                                 @map("__v")
+    carga_id               String                              @db.ObjectId
+    estadistica            InformeFinalesEstadistica
+    estado                 String
+    evaluacion             InformeFinalesEvaluacion[]
+    informacion_estudiante InformeFinalesInformacionEstudiante
+    profesor_id            String                              @db.ObjectId
+}
+
+model lenguas {
+    id           String             @id @default(auto()) @map("_id") @db.ObjectId
+    v            Int                @map("__v")
+    conversacion Int
+    escritura    Int
+    estado       String
+    evidencia    LenguasEvidencia[]
+    idUsuario    String             @db.ObjectId
+    idioma       String
+    lectura      Int
+    tipo         String
+}
+
+model ppaas {
+    id              String           @id @default(auto()) @map("_id") @db.ObjectId
+    v               Int              @map("__v")
+    estado          String
+    evidencia       PpaasEvidencia[]
+    fechaActividad  String
+    idUsuario       String           @db.ObjectId
+    lugar           String
+    nombreActividad String
+    tipoActividad   String
+}
+
+model preguntas {
+    id             String              @id @default(auto()) @map("_id") @db.ObjectId
+    v              Int                 @map("__v")
+    estado         String
+    grupo_id       String              @db.ObjectId
+    modulo         String
+    opciones       PreguntasOpciones[]
+    pregunta       String
+    tipo_respuesta String
+}
+
+model preguntasifs {
+    id       String @id @default(auto()) @map("_id") @db.ObjectId
+    v        Int    @map("__v")
+    estado   String
+    pregunta String
+}
+
+model produccion_intelectuals {
+    id                     String                            @id @default(auto()) @map("_id") @db.ObjectId
+    v                      Int                               @map("__v")
+    cantidadPresentaciones Int
+    categoria              String
+    estado                 String?
+    evidencia              ProduccionIntelectualsEvidencia[]
+    idUsuario              String                            @db.ObjectId
+    lugarPresentacion      String
+    nombreProduccion       String
+    tema                   String
+    year                   String
+}
+
+model trabajo_finales {
+    id        String                    @id @default(auto()) @map("_id") @db.ObjectId
+    v         Int                       @map("__v")
+    estado    String
+    evidencia TrabajoFinalesEvidencia[]
+    fecha     String?
+    idUsuario String                    @db.ObjectId
+    tipo      String
+    titulo    String
+}
+
+model usuarios {
+    id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+    v                  Int?                @map("__v")
+    canton             String
+    cedula             String
+    clave              String
+    condicion          String?
+    direccion          String
+    distrito           String
+    edad               String?
+    emails             UsuariosEmails[]
+    estado             String
+    fecha_contratacion String?
+    fecha_nacimiento   String?
+    foto               String
+    nombre             String
+    perfil             String?
+    provincia          String
+    rol                String
+    telefono           String?
+    telefonos          UsuariosTelefonos[]
+    titulo             String?
 }

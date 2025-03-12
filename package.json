@@ -9,7 +9,9 @@
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "ui": "pnpm --filter @una-gc/ui ui",
-    "prisma": "pnpm --filter @una-gc/database db:generate",
+    "prisma:generate": "pnpm --filter @una-gc/database db:generate",
+    "prisma:migrate": "pnpm --filter @una-gc/database db:migrate",
+    "prisma:pull": "pnpm --filter @una-gc/database db:pull",
     "prepare": "husky",
     "docs": "pnpm --filter @una-gc/docs start",
     "spell": "cspell --config cspell.config.yaml \"**/*\""
