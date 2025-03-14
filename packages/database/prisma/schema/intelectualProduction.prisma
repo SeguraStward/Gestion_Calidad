@@ -1,0 +1,23 @@
+model IntelectualProduction {
+    id                     String         @id @default(auto()) @map("_id") @db.ObjectId
+    version                Int            @map("__v")@default(0)
+    cantidadPresentaciones Int
+    categoria              String
+    estado                 String?
+    evidencia              ProduccionIntelectualsEvidencia[]
+    idUsuario              String         @db.ObjectId
+    lugarPresentacion      String
+    nombreProduccion       String
+    tema                   String
+    year                   String
+
+    @@map("intelectual_productions")
+}
+type ProduccionIntelectualsEvidencia {
+    download String
+    idFile   String
+    link     String
+    name     String
+    tipo     String
+    uri      String
+}

@@ -1,35 +1,71 @@
+// model User {
+//     id        String @id @default(auto()) @map("_id") @db.ObjectId
+//     email     String @unique
+//     hash      String
+//     first_name String
+//     last_name String
+     
+//     id_number String? @unique
+
+//     phoneNumber    String?
+//     profilePicture String?
+//     birthday       DateTime?
+//     userState      UserState @default(ACTIVE)
+
+//     createdAt   DateTime      @default(now())
+//     userRole    UserRole      @default(USER)
+//     permissions Permissions[]
+//     @@map("users")
+// }
+
+// enum UserRole {
+//     USER
+//     ADMIN
+// }
+
+// enum Permissions {
+//     CREATED
+//     READ
+//     EDIT
+//     DELETE
+// }
+
+// enum UserState {
+//     ACTIVE
+//     INACTIVE
+// }
+
 model User {
-    id        String @id @default(auto()) @map("_id") @db.ObjectId
-    email     String @unique
-    password  String
-    name      String
-    lastNames String
-
-    id_number String? @unique
-
-    phoneNumber    String?
-    profilePicture String?
-    birthday       DateTime?
-    userState      UserState @default(ACTIVE)
-
-    createdAt   DateTime      @default(now())
-    userRole    UserRole      @default(USER)
-    permissions Permissions[]
+    id                 String              @id @default(auto()) @map("_id") @db.ObjectId
+    version            Int                 @map("__v")@default(0)
+    canton             String
+    cedula             String
+    clave              String
+    condicion          String?
+    direccion          String
+    distrito           String
+    edad               String?
+    emails             UserEmail[]
+    estado             String
+    fecha_contratacion String?
+    fecha_nacimiento   String?
+    foto               String
+    nombre             String
+    perfil             String?
+    provincia          String
+    rol                String
+    telefono           String?
+    telefonos          UserPhone[]
+    titulo             String?
+    @@map("users")
 }
 
-enum UserRole {
-    USER
-    ADMIN
+
+
+type UserEmail {
+    email String
 }
 
-enum Permissions {
-    CREATED
-    READ
-    EDIT
-    DELETE
-}
-
-enum UserState {
-    ACTIVE
-    INACTIVE
+type UserPhone {
+    telefono String
 }

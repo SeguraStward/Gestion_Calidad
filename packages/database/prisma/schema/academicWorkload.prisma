@@ -1,0 +1,19 @@
+model AcademicLoad {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  version        Int      @map("__v")@default(0)
+  classroomId    String   @db.ObjectId
+  campusId       String   @db.ObjectId
+  termId         String   @db.ObjectId
+  availableSeats Int     
+  enrollmentCap  Int     
+  maximumCap     Int     
+  courseId       String   @db.ObjectId
+  status         String  
+  date           String?  
+  groupId        String   @db.ObjectId
+  scheduleId     String   @db.ObjectId
+  courseNumber   String   
+  professorId    String   @db.ObjectId
+
+  @@map("academic_loads")
+}

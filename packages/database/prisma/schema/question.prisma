@@ -1,0 +1,18 @@
+model Question {
+ id             String           @id @default(auto()) @map("_id") @db.ObjectId
+ version        Int              @map("__v") @default(0)
+ status         String           @map("status")
+ groupId        String           @map("group_id") @db.ObjectId
+ module         String           @map("module")
+ options        QuestionOption[] @map("options")
+ question       String           @map("question")
+ responseType   String           @map("response_type")
+
+ @@map("questions")
+}
+
+type QuestionOption {
+ category       String
+ label          String
+ value          String
+}

@@ -1,0 +1,22 @@
+model Ppaa {
+ id              String        @id @default(auto()) @map("_id") @db.ObjectId
+ version         Int           @map("__v") @default(0)
+ status          String        @map("status")
+ evidence        PpaaEvidence[] @map("evidence")
+ activityDate    String        @map("activity_date")
+ userId          String        @map("user_id") @db.ObjectId
+ location        String        @map("location")
+ activityName    String        @map("activity_name")
+ activityType    String        @map("activity_type")
+
+ @@map("ppaas")
+}
+
+type PpaaEvidence {
+ download    String
+ fileId      String    @map("file_id")
+ link        String
+ name        String
+ type        String
+ uri         String
+}

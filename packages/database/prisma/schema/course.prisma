@@ -11,6 +11,7 @@
 
 model Course {
     id          String   @id @default(auto()) @map("_id") @db.ObjectId
+    version     Int      @map("__v")@default(0)
     name        String
     description String?
     //   profesor    Profesor  @relation("ProfesorCourses", fields: [profesorId], references: [id])
@@ -27,4 +28,18 @@ model CourseSchedule {
     endTime   DateTime
     classroom String
     createdAt DateTime @default(now())
+}
+
+//old model
+model cursos {
+    id             String @id @default(auto()) @map("_id") @db.ObjectId
+    v              Int?   @map("__v")
+    codigo         String
+    creditos       Int
+    estado         String
+    horas_contacto Int
+    idEscuela      String @db.ObjectId
+    /// Multiple data types found: String: 0.6%, Int: 99.4% out of 164 sampled entries
+    nivel          Json
+    nombre         String
 }

@@ -1,0 +1,26 @@
+model WorkExperience {
+    id                String                         @id @default(auto()) @map("_id") @db.ObjectId
+    version           Int                            @map("__v")@default(0)
+    empresa           String
+    estado            String
+    evidencia         ExperienciaLaboralsEvidencia[]
+    fechaFinal        String
+    fechaInicio       String
+    /// Multiple data types found: String: 33.3%, String (ObjectId): 66.7% out of 3 sampled entries
+    idUsuario         Json
+    puesto            String
+    responsabilidades String
+    tipoExperiencia   String
+
+    @@map("work_experiences")
+}
+   
+
+type ExperienciaLaboralsEvidencia {
+    download String
+    idFile   String
+    link     String
+    name     String
+    tipo     String
+    uri      String
+}
