@@ -1,0 +1,35 @@
+model User {
+    id        String @id @default(auto()) @map("_id") @db.ObjectId
+    email     String @unique
+    password  String
+    name      String
+    lastNames String
+
+    id_number String? @unique
+
+    phoneNumber    String?
+    profilePicture String?
+    birthday       DateTime?
+    userState      UserState @default(ACTIVE)
+
+    createdAt   DateTime      @default(now())
+    userRole    UserRole      @default(USER)
+    permissions Permissions[]
+}
+
+enum UserRole {
+    USER
+    ADMIN
+}
+
+enum Permissions {
+    CREATED
+    READ
+    EDIT
+    DELETE
+}
+
+enum UserState {
+    ACTIVE
+    INACTIVE
+}

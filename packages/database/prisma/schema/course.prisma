@@ -1,0 +1,30 @@
+// Módulo de Gestión Académica
+// •	Gestión de carga académica de docentes y estudiantes: 
+// o	Importación masiva de datos desde Excel con validaciones.
+// o	Asignación dinámica de profesores a cursos y sesiones.
+// o	Gestión de horarios y asignación de aulas.
+// •	Administración de entidades académicas: 
+// o	Sedes y campus.
+// o	Facultades y escuelas.
+// o	Carreras y programas académicos.
+// o	Cursos y asignaturas.
+
+model Course {
+    id          String   @id @default(auto()) @map("_id") @db.ObjectId
+    name        String
+    description String?
+    //   profesor    Profesor  @relation("ProfesorCourses", fields: [profesorId], references: [id])
+    profesorId  String
+    //   estudiantes Estudiante[] @relation("EstudianteCourses")
+    createdAt   DateTime @default(now())
+}
+
+model CourseSchedule {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    //   course      Course   @relation(fields: [courseId], references: [id])
+    courseId  String
+    startTime DateTime
+    endTime   DateTime
+    classroom String
+    createdAt DateTime @default(now())
+}
