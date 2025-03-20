@@ -1,0 +1,47 @@
+model AcademicLoad {
+  id             String             @id @default(auto()) @map("_id") @db.ObjectId
+  version        Int                @map("__v") @default(0) // Added version field
+  availableSeats Int
+  enrollmentCap  Int
+  maximumCap     Int
+  courseNumber   String
+  status         AcademicLoadStatus
+
+  classroom   Classroom @relation(fields: [classroomId], references: [id])
+  classroomId String    @db.ObjectId
+
+  campus   Campus @relation(fields: [campusId], references: [id])
+  campusId String @db.ObjectId
+
+  term   Term   @relation(fields: [termId], references: [id])
+  termId String @db.ObjectId
+
+  course   Course @relation(fields: [courseId], references: [id])
+  courseId String @db.ObjectId
+
+  group   Group  @relation(fields: [groupId], references: [id])
+  groupId String @db.ObjectId
+
+  schedule   Schedule @relation(fields: [scheduleId], references: [id])
+  scheduleId String   @db.ObjectId
+
+  professor   Professor @relation(fields: [professorId], references: [id])
+  professorId String    @db.ObjectId
+
+  enrolledStudents StudentEnrollment[]
+
+  finalReports FinalReport[] // Relación con FinalReport
+
+  @@index([campusId])
+  @@index([courseId])
+  @@index([termId])
+  @@index([professorId])
+  @@map("academic_loads")
+}
+
+enum AcademicLoadStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+  CANCELLED
+}

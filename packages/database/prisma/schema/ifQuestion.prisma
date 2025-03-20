@@ -6,3 +6,4 @@ model IfQuestion {
 
     @@map("if_questions") 
 }
+//TODO: I don quite understand the purpose of this model.  

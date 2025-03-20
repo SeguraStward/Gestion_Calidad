@@ -1,9 +1,13 @@
 model School {
-    id          String @id @default(auto()) @map("_id") @db.ObjectId
-    version     Int                       @map("__v")@default(0)
+    id          String      @id @default(auto()) @map("_id") @db.ObjectId
+    version     Int         @default(0) @map("__v")
     code        String
     description String
     status      String
-    idFaculty   String @db.ObjectId
+    idFaculty   String      @db.ObjectId
+    faculty     Faculty     @relation(fields: [idFaculty], references: [id])
+    courses     Course[]
+    professors  Professor[]
+
     @@map("schools")
 }

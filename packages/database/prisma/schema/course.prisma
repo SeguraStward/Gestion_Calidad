@@ -1,45 +1,27 @@
-// Módulo de Gestión Académica
-// •	Gestión de carga académica de docentes y estudiantes: 
-// o	Importación masiva de datos desde Excel con validaciones.
-// o	Asignación dinámica de profesores a cursos y sesiones.
-// o	Gestión de horarios y asignación de aulas.
-// •	Administración de entidades académicas: 
-// o	Sedes y campus.
-// o	Facultades y escuelas.
-// o	Carreras y programas académicos.
-// o	Cursos y asignaturas.
-
 model Course {
-    id          String   @id @default(auto()) @map("_id") @db.ObjectId
-    version     Int      @map("__v")@default(0)
-    name        String
-    description String?
-    //   profesor    Profesor  @relation("ProfesorCourses", fields: [profesorId], references: [id])
-    profesorId  String
-    //   estudiantes Estudiante[] @relation("EstudianteCourses")
-    createdAt   DateTime @default(now())
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  version        Int            @map("__v") @default(0) // Added version field
+  code           String         @unique  
+  name           String
+  description    String?
+  credits        Int
+  contactHours   Int
+  level          String
+  academicLoads AcademicLoad[] 
+  school     School         @relation(fields: [schoolId], references: [id])
+  schoolId   String         @db.ObjectId
+  @@map("courses")
 }
-
-model CourseSchedule {
-    id        String   @id @default(auto()) @map("_id") @db.ObjectId
-    //   course      Course   @relation(fields: [courseId], references: [id])
-    courseId  String
-    startTime DateTime
-    endTime   DateTime
-    classroom String
-    createdAt DateTime @default(now())
-}
-
-//old model
-model cursos {
-    id             String @id @default(auto()) @map("_id") @db.ObjectId
-    v              Int?   @map("__v")
-    codigo         String
-    creditos       Int
-    estado         String
-    horas_contacto Int
-    idEscuela      String @db.ObjectId
-    /// Multiple data types found: String: 0.6%, Int: 99.4% out of 164 sampled entries
-    nivel          Json
-    nombre         String
-}
+// //old model
+// model cursos {
+//     id             String @id @default(auto()) @map("_id") @db.ObjectId
+//     v              Int?   @map("__v")
+//     codigo         String
+//     creditos       Int
+//     estado         String
+//     horas_contacto Int
+//     idEscuela      String @db.ObjectId
+//     /// Multiple data types found: String: 0.6%, Int: 99.4% out of 164 sampled entries
+//     nivel          Json
+//     nombre         String
+// }

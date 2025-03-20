@@ -1,9 +1,8 @@
-/// Represents a group of questions.
-model QuestionGroup {
+ model QuestionGroup {
   id         String @id @default(auto()) @map("_id") @db.ObjectId
   version    Int                       @map("__v")@default(0)
   status     String  
   question   String  
 
   @@map("question_groups") 
-}
+}//NOTE: what is the purpose of this?
