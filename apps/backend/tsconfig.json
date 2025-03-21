@@ -14,24 +14,12 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@modules/*": [
-        "src/modules/*"
-      ],
-      "@core/*": [
-        "src/core/*"
-      ],
-      "@shared/*": [
-        "src/shared/*"
-      ],
-      "@common/*": [
-        "src/core/common/*"
-      ]
+      "@modules/*": ["src/modules/*"],
+      "@core/*": ["src/core/*"],
+      "@shared/*": ["src/shared/*"],
+      "@common/*": ["src/core/common/*"]
     }
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
 }
