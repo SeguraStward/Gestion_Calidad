@@ -1,6 +1,6 @@
-# gestion de la calidad
+# Gestión de la calidad
 
-Proyecto de gestión de la calidad
+## Description
 
 ## Useful commands
 
@@ -29,3 +29,8 @@ pnpm run prisma
 # Build apps
 pnpm run build
 ```
+
+## vs code recommend extensions
+
+* Code spell checker: check the orthography
+* Prisma
