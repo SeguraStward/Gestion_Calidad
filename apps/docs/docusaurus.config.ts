@@ -78,13 +78,7 @@ const config: Config = {
           type: "docSidebar",
           sidebarId: "tutorialSidebar",
           position: "left",
-          label: "Tutorial",
-        },
-        { to: "/blog", label: "Blog", position: "left" },
-        {
-          href: "https://github.com/facebook/docusaurus",
-          label: "GitHub",
-          position: "right",
+          label: "Documentación Sistema de Gestión de la Calidad",
         },
       ],
     },
@@ -95,7 +89,7 @@ const config: Config = {
           title: "Docs",
           items: [
             {
-              label: "Tutorial",
+              label: "Documentación Sistema de Gestión de la Calidad",
               to: "/docs/intro",
             },
           ],
@@ -114,19 +108,6 @@ const config: Config = {
             {
               label: "X",
               href: "https://x.com/docusaurus",
-            },
-          ],
-        },
-        {
-          title: "More",
-          items: [
-            {
-              label: "Blog",
-              to: "/blog",
-            },
-            {
-              label: "GitHub",
-              href: "https://github.com/facebook/docusaurus",
             },
           ],
         },

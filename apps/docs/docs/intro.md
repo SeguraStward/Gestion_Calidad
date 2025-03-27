@@ -1,47 +1,27 @@
 ---
-sidebar_position: 1
+sidebar_position: 4
 ---
 
-# Tutorial Intro
+# Documentación Sistema de Gestión de la Calidad
 
-Let's discover **Docusaurus in less than 5 minutes**.
+## Introducción
 
-## Getting Started
+Este documento presenta la documentación completa del Sistema de Gestión de la Calidad, diseñado para apoyar los procesos académicos y administrativos institucionales.
 
-Get started by **creating a new site**.
+### Instalación Sistema Legado
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+El sistema legado requiere procedimientos específicos de instalación tanto para el cliente como para el servidor:
 
-### What you'll need
+- [0.0.1 Instalación del Cliente](./0.0.0-Sistema-Legado/0.0.1-como-instalar-cliente.md) - Guía para configurar y construir el cliente con las versiones correctas de Node.js
+- [0.0.2 Instalación del Servidor](./0.0.0-Sistema-Legado/0.0.2-como-instalar-server.md) - Instrucciones para instalar y ejecutar el servidor del sistema legado
 
-- [Node.js](https://nodejs.org/en/download/) version 18.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
+### Documentación Funcional
 
-## Generate a new site
+- [1.1.1 Requerimientos](0.1.0-Requerimientos-Historias-Usuario/requerimientos.md) - Especificaciones funcionales y no funcionales del sistema
+- [1.1.2 Historias de Usuario](0.1.0-Requerimientos-Historias-Usuario/historias-usuario.md) - Necesidades de los usuarios expresadas en formato ágil
 
-Generate a new Docusaurus site using the **classic template**.
+### Repositorio de Código
 
-The classic template will automatically be added to your project after you run the command:
-
-```bash
-npm init docusaurus@latest my-website classic
-```
-
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
-
-The command also installs all necessary dependencies you need to run Docusaurus.
-
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
-```
-
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
-
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
-
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+| Repositorio GitHub | Enlace                                       |
+| ------------------ | -------------------------------------------- |
+| gestion-calidad    | https://github.com/arayaroma/gestion-calidad |
