@@ -30,7 +30,7 @@ model AcademicLoad {
 
   enrolledStudents StudentEnrollment[]
 
-  finalReports FinalReport[] // Relación con FinalReport
+  finalReports FinalReport[] 
 
   @@index([campusId])
   @@index([courseId])

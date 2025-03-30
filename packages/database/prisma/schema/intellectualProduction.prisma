@@ -12,7 +12,7 @@ model IntellectualProduction {
     user              User                             @relation(fields: [userId], references: [id])
 
     evidence          IntellectualProductionEvidence[]
-    @@map("intelectual_productions")
+    @@map("intellectual_productions")
 }
 
 type IntellectualProductionEvidence {

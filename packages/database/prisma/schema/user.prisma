@@ -1,10 +1,11 @@
 model User {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  version    Int       @map("__v") @default(0) // Added version field
+  version    Int       @default(0) @map("__v")  
   email      UserEmail @unique
   nationalId String?
   canton     String?
   district   String?
+  googleId   String?   @unique
 
   firstName String?
   lastName  String?
@@ -36,7 +37,6 @@ model User {
   finalWorks              final_work[]
   lenguage                Language[]
   ppaas                   Ppaa[]
-
 
   @@index([province, canton, district])
   @@index([firstName, lastName])

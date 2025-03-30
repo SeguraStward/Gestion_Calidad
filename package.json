@@ -11,7 +11,7 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "ui": "pnpm --filter @una-gc/ui ui",
+    "ui": "pnpm --filter @una-gc/ui ui", 
     "prisma:generate": "pnpm --filter @una-gc/database db:generate",
     "prisma:migrate": "pnpm --filter @una-gc/database db:migrate",
     "prisma:pull": "pnpm --filter @una-gc/database db:pull",
