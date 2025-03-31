@@ -1,0 +1,12 @@
+model Term {
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  version        Int            @map("__v") @default(0) // Added version field
+  name           String         @unique  
+  code           String 
+  description    String
+  status         String
+  startDate      DateTime
+  endDate        DateTime
+  academicLoads AcademicLoad[]
+  @@map("terms")
+}

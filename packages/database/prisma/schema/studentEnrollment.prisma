@@ -1,0 +1,12 @@
+model StudentEnrollment {
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  version        Int            @map("__v") @default(0) // Added version field
+  student        User           @relation(fields: [studentId], references: [id])
+  studentId      String         @db.ObjectId
+  academicLoad   AcademicLoad   @relation(fields: [academicLoadId], references: [id])
+  academicLoadId String         @db.ObjectId
+  enrollmentDate DateTime       @default(now())
+
+  @@unique([studentId, academicLoadId])
+  @@map("student_enrollments")
+}

@@ -1,0 +1,26 @@
+model Ppaa {
+   id           String         @id @default(auto()) @map("_id") @db.ObjectId
+   version      Int            @map("__v") @default(0) // Added version field
+   status       String
+   evidence     PpaaEvidence[]
+   activityDate String
+   location     String
+   activityName String
+   activityType String
+
+   userId String @db.ObjectId
+   user   User   @relation(fields: [userId], references: [id])
+
+   @@index([userId])
+   @@index([activityDate])
+   @@map("ppaas")
+}
+
+type PpaaEvidence {
+   download String
+   fileId   String
+   link     String
+   name     String
+   type     String
+   uri      String
+}

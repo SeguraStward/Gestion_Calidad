@@ -1,0 +1,23 @@
+model final_work {
+    id        String             @id @default(auto()) @map("_id") @db.ObjectId
+    version   Int                @map("__v")@default(0)
+    status    String
+    evidence  FinalWorkEvidence[]
+    date      DateTime? 
+    type      String
+    title     String
+
+    userId    String              @db.ObjectId
+    user      User                @relation(fields: [userId], references: [id])
+
+    @@map("final_works")
+}
+
+type FinalWorkEvidence {
+    download String
+    idFile   String
+    link     String?
+    name     String?
+    tipo     String
+    uri      String
+}
