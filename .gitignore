@@ -36,3 +36,9 @@ npm-debug.log*
 *.pem
 
 /packages/database/prisma/generated
+
+# Files
+*.bat
+
+# IDE vs Code
+.vscode
