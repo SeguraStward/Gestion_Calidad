@@ -27,6 +27,8 @@ ignorePaths:
   - "yarn.lock"
   - "./project-words.txt"
   - "./packages/database/prisma/generated/*"
+  - "*.prisma"
+  - "**/docs/**"
 dictionaryDefinitions:
   - name: project-words
     path: ./project-words.txt
