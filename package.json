@@ -14,7 +14,8 @@
     "prisma:pull": "pnpm --filter @una-gc/database db:pull",
     "prepare": "husky",
     "docs": "pnpm --filter @una-gc/docs start",
-    "spell": "cspell --config cspell.config.yaml \"**/*\""
+    "spell": "cspell --config cspell.config.yaml \"**/*\"",
+    "lint-staged": "lint-staged"
   },
   "devDependencies": {
     "@una-gc/eslint-config": "workspace:*",
@@ -26,8 +27,16 @@
     "turbo": "^2.3.0",
     "typescript": "5.5.4"
   },
-  "packageManager": "pnpm@9.12.3",
-  "engines": {
-    "node": ">=20"
-  }
+  "lint-staged": {
+    "**/*.{ts,tsx}": [
+      "cspell --config cspell.config.yaml --no-must-find-files --overrides",
+      "prettier --write",
+      "eslint"
+    ],
+    "**/*.{md,json}": [
+      "cspell --config cspell.config.yaml --no-must-find-files --overrides",
+      "prettier --write"
+    ]
+  },
+  "packageManager": "pnpm@10.7.0+sha512.6b865ad4b62a1d9842b61d674a393903b871d9244954f652b8842c2b553c72176b278f64c463e52d40fff8aba385c235c8c9ecf5cc7de4fd78b8bb6d49633ab6"
 }
