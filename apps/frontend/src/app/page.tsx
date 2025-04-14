@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@una-gc/ui/components/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components/card';
 import { LogIn } from 'lucide-react';
 
 export default function HomePage() {
@@ -9,12 +10,21 @@ export default function HomePage() {
   };
 
   return (
-    <main>
-      <h1>Iniciar sesión con cuenta institucional</h1>
-      <Button onClick={handleGoogleLogin}>
-        Iniciar sesión con Google
-        <LogIn/>
-      </Button>
+    <main className="flex items-center justify-center min-h-screen px-4">
+      <Card className="w-full max-w-md shadow-md border border-muted">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-semibold">Inicia sesión</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center gap-4">
+          <p className="text-muted-foreground text-center text-sm">
+            Usa tu cuenta institucional de Google para acceder
+          </p>
+          <Button onClick={handleGoogleLogin} className="w-full">
+            Iniciar sesión con Google
+            <LogIn className="ml-2 h-4 w-4" />
+          </Button>
+        </CardContent>
+      </Card>
     </main>
   );
 }

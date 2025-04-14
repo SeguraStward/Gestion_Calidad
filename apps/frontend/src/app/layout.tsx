@@ -1,8 +1,6 @@
-// app/layout.tsx
 import '@una-gc/ui/globals.css';
 import { Inter } from 'next/font/google';
 import { ReactNode } from 'react';
-import { Sidebar, SidebarProvider } from '@una-gc/ui/components/sidebar';
 
 import { ThemeProvider } from '@/providers/theme-provider';
 import { Toaster } from 'sonner';
@@ -23,14 +21,14 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} flex min-h-screen`}>
+      <body className={`${inter.className} flex min-h-screen items-center justify-center antialiased`}>
         <ReactQueryProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-              <div className="flex-1 p-4">
-                <main>{children}</main>
-              </div>
+            {children}
             <Toaster />
-            <ModeToggle />
+            <div className="fixed top-4 right-4">
+              <ModeToggle />
+            </div>
           </ThemeProvider>
         </ReactQueryProvider>
       </body>
