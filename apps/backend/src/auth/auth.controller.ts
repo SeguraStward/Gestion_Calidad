@@ -45,7 +45,7 @@ export class AuthController {
       if (!userEmail.endsWith('@est.una.ac.cr')) {
         this.logger.warn(`Invalid email domain: ${userEmail}`);
         //change url
-        return res.redirect(`${this.configService.get('FRONTEND_URL')}/profile`);
+        return res.redirect(`${this.configService.get('FRONTEND_URL')}/select-role`);
       }
 
       const result = await this.authService.googleLogin(req.user);
@@ -60,7 +60,7 @@ export class AuthController {
       });
 
       // Redirect to frontend success page
-      return res.redirect(`${this.configService.get('FRONTEND_URL')}/profile`);
+      return res.redirect(`${this.configService.get('FRONTEND_URL')}/select-role`);
     } catch (error) {
       this.logger.error(`Authentication error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error`);
