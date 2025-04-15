@@ -44,8 +44,7 @@ export class AuthController {
       const userEmail = (req.user as { email: string }).email;
       if (!userEmail.endsWith('@est.una.ac.cr')) {
         this.logger.warn(`Invalid email domain: ${userEmail}`);
-        //change url
-        return res.redirect(`${this.configService.get('FRONTEND_URL')}/select-role`);
+        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error`);
       }
 
       const result = await this.authService.googleLogin(req.user);

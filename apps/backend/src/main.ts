@@ -5,13 +5,14 @@ import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
 import { HttpResponseInterceptor } from '@core/http/interceptors/http-response.interceptor';
 import { ErrorResponseFilter } from '@core/http/filters/error-response.filter';
-
+import cookieParser from 'cookie-parser';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useLogger(new Logger());
+  app.use(cookieParser());
 
   app.enableCors({
     origin: true,
