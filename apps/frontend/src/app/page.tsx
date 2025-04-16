@@ -6,7 +6,11 @@ import { LogIn } from 'lucide-react';
 
 export default function HomePage() {
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:3000/api/v1/auth/google/login';
+    const url = process.env.NEXT_PUBLIC_GOOGLE_LOGIN_URL;
+    if (!url) {
+      throw new Error('NEXT_PUBLIC_GOOGLE_LOGIN_URL is not defined');
+    }
+    window.location.href = url;
   };
 
   return (
