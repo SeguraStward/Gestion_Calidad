@@ -4,13 +4,20 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { LoggerMiddleware } from '@core/http/middlewares/logger.middleware';
 import { PrismaModule } from './prisma/prisma.module';
 import { AppController } from './app.controller';
-import { UsersModule } from '@modules/users/users.module';
-import { UsersService } from '@modules/users/services/users.service';
-import { DtoValidator } from '@core/common/dto-validator';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, UsersModule],
-  providers: [PrismaService, UsersService, DtoValidator],
+  imports: [
+    AuthModule,
+    PrismaModule,
+    JwtModule.register({}),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+  ],
+  providers: [PrismaService],
   controllers: [AppController],
 })
 export class AppModule implements NestModule {
