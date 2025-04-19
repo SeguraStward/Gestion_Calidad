@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { GenericRepository } from '../interfaces/generic-repository.interface';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '@src/prisma/prisma.service';
 import { PaginatedResponse } from '@core/http/interfaces/paginated-response.interface';
 
 @Injectable()
