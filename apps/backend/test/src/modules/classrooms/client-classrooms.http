@@ -1,0 +1,51 @@
+#var, use command >Rest Client: Switch Environment in search bar of vs code
+@id =1
+
+###
+
+### Get all classrooms
+GET http://localhost:3000/api/v1/classrooms HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get classroom by ID
+GET http://localhost:3000/api/v1/classrooms/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new classroom
+POST http://localhost:3000/api/v1/classrooms HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Aula 101",
+  "code": "A101",
+  "description": "Aula principal del edificio A",
+  "location": "Edificio A, Primer Piso",
+  "capacity": 40,
+  "type": "TEORIA",
+  "status": "AVAILABLE",
+  "features": ["PROYECTOR", "COMPUTADOR", "WIFI"]
+}
+
+###
+
+### Update an existing classroom
+PUT http://localhost:3000/api/v1/classrooms/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Aula 101 - Actualizada",
+  "description": "Aula principal renovada del edificio A",
+  "capacity": 45,
+  "status": "MAINTENANCE",
+  "features": ["PROYECTOR", "COMPUTADOR", "WIFI", "AUDIO"]
+}
+
+###
+
+### Delete a classroom
+DELETE http://localhost:3000/api/v1/classrooms/{{id}} HTTP/1.1
+Content-Type: application/json
