@@ -2,31 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsInt, IsArray, ValidateNested, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class WorkExperienceEvidenceDto {
-  @ApiProperty({ description: 'Download path' })
-  @IsString()
-  download: string;
-
-  @ApiProperty({ description: 'File ID' })
-  @IsString()
-  fileId: string;
-
-  @ApiProperty({ description: 'Link to evidence' })
-  @IsString()
-  link: string;
-
-  @ApiProperty({ description: 'File name' })
-  @IsString()
-  name: string;
-
-  @ApiProperty({ description: 'File type' })
-  @IsString()
-  type: string;
-
-  @ApiProperty({ description: 'URI path' })
-  @IsString()
-  uri: string;
-}
+import { EvidenceDto } from '@modules/general-types-dto';
 
 export class WorkExperienceDto {
   @ApiPropertyOptional({ description: 'WorkExperience ID' })
@@ -42,12 +18,12 @@ export class WorkExperienceDto {
   @IsString()
   status: string;
 
-  @ApiProperty({ description: 'Evidence files', type: [WorkExperienceEvidenceDto] })
+  @ApiProperty({ description: 'Evidence files', type: [EvidenceDto] })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => WorkExperienceEvidenceDto)
+  @Type(() => EvidenceDto)
   @IsOptional()
-  evidence?: WorkExperienceEvidenceDto[];
+  evidence?: EvidenceDto[];
 
   @ApiProperty({ description: 'Start date' })
   @IsDateString()

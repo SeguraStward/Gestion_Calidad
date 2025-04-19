@@ -2,33 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsInt, IsDate, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class FinalWorkEvidenceDto {
-  @ApiProperty({ description: 'Download link' })
-  @IsString()
-  download: string;
-
-  @ApiProperty({ description: 'File ID' })
-  @IsString()
-  fileId: string;
-
-  @ApiPropertyOptional({ description: 'Link' })
-  @IsString()
-  @IsOptional()
-  link?: string;
-
-  @ApiPropertyOptional({ description: 'Name' })
-  @IsString()
-  @IsOptional()
-  name?: string;
-
-  @ApiProperty({ description: 'Evidence type' })
-  @IsString()
-  type: string;
-
-  @ApiProperty({ description: 'URI' })
-  @IsString()
-  uri: string;
-}
+import { EvidenceDto } from '@modules/general-types-dto';
 
 export class FinalWorkDto {
   @ApiPropertyOptional({ description: 'FinalWork ID' })
@@ -63,11 +37,11 @@ export class FinalWorkDto {
   @IsOptional()
   version?: number = 0;
 
-  @ApiProperty({ description: 'Evidence', type: [FinalWorkEvidenceDto] })
+  @ApiProperty({ description: 'Evidence', type: [EvidenceDto] })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => FinalWorkEvidenceDto)
-  evidence: FinalWorkEvidenceDto[];
+  @Type(() => EvidenceDto)
+  evidence: EvidenceDto[];
 
   constructor(dto: Partial<FinalWorkDto> = {}) {
     Object.assign(this, dto);

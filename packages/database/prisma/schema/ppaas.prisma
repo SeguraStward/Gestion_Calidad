@@ -1,8 +1,8 @@
 model Ppaa {
-  id           String         @id @default(auto()) @map("_id") @db.ObjectId
-  version      Int            @default(0) @map("__v")
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  version      Int        @default(0) @map("__v")
   status       String
-  evidence     PpaaEvidence[]
+  evidence     Evidence[]
   activityDate String
   location     String
   activityName String
@@ -14,13 +14,4 @@ model Ppaa {
   @@index([userId])
   @@index([activityDate])
   @@map("ppaas")
-}
-
-type PpaaEvidence {
-  download String
-  fileId   String
-  link     String
-  name     String
-  type     String
-  uri      String
 }

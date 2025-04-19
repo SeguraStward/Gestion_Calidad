@@ -1,9 +1,9 @@
 model WorkExperience {
-  id        String                   @id @default(auto()) @map("_id") @db.ObjectId
-  version   Int                      @default(0) @map("__v")
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  version   Int        @default(0) @map("__v")
   company   String
   status    String
-  evidence  WorkExperienceEvidence[]
+  evidence  Evidence[]
   startDate DateTime
   endDate   DateTime?
   position  String
@@ -17,13 +17,4 @@ model WorkExperience {
   userId String @db.ObjectId
 
   @@map("work_experiences")
-}
-
-type WorkExperienceEvidence {
-  fileId   String
-  name     String
-  type     String
-  uri      String
-  link     String
-  download String
 }
