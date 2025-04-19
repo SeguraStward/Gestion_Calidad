@@ -1,0 +1,24 @@
+{
+    // vscode editor
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.unusualLineTerminators": "auto",
+    "editor.autoIndent": "full",
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    
+  // use command ">Rest Client: Switch Environment" in search bar of vs code
+  "rest-client.environmentVariables": {
+    "$shared": {},
+    "development": {
+      "classroomId": "",
+      "campusId": "",
+      "termId": "",
+      "courseId": "",
+      "groupId": "",
+      "scheduleId": "",
+      "professorId": ""
+    }
+  }
+}

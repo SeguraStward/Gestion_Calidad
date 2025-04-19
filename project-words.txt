@@ -1,4 +1,8 @@
 calidad
+dtos
+Elipssis
 gestión
 shadcn
+Swal
+sweetalert
 Vercel

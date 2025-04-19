@@ -39,6 +39,3 @@ npm-debug.log*
 
 # Files
 *.bat
-
-# IDE vs Code
-.vscode
