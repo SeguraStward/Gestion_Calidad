@@ -1,0 +1,50 @@
+#var, use command >Rest Client: Switch Environment in search bar of vs code
+@id =1
+
+###
+
+### Get all courses
+GET http://localhost:3000/api/v1/courses HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get course by ID
+GET http://localhost:3000/api/v1/courses/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new course
+POST http://localhost:3000/api/v1/courses HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Introduction to Programming",
+  "description": "A beginner course on programming concepts.",
+  "credits": 3,
+  "contactHours": 45,
+  "level": "Undergraduate",
+  "schoolId": "644a1f2e5f1b2c001c8e4d3a"
+}
+
+###
+
+### Update an existing course
+PUT http://localhost:3000/api/v1/courses/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Advanced Programming",
+  "description": "An advanced course on programming concepts.",
+  "credits": 4,
+  "contactHours": 60,
+  "level": "Graduate",
+  "schoolId": "644a1f2e5f1b2c001c8e4d3a"
+}
+
+###
+
+### Delete a course
+DELETE http://localhost:3000/api/v1/courses/{{id}} HTTP/1.1
+Content-Type: application/json
