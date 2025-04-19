@@ -1,11 +1,13 @@
-model Group {
+model AcademicPeriod {
   id            String         @id @default(auto()) @map("_id") @db.ObjectId
   version       Int            @default(0) @map("__v")
-  code          String         @unique
-  type          String
+  name          String         @unique
+  code          String
+  description   String
   status        String
-  number        String
+  startDate     DateTime
+  endDate       DateTime
   academicLoads AcademicLoad[]
 
-  @@map("groups")
+  @@map("academic_periods")
 }

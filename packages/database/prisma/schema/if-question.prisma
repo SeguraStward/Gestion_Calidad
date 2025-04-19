@@ -1,0 +1,10 @@
+model IfQuestion {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  version  Int    @default(0) @map("__v")
+  status   String
+  question String
+
+  @@map("if_questions")
+}
+
+//TODO: I don quite understand the purpose of this model.  

@@ -1,6 +1,6 @@
 model AcademicLoad {
   id             String             @id @default(auto()) @map("_id") @db.ObjectId
-  version        Int                @map("__v") @default(0) // Added version field
+  version        Int                @default(0) @map("__v")
   availableSeats Int
   enrollmentCap  Int
   maximumCap     Int
@@ -13,8 +13,8 @@ model AcademicLoad {
   campus   Campus @relation(fields: [campusId], references: [id])
   campusId String @db.ObjectId
 
-  term   Term   @relation(fields: [termId], references: [id])
-  termId String @db.ObjectId
+  academicPeriod   AcademicPeriod @relation(fields: [academicPeriodId], references: [id])
+  academicPeriodId String         @db.ObjectId
 
   course   Course @relation(fields: [courseId], references: [id])
   courseId String @db.ObjectId
@@ -30,18 +30,18 @@ model AcademicLoad {
 
   enrolledStudents StudentEnrollment[]
 
-  finalReports FinalReport[] 
+  finalReports FinalReport[]
 
+  @@index([academicPeriodId])
   @@index([campusId])
   @@index([courseId])
-  @@index([termId])
   @@index([professorId])
   @@map("academic_loads")
 }
 
 enum AcademicLoadStatus {
-  DRAFT
   ACTIVE
+  INACTIVE
   ARCHIVED
-  CANCELLED
+  DELETED
 }

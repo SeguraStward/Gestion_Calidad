@@ -1,14 +1,14 @@
 model Professor {
-  id             String         @id @default(auto()) @map("_id") @db.ObjectId
-  version        Int            @map("__v") @default(0) // Added version field
-  academicRank   String   
-  bio            String?    
-  userId         String         @db.ObjectId @unique 
-  user           User           @relation(fields: [userId], references: [id])
-  schoolId       String         @db.ObjectId @unique
-  school         School         @relation(fields: [schoolId], references: [id])
-  
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  version      Int     @default(0) @map("__v")
+  academicRank String
+  bio          String?
+  userId       String  @unique @db.ObjectId
+  user         User    @relation(fields: [userId], references: [id])
+  schoolId     String  @unique @db.ObjectId
+  school       School  @relation(fields: [schoolId], references: [id])
 
   academicLoads AcademicLoad[]
+
   @@map("professors")
 }

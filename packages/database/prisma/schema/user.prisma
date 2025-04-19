@@ -1,6 +1,6 @@
 model User {
   id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  version    Int       @default(0) @map("__v")  
+  version    Int       @default(0) @map("__v")
   email      UserEmail @unique
   nationalId String?
   canton     String?
@@ -14,10 +14,10 @@ model User {
 
   condition         String?
   address           String?
-  status            UserStatus @default(ACTIVE)
+  status            Status    @default(ACTIVE)
   hireDate          DateTime?
   birthDate         DateTime?
-  photoUrl          String?    @default("")
+  photoUrl          String?   @default("")
   profileType       String?
   primaryPhone      String?
   professionalTitle String?
@@ -29,13 +29,12 @@ model User {
   phoneNumbers UserPhone[]
 
   professor               Professor?
-  generalConfiguration    GeneralConfiguration?
   intellectualProductions IntellectualProduction[]
   academicBackgrounds     AcademicBackground[]
   enrollments             StudentEnrollment[]
   workExperiences         WorkExperience[]
-  finalWorks              final_work[]
-  lenguage                Language[]
+  finalWorks              FinalWork[]
+  language                Language[]
   ppaas                   Ppaa[]
 
   @@index([province, canton, district])
@@ -59,11 +58,6 @@ enum UserPermission {
   DELETE
   ADD
   VIEW
-}
-
-enum UserStatus {
-  ACTIVE
-  INACTIVE
 }
 
 enum UserRole {

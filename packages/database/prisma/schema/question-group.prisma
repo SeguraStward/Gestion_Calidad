@@ -1,0 +1,10 @@
+model QuestionGroup {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  version  Int    @default(0) @map("__v")
+  status   String
+  question String
+
+  @@map("question_groups")
+}
+
+//NOTE: what is the purpose of this?
