@@ -31,14 +31,14 @@ Content-Type: application/json
       "idFile": "file12345",
       "link": "https://example.com/files/document1.pdf",
       "name": "Literature Review",
-      "tipo": "document",
+      "type": "document",
       "uri": "/storage/document1.pdf"
     },
     {
       "download": "/downloads/presentation.pptx",
       "idFile": "file67890",
       "name": "Initial Proposal",
-      "tipo": "presentation",
+      "type": "presentation",
       "uri": "/storage/presentation.pptx"
     }
   ]
@@ -62,14 +62,14 @@ Content-Type: application/json
       "idFile": "file12345",
       "link": "https://example.com/files/document1.pdf",
       "name": "Literature Review",
-      "tipo": "document",
+      "type": "document",
       "uri": "/storage/document1.pdf"
     },
     {
       "download": "/downloads/presentation.pptx",
       "idFile": "file67890",
       "name": "Initial Proposal",
-      "tipo": "presentation",
+      "type": "presentation",
       "uri": "/storage/presentation.pptx"
     }
   ]
@@ -92,14 +92,14 @@ Content-Type: application/json
       "idFile": "file12345",
       "link": "https://example.com/files/document1.pdf",
       "name": "Literature Review",
-      "tipo": "document",
+      "type": "document",
       "uri": "/storage/document1.pdf"
     },
     {
       "download": "/downloads/presentation.pptx",
       "idFile": "file67890",
       "name": "Initial Proposal",
-      "tipo": "presentation",
+      "type": "presentation",
       "uri": "/storage/presentation.pptx"
     },
     {
@@ -107,7 +107,7 @@ Content-Type: application/json
       "idFile": "file24680",
       "link": "https://example.com/files/final_report.pdf",
       "name": "Final Report",
-      "tipo": "document",
+      "type": "document",
       "uri": "/storage/final_report.pdf"
     }
   ]
