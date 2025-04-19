@@ -10,7 +10,7 @@ import {
   ValidateNested,
   IsEmail,
 } from 'class-validator';
-import { Province, UserPermission, UserRole, UserStatus } from '@una-gc/database/prisma/generated/client';
+import { Province, UserPermission, UserRole, Status } from '@una-gc/database/prisma/generated/client';
 
 export class UserEmailDto {
   @ApiProperty({ description: 'User email address' })
@@ -89,9 +89,9 @@ export class UserDto {
   @IsOptional()
   address?: string;
 
-  @ApiProperty({ description: 'User status', enum: UserStatus, default: UserStatus.ACTIVE })
-  @IsEnum(UserStatus)
-  status: UserStatus;
+  @ApiProperty({ description: 'Status', enum: Status, default: Status.ACTIVE })
+  @IsEnum(Status)
+  status: Status;
 
   @ApiPropertyOptional({ description: 'Hire date' })
   @IsDate()
