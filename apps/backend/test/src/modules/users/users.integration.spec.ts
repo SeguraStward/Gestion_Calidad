@@ -3,7 +3,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { UsersModule } from '@modules/users/users.module';
 import { PrismaService } from '@src/prisma/prisma.service';
-import { UserStatus } from '@una-gc/database/prisma/generated/client';
+import { Status } from '@una-gc/database/prisma/generated/client';
 import { HttpResponseInterceptor } from '@core/http/interceptors/http-response.interceptor';
 import { ErrorResponseFilter } from '@core/http/filters/error-response.filter';
 import { testUser } from './test-fixtures';
@@ -72,7 +72,7 @@ describe('Users Integration', () => {
       email: { email: 'new@example.com', isVerified: false },
       firstName: 'New',
       lastName: 'User',
-      status: UserStatus.ACTIVE,
+      status: Status.ACTIVE,
     };
 
     const response = await request(app.getHttpServer()).post('/users').send(userToCreate);

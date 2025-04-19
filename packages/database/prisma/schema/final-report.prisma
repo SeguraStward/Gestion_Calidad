@@ -4,7 +4,7 @@ model FinalReport {
   loadId             String                        @db.ObjectId
   load               AcademicLoad                  @relation(fields: [loadId], references: [id])
   statistics         FinalReportStatistics
-  status             String
+  status             Status
   evaluation         FinalReportEvaluation[]
   studentInformation FinalReportStudentInformation
   professorId        String                        @db.ObjectId

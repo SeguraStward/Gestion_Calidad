@@ -21,7 +21,7 @@ export class CourseDto {
   @IsInt()
   credits: number;
 
-  @ApiProperty({ description: 'Status', enum: Status, default: Status.ACTIVE })
+  @ApiProperty({ description: 'Course Dto Status', enum: Status, default: Status.ACTIVE })
   @IsEnum(Status)
   status: Status;
 

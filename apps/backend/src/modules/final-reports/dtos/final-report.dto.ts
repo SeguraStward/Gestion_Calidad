@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, IsArray, ValidateNested } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsEnum, IsArray, ValidateNested } from 'class-validator';
+import { Status } from '@una-gc/database/prisma/generated/client';
 import { Type } from 'class-transformer';
 
 export class FinalReportStatisticsDto {
@@ -151,9 +152,9 @@ export class FinalReportDto {
   @Type(() => FinalReportStatisticsDto)
   statistics: FinalReportStatisticsDto;
 
-  @ApiProperty({ description: 'Status of the report' })
-  @IsString()
-  status: string;
+  @ApiProperty({ description: 'Final Report Dto', enum: Status, default: Status.ACTIVE })
+  @IsEnum(Status)
+  status: Status;
 
   @ApiProperty({ description: 'Evaluations of the report' })
   @IsArray()

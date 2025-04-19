@@ -1,4 +1,4 @@
-import { UserStatus, UserRole, Province, UserPermission } from '@una-gc/database/prisma/generated/client';
+import { Status, UserRole, Province, UserPermission } from '@una-gc/database/prisma/generated/client';
 import { UserDto } from '@modules/users/dtos/user.dto';
 
 // Minimal user data for most tests
@@ -8,7 +8,7 @@ export const testUser = {
   firstName: 'Juan',
   lastName: 'Perez',
   role: UserRole.USER,
-  status: UserStatus.ACTIVE,
+  status: Status.ACTIVE,
   phoneNumbers: [{ number: '123456789', isPrimary: true }],
 };
 
@@ -25,7 +25,7 @@ export const testUser2 = {
   province: Province.SAN_JOSE,
   role: UserRole.USER,
   email: { email: 'e2e-test@example.com', isVerified: true },
-  status: UserStatus.ACTIVE,
+  status: Status.ACTIVE,
   phoneNumbers: [],
   condition: 'Healthy',
   address: '123 Test Street',
@@ -45,7 +45,7 @@ export const testUserDto = new UserDto(testUser);
 export const testUserUpdate = {
   firstName: 'Juan update',
   lastName: 'Perez update',
-  status: UserStatus.INACTIVE,
+  status: Status.INACTIVE,
 };
 
 // Helper function to create mock repository

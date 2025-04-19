@@ -1,11 +1,11 @@
 model AcademicLoad {
-  id             String             @id @default(auto()) @map("_id") @db.ObjectId
-  version        Int                @default(0) @map("__v")
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  version        Int    @default(0) @map("__v")
   availableSeats Int
   enrollmentCap  Int
   maximumCap     Int
   courseNumber   String
-  status         AcademicLoadStatus
+  status         Status
 
   classroom   Classroom @relation(fields: [classroomId], references: [id])
   classroomId String    @db.ObjectId
@@ -37,11 +37,4 @@ model AcademicLoad {
   @@index([courseId])
   @@index([professorId])
   @@map("academic_loads")
-}
-
-enum AcademicLoadStatus {
-  ACTIVE
-  INACTIVE
-  ARCHIVED
-  DELETED
 }

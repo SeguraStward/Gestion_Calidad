@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsDate, IsNotEmpty } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsDate, IsNotEmpty } from 'class-validator';
+import { Status } from '@una-gc/database/prisma/generated/client';
 
 export class AcademicPeriodDto {
   @ApiPropertyOptional({ description: 'AcademicPeriod ID' })
@@ -23,9 +24,8 @@ export class AcademicPeriodDto {
   description: string;
 
   @ApiProperty({ description: 'Status of the academic period' })
-  @IsString()
-  @IsNotEmpty()
-  status: string;
+  @IsEnum(Status)
+  status: Status;
 
   @ApiProperty({ description: 'Start date of the academic period' })
   @IsDate()

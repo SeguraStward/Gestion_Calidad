@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsEnum } from 'class-validator';
+import { Status } from '@una-gc/database/prisma/generated/client';
 
 export class FacultyDto {
   @ApiPropertyOptional({ description: 'Faculty ID' })
@@ -24,9 +25,9 @@ export class FacultyDto {
   @IsString()
   description: string;
 
-  @ApiProperty({ description: 'Status' })
-  @IsString()
-  status: string;
+  @ApiProperty({ description: 'Academic load status', enum: Status, default: Status.ACTIVE })
+  @IsEnum(Status)
+  status: Status;
 
   constructor(dto: Partial<FacultyDto> = {}) {
     Object.assign(this, dto);

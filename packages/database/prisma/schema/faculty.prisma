@@ -3,7 +3,7 @@ model Faculty {
   version     Int      @default(0) @map("__v")
   code        String
   description String
-  status      String
+  status      Status
   schools     School[]
 
   @@map("faculties")

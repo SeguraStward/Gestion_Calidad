@@ -3,7 +3,7 @@ model Group {
   version       Int            @default(0) @map("__v")
   code          String         @unique
   type          String
-  status        String
+  status        Status
   number        String
   academicLoads AcademicLoad[]
 

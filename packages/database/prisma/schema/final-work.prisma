@@ -1,7 +1,7 @@
 model FinalWork {
   id       String     @id @default(auto()) @map("_id") @db.ObjectId
   version  Int        @default(0) @map("__v")
-  status   String
+  status   Status
   evidence Evidence[]
   date     DateTime?
   type     String

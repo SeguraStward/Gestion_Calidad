@@ -3,7 +3,7 @@ model Language {
   version      Int                @default(0) @map("__v")
   conversation Int
   writing      Int
-  status       String
+  status       Status
   evidence     LanguageEvidence[]
   languageName String
   reading      Int

@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsInt, IsEnum } from 'class-validator';
-import { AcademicLoadStatus } from '@una-gc/database/prisma/generated/client';
+import { Status } from '@una-gc/database/prisma/generated/client';
 
 export class AcademicLoadDto {
   @ApiPropertyOptional({ description: 'AcademicLoad ID' })
@@ -29,9 +29,9 @@ export class AcademicLoadDto {
   @IsString()
   courseNumber: string;
 
-  @ApiProperty({ description: 'Academic load status', enum: AcademicLoadStatus })
-  @IsEnum(AcademicLoadStatus)
-  status: AcademicLoadStatus;
+  @ApiProperty({ description: 'Academic load status', enum: Status, default: Status.ACTIVE })
+  @IsEnum(Status)
+  status: Status;
 
   @ApiProperty({ description: 'Classroom ID' })
   @IsString()

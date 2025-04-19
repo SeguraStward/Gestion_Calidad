@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, IsDate, IsArray, ValidateNested } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsEnum, IsDate, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 import { EvidenceDto } from '@modules/general-types-dto';
+import { Status } from '@una-gc/database/prisma/generated/client';
 
 export class FinalWorkDto {
   @ApiPropertyOptional({ description: 'FinalWork ID' })
@@ -14,9 +15,9 @@ export class FinalWorkDto {
   @IsString()
   title: string;
 
-  @ApiProperty({ description: 'Status' })
-  @IsString()
-  status: string;
+  @ApiProperty({ description: 'Final Work Dto status', enum: Status, default: Status.ACTIVE })
+  @IsEnum(Status)
+  status: Status;
 
   @ApiProperty({ description: 'Type' })
   @IsString()

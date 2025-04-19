@@ -4,7 +4,7 @@ model AcademicPeriod {
   name          String         @unique
   code          String
   description   String
-  status        String
+  status        Status
   startDate     DateTime
   endDate       DateTime
   academicLoads AcademicLoad[]
