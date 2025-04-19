@@ -1,0 +1,47 @@
+#var, use command >Rest Client: Switch Environment in search bar of vs code
+@id =1
+
+###
+
+### Get all academic-periods
+GET http://localhost:3000/api/v1/academic-periods HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get academic-period by ID
+GET http://localhost:3000/api/v1/academic-periods/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new academic-period
+POST http://localhost:3000/api/v1/academic-periods HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Semestre 2025-1",
+  "startDate": "2025-02-01",
+  "endDate": "2025-06-30",
+  "status": "active",
+  "description": "Primer semestre del año académico 2025"
+}
+
+###
+
+### Update an existing academic-period
+PUT http://localhost:3000/api/v1/academic-periods/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Semestre 2025-1",
+  "startDate": "2025-02-01",
+  "endDate": "2025-07-15",
+  "status": "active",
+  "description": "Primer semestre del año académico 2025 (fechas extendidas)"
+}
+###
+
+### Delete a academic-period
+DELETE http://localhost:3000/api/v1/academic-periods/{{id}} HTTP/1.1
+Content-Type: application/json
