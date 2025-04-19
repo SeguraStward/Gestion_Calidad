@@ -1,0 +1,93 @@
+#var, use command >Rest Client: Switch Environment in search bar of vs code
+@id =1
+
+###
+
+### Get all work-experiences
+GET http://localhost:3000/api/v1/work-experiences HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get work-experience by ID
+GET http://localhost:3000/api/v1/work-experiences/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new work-experience
+POST http://localhost:3000/api/v1/work-experiences HTTP/1.1
+Content-Type: application/json
+
+{
+  "company": "Tech Solutions Inc.",
+  "status": "active",
+  "evidence": [
+    {
+      "download": "/downloads/certificate-tech-solutions.pdf",
+      "fileId": "file123456",
+      "link": "https://example.com/certificate",
+      "name": "Employment Certificate",
+      "type": "application/pdf",
+      "uri": "/files/certificate-tech-solutions.pdf"
+    }
+  ],
+  "startDate": "2022-01-15T00:00:00.000Z",
+  "endDate": "2023-06-30T00:00:00.000Z",
+  "position": "Full Stack Developer",
+  "responsibilities": [
+    "Developed and maintained web applications",
+    "Implemented new features using React and Node.js",
+    "Collaborated with cross-functional teams"
+  ],
+  "experienceType": "full-time",
+  "document": "EMP-2022-001",
+  "userId": "65fa98765432109876543210"
+}
+
+###
+
+### Update an existing work-experience
+PUT http://localhost:3000/api/v1/work-experiences/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "company": "Tech Solutions International",
+  "status": "active",
+  "evidence": [
+    {
+      "download": "/downloads/certificate-tech-solutions.pdf",
+      "fileId": "file123456",
+      "link": "https://example.com/certificate",
+      "name": "Employment Certificate",
+      "type": "application/pdf",
+      "uri": "/files/certificate-tech-solutions.pdf"
+    },
+    {
+      "download": "/downloads/recommendation-letter.pdf",
+      "fileId": "file789012",
+      "link": "https://example.com/recommendation",
+      "name": "Recommendation Letter",
+      "type": "application/pdf",
+      "uri": "/files/recommendation-letter.pdf"
+    }
+  ],
+  "startDate": "2022-01-15T00:00:00.000Z",
+  "endDate": "2023-08-15T00:00:00.000Z",
+  "position": "Senior Full Stack Developer",
+  "responsibilities": [
+    "Developed and maintained web applications",
+    "Implemented new features using React and Node.js",
+    "Led a team of junior developers",
+    "Conducted code reviews and mentored team members"
+  ],
+  "experienceType": "full-time",
+  "document": "EMP-2022-001-UPDATED",
+  "userId": "65fa98765432109876543210"
+}
+
+###
+
+### Delete a work-experience
+DELETE http://localhost:3000/api/v1/work-experiences/{{id}} HTTP/1.1
+Content-Type: application/json
