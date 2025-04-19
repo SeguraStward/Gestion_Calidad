@@ -1,0 +1,123 @@
+#var, use command >Rest Client: Switch Environment in search bar of vs code
+@id =1
+
+###
+
+### Get all final-reports
+GET http://localhost:3000/api/v1/final-reports HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get final-report by ID
+GET http://localhost:3000/api/v1/final-reports/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new final-report
+POST http://localhost:3000/api/v1/final-reports HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Final Report 2025",
+  "version": 1,
+  "loadId": "644a1f2e8f1b2c001c8e4d5a",
+  "statistics": {
+    "passed": 50,
+    "failed": 10,
+    "dropouts": 5,
+    "totalStudents": 65
+  },
+  "status": "completed",
+  "evaluation": [
+    {
+      "questionGroup": "Group A",
+      "questionId": "Q1",
+      "options": [
+        {
+          "category": "Category 1",
+          "label": "Option 1",
+          "value": "Value 1"
+        }
+      ],
+      "otherResponse": "Other response example",
+      "question": "What is your opinion?",
+      "response": "Positive",
+      "multipleResponse": ["Response 1", "Response 2"],
+      "responseType": "text"
+    }
+  ],
+  "studentInformation": {
+    "adjustments": [
+      {
+        "support": "Extra time",
+        "idNumber": "123456",
+        "name": "John Doe",
+        "grade": "A",
+        "observation": "Performed well"
+      }
+    ],
+    "safeguards": [
+      {
+        "idNumber": "654321",
+        "name": "Jane Smith",
+        "grade": "B",
+        "observation": "Needs improvement"
+      }
+    ]
+  },
+  "professorId": "644a1f2e8f1b2c001c8e4d5b"
+}
+
+###
+
+### Update an existing final-report
+PUT http://localhost:3000/api/v1/final-reports/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Updated Final Report 2025",
+  "version": 2,
+  "statistics": {
+    "passed": 55,
+    "failed": 8,
+    "dropouts": 2,
+    "totalStudents": 65
+  },
+  "status": "in-progress",
+  "evaluation": [
+    {
+      "questionGroup": "Group B",
+      "questionId": "Q2",
+      "options": [
+        {
+          "category": "Category 2",
+          "label": "Option 2",
+          "value": "Value 2"
+        }
+      ],
+      "question": "How would you rate the course?",
+      "response": "Excellent",
+      "responseType": "rating"
+    }
+  ],
+  "studentInformation": {
+    "adjustments": [
+      {
+        "support": "Special seating",
+        "idNumber": "789012",
+        "name": "Alice Brown",
+        "grade": "A+",
+        "observation": "Outstanding performance"
+      }
+    ]
+  },
+  "professorId": "644a1f2e8f1b2c001c8e4d5c"
+}
+
+###
+
+### Delete a final-report
+DELETE http://localhost:3000/api/v1/final-reports/{{id}} HTTP/1.1
+Content-Type: application/json
