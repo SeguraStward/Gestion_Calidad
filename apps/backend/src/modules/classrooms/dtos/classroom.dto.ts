@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, IsEnum } from 'class-validator'; // delete if not needed someones
-// import { } from '@una-gc/database/prisma/generated/client'; // form imports for Prisma types
+import { IsOptional, IsString, IsInt } from 'class-validator';
 
 export class ClassroomDto {
   @ApiPropertyOptional({ description: 'Classroom ID' })
@@ -8,9 +7,22 @@ export class ClassroomDto {
   @IsOptional()
   id?: string;
 
-  @ApiProperty({ description: 'Name' })
+  @ApiPropertyOptional({ description: 'Version', readOnly: true })
+  @IsInt()
+  @IsOptional()
+  version?: number;
+
+  @ApiProperty({ description: 'Room Number' })
   @IsString()
-  name: string;
+  roomNumber: string;
+
+  @ApiProperty({ description: 'Classroom Capacity' })
+  @IsInt()
+  capacity: number;
+
+  @ApiProperty({ description: 'Campus ID' })
+  @IsString()
+  campusId: string;
 
   constructor(dto: Partial<ClassroomDto> = {}) {
     Object.assign(this, dto);

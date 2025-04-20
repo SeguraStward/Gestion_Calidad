@@ -4,50 +4,94 @@ import {
   IsEnum,
   IsOptional,
   IsString,
+  IsInt,
   IsBoolean,
-  IsDate,
   IsArray,
   ValidateNested,
+  IsDate,
   IsEmail,
 } from 'class-validator';
 import { Province, UserPermission, UserRole, Status } from '@una-gc/database/prisma/generated/client';
 
-export class UserEmailDto {
+class UserEmailDto {
   @ApiProperty({ description: 'User email address' })
+  @IsString()
   @IsEmail()
   email: string;
 
   @ApiProperty({ description: 'Email verification status' })
   @IsBoolean()
-  isVerified: boolean;
+  @IsOptional()
+  isVerified?: boolean = false;
 }
 
-export class UserPhoneDto {
+class UserPhoneDto {
   @ApiPropertyOptional({ description: 'Phone number' })
   @IsString()
   @IsOptional()
   number?: string;
 
-  @ApiProperty({ description: 'Primary phone indicator' })
+  @ApiPropertyOptional({ description: 'Is primary phone number' })
   @IsBoolean()
-  isPrimary: boolean;
+  @IsOptional()
+  isPrimary?: boolean = false;
 }
-
 export class UserDto {
   @ApiPropertyOptional({ description: 'User ID' })
   @IsString()
   @IsOptional()
   id?: string;
 
-  @ApiProperty({ description: 'Email information' })
+  @ApiPropertyOptional({ description: 'Version', readOnly: true })
+  @IsInt()
+  @IsOptional()
+  version?: number;
+
+  @ApiProperty({ description: 'User email information' })
   @ValidateNested()
   @Type(() => UserEmailDto)
   email: UserEmailDto;
+
+  @ApiProperty({ description: 'Full name' })
+  @IsString()
+  fullName: string;
+
+  @ApiProperty({ description: 'Full last name' })
+  @IsString()
+  fullLastName: string;
+
+  @ApiPropertyOptional({ description: 'Photo URL' })
+  @IsString()
+  @IsOptional()
+  photoUrl?: string;
 
   @ApiPropertyOptional({ description: 'National ID' })
   @IsString()
   @IsOptional()
   nationalId?: string;
+
+  @ApiPropertyOptional({ description: 'Birth date' })
+  @Type(() => Date)
+  @IsDate()
+  @IsOptional()
+  birthDate?: Date;
+
+  @ApiPropertyOptional({ description: 'Primary phone' })
+  @IsString()
+  @IsOptional()
+  primaryPhone?: string;
+
+  @ApiPropertyOptional({ description: 'Phone numbers', type: [UserPhoneDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UserPhoneDto)
+  @IsOptional()
+  phoneNumbers?: UserPhoneDto[];
+
+  @ApiPropertyOptional({ description: 'Province', enum: Province })
+  @IsEnum(Province)
+  @IsOptional()
+  province?: Province;
 
   @ApiPropertyOptional({ description: 'Canton' })
   @IsString()
@@ -59,83 +103,66 @@ export class UserDto {
   @IsOptional()
   district?: string;
 
-  @ApiPropertyOptional({ description: 'First name' })
-  @IsString()
-  @IsOptional()
-  firstName?: string;
-
-  @ApiPropertyOptional({ description: 'Last name' })
-  @IsString()
-  @IsOptional()
-  lastName?: string;
-
-  @ApiPropertyOptional({ description: 'Province', enum: Province })
-  @IsEnum(Province)
-  @IsOptional()
-  province?: Province;
-
-  @ApiPropertyOptional({ description: 'User role', enum: UserRole })
-  @IsEnum(UserRole)
-  @IsOptional()
-  role?: UserRole;
-
-  @ApiPropertyOptional({ description: 'User condition' })
-  @IsString()
-  @IsOptional()
-  condition?: string;
-
   @ApiPropertyOptional({ description: 'Address' })
   @IsString()
   @IsOptional()
   address?: string;
-
-  @ApiProperty({ description: 'Status', enum: Status, default: Status.ACTIVE })
-  @IsEnum(Status)
-  status: Status;
-
-  @ApiPropertyOptional({ description: 'Hire date' })
-  @IsDate()
-  @IsOptional()
-  @Type(() => Date)
-  hireDate?: Date;
-
-  @ApiPropertyOptional({ description: 'Birth date' })
-  @IsDate()
-  @IsOptional()
-  @Type(() => Date)
-  birthDate?: Date;
-
-  @ApiPropertyOptional({ description: 'Photo URL' })
-  @IsString()
-  @IsOptional()
-  photoUrl?: string;
-
-  @ApiPropertyOptional({ description: 'Profile type' })
-  @IsString()
-  @IsOptional()
-  profileType?: string;
-
-  @ApiPropertyOptional({ description: 'Primary phone' })
-  @IsString()
-  @IsOptional()
-  primaryPhone?: string;
 
   @ApiPropertyOptional({ description: 'Professional title' })
   @IsString()
   @IsOptional()
   professionalTitle?: string;
 
-  @ApiPropertyOptional({ description: 'User permissions', enum: UserPermission, isArray: true })
+  @ApiPropertyOptional({ description: 'Hire date' })
+  @Type(() => Date)
+  @IsDate()
+  @IsOptional()
+  hireDate?: Date;
+
+  @ApiPropertyOptional({ description: 'Condition' })
+  @IsString()
+  @IsOptional()
+  condition?: string;
+
+  @ApiPropertyOptional({ description: 'User roles', enum: UserRole, isArray: true })
+  @IsEnum(UserRole, { each: true })
   @IsArray()
+  @IsOptional()
+  roles?: UserRole[];
+
+  @ApiPropertyOptional({ description: 'User permissions', enum: UserPermission, isArray: true })
   @IsEnum(UserPermission, { each: true })
+  @IsArray()
   @IsOptional()
   permissions?: UserPermission[];
 
-  @ApiPropertyOptional({ description: 'Phone numbers', type: [UserPhoneDto] })
-  @ValidateNested({ each: true })
-  @Type(() => UserPhoneDto)
+  @ApiPropertyOptional({ description: 'Profile types', type: [String] })
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  phoneNumbers?: UserPhoneDto[];
+  profileTypes?: string[];
+
+  @ApiPropertyOptional({ description: 'User status', enum: Status, default: 'ACTIVE' })
+  @IsEnum(Status)
+  @IsOptional()
+  status?: Status;
+
+  @ApiPropertyOptional({ description: 'Google ID' })
+  @IsString()
+  @IsOptional()
+  googleId?: string;
+
+  @ApiPropertyOptional({ description: 'Creation date', readOnly: true })
+  @Type(() => Date)
+  @IsDate()
+  @IsOptional()
+  createdAt?: Date;
+
+  @ApiPropertyOptional({ description: 'Last update date', readOnly: true })
+  @Type(() => Date)
+  @IsDate()
+  @IsOptional()
+  updatedAt?: Date;
 
   constructor(dto: Partial<UserDto> = {}) {
     Object.assign(this, dto);

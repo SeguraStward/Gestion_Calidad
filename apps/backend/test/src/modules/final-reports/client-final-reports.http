@@ -21,7 +21,6 @@ Content-Type: application/json
 
 {
   "name": "Final Report 2025",
-  "version": 1,
   "loadId": "644a1f2e8f1b2c001c8e4d5a",
   "statistics": {
     "passed": 50,

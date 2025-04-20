@@ -3,48 +3,69 @@ import { UserDto } from '@modules/users/dtos/user.dto';
 
 // Minimal user data for most tests
 export const testUser = {
-  id: 'test-id',
-  email: { email: 'example@example.com', isVerified: true },
-  firstName: 'Juan',
-  lastName: 'Perez',
-  role: UserRole.USER,
+  email: {
+    email: 'test@example.com',
+    isVerified: false,
+  },
+  fullName: 'Test',
+  fullLastName: 'User',
   status: Status.ACTIVE,
-  phoneNumbers: [{ number: '123456789', isPrimary: true }],
+  roles: [UserRole.USER],
 };
 
 // ALL user data for most tests
 export const testUser2 = {
-  id: 'e2e-test-id',
+  id: '507f1f77bcf86cd799439011',
   version: 1,
+  email: {
+    email: 'john.doe@example.com',
+    isVerified: true,
+  },
+  fullName: 'John',
+  fullLastName: 'Doe Smith',
+  photoUrl: 'https://example.com/photos/johndoe.jpg',
   nationalId: '123456789',
-  canton: 'Test Canton',
-  district: 'Test District',
-  googleId: 'test-google-id',
-  firstName: 'E2E',
-  lastName: 'Test',
+  birthDate: new Date('1990-01-15T00:00:00.000Z'),
+  primaryPhone: '88776655',
+  phoneNumbers: [
+    {
+      number: '88776655',
+      isPrimary: true,
+    },
+    {
+      number: '22334455',
+      isPrimary: false,
+    },
+  ],
   province: Province.SAN_JOSE,
-  role: UserRole.USER,
-  email: { email: 'e2e-test@example.com', isVerified: true },
+  canton: 'Central',
+  district: 'Catedral',
+  address: '100m Norte del Parque Central',
+  professionalTitle: 'Ingeniero en Sistemas',
+  hireDate: new Date('2020-03-01T00:00:00.000Z'),
+  condition: 'Tiempo completo',
+  roles: [UserRole.USER, UserRole.PROFESSOR],
+  permissions: [UserPermission.VIEW, UserPermission.EDIT],
+  profileTypes: ['academic', 'research'],
   status: Status.ACTIVE,
-  phoneNumbers: [],
-  condition: 'Healthy',
-  address: '123 Test Street',
-  hireDate: new Date('2020-01-01'),
-  birthDate: new Date('1990-01-01'),
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  photoUrl: 'https://example.com/photo.jpg',
-  profileType: 'BASIC',
-  primaryPhone: '123456789',
-  professionalTitle: 'Software Engineer',
-  permissions: [UserPermission.EDIT, UserPermission.VIEW],
+  googleId: 'g-123456789',
+  createdAt: new Date('2023-01-01T00:00:00.000Z'),
+  updatedAt: new Date('2023-01-01T00:00:00.000Z'),
 };
 
 export const testUserDto = new UserDto(testUser);
 
 export const testUserUpdate = {
-  firstName: 'Juan update',
-  lastName: 'Perez update',
+  email: {
+    email: 'updated@example.com',
+    isVerified: true,
+  },
+  fullName: 'Updated',
+  fullLastName: 'User Name',
+  photoUrl: 'https://example.com/photos/updated.jpg',
+  primaryPhone: '99887766',
+  province: Province.HEREDIA,
+  roles: [UserRole.USER, UserRole.ADMIN],
   status: Status.INACTIVE,
 };
 
