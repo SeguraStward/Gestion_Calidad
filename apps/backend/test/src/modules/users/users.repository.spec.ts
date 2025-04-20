@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { UsersRepository } from '@modules/users/users.repository';
-import { PrismaService } from '@src/prisma/prisma.service';
+import { PrismaModule } from '@src/prisma/prisma.module';
 import { NotFoundException } from '@nestjs/common';
 import { testUser, testUserUpdate, createMockPrisma } from './test-fixtures';
 

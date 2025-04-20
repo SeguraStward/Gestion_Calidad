@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { UsersModule } from '@modules/users/users.module';
-import { PrismaService } from '@src/prisma/prisma.service';
+import { PrismaModule } from '@src/prisma/prisma.module';
 import { Status } from '@una-gc/database/prisma/generated/client';
 import { HttpResponseInterceptor } from '@core/http/interceptors/http-response.interceptor';
 import { ErrorResponseFilter } from '@core/http/filters/error-response.filter';

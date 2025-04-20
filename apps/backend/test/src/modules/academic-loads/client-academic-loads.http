@@ -4,19 +4,19 @@
 ###
 
 ### Get all academic loads
-GET http://localhost:3000/api/v1/academic_loads HTTP/1.1
+GET http://localhost:3000/api/v1/academic-loads HTTP/1.1
 Content-Type: application/json
 
 ###
 
 ### Get academic load by ID
-GET http://localhost:3000/api/v1/academic_loads/{{id}} HTTP/1.1
+GET http://localhost:3000/api/v1/academic-loads/{{id}} HTTP/1.1
 Content-Type: application/json
 
 ###
 
 ### Create a new academic load
-POST http://localhost:3000/api/v1/academic_loads HTTP/1.1
+POST http://localhost:3000/api/v1/academic-loads HTTP/1.1
 Content-Type: application/json
 
 {
@@ -39,7 +39,7 @@ Content-Type: application/json
 ###
 
 ### Update an existing academic load
-PUT http://localhost:3000/api/v1/academic_loads/{{id}} HTTP/1.1
+PUT http://localhost:3000/api/v1/academic-loads/{{id}} HTTP/1.1
 Content-Type: application/json
 
 {
@@ -54,5 +54,5 @@ Content-Type: application/json
 ###
 
 ### Delete an academic load
-DELETE http://localhost:3000/api/v1/academic_loads/{{id}} HTTP/1.1
+DELETE http://localhost:3000/api/v1/academic-loads/{{id}} HTTP/1.1
 Content-Type: application/json
