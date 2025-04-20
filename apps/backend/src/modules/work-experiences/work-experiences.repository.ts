@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Prisma, WorkExperience } from '@una-gc/database/prisma/generated/client';
 import { GenericPrismaRepository } from '@core/common/repositories/generic-prisma.repository';
-import { PrismaService } from '@src/prisma/prisma.service';
+import { PrismaModule } from '@src/prisma/prisma.module';
 
 export class WorkExperiencesRepository extends GenericPrismaRepository<
   WorkExperience,
