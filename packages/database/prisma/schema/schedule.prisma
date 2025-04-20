@@ -2,9 +2,10 @@ model Schedule {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
-  days          ScheduleDays[]
-  startTime     String
-  endTime       String
+  days      ScheduleDays[]
+  startTime String
+  endTime   String
+
   academicLoads AcademicLoad[]
 
   @@map("schedules")

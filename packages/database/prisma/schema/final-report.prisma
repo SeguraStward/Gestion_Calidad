@@ -10,8 +10,9 @@ model FinalReport {
 
   evaluation         FinalReportEvaluation[]
   studentInformation FinalReportStudentInformation
-  professor          Professor                     @relation(fields: [professorId], references: [id])
-  professorId        String                        @db.ObjectId
+
+  professor   Professor @relation(fields: [professorId], references: [id])
+  professorId String    @db.ObjectId
 
   @@map("final_reports")
 }

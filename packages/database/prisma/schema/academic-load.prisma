@@ -31,7 +31,8 @@ model AcademicLoad {
 
   date DateTime?
 
-  status            Status
+  status Status
+
   FinalReport       FinalReport[]
   StudentEnrollment StudentEnrollment[]
 

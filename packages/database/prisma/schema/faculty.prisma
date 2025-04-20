@@ -6,6 +6,8 @@ model Faculty {
   description String
   status      Status
 
+  name String?
+
   schools School[]
 
   @@map("faculties")

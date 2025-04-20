@@ -2,10 +2,12 @@ model Classroom {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
-  roomNumber    String         @unique
-  capacity      Int
-  campusId      String         @db.ObjectId
-  campus        Campus         @relation(fields: [campusId], references: [id])
+  roomNumber String @unique
+  capacity   Int
+
+  campus   Campus @relation(fields: [campusId], references: [id])
+  campusId String @db.ObjectId
+
   academicLoads AcademicLoad[]
 
   @@map("classrooms")

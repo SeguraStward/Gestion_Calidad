@@ -6,7 +6,8 @@ model Campus {
   description String
   status      Status
 
-  name          String?
+  name String?
+
   classrooms    Classroom[]
   academicLoads AcademicLoad[]
 
