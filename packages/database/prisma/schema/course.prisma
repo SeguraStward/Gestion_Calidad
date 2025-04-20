@@ -1,16 +1,20 @@
 model Course {
-  id            String         @id @default(auto()) @map("_id") @db.ObjectId
-  version       Int            @default(0) @map("__v")
-  code          String         @unique
-  name          String
-  level         String
-  description   String?
-  credits       Int
-  status        Status
-  contactHours  Int
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  code   String
+  status Status
+
+  name         String
+  credits      Int
+  level        String
+  contactHours Int
+  school       School @relation(fields: [schoolId], references: [id])
+  schoolId     String @db.ObjectId
+
+  description String?
+
   academicLoads AcademicLoad[]
-  school        School         @relation(fields: [schoolId], references: [id])
-  schoolId      String         @db.ObjectId
 
   @@map("courses")
 }

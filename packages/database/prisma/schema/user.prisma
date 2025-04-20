@@ -1,32 +1,35 @@
 model User {
-  id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  version    Int       @default(0) @map("__v")
-  email      UserEmail @unique
-  nationalId String?
-  canton     String?
-  district   String?
-  googleId   String?   @unique
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
 
-  firstName String?
-  lastName  String?
-  province  Province?
-  role      UserRole?
+  email        UserEmail @unique
+  fullName     String
+  fullLastName String
+  photoUrl     String?   @default("")
 
-  condition         String?
-  address           String?
-  status            Status    @default(ACTIVE)
-  hireDate          DateTime?
-  birthDate         DateTime?
-  photoUrl          String?   @default("")
-  profileType       String?
-  primaryPhone      String?
+  nationalId   String?
+  birthDate    DateTime?
+  primaryPhone String?
+  phoneNumbers UserPhone[]
+
+  province Province?
+  canton   String?
+  district String?
+  address  String?
+
   professionalTitle String?
+  hireDate          DateTime?
+  condition         String?
+
+  roles        UserRole[]
+  permissions  UserPermission[]
+  profileTypes String[]
+  status       Status           @default(ACTIVE)
+
+  googleId String? @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  permissions  UserPermission[]
-  phoneNumbers UserPhone[]
 
   professor               Professor?
   intellectualProductions IntellectualProduction[]
@@ -34,12 +37,12 @@ model User {
   enrollments             StudentEnrollment[]
   workExperiences         WorkExperience[]
   finalWorks              FinalWork[]
-  language                Language[]
+  userLanguages           UserLanguage[]
   ppaas                   Ppaa[]
 
   @@index([province, canton, district])
-  @@index([firstName, lastName])
-  @@index([role])
+  @@index([fullName, fullLastName])
+  @@index([roles])
   @@map("users")
 }
 

@@ -1,12 +1,16 @@
 model FinalReport {
-  id                 String                        @id @default(auto()) @map("_id") @db.ObjectId
-  version            Int                           @default(0) @map("__v")
-  loadId             String                        @db.ObjectId
-  load               AcademicLoad                  @relation(fields: [loadId], references: [id])
-  statistics         FinalReportStatistics
-  status             Status
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  loadId String       @db.ObjectId
+  load   AcademicLoad @relation(fields: [loadId], references: [id])
+
+  statistics FinalReportStatistics
+  status     Status
+
   evaluation         FinalReportEvaluation[]
   studentInformation FinalReportStudentInformation
+  professor          Professor                     @relation(fields: [professorId], references: [id])
   professorId        String                        @db.ObjectId
 
   @@map("final_reports")

@@ -1,14 +1,19 @@
 model AcademicBackground {
-  id           String     @id @default(auto()) @map("_id") @db.ObjectId
-  version      Int        @default(0) @map("__v")
-  status       Status
-  evidence     Evidence[]
-  date         String
-  userId       String     @db.ObjectId
-  user         User       @relation(fields: [userId], references: [id])
-  institution  String
-  observations String
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
   degree       String
+  evidence     Evidence[]
+  observations String
+  status       Status
+
+  date String
+
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  institution     String
+  InstitutionType String
 
   @@map("academic_backgrounds")
 }

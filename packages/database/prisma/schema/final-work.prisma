@@ -1,14 +1,16 @@
 model FinalWork {
-  id       String     @id @default(auto()) @map("_id") @db.ObjectId
-  version  Int        @default(0) @map("__v")
-  status   Status
-  evidence Evidence[]
-  date     DateTime?
-  type     String
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
   title    String
+  type     String
+  evidence Evidence[]
+  status   Status
 
   userId String @db.ObjectId
   user   User   @relation(fields: [userId], references: [id])
+
+  date DateTime?
 
   @@map("final_works")
 }

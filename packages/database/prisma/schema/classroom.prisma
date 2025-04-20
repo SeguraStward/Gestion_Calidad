@@ -1,6 +1,7 @@
 model Classroom {
-  id            String         @id @default(auto()) @map("_id") @db.ObjectId
-  version       Int            @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
   roomNumber    String         @unique
   capacity      Int
   campusId      String         @db.ObjectId

@@ -1,23 +1,24 @@
 model AcademicLoad {
-  id             String @id @default(auto()) @map("_id") @db.ObjectId
-  version        Int    @default(0) @map("__v")
-  availableSeats Int
-  enrollmentCap  Int
-  maximumCap     Int
-  courseNumber   String
-  status         Status
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
 
-  classroom   Classroom @relation(fields: [classroomId], references: [id])
-  classroomId String    @db.ObjectId
-
-  campus   Campus @relation(fields: [campusId], references: [id])
-  campusId String @db.ObjectId
+  nrc String
 
   academicPeriod   AcademicPeriod @relation(fields: [academicPeriodId], references: [id])
   academicPeriodId String         @db.ObjectId
 
+  campus   Campus @relation(fields: [campusId], references: [id])
+  campusId String @db.ObjectId
+
   course   Course @relation(fields: [courseId], references: [id])
   courseId String @db.ObjectId
+
+  classroom   Classroom @relation(fields: [classroomId], references: [id])
+  classroomId String    @db.ObjectId
+
+  maximumCapacity  Int
+  enrolledCapacity Int
+  availableSeats   Int
 
   group   Group  @relation(fields: [groupId], references: [id])
   groupId String @db.ObjectId
@@ -28,9 +29,11 @@ model AcademicLoad {
   professor   Professor @relation(fields: [professorId], references: [id])
   professorId String    @db.ObjectId
 
-  enrolledStudents StudentEnrollment[]
+  date DateTime?
 
-  finalReports FinalReport[]
+  status            Status
+  FinalReport       FinalReport[]
+  StudentEnrollment StudentEnrollment[]
 
   @@index([academicPeriodId])
   @@index([campusId])

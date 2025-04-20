@@ -1,9 +1,12 @@
 model Campus {
-  id            String         @id @default(auto()) @map("_id") @db.ObjectId
-  version       Int            @default(0) @map("__v")
-  code          String         @unique
-  name          String
-  description   String
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  code        String @unique
+  description String
+  status      Status
+
+  name          String?
   classrooms    Classroom[]
   academicLoads AcademicLoad[]
 

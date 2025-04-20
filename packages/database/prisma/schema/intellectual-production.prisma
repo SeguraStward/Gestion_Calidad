@@ -1,17 +1,18 @@
 model IntellectualProduction {
-  id                String  @id @default(auto()) @map("_id") @db.ObjectId
-  version           Int     @default(0) @map("__v")
-  presentationCount Int
-  category          String
-  status            String?
-  presentationVenue String
-  productionName    String
-  topic             String
-  year              String
-  userId            String  @db.ObjectId
-  user              User    @relation(fields: [userId], references: [id])
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
 
-  evidence Evidence[]
+  category             String
+  topic                String
+  year                 String
+  presentationCount    Int
+  evidence             Evidence[]
+  presentationLocation String
+  productionName       String
+  status               Status?
+
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
 
   @@map("intellectual_productions")
 }
