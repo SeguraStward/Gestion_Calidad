@@ -63,8 +63,8 @@ describe('UsersController (e2e)', () => {
   it('POST /api/v1/users - should create a new user', async () => {
     const newUser = {
       email: { email: 'new@example.com', isVerified: false },
-      firstName: 'New',
-      lastName: 'User',
+      fullName: 'New',
+      fullLastName: 'User',
       status: 'ACTIVE',
     };
 

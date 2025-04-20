@@ -70,8 +70,8 @@ describe('Users Integration', () => {
   it('POST /users - should create a user', async () => {
     const userToCreate = {
       email: { email: 'new@example.com', isVerified: false },
-      firstName: 'New',
-      lastName: 'User',
+      fullName: 'New',
+      fullLastName: 'User',
       status: Status.ACTIVE,
     };
 
@@ -79,6 +79,6 @@ describe('Users Integration', () => {
 
     expect(response.status).toBe(201);
     expect(response.body.data.id).toBe('new-id');
-    expect(response.body.data.firstName).toBe(userToCreate.firstName);
+    expect(response.body.data.fullName).toBe(userToCreate.fullName);
   });
 });

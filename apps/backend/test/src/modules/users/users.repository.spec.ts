@@ -44,8 +44,8 @@ describe('UsersRepository', () => {
     it('should create a new user', async () => {
       const userToCreate = {
         email: testUser.email,
-        firstName: testUser.firstName,
-        lastName: testUser.lastName,
+        fullName: testUser.fullName,
+        fullLastName: testUser.fullLastName,
         status: testUser.status,
       };
 
@@ -65,7 +65,7 @@ describe('UsersRepository', () => {
       });
 
       const result = await repository.update(testUser.id, testUserUpdate);
-      expect(result.firstName).toBe(testUserUpdate.firstName);
+      expect(result.fullName).toBe(testUserUpdate.fullName);
     });
 
     it('should delete a user', async () => {

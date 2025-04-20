@@ -37,8 +37,8 @@ export class AuthService {
             email: googleUser.email,
             isVerified: true,
           },
-          firstName: googleUser.firstName,
-          lastName: googleUser.lastName,
+          fullName: googleUser.firstName,
+          fullLastName: googleUser.lastNme,
           googleId: googleUser.googleId,
           photoUrl: googleUser.picture,
         },
@@ -61,8 +61,8 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email.email, // Changed to access nested email
-        firstName: user.firstName,
-        lastName: user.lastName,
+        fullName: user.fullName,
+        fullLastName: user.fullLastName,
         profilePicture: user.photoUrl,
       },
       token,
