@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Prisma, User } from '@una-gc/database/prisma/generated/client';
 import { GenericPrismaRepository } from '@core/common/repositories/generic-prisma.repository';
-import { PrismaModule } from '@src/prisma/prisma.module';
+import { PrismaService } from '@src/prisma/prisma.service';
 
 export class UsersRepository extends GenericPrismaRepository<
   User,

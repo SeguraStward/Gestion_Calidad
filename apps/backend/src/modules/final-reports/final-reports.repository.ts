@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Prisma, FinalReport } from '@una-gc/database/prisma/generated/client';
 import { GenericPrismaRepository } from '@core/common/repositories/generic-prisma.repository';
-import { PrismaModule } from '@src/prisma/prisma.module';
+import { PrismaService } from '@src/prisma/prisma.service';
 
 export class FinalReportsRepository extends GenericPrismaRepository<
   FinalReport,
