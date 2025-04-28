@@ -49,7 +49,7 @@ export class AuthController {
 
       const result = await this.authService.googleLogin(req.user);
       this.logger.debug('User authenticated successfully');
-
+      this.logger.debug('token: ( ' + result.token + ' )');
       // Set the token in an HTTP-only cookie
       res.cookie('auth_token', result.token, {
         httpOnly: true,
