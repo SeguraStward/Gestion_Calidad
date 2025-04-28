@@ -1,10 +1,10 @@
 model Group {
-  id            String         @id @default(auto()) @map("_id") @db.ObjectId
-  version       Int            @default(0) @map("__v")
-  code          String         @unique
-  type          String
-  status        Status
-  number        String
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  number String @unique
+  status Status
+
   academicLoads AcademicLoad[]
 
   @@map("groups")

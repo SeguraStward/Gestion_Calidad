@@ -8,7 +8,7 @@ export class FacultyDto {
   @IsOptional()
   id?: string;
 
-  @ApiPropertyOptional({ description: 'Version number' })
+  @ApiPropertyOptional({ description: 'Version', readOnly: true })
   @IsInt()
   @IsOptional()
   version?: number;
@@ -17,17 +17,18 @@ export class FacultyDto {
   @IsString()
   code: string;
 
-  @ApiProperty({ description: 'Name' })
-  @IsString()
-  name: string;
-
   @ApiProperty({ description: 'Description' })
   @IsString()
   description: string;
 
-  @ApiProperty({ description: 'Academic load status', enum: Status, default: Status.ACTIVE })
+  @ApiProperty({ description: 'Status of the faculty', enum: Status, default: Status.ACTIVE })
   @IsEnum(Status)
   status: Status;
+
+  @ApiPropertyOptional({ description: 'Name' })
+  @IsString()
+  @IsOptional()
+  name?: string;
 
   constructor(dto: Partial<FacultyDto> = {}) {
     Object.assign(this, dto);

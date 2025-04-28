@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, IsArray, ValidateNested, IsDateString } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsArray, ValidateNested, IsDate } from 'class-validator';
 import { Type } from 'class-transformer';
 
 import { EvidenceDto } from '@modules/general-types-dto';
@@ -10,55 +10,58 @@ export class WorkExperienceDto {
   @IsOptional()
   id?: string;
 
+  @ApiPropertyOptional({ description: 'Version', readOnly: true })
+  @IsInt()
+  @IsOptional()
+  version?: number;
+
   @ApiProperty({ description: 'Company name' })
   @IsString()
   company: string;
 
-  @ApiProperty({ description: 'Status' })
+  @ApiProperty({ description: 'Position in the company' })
   @IsString()
-  status: string;
+  position: string;
 
-  @ApiProperty({ description: 'Evidence files', type: [EvidenceDto] })
+  @ApiProperty({ description: 'List of responsibilities' })
+  @IsArray()
+  @IsString({ each: true })
+  responsibilities: string[];
+
+  @ApiProperty({ description: 'Type of experience' })
+  @IsString()
+  experienceType: string;
+
+  @ApiProperty({ description: 'Start date of the experience' })
+  @Type(() => Date)
+  @IsDate()
+  startDate: Date;
+
+  @ApiPropertyOptional({ description: 'End date of the experience' })
+  @Type(() => Date)
+  @IsDate()
+  @IsOptional()
+  endDate?: Date;
+
+  @ApiPropertyOptional({ description: 'Evidence documents' })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => EvidenceDto)
   @IsOptional()
   evidence?: EvidenceDto[];
 
-  @ApiProperty({ description: 'Start date' })
-  @IsDateString()
-  startDate: Date;
-
-  @ApiPropertyOptional({ description: 'End date' })
-  @IsDateString()
-  @IsOptional()
-  endDate?: Date;
-
-  @ApiProperty({ description: 'Position held' })
-  @IsString()
-  position: string;
-
-  @ApiProperty({ description: 'Responsibilities', type: [String] })
-  @IsArray()
-  @IsString({ each: true })
-  responsibilities: string[];
-
-  @ApiProperty({ description: 'Experience type' })
-  @IsString()
-  experienceType: string;
-
-  @ApiProperty({ description: 'Document reference' })
-  @IsString()
-  document: string;
-
   @ApiProperty({ description: 'User ID' })
   @IsString()
   userId: string;
 
-  @ApiPropertyOptional({ description: 'Version' })
-  @IsInt()
+  @ApiProperty({ description: 'Status of the work experience' })
+  @IsString()
+  status: string;
+
+  @ApiPropertyOptional({ description: 'Document reference' })
+  @IsString()
   @IsOptional()
-  version?: number;
+  document?: string;
 
   constructor(dto: Partial<WorkExperienceDto> = {}) {
     Object.assign(this, dto);

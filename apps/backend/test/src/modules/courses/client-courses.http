@@ -21,11 +21,11 @@ Content-Type: application/json
 
 {
   "name": "Introduction to Programming",
-  "description": "A beginner course on programming concepts.",
   "credits": 3,
-  "contactHours": 45,
   "level": "Undergraduate",
-  "schoolId": "644a1f2e5f1b2c001c8e4d3a"
+  "contactHours": 45,
+  "schoolId": "644a1f2e5f1b2c001c8e4d3a",
+  "description": "A beginner course on programming concepts."
 }
 
 ###
@@ -36,11 +36,11 @@ Content-Type: application/json
 
 {
   "name": "Advanced Programming",
-  "description": "An advanced course on programming concepts.",
   "credits": 4,
-  "contactHours": 60,
   "level": "Graduate",
-  "schoolId": "644a1f2e5f1b2c001c8e4d3a"
+  "contactHours": 60,
+  "schoolId": "644a1f2e5f1b2c001c8e4d3a",
+  "description": "An advanced course on programming concepts."
 }
 
 ###

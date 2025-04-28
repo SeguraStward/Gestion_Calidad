@@ -63,7 +63,7 @@ describe('UsersService', () => {
       mockRepository.update.mockResolvedValue(updatedUser);
 
       const result = await service.update(testUser.id, testUserUpdate);
-      expect(result.firstName).toBe(testUserUpdate.firstName);
+      expect(result.fullName).toBe(testUserUpdate.fullName);
     });
 
     it('should delete a user', async () => {

@@ -20,20 +20,38 @@ POST http://localhost:3000/api/v1/users HTTP/1.1
 Content-Type: application/json
 
 {
-  "email": {
-    "email": "example@example.com",
-    "isVerified": true
+    "email": {
+    "email": "john.doe@example.com",
+    "isVerified": false
   },
-  "firstName": "Juan",
-  "lastName": "Perez",
-  "role": "USER",
-  "status": "ACTIVE",
+  "fullName": "John",
+  "fullLastName": "Doe Smith",
+  "photoUrl": "https://example.com/photos/johndoe.jpg",
+  "nationalId": "123456789",
+  "birthDate": "1990-01-15T00:00:00.000Z",
+  "primaryPhone": "88776655",
   "phoneNumbers": [
     {
-      "number": "123456789",
+      "number": "88776655",
       "isPrimary": true
+    },
+    {
+      "number": "22334455",
+      "isPrimary": false
     }
-  ]
+  ],
+  "province": "SAN_JOSE",
+  "canton": "Central",
+  "district": "Catedral",
+  "address": "100m Norte del Parque Central",
+  "professionalTitle": "Ingeniero en Sistemas",
+  "hireDate": "2020-03-01T00:00:00.000Z",
+  "condition": "Tiempo completo",
+  "roles": ["USER", "PROFESSOR"],
+  "permissions": ["VIEW", "EDIT"],
+  "profileTypes": ["academic", "research"],
+  "status": "ACTIVE",
+  "googleId": "g-123456789"
 }
 
 ###

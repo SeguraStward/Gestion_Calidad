@@ -8,6 +8,7 @@ import { UsersRepository } from './users.repository';
 
 @Module({
   imports: [PrismaModule],
+  imports: [PrismaModule],
   controllers: [UsersController],
   providers: [UsersService, UsersRepository, DtoValidator],
   exports: [UsersService, UsersRepository],

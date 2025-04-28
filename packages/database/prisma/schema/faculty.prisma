@@ -1,10 +1,14 @@
 model Faculty {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  version     Int      @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
   code        String
   description String
   status      Status
-  schools     School[]
+
+  name String?
+
+  schools School[]
 
   @@map("faculties")
 }

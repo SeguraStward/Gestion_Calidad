@@ -1,0 +1,27 @@
+model UserLanguage {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  language String
+  type     String
+  speaking Int
+  writing  Int
+  reading  Int
+  evidence LanguageEvidence[]
+  status   Status
+
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("languages")
+}
+
+type LanguageEvidence {
+  download String
+  fileId   String @map("file_id")
+  link     String
+  name     String
+  type     String
+  uri      String
+}

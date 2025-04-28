@@ -8,6 +8,7 @@ import { AcademicLoadsRepository } from './academic-loads.repository';
 
 @Module({
   imports: [PrismaModule],
+  imports: [PrismaModule],
   controllers: [AcademicLoadsController],
   providers: [AcademicLoadsService, AcademicLoadsRepository, DtoValidator],
   exports: [AcademicLoadsService, AcademicLoadsRepository],

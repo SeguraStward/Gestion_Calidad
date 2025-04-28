@@ -4,52 +4,55 @@
 ###
 
 ### Get all academic loads
-GET http://localhost:3000/api/v1/academic_loads HTTP/1.1
+GET http://localhost:3000/api/v1/academic-loads HTTP/1.1
 Content-Type: application/json
 
 ###
 
 ### Get academic load by ID
-GET http://localhost:3000/api/v1/academic_loads/{{id}} HTTP/1.1
+GET http://localhost:3000/api/v1/academic-loads/{{id}} HTTP/1.1
 Content-Type: application/json
 
 ###
 
 ### Create a new academic load
-POST http://localhost:3000/api/v1/academic_loads HTTP/1.1
+POST http://localhost:3000/api/v1/academic-loads HTTP/1.1
 Content-Type: application/json
 
 {
-    "availableSeats": 25,
-    "enrollmentCap": 30,
-    "maximumCap": 35,
-    "courseNumber": "ING-432",
-    "status": "ACTIVE",
-    "classroomId": "{{classroomId}}",
-    "campusId": "{{campusId}}",
-    "academicPeriod Id": "{{academicPeriod Id}}",
-    "courseId": "{{courseId}}",
-    "groupId": "{{groupId}}",
-    "scheduleId": "{{scheduleId}}",
-    "professorId": "{{professorId}}",
-    "name": "Ingeniería de Software I"
+
+  "nrc": "12345",
+  "academicPeriod Id": "{{academicPeriod Id}}",
+  "campusId": "{{campusId}}",
+  "courseId": "{{courseId}}",
+  "classroomId": "{{classroomId}}",
+  "maximumCapacity": 30,
+  "enrolledCapacity": 25,
+  "availableSeats": 5,
+  "groupId": "{{groupId}}",
+  "scheduleId": "{{scheduleId}}",
+  "professorId": "{{professorId}}",
+  "date": "2025-04-19T14:30:00Z",
+  "status": "ACTIVE"
 }
 
 ###
 
 ### Update an existing academic load
-PUT http://localhost:3000/api/v1/academic_loads/{{id}} HTTP/1.1
+PUT http://localhost:3000/api/v1/academic-loads/{{id}} HTTP/1.1
 Content-Type: application/json
 
 {
-    "availableSeats": 20,
-    "enrollmentCap": 30,
-    "status": "ACTIVE",
-    "name": "Ingeniería de Software I - Updated"
+  "nrc": "12345",
+  "maximumCapacity": 35,
+  "enrolledCapacity": 28,
+  "availableSeats": 7,
+  "date": "2025-04-20T14:30:00Z",
+  "status": "ACTIVE"
 }
 
 ###
 
 ### Delete an academic load
-DELETE http://localhost:3000/api/v1/academic_loads/{{id}} HTTP/1.1
+DELETE http://localhost:3000/api/v1/academic-loads/{{id}} HTTP/1.1
 Content-Type: application/json

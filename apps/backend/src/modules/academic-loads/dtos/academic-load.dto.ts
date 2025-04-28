@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, IsEnum } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsEnum, IsDate } from 'class-validator';
 import { Status } from '@una-gc/database/prisma/generated/client';
+import { Type } from 'class-transformer';
 
 export class AcademicLoadDto {
   @ApiPropertyOptional({ description: 'AcademicLoad ID' })
@@ -8,46 +9,42 @@ export class AcademicLoadDto {
   @IsOptional()
   id?: string;
 
-  @ApiPropertyOptional({ description: 'Version number', default: 0 })
+  @ApiPropertyOptional({ description: 'Version', readOnly: true })
   @IsInt()
   @IsOptional()
   version?: number;
 
-  @ApiProperty({ description: 'Available seats' })
-  @IsInt()
-  availableSeats: number;
-
-  @ApiProperty({ description: 'Enrollment cap' })
-  @IsInt()
-  enrollmentCap: number;
-
-  @ApiProperty({ description: 'Maximum capacity' })
-  @IsInt()
-  maximumCap: number;
-
-  @ApiProperty({ description: 'Course number' })
+  @ApiProperty({ description: 'NRC (Unique identifier for the class section)' })
   @IsString()
-  courseNumber: string;
+  nrc: string;
 
-  @ApiProperty({ description: 'Academic load status', enum: Status, default: Status.ACTIVE })
-  @IsEnum(Status)
-  status: Status;
-
-  @ApiProperty({ description: 'Classroom ID' })
+  @ApiProperty({ description: 'Academic period ID' })
   @IsString()
-  classroomId: string;
+  academicPeriodId: string;
 
   @ApiProperty({ description: 'Campus ID' })
   @IsString()
   campusId: string;
 
-  @ApiProperty({ description: 'AcademicPeriod  ID' })
-  @IsString()
-  academicPeriodId: string;
-
   @ApiProperty({ description: 'Course ID' })
   @IsString()
   courseId: string;
+
+  @ApiProperty({ description: 'Classroom ID' })
+  @IsString()
+  classroomId: string;
+
+  @ApiProperty({ description: 'Maximum capacity of the course' })
+  @IsInt()
+  maximumCapacity: number;
+
+  @ApiProperty({ description: 'Number of enrolled students' })
+  @IsInt()
+  enrolledCapacity: number;
+
+  @ApiProperty({ description: 'Available seats in the course' })
+  @IsInt()
+  availableSeats: number;
 
   @ApiProperty({ description: 'Group ID' })
   @IsString()
@@ -61,9 +58,15 @@ export class AcademicLoadDto {
   @IsString()
   professorId: string;
 
-  @ApiProperty({ description: 'Name' })
-  @IsString()
-  name: string;
+  @ApiPropertyOptional({ description: 'Date associated with the academic load' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  date?: Date;
+
+  @ApiProperty({ description: 'Status of the academic load', enum: Status })
+  @IsEnum(Status)
+  status: Status;
 
   constructor(dto: Partial<AcademicLoadDto> = {}) {
     Object.assign(this, dto);

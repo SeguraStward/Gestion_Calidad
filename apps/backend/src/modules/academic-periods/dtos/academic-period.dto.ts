@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsDate, IsNotEmpty } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsEnum, IsDate, IsNotEmpty } from 'class-validator';
 import { Status } from '@una-gc/database/prisma/generated/client';
+import { Type } from 'class-transformer';
 
 export class AcademicPeriodDto {
   @ApiPropertyOptional({ description: 'AcademicPeriod ID' })
@@ -8,10 +9,10 @@ export class AcademicPeriodDto {
   @IsOptional()
   id?: string;
 
-  @ApiProperty({ description: 'Name of the academic period' })
-  @IsString()
-  @IsNotEmpty()
-  name: string;
+  @ApiPropertyOptional({ description: 'Version', readOnly: true })
+  @IsInt()
+  @IsOptional()
+  version?: number;
 
   @ApiProperty({ description: 'Code of the academic period' })
   @IsString()
@@ -27,15 +28,22 @@ export class AcademicPeriodDto {
   @IsEnum(Status)
   status: Status;
 
-  @ApiProperty({ description: 'Start date of the academic period' })
-  @IsDate()
-  @IsNotEmpty()
-  startDate: Date;
+  @ApiPropertyOptional({ description: 'Name of the academic period' })
+  @IsString()
+  @IsOptional()
+  name?: string;
 
-  @ApiProperty({ description: 'End date of the academic period' })
+  @ApiPropertyOptional({ description: 'Start date of the academic period' })
+  @Type(() => Date)
   @IsDate()
-  @IsNotEmpty()
-  endDate: Date;
+  @IsOptional()
+  startDate?: Date;
+
+  @ApiPropertyOptional({ description: 'End date of the academic period' })
+  @Type(() => Date)
+  @IsDate()
+  @IsOptional()
+  endDate?: Date;
 
   constructor(dto: Partial<AcademicPeriodDto> = {}) {
     Object.assign(this, dto);

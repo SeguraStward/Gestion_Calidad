@@ -21,8 +21,9 @@ Content-Type: application/json
 
 {
   "code": "CAMP-001",
-  "name": "Campus Principal",
-  "description": "Campus principal ubicado en el centro de la ciudad"
+  "description": "Campus principal ubicado en el centro de la ciudad",
+  "status": "active",
+  "name": "Campus Principal"
 }
 
 ###
@@ -33,8 +34,8 @@ Content-Type: application/json
 
 {
   "code": "CAMP-001",
-  "name": "Campus Principal Renovado",
-  "description": "Campus principal con nuevas instalaciones académicas"
+  "description": "Campus principal con nuevas instalaciones académicas",
+  "name": "Campus Principal Renovado"
 }
 
 ###

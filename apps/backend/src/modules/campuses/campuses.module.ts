@@ -8,6 +8,7 @@ import { CampusesRepository } from './campuses.repository';
 
 @Module({
   imports: [PrismaModule],
+  imports: [PrismaModule],
   controllers: [CampusesController],
   providers: [CampusesService, CampusesRepository, DtoValidator],
   exports: [CampusesService, CampusesRepository],

@@ -9,38 +9,38 @@ Content-Type: application/json
 
 ###
 
-### Get facultie by ID
+### Get faculties by ID
 GET http://localhost:3000/api/v1/faculties/{{id}} HTTP/1.1
 Content-Type: application/json
 
 ###
 
-### Create a new facultie
+### Create a new faculties
 POST http://localhost:3000/api/v1/faculties HTTP/1.1
 Content-Type: application/json
 
 {
   "code": "FCTEC",
   "name": "Facultad de Ciencias Exactas y Naturales",
-  "description": "Facultad dedicada a las ciencias exactas y naturales",
-  "status": "ACTIVE"
+  "status": "ACTIVE",
+  "description": "Facultad dedicada a las ciencias exactas y naturales"
 }
 
 ###
 
-### Update an existing facultie
+### Update an existing faculties
 PUT http://localhost:3000/api/v1/faculties/{{id}} HTTP/1.1
 Content-Type: application/json
 
 {
   "code": "FCTEC",
-  "name": "Facultad de Ciencias Exactas y Naturales",
   "description": "Facultad dedicada a las ciencias exactas y naturales - Actualizada",
-  "status": "ACTIVE"
+  "status": "ACTIVE",
+  "name": "Facultad de Ciencias Exactas y Naturales"
 }
 
 ###
 
-### Delete a facultie
+### Delete a faculties
 DELETE http://localhost:3000/api/v1/faculties/{{id}} HTTP/1.1
 Content-Type: application/json

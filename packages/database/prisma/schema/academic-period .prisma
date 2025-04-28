@@ -1,12 +1,15 @@
 model AcademicPeriod {
-  id            String         @id @default(auto()) @map("_id") @db.ObjectId
-  version       Int            @default(0) @map("__v")
-  name          String         @unique
-  code          String
-  description   String
-  status        Status
-  startDate     DateTime
-  endDate       DateTime
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  code        String
+  description String
+  status      Status
+
+  name      String?
+  startDate DateTime?
+  endDate   DateTime?
+
   academicLoads AcademicLoad[]
 
   @@map("academic_periods")

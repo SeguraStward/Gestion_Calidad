@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { UsersRepository } from '@modules/users/users.repository';
-import { PrismaService } from '@src/prisma/prisma.service';
+import { PrismaModule } from '@src/prisma/prisma.module';
 import { NotFoundException } from '@nestjs/common';
 import { testUser, testUserUpdate, createMockPrisma } from './test-fixtures';
 
@@ -44,8 +44,8 @@ describe('UsersRepository', () => {
     it('should create a new user', async () => {
       const userToCreate = {
         email: testUser.email,
-        firstName: testUser.firstName,
-        lastName: testUser.lastName,
+        fullName: testUser.fullName,
+        fullLastName: testUser.fullLastName,
         status: testUser.status,
       };
 
@@ -65,7 +65,7 @@ describe('UsersRepository', () => {
       });
 
       const result = await repository.update(testUser.id, testUserUpdate);
-      expect(result.firstName).toBe(testUserUpdate.firstName);
+      expect(result.fullName).toBe(testUserUpdate.fullName);
     });
 
     it('should delete a user', async () => {

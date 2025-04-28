@@ -20,7 +20,7 @@ export class GoogleUserDto {
   @ApiProperty()
   @IsString()
   @IsOptional()
-  lastName?: string;
+  fullLastName?: string;
 
   @ApiProperty()
   @IsString()

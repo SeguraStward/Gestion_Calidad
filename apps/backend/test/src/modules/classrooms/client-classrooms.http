@@ -20,14 +20,9 @@ POST http://localhost:3000/api/v1/classrooms HTTP/1.1
 Content-Type: application/json
 
 {
-  "name": "Aula 101",
-  "code": "A101",
-  "description": "Aula principal del edificio A",
-  "location": "Edificio A, Primer Piso",
-  "capacity": 40,
-  "type": "TEORIA",
-  "status": "AVAILABLE",
-  "features": ["PROYECTOR", "COMPUTADOR", "WIFI"]
+  "roomNumber": "A-101",
+  "capacity": 35,
+  "campusId": "65f8a7b9c830d232e456a890"
 }
 
 ###
@@ -37,11 +32,9 @@ PUT http://localhost:3000/api/v1/classrooms/{{id}} HTTP/1.1
 Content-Type: application/json
 
 {
-  "name": "Aula 101 - Actualizada",
-  "description": "Aula principal renovada del edificio A",
-  "capacity": 45,
-  "status": "MAINTENANCE",
-  "features": ["PROYECTOR", "COMPUTADOR", "WIFI", "AUDIO"]
+  "roomNumber": "A-102",
+  "capacity": 40,
+  "campusId": "65f8a7b9c830d232e456a890"
 }
 
 ###

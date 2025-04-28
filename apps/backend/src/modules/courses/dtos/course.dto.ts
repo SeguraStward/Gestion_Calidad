@@ -8,34 +8,39 @@ export class CourseDto {
   @IsOptional()
   id?: string;
 
+  @ApiPropertyOptional({ description: 'Version', readOnly: true })
+  @IsInt()
+  @IsOptional()
+  version?: number;
+
   @ApiProperty({ description: 'Name' })
   @IsString()
   name: string;
-
-  @ApiPropertyOptional({ description: 'Description' })
-  @IsString()
-  @IsOptional()
-  description?: string;
 
   @ApiProperty({ description: 'Credits' })
   @IsInt()
   credits: number;
 
-  @ApiProperty({ description: 'Course Dto Status', enum: Status, default: Status.ACTIVE })
-  @IsEnum(Status)
-  status: Status;
+  @ApiProperty({ description: 'Level' })
+  @IsString()
+  level: string;
 
   @ApiProperty({ description: 'Contact Hours' })
   @IsInt()
   contactHours: number;
 
-  @ApiProperty({ description: 'Level' })
-  @IsString()
-  level: string;
+  @ApiProperty({ description: 'Course Dto Status', enum: Status, default: Status.ACTIVE })
+  @IsEnum(Status)
+  status: Status;
 
   @ApiProperty({ description: 'School ID' })
   @IsString()
   schoolId: string;
+
+  @ApiPropertyOptional({ description: 'Description' })
+  @IsString()
+  @IsOptional()
+  description?: string;
 
   constructor(dto: Partial<CourseDto> = {}) {
     Object.assign(this, dto);
