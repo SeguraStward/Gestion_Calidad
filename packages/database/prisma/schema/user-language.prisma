@@ -7,7 +7,7 @@ model UserLanguage {
   speaking Int
   writing  Int
   reading  Int
-  evidence LanguageEvidence[]
+  evidence Evidence[]
   status   Status
 
   userId String @db.ObjectId
@@ -15,13 +15,4 @@ model UserLanguage {
 
   @@index([userId])
   @@map("languages")
-}
-
-type LanguageEvidence {
-  download String
-  fileId   String @map("file_id")
-  link     String
-  name     String
-  type     String
-  uri      String
 }

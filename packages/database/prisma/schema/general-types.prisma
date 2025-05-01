@@ -1,8 +1,9 @@
 type Evidence {
-  fileId   String
+  fileId   String @map("file_id")
   name     String
   type     String
   uri      String
   link     String
   download String
 }
+ 

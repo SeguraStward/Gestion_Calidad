@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, IsEnum, IsArray } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsEnum, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { Status } from '@una-gc/database/prisma/generated/client'; // Import for Status enum
+import { EvidenceDto } from '../../general-types-dto'; // Adjust path as needed
 
 export class IntellectualProductionDto {
   @ApiPropertyOptional({ description: 'IntellectualProduction ID' })
