@@ -6,7 +6,7 @@ model User {
   isVerified Boolean @default(false)
 
   fullName     String
-  fullLastName String
+  fullLastName String?
   photoUrl     String? @default("")
 
   nationalId   String?

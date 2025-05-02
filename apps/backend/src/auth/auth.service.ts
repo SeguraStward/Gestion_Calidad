@@ -24,7 +24,7 @@ export class AuthService {
         ],
       },
     });
-
+    console.log('Google user object:', JSON.stringify(googleUser, null, 2));
     if (!user) {
       // Create new user
       user = await this.prisma.user.create({
@@ -32,7 +32,7 @@ export class AuthService {
           email: googleUser.email,
           isVerified: true,
           fullName: googleUser.firstName,
-          fullLastName: googleUser.lastNme,
+          fullLastName: googleUser.lastName,
           googleId: googleUser.googleId,
           photoUrl: googleUser.picture,
         },
