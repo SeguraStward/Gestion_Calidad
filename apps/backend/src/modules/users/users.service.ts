@@ -25,12 +25,12 @@ export class UsersService extends GenericService<User, UserDto, UserDto> {
 
     const updateData: any = {};
 
-    if (updateUserDto.firstName !== undefined) {
-      updateData.firstName = updateUserDto.firstName;
+    if (updateUserDto.fullName !== undefined) {
+      updateData.fullName = updateUserDto.fullName;
     }
 
-    if (updateUserDto.lastName !== undefined) {
-      updateData.lastName = updateUserDto.lastName;
+    if (updateUserDto.fullLastName !== undefined) {
+      updateData.fullLastName = updateUserDto.fullLastName;
     }
 
     if (updateUserDto.primaryPhone !== undefined) {
@@ -38,11 +38,10 @@ export class UsersService extends GenericService<User, UserDto, UserDto> {
     }
 
     if (updateUserDto.email) {
-      updateData.email = {
-        email: updateUserDto.email.email,
-        isVerified: existingUser.email.isVerified,
-      };
+      updateData.email = updateUserDto.email;
     }
+
+    existingUser.version = existingUser.version ? existingUser.version + 1 : 1;
 
     const updatedUser = await this.usersRepository.update(id, updateData);
 

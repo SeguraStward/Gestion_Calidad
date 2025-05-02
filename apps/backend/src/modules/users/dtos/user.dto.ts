@@ -13,18 +13,6 @@ import {
 } from 'class-validator';
 import { Province, UserPermission, UserRole, Status } from '@una-gc/database/prisma/generated/client';
 
-class UserEmailDto {
-  @ApiProperty({ description: 'User email address' })
-  @IsString()
-  @IsEmail()
-  email: string;
-
-  @ApiProperty({ description: 'Email verification status' })
-  @IsBoolean()
-  @IsOptional()
-  isVerified?: boolean = false;
-}
-
 class UserPhoneDto {
   @ApiPropertyOptional({ description: 'Phone number' })
   @IsString()
@@ -47,10 +35,15 @@ export class UserDto {
   @IsOptional()
   version?: number;
 
-  @ApiProperty({ description: 'User email information' })
-  @ValidateNested()
-  @Type(() => UserEmailDto)
-  email: UserEmailDto;
+  @ApiProperty({ description: 'User email address' })
+  @IsString()
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ description: 'Email verification status' })
+  @IsBoolean()
+  @IsOptional()
+  isVerified?: boolean = false;
 
   @ApiProperty({ description: 'Full name' })
   @IsString()

@@ -19,10 +19,7 @@ export class AuthService {
         OR: [
           { googleId: googleUser.googleId },
           {
-            email: {
-              email: googleUser.email,
-              isVerified: true,
-            },
+            email: googleUser.email,
           },
         ],
       },
@@ -32,11 +29,8 @@ export class AuthService {
       // Create new user
       user = await this.prisma.user.create({
         data: {
-          email: {
-            // Changed to match UserEmail type
-            email: googleUser.email,
-            isVerified: true,
-          },
+          email: googleUser.email,
+          isVerified: true,
           fullName: googleUser.firstName,
           fullLastName: googleUser.lastNme,
           googleId: googleUser.googleId,
@@ -55,12 +49,12 @@ export class AuthService {
     }
 
     // Generate JWT token
-    const token = this.generateToken(user.id, user.email.email); // Note the nested email access
+    const token = this.generateToken(user.id, user.email);
 
     return {
       user: {
         id: user.id,
-        email: user.email.email, // Changed to access nested email
+        email: user.email,
         fullName: user.fullName,
         fullLastName: user.fullLastName,
         profilePicture: user.photoUrl,
