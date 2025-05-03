@@ -20,9 +20,9 @@ POST http://localhost:3000/api/v1/campuses HTTP/1.1
 Content-Type: application/json
 
 {
-  "code": "CAMP-001",
+  "code": "CAMP-003",
   "description": "Campus principal ubicado en el centro de la ciudad",
-  "status": "active",
+  "status": "ACTIVE",
   "name": "Campus Principal"
 }
 
@@ -33,7 +33,7 @@ PUT http://localhost:3000/api/v1/campuses/{{id}} HTTP/1.1
 Content-Type: application/json
 
 {
-  "code": "CAMP-001",
+  "code": "CAMP-002",
   "description": "Campus principal con nuevas instalaciones académicas",
   "name": "Campus Principal Renovado"
 }

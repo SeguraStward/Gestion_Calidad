@@ -1,0 +1,79 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code 
+
+@id = 1 
+
+### Get all questions
+GET http://localhost:3000/api/v1/questions HTTP/1.1 
+Content-Type: application/json 
+
+### Get question by ID 
+GET http://localhost:3000/api/v1/questions/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+### Create a new question
+POST http://localhost:3000/api/v1/questions HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "status": "ACTIVE",
+  "groupId": "60f7a5c4d5b5e40c8c234567",
+  "module": "Academic Assessment",
+  "question": "How would you rate the teaching effectiveness?",
+  "responseType": "MULTIPLE_CHOICE",
+  "options": [
+    {
+      "category": "rating",
+      "label": "Excellent",
+      "value": "5"
+    },
+    {
+      "category": "rating",
+      "label": "Good",
+      "value": "4"
+    },
+    {
+      "category": "rating",
+      "label": "Average",
+      "value": "3"
+    },
+    {
+      "category": "rating",
+      "label": "Poor",
+      "value": "2"
+    },
+    {
+      "category": "rating",
+      "label": "Very Poor",
+      "value": "1"
+    }
+  ]
+}
+
+### Update an existing question
+PUT http://localhost:3000/api/v1/questions/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "status": "UPDATED",
+  "groupId": "60f7a5c4d5b5e40c8c234567",
+  "module": "Course Evaluation",
+  "question": "Rate the clarity of course materials",
+  "responseType": "SLIDER",
+  "options": [
+    {
+      "category": "range",
+      "label": "Low",
+      "value": "1"
+    },
+    {
+      "category": "range",
+      "label": "High",
+      "value": "10"
+    }
+  ]
+}
+
+### Delete a question
+DELETE http://localhost:3000/api/v1/questions/{{id}} HTTP/1.1 
+Content-Type: application/json
+

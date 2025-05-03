@@ -27,6 +27,7 @@ export class ProfessorDto {
 
   @ApiProperty({ description: 'School ID' })
   @IsString()
+  @IsOptional()
   schoolId: string;
 
   @ApiPropertyOptional({ description: 'Academic Load IDs', type: [String] })

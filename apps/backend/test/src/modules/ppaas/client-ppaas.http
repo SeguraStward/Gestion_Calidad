@@ -1,0 +1,70 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code 
+
+@id = 1 
+
+### Get all ppaas
+GET http://localhost:3000/api/v1/ppaas HTTP/1.1 
+Content-Type: application/json 
+
+### Get ppaa by ID 
+GET http://localhost:3000/api/v1/ppaas/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+### Create a new ppaa
+POST http://localhost:3000/api/v1/ppaas HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "activityName": "Workshop on Teaching Methodologies",
+  "activityType": "Professional Development",
+  "activityDate": "2025-06-15",
+  "location": "Campus Central, Room 203",
+  "status": "Scheduled",
+  "userId": "6814406ec270e9b0b34acc4a",
+  "evidence": [
+    {
+      "fileId": "file_12345",
+      "name": "Workshop Agenda",
+      "type": "pdf",
+      "uri": "/documents/workshop/agenda.pdf",
+      "link": "https://example.com/view/agenda",
+      "download": "https://example.com/download/agenda.pdf"
+    },
+    {
+      "fileId": "file_67890",
+      "name": "Registration Certificate",
+      "type": "pdf",
+      "uri": "/documents/workshop/certificate.pdf",
+      "link": "https://example.com/view/certificate",
+      "download": "https://example.com/download/certificate.pdf"
+    }
+  ]
+}
+
+### Update an existing ppaa
+PUT http://localhost:3000/api/v1/ppaas/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "activityName": "Updated Workshop on Advanced Teaching Methodologies",
+  "activityType": "Professional Development",
+  "activityDate": "2025-07-20",
+  "location": "Virtual Meeting",
+  "status": "Confirmed",
+  "userId": "60f7a5c4d5b5e40c8c234567",
+  "evidence": [
+    {
+      "fileId": "file_12345",
+      "name": "Workshop Agenda",
+      "type": "pdf",
+      "uri": "/documents/workshop/agenda.pdf",
+      "link": "https://example.com/view/agenda",
+      "download": "https://example.com/download/agenda.pdf"
+    }
+  ]
+}
+
+### Delete a ppaa
+DELETE http://localhost:3000/api/v1/ppaas/{{id}} HTTP/1.1 
+Content-Type: application/json
+

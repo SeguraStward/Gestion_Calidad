@@ -8,8 +8,8 @@ model Professor {
   academicRank String
   bio          String?
 
-  school   School @relation(fields: [schoolId], references: [id])
-  schoolId String @unique @db.ObjectId
+  school   School? @relation(fields: [schoolId], references: [id])
+  schoolId String? @db.ObjectId
 
   academicLoads AcademicLoad[]
   FinalReport   FinalReport[]

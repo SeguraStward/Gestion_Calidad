@@ -21,7 +21,7 @@ Content-Type: application/json
 
 {
   "company": "Tech Solutions Inc.",
-  "status": "active",
+  "status": "ACTIVE",
   "evidence": [
     {
       "download": "/downloads/certificate-tech-solutions.pdf",
@@ -53,7 +53,7 @@ Content-Type: application/json
 
 {
   "company": "Tech Solutions International",
-  "status": "active",
+  "status": "ACTIVE",
   "evidence": [
     {
       "download": "/downloads/certificate-tech-solutions.pdf",

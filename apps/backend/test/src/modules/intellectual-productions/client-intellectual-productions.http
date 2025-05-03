@@ -1,0 +1,65 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code 
+
+@id = 1 
+
+### Get all intellectual-productions 
+GET http://localhost:3000/api/v1/intellectual-productions HTTP/1.1 
+Content-Type: application/json 
+
+### Get intellectual-production by ID 
+GET http://localhost:3000/api/v1/intellectual-productions/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+### Create a new intellectual-production 
+POST http://localhost:3000/api/v1/intellectual-productions HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "category": "Research Paper",
+  "topic": "Advances in Machine Learning",
+  "year": "2024",
+  "presentationCount": 3,
+  "presentationLocation": "International AI Conference",
+  "productionName": "Neural Networks in Educational Settings",
+  "status": "ACTIVE",
+  "userId": "6814406ec270e9b0b34acc4a",
+  "evidence": [
+    {
+      "fileId": "file_12345",
+      "name": "Research Paper Document",
+      "type": "pdf",
+      "uri": "/documents/papers/neural_networks.pdf",
+      "link": "https://example.com/view/neural_networks",
+      "download": "https://example.com/download/neural_networks.pdf"
+    },
+    {
+      "fileId": "file_67890",
+      "name": "Conference Presentation",
+      "type": "pptx",
+      "uri": "/documents/presentations/ai_conference.pptx",
+      "link": "https://example.com/view/ai_conference",
+      "download": "https://example.com/download/ai_conference.pptx"
+    }
+  ]
+}
+
+### Update an existing intellectual-production 
+PUT http://localhost:3000/api/v1/intellectual-productions/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "category": "Book Chapter",
+  "topic": "Advanced Data Analysis",
+  "year": "2025",
+  "presentationCount": 5,
+  "presentationLocation": "Virtual Academic Conference",
+  "productionName": "Statistical Methods in Educational Research",
+  "status": "ACTIVE",
+  "userId": "60f7a5c4d5b5e40c8c234567",
+  "evidenceIds": ["60f7a5c4d5b5e40c8c234570", "60f7a5c4d5b5e40c8c234571"]
+} 
+
+### Delete a intellectual-production 
+DELETE http://localhost:3000/api/v1/intellectual-productions/{{id}} HTTP/1.1 
+Content-Type: application/json
+

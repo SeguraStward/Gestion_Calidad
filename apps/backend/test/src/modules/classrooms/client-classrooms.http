@@ -22,7 +22,7 @@ Content-Type: application/json
 {
   "roomNumber": "A-101",
   "capacity": 35,
-  "campusId": "65f8a7b9c830d232e456a890"
+  "campusId": "68155584c434b0977c70af87"
 }
 
 ###
@@ -34,7 +34,7 @@ Content-Type: application/json
 {
   "roomNumber": "A-102",
   "capacity": 40,
-  "campusId": "65f8a7b9c830d232e456a890"
+  "campusId": "68155584c434b0977c70af87"
 }
 
 ###

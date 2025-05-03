@@ -25,21 +25,22 @@ Content-Type: application/json
   "evidence": [
     {
       "download": "/downloads/document1.pdf",
-      "idFile": "file12345",
+      "fileId": "file12345",
       "link": "https://example.com/files/document1.pdf",
       "name": "Literature Review",
       "type": "document",
       "uri": "/storage/document1.pdf"
     },
     {
-      "download": "/downloads/presentation.pptx",
-      "idFile": "file67890",
+      "fileId": "file67890",
+      "download": "/downloads/presentation.pptx",  
+      "link": "https://example.com/files/document1.pdf",
       "name": "Initial Proposal",
       "type": "presentation",
       "uri": "/storage/presentation.pptx"
     }
   ],
-  "status": "in_progress",
+  "status": "ARCHIVED",
   "userId": "65d4912a1309b10b4c6d2b65",
   "date": "2025-04-15T10:00:00.000Z"
 }
@@ -73,8 +74,7 @@ Content-Type: application/json
   "status": "in_progress",
   "userId": "65d4912a1309b10b4c6d2b65",
   "date": "2025-04-15T10:00:00.000Z"
-}
-
+} 
 ###
 
 ### Delete a final-work

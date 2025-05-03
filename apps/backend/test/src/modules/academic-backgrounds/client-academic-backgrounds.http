@@ -1,0 +1,71 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code 
+@id = 681552bda5f2cc8a3ce62d5a
+
+### Get all academic-backgrounds 
+GET http://localhost:3000/api/v1/academic-backgrounds HTTP/1.1 
+Content-Type: application/json 
+
+### Get academic-background by ID 
+GET http://localhost:3000/api/v1/academic-backgrounds/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+### Create a new academic-background 
+POST http://localhost:3000/api/v1/academic-backgrounds HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "degree": "Master of Science in Computer Science",
+  "observations": "Graduated with honors",
+  "status": "ACTIVE",
+  "date": "2023-05-15",
+  "userId": "6814406ec270e9b0b34acc4a",
+  "institution": "Universidad Nacional",
+  "InstitutionType": "Public University",
+  "evidence": [
+    {
+      "fileId": "file_12345",
+      "name": "Degree Certificate",
+      "type": "pdf",
+      "uri": "/documents/certificates/degree_cert.pdf",
+      "link": "https://example.com/view/degree_cert",
+      "download": "https://example.com/download/degree_cert.pdf"
+    },
+    {
+      "fileId": "file_67890",
+      "name": "Academic Transcript",
+      "type": "pdf",
+      "uri": "/documents/certificates/transcript.pdf",
+      "link": "https://example.com/view/transcript",
+      "download": "https://example.com/download/transcript.pdf"
+    }
+  ]
+}
+
+### Update an existing academic-background // its not done yet
+PUT http://localhost:3000/api/v1/academic-backgrounds/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "degree": "PhD in Computer Science",
+  "observations": "Dissertation on AI ethics",
+  "status": "ACTIVE",
+  "date": "2023-12-10",
+  "userId": "60f7a5c4d5b5e40c8c234567",
+  "institution": "Universidad Nacional",
+  "InstitutionType": "Public University",
+  "evidence": [
+    {
+      "fileId": "file_24680",
+      "name": "PhD Certificate",
+      "type": "pdf",
+      "uri": "/documents/certificates/phd_cert.pdf",
+      "link": "https://example.com/view/phd_cert",
+      "download": "https://example.com/download/phd_cert.pdf"
+    }
+  ]
+}
+
+### Delete an academic-background 
+DELETE http://localhost:3000/api/v1/academic-backgrounds/{{id}} HTTP/1.1 
+Content-Type: application/json
+

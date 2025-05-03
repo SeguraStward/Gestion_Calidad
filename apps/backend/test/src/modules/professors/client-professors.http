@@ -1,0 +1,40 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code 
+
+@id = 1 
+
+### Get all professors
+GET http://localhost:3000/api/v1/professors HTTP/1.1 
+Content-Type: application/json 
+
+### Get professor by ID 
+GET http://localhost:3000/api/v1/professors/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+### Create a new professor
+POST http://localhost:3000/api/v1/professors HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "userId": "6814406ec270e9b0b34acc4a",
+  "version" : 0,
+  "academicRank": "Associate Professor",
+  "bio": "Experienced educator with 10 years of teaching in Computer Science"
+}
+
+### Update an existing professor
+PUT http://localhost:3000/api/v1/professors/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "userId": "60f7a5c4d5b5e40c8c234567",
+  "academicRank": "Full Professor",
+  "bio": "Distinguished educator with 15 years of teaching experience in Computer Science and Artificial Intelligence",
+  "schoolId": "60f7a5c4d5b5e40c8c234568",
+  "academicLoadIds": ["60f7a5c4d5b5e40c8c234572", "60f7a5c4d5b5e40c8c234573"],
+  "finalReportIds": ["60f7a5c4d5b5e40c8c234574", "60f7a5c4d5b5e40c8c234575"]
+}
+
+### Delete a professor
+DELETE http://localhost:3000/api/v1/professors/{{id}} HTTP/1.1 
+Content-Type: application/json
+

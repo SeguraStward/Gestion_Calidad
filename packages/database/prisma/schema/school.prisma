@@ -5,8 +5,8 @@ model School {
   code        String
   description String
 
-  facultyId String  @db.ObjectId
-  faculty   Faculty @relation(fields: [facultyId], references: [id])
+  facultyId String?  @db.ObjectId
+  faculty   Faculty? @relation(fields: [facultyId], references: [id])
 
   status Status
 
