@@ -1,7 +1,4 @@
 {
-  "dependencies": {
-    "@nestjs/mapped-types": "*"
-  },
   "name": "una-gc",
   "version": "0.0.1",
   "private": true,
@@ -21,25 +18,29 @@
     "lint-staged": "lint-staged"
   },
   "devDependencies": {
+    "@eslint/js": "^9.26.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@typescript-eslint/typescript-estree": "^8.31.1",
+    "@typescript-eslint/utils": "^8.31.1",
     "@una-gc/eslint-config": "workspace:*",
     "@una-gc/typescript-config": "workspace:*",
-    "cspell": "^8.17.5",
-    "eslint": "catalog:",
+    "cspell": "^8.19.4",
+    "eslint": "^9.26.0",
     "husky": "^9.1.7",
-    "lint-staged": "^15.4.3",
-    "prettier": "^3.2.5",
-    "turbo": "^2.3.0",
-    "typescript": "5.5.4"
+    "lint-staged": "^15.5.1",
+    "prettier": "^3.5.3",
+    "turbo": "^2.5.2",
+    "typescript": "^5.8.3"
   },
   "lint-staged": {
     "**/*.{ts,tsx}": [
-      "cspell --config cspell.config.yaml --no-must-find-files --overrides",
       "prettier --write",
-      "eslint"
+      "cspell --config cspell.config.yaml --no-must-find-files --overrides"
     ],
     "**/*.{md,json}": [
-      "cspell --config cspell.config.yaml --no-must-find-files --overrides",
-      "prettier --write"
+      "prettier --write",
+      "cspell --config cspell.config.yaml --no-must-find-files --overrides"
     ]
   },
   "packageManager": "pnpm@10.7.0+sha512.6b865ad4b62a1d9842b61d674a393903b871d9244954f652b8842c2b553c72176b278f64c463e52d40fff8aba385c235c8c9ecf5cc7de4fd78b8bb6d49633ab6"
