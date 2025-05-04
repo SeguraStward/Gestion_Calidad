@@ -1,9 +1,10 @@
 {
-  "$schema": "https://turborepo.org/schema.json",
+  "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
   "tasks": {
     "db:generate": {
-      "cache": false
+      "cache": false,
+      "outputs": ["./prisma/generated/**"]
     },
     "db:migrate": {
       "cache": false,
@@ -24,7 +25,14 @@
       ]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "docs/**/*.md",
+        ".eslintrc*",
+        "package.json"
+      ]
     },
     "check-types": {
       "dependsOn": ["^check-types"]
@@ -35,7 +43,11 @@
       "persistent": true
     },
     "test": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build"],
+      "inputs": ["src/**/*", "tests/**/*", "package.json", "jest.config.*"]
+    },
+    "format": {
+      "outputs": []
     }
   }
 }
