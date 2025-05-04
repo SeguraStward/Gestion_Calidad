@@ -4,19 +4,21 @@ sidebar_position: 1
 
 # 0.1.1 Requerimientos
 
+✅ Listo / Completado
+
+🔄 En proceso / En progreso
+
+❌ Sin terminar / Incompleto
+
 ## 1. Requerimientos Funcionales
 
 ### 1.1 Módulo de Autenticación y Seguridad
 
-- Inicio de sesión con credenciales de usuario (correo institucional y contraseña).
-- Autenticación con Google utilizando el dominio institucional.
-- Recuperación de contraseña con doble autenticación.
-- Activación e inactivación de usuarios por parte de administradores.
-- Gestión de roles y permisos específicos para distintos usuarios (administradores, profesores, estudiantes, revisores, etc.).
-- Registro de actividad de inicio de sesión (IP, ubicación, dispositivo utilizado).
-- Configuración de políticas de seguridad:
-  - Expiración de contraseñas periódica.
-  - Bloqueo de cuenta tras intentos fallidos repetidos.
+- Inicio de sesión con credenciales de usuario (correo institucional y contraseña). ✅
+- Autenticación con Google utilizando el dominio institucional. ✅
+- Activación e inactivación de usuarios por parte de administradores. ❌
+- Gestión de roles y permisos específicos para distintos usuarios (administradores, profesores, estudiantes, revisores, etc.). 🔄
+- Registro de actividad de inicio de sesión (IP, ubicación, dispositivo utilizado). ❌
 
 ### 1.2 Módulo de Perfil de Usuario
 
@@ -39,7 +41,7 @@ sidebar_position: 1
 ### 1.4 Módulo de Gestión Académica
 
 - Gestión de carga académica de docentes y estudiantes:
-  - Importación masiva de datos desde Excel con validaciones.
+  - Importación masiva de datos desde Excel con validaciones. 🔄
   - Asignación dinámica de profesores a cursos y sesiones.
   - Gestión de horarios y asignación de aulas.
 - Administración de entidades académicas:
