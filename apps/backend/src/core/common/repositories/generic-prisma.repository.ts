@@ -4,6 +4,7 @@ import { PrismaService } from '@src/prisma/prisma.service';
 import { PaginatedResponse } from '@core/http/interfaces/paginated-response.interface';
 
 @Injectable()
+/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 export abstract class GenericPrismaRepository<T, CreateInput, UpdateInput, WhereUniqueInput>
   implements GenericRepository<T>
 {
