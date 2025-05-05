@@ -20,7 +20,7 @@ model AcademicLoad {
   enrolledCapacity Int
   availableSeats   Int
 
-  group   Group  @relation(fields: [groupId], references: [id])
+  group   AcademicLoadsGroup  @relation(fields: [groupId], references: [id])
   groupId String @db.ObjectId
 
   schedule   Schedule @relation(fields: [scheduleId], references: [id])

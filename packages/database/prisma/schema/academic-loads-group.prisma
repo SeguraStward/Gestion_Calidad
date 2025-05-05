@@ -1,4 +1,4 @@
-model Group {
+model AcademicLoadsGroup {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
@@ -7,5 +7,5 @@ model Group {
 
   academicLoads AcademicLoad[]
 
-  @@map("groups")
+  @@map("AcademicLoadsGroup")
 }

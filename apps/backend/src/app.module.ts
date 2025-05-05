@@ -26,6 +26,7 @@ import { SchedulesModule } from '@modules/schedules/schedules.module';
 import { SchoolsModule } from '@modules/schools/schools.module';
 import { UserLanguagesModule } from '@modules/user-languages/user-languages.module';
 import { WorkExperiencesModule } from '@modules/work-experiences/work-experiences.module';
+import { AcademicLoadsGroupsModule } from '@modules/academic-loads-groups/academic-loads-groups.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { WorkExperiencesModule } from '@modules/work-experiences/work-experience
     SchoolsModule,
     UserLanguagesModule,
     WorkExperiencesModule,
+    AcademicLoadsGroupsModule,
   ],
   controllers: [AppController],
 })
