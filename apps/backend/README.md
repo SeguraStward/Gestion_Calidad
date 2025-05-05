@@ -137,7 +137,7 @@ Content-Type: application/json
 
 ## Author
 
-This module was developed by:
+This API was developed by:
 
 - Juan C. Camacho Solano ([GitHub: JuanCaUNA](https://github.com/JuanCaUNA))
 - Fran Mora Cabezas ([GitHub: FranMoraCz17](https://github.com/FranMoraCz17))
