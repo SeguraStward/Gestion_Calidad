@@ -1,5 +1,6 @@
 import { GenericController } from '@core/common/interfaces/generic.controller';
 import { Controller, Logger } from '@nestjs/common';
+
 import { AcademicLoadDto } from './dtos/academic-load.dto';
 import { AcademicLoadsService } from './academic-loads.service';
 

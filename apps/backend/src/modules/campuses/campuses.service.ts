@@ -1,8 +1,9 @@
 import { GenericService } from '@core/common/interfaces/generic.service';
+import { DtoValidator } from '@core/common/dto-validator';
 import { Injectable, Logger } from '@nestjs/common';
+
 import { CampusDto } from './dtos/campus.dto';
 import { Campus } from '@una-gc/database/prisma/generated/client';
-import { DtoValidator } from '@core/common/dto-validator';
 import { CampusesRepository } from './campuses.repository';
 
 @Injectable()

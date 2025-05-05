@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsInt, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { EvidenceDto } from '../../general-types-dto';
+import { EvidenceDto } from '@modules/general-types-dto';
 
 export class PpaaDto {
   @ApiPropertyOptional({ description: 'Ppaa ID' })

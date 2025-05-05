@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsInt, IsEnum, IsArray } from 'class-validator';
-import { Status } from '@una-gc/database/prisma/generated/client'; // Import for Status enum
+import { Status } from '@una-gc/database/prisma/generated/client';
 
 export class SchoolDto {
   @ApiPropertyOptional({ description: 'School ID' })
