@@ -124,10 +124,9 @@ Refer to the [official NestJS documentation](https://docs.nestjs.com/deployment)
 
 ## Usage Example
 
-```bash
-curl -X POST http://localhost:3000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","password":"your_password"}'
+```http
+GET http://localhost:3000/api/v1/users HTTP/1.1
+Content-Type: application/json
 ```
 
 ## Useful Resources
