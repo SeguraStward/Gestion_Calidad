@@ -38,6 +38,17 @@ const data = {
   ],
   navMain: [
     {
+      title: 'Gestión Académica',
+      url: '/gestion-academica',
+      icon: GalleryVerticalEnd,
+      items: [
+        { title: 'Importación', url: '/academic-management/dynamic-load/bulk-import' },
+        { title: 'Asignación', url: '/academic-management/teacher-assignment' },
+        { title: 'Horarios', url: '/academic-management/dynamic-load/horarios' },
+        { title: 'Sedes', url: '/gestion-academica/entidades-academicas/sedes' }
+      ]
+    },
+    {
       title: 'Formación Académica',
       url: '/admin/academics',
       icon: GalleryVerticalEnd,
