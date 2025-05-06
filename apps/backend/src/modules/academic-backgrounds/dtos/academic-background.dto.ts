@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsInt, IsEnum, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Status } from '@una-gc/database/prisma/generated/client'; // Import for Status enum
-import { EvidenceDto } from '../../general-types-dto'; // Adjust path as needed
+import { Status } from '@una-gc/database/prisma/generated/client';
+import { EvidenceDto } from '@modules/general-types-dto';
 
 export class AcademicBackgroundDto {
   @ApiPropertyOptional({ description: 'AcademicBackground ID' })

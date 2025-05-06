@@ -1,5 +1,6 @@
 import { GenericController } from '@core/common/interfaces/generic.controller';
 import { Controller, Logger } from '@nestjs/common';
+
 import { CampusDto } from './dtos/campus.dto';
 import { CampusesService } from './campuses.service';
 
