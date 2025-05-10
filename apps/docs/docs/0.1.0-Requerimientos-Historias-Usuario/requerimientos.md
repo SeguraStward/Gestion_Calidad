@@ -12,7 +12,7 @@ sidebar_position: 1
 
 ## 1. Requerimientos Funcionales
 
-### 1.1 Módulo de Autenticación y Seguridad
+### 1.1 Módulo de Autenticación y Seguridad (ESTEBAN SIBAJA GRANADOS SIBAJA)
 
 - Inicio de sesión con credenciales de usuario (correo institucional y contraseña). ✅
 - Autenticación con Google utilizando el dominio institucional. ✅
@@ -20,14 +20,14 @@ sidebar_position: 1
 - Gestión de roles y permisos específicos para distintos usuarios (administradores, profesores, estudiantes, revisores, etc.). 🔄
 - Registro de actividad de inicio de sesión (IP, ubicación, dispositivo utilizado). ❌
 
-### 1.2 Módulo de Perfil de Usuario
+### 1.2 Módulo de Perfil de Usuario (FRANCISCO MORA CABEZAS)
 
 - Visualización del perfil con información básica (nombre, rol, permisos, correo).
 - Edición de información personal (nombre, teléfono, foto de perfil).
 - Personalización de interfaz con opciones de accesibilidad.
 - Configuración de privacidad para definir la información visible a otros usuarios.
 
-### 1.3 Módulo de Configuración General y Accesibilidad
+### 1.3 Módulo de Configuración General y Accesibilidad (FRANCISCO MORA CABEZAS)
 
 - Configuración de parámetros generales del sistema.
 - Opciones de accesibilidad avanzadas:
@@ -38,7 +38,7 @@ sidebar_position: 1
   - Restauración de configuraciones predeterminadas.
 - Visualización de la interfaz como otro rol por parte de los administradores.
 
-### 1.4 Módulo de Gestión Académica
+### 1.4 Módulo de Gestión Académica (ESTEBAN JAVIER GRANADOS SIBAJA)
 
 - Gestión de carga académica de docentes y estudiantes:
   - Importación masiva de datos desde Excel con validaciones. 🔄
@@ -50,14 +50,14 @@ sidebar_position: 1
   - Carreras y programas académicos.
   - Cursos y asignaturas.
 
-### 1.5 Módulo de Gestión de Experiencia y Producción
+### 1.5 Módulo de Gestión de Experiencia y Producción (ÁNGEL SEGURA MENDEZ)
 
 - Registro y gestión de formación académica de docentes.
 - Registro de experiencia laboral docente.
 - Gestión de producción intelectual (artículos, libros, investigaciones).
 - Registro y administración de actividades PPAAS (Programas de Promoción de Aprendizaje y Asesoramiento).
 
-### 1.6 Módulo de Trabajos de Graduación (TFG)
+### 1.6 Módulo de Trabajos de Graduación (TFG) (ÁNGEL SEGURA MENDEZ)
 
 - Creación y listado de proyectos de TFG.
 - Búsqueda y filtrado por estudiante, título, línea de investigación, año y estado.
@@ -66,7 +66,7 @@ sidebar_position: 1
 - Creación y seguimiento de sesiones de revisión.
 - Visualización de proyectos abiertos, vencidos y próximos a vencer.
 
-### 1.7 Módulo de Evaluación de Calidad y SINAES
+### 1.7 Módulo de Evaluación de Calidad y SINAES (ESTEBAN JAVIER GRANADOS SIBAJA)
 
 - Gestión de modelos de evaluación basados en criterios SINAES:
   - Creación, edición y eliminación de componentes SINAES.
@@ -81,7 +81,7 @@ sidebar_position: 1
 - Estadísticas de desempeño académico con gráficos dinámicos.
 - Exportación de informes en formatos PDF, Excel y CSV.
 
-### 1.9 Módulo de Gestión de Comisiones Académicas
+### 1.9 Módulo de Gestión de Comisiones Académicas (JUAN CARLOS CAMACHO SOLANO)
 
 - Creación de comisiones académicas con asignación de docentes y evaluadores.
 - Importación de datos desde Excel.
@@ -94,7 +94,7 @@ sidebar_position: 1
 - Filtros avanzados de búsqueda y categorización.
 - Generación de documentos PDF adjuntos en notificaciones.
 
-### 1.11 Módulo de Auditoría e Historial
+### 1.11 Módulo de Auditoría e Historial (JUAN CARLOS CAMACHO SOLANO)
 
 - Registro detallado de acciones de usuarios.
 - Filtros avanzados en historial de auditoría.
