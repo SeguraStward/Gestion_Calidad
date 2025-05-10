@@ -4,7 +4,7 @@ import { Button } from '@una-gc/ui/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components/card'
 import { LogIn } from 'lucide-react'
 
-export default function HomePage() {
+export default function LoginPage() {
   const handleGoogleLogin = () => {
     const url = process.env.NEXT_PUBLIC_GOOGLE_LOGIN_URL
     if (!url) {

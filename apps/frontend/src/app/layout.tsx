@@ -4,7 +4,7 @@ import { ReactNode } from 'react'
 
 import { ThemeProvider } from '@/providers/theme-provider'
 import { Toaster } from 'sonner'
-import { ModeToggle } from './(components)/mode-toggle'
+import { ModeToggle } from './(components)/ui/mode-toggle'
 import ReactQueryProvider from '@/providers/react-query-provider'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -18,7 +18,7 @@ interface RootLayoutProps {
   children: ReactNode
 }
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default function LoginLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} flex min-h-screen items-center justify-center antialiased`}>
