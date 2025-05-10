@@ -43,7 +43,7 @@ const data = {
       icon: GalleryVerticalEnd,
       items: [
         { title: 'Importación', url: '/academic-management/dynamic-load/bulk-import' },
-        { title: 'Asignación', url: '/academic-management/teacher-assignment' },
+        { title: 'Asignación', url: '/academic-management/professor-assignment' },
         { title: 'Horarios', url: '/academic-management/dynamic-load/horarios' },
         { title: 'Sedes', url: '/gestion-academica/entidades-academicas/sedes' }
       ]
