@@ -7,6 +7,7 @@ interface FormFileInputProps {
   onChange: (file: File | null) => void
   accept?: string
   required?: boolean
+  ref?: React.Ref<HTMLInputElement>
 }
 
 export const FormFileInput = ({ id, label, onChange, accept = '*', required = false }: FormFileInputProps) => {
