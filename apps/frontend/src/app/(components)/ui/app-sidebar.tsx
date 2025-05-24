@@ -44,7 +44,7 @@ const data = {
       items: [
         { title: 'Importación', url: '/academic-management/bulk-import' },
         { title: 'Asignación', url: '/academic-management/professor-assignment' },
-        { title: 'Horarios', url: '/academic-management/dynamic-load/horarios' },
+        { title: 'Horarios', url: '/academic-management/schedule-assignment' },
         { title: 'Sedes', url: '/gestion-academica/entidades-academicas/sedes' }
       ]
     },
