@@ -1,123 +1,138 @@
 'use client'
 
 import { useState } from 'react'
-import { FormLayout } from '../../../../app/(components)/form/form-layout'
-import { FormSelect } from '../../../../app/(components)/form/select'
-import { Card } from '@una-gc/ui/components/card'
-import { Button } from '@una-gc/ui/components/button'
-import { Skeleton } from '@una-gc/ui/components/skeleton'
 import { useProfessorAssignments } from '@/modules/academic-management/professor-assignment/hooks/useProfessorAssignments'
-import { FilterBar } from '../../../../app/(components)/ui/filter-bar'
+import { AssignmentList } from './assignment-list'
+import { AssignmentForm } from './assignment-form'
+import { AssignmentFilter } from './assignment-filter'
+import { DeleteConfirmationDialog } from './delete-confirmation-dialog'
+import { LoadingState } from './loading-state'
+import { PageHeader } from './page-header'
 import { toast } from 'sonner'
-import Swal from 'sweetalert2'
 
 export const ProfessorAssignmentPage = () => {
   const {
     courses,
     professors,
-    assignments,
+    assignments, // sin filtro
     addAssignment,
     deleteAssignment,
-    filter,
-    setFilter,
+    updateAssignment,
     isLoadingCourses,
     isLoadingProfessors
   } = useProfessorAssignments()
 
+  const [formData, setFormData] = useState<any | null>(null)
+  const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(null)
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null)
   const [selectedProfessor, setSelectedProfessor] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  const handleAssign = () => {
+  const [assignmentFilter, setAssignmentFilter] = useState('')
+  const [professorFilter, setProfessorFilter] = useState('')
+
+  const handleEdit = (assignment: any) => {
+    setFormData(assignment)
+    setSelectedCourse(assignment.course.id)
+    setSelectedProfessor(assignment.professor.id)
+  }
+
+  const handleAssign = async () => {
     if (!selectedCourse || !selectedProfessor) {
       toast.error('Debe seleccionar un curso y un profesor.')
       return
     }
 
-    const success = addAssignment(selectedCourse, selectedProfessor)
+    setIsSubmitting(true)
+
+    // Esperamos que addAssignment devuelva el resultado
+    const success = formData
+      ? await updateAssignment(formData.id, selectedCourse, selectedProfessor)
+      : await addAssignment(selectedCourse, selectedProfessor)
 
     if (!success) {
-      toast.error('Ya existe esta asignación.')
-    } else {
-      toast.success('¡Asignación creada con éxito!')
-      setSelectedCourse(null)
-      setSelectedProfessor(null)
+      toast.error('¡Ya existe esta asignación o hubo algún error!')
+      setIsSubmitting(false)
+      return
     }
+
+    toast.success(formData ? '¡Asignación actualizada con éxito!' : '¡Asignación creada con éxito!')
+
+    setSelectedCourse(null)
+    setSelectedProfessor(null)
+    setFormData(null)
+    setIsSubmitting(false)
   }
 
   const confirmDelete = (assignmentId: string) => {
-    Swal.fire({
-      title: '¿Estás seguro?',
-      text: 'Esta acción eliminará la asignación permanentemente.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      reverseButtons: true
-    }).then((result) => {
-      if (result.isConfirmed) {
-        deleteAssignment(assignmentId)
-        toast.success('Asignación eliminada correctamente.')
-      }
-    })
+    setAssignmentToDelete(assignmentId)
+    setShowDeleteDialog(true)
   }
 
+  const handleDelete = () => {
+    if (assignmentToDelete) {
+      deleteAssignment(assignmentToDelete)
+      toast.success('¡Asignación eliminada correctamente!.')
+    }
+    setShowDeleteDialog(false)
+    setAssignmentToDelete(null)
+  }
+
+  const isLoading = isLoadingCourses || isLoadingProfessors
+
+  // Filtrar la lista acá, usando los filtros separados
+  const filteredAssignments = assignments.filter(
+    (a) =>
+      a.course.name.toLowerCase().includes(assignmentFilter.toLowerCase()) &&
+      a.professor.name.toLowerCase().includes(professorFilter.toLowerCase())
+  )
+
   return (
-    <div className="space-y-6">
-      <FormLayout
-        title="Asignación de Profesores a Cursos"
-        onSubmit={(e) => {
-          e.preventDefault()
-          handleAssign()
+    <div className="space-y-8 max-w-4xl mx-auto py-6">
+      <PageHeader />
+
+      {isLoading ? (
+        <LoadingState />
+      ) : (
+        <>
+          <AssignmentForm
+            courses={courses}
+            professors={professors}
+            selectedCourse={selectedCourse}
+            selectedProfessor={selectedProfessor}
+            setSelectedCourse={setSelectedCourse}
+            setSelectedProfessor={setSelectedProfessor}
+            isSubmitting={isSubmitting}
+            handleAssign={handleAssign}
+            formData={formData}
+          />
+
+          <AssignmentFilter
+            assignmentFilter={assignmentFilter}
+            setAssignmentFilter={setAssignmentFilter}
+            professorFilter={professorFilter}
+            setProfessorFilter={setProfessorFilter}
+          />
+
+          <AssignmentList
+            assignments={filteredAssignments}
+            confirmDelete={confirmDelete}
+            onEdit={handleEdit}
+            filter={assignmentFilter}
+            setFilter={setAssignmentFilter}
+          />
+        </>
+      )}
+
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setAssignmentToDelete(null)
+          setShowDeleteDialog(isOpen)
         }}
-      >
-        {isLoadingCourses ? (
-          <Skeleton className="h-10 w-full" />
-        ) : (
-          <FormSelect
-            label="Curso"
-            value={selectedCourse}
-            onChange={setSelectedCourse}
-            options={courses}
-            placeholder="Seleccione un curso"
-            required
-          />
-        )}
-
-        {isLoadingProfessors ? (
-          <Skeleton className="h-10 w-full" />
-        ) : (
-          <FormSelect
-            label="Profesor"
-            value={selectedProfessor}
-            onChange={setSelectedProfessor}
-            options={professors}
-            placeholder="Seleccione un profesor"
-            required
-          />
-        )}
-
-        <Button type="submit">Asignar</Button>
-      </FormLayout>
-
-      <FilterBar value={filter} onChange={setFilter} />
-
-      <div className="space-y-4">
-        <h3 className="text-xl font-bold">Asignaciones actuales</h3>
-        {assignments.length === 0 && <p className="text-gray-600">No hay asignaciones que coincidan con el filtro.</p>}
-        {assignments.map((assignment) => (
-          <Card key={assignment.id} className="flex justify-between items-center p-4">
-            <div>
-              <p className="font-semibold">{assignment.professor.name}</p>
-              <p className="text-sm text-gray-500">{assignment.course.name}</p>
-            </div>
-            <Button variant="destructive" onClick={() => confirmDelete(assignment.id)}>
-              Eliminar
-            </Button>
-          </Card>
-        ))}
-      </div>
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }
