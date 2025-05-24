@@ -1,3 +1,5 @@
+'use client'
+
 import { Input } from '@una-gc/ui/components/input'
 
 interface FilterBarProps {
