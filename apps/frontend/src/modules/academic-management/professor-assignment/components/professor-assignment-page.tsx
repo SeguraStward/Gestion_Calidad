@@ -82,11 +82,13 @@ export const ProfessorAssignmentPage = () => {
   const isLoading = isLoadingCourses || isLoadingProfessors
 
   // Filtrar la lista acá, usando los filtros separados
-  const filteredAssignments = assignments.filter(
-    (a) =>
-      a.course.name.toLowerCase().includes(assignmentFilter.toLowerCase()) &&
-      a.professor.name.toLowerCase().includes(professorFilter.toLowerCase())
-  )
+  const filteredAssignments = assignments
+    .filter((a) => a.course && a.professor) // Solo completos
+    .filter(
+      (a) =>
+        a.course.name.toLowerCase().includes(assignmentFilter.toLowerCase()) &&
+        a.professor.name.toLowerCase().includes(professorFilter.toLowerCase())
+    )
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto py-6">
