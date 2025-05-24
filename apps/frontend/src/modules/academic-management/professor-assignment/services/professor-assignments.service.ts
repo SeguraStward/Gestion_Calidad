@@ -47,21 +47,22 @@ export const fetchAssignments = async (): Promise<Assignment[]> => {
   )
 }
 
-export const addAssignment = async (courseId: string, professorId: string): Promise<boolean> => {
+export const addAssignment = async (courseId: string, professorId: string): Promise<Assignment | null> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       const course = coursesMock.find((c) => c.id === courseId)
       const professor = professorsMock.find((p) => p.id === professorId)
 
       if (course && professor) {
-        assignmentsMock.push({
+        const newAssignment = {
           id: crypto.randomUUID(),
           course,
           professor
-        })
-        resolve(true)
+        }
+        assignmentsMock.push(newAssignment)
+        resolve(newAssignment)
       } else {
-        resolve(false)
+        resolve(null)
       }
     }, 500)
   })
@@ -83,16 +84,24 @@ export const updateAssignment = async (id: string, courseId: string, professorId
       const course = coursesMock.find((c) => c.id === courseId)
       const professor = professorsMock.find((p) => p.id === professorId)
 
-      if (index !== -1 && course && professor) {
-        assignmentsMock[index] = {
-          id,
-          course,
-          professor
-        }
-        resolve(true)
-      } else {
+      if (index === -1 || !course || !professor) {
         resolve(false)
+        return
       }
+
+      // Validación duplicado (ignorando el mismo id que se actualiza)
+      const exists = assignmentsMock.some((a) => a.course.id === courseId && a.professor.id === professorId && a.id !== id)
+      if (exists) {
+        resolve(false) // ya existe otro con esa combinación
+        return
+      }
+
+      assignmentsMock[index] = {
+        id,
+        course,
+        professor
+      }
+      resolve(true)
     }, 500)
   })
 }
