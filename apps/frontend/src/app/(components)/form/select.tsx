@@ -1,3 +1,5 @@
+'use client'
+
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@una-gc/ui/components/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@una-gc/ui/components/popover'
 import { Button } from '@una-gc/ui/components/button'
