@@ -1,92 +1,54 @@
 'use client'
 
-import { Button } from '@una-gc/ui/components/button'
-import { Upload, CheckCircle, AlertTriangle } from 'lucide-react'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@una-gc/ui/components/card'
-import { FormLayout } from '../../../../app/(components)/form/form-layout'
-import { FormFileInput } from '../../../../app/(components)/form/file-input'
+import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components/card'
 import { useImportExcel } from '../hooks/useImportExcel'
-import { ExcelPreview } from './excel-preview'
-import { Alert, AlertDescription, AlertTitle } from '@una-gc/ui/components/alert'
-import React, { useRef } from 'react'
+import { BulkImportHeader } from './bulk-import-header'
+import { ImportForm } from './import-form'
+import { RefreshCw, Upload } from 'lucide-react'
+import { Skeleton } from '@una-gc/ui/components/skeleton'
 
 export function BulkImportPage() {
   const { file, excelData, error, success, loading, handleFileChange, handleSubmit, resetImport } = useImportExcel()
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
-
-  const handleImportOtherFile = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-    resetImport()
+  if (loading) {
+    return (
+      <div className="p-10 max-w-4xl mx-auto">
+        <div className="flex items-center justify-center mb-8">
+          <RefreshCw className="animate-spin h-6 w-6 mr-3 text-primary" />
+          <Skeleton className="h-10 w-1/3" />
+        </div>
+        <Skeleton className="h-12 w-full mb-4" />
+        <Skeleton className="h-12 w-full mb-4" />
+        <Skeleton className="h-12 w-1/2 mb-6" />
+      </div>
+    )
   }
 
   return (
-    <div className="py-8">
-      <Card className="mx-auto w-full max-w-3xl">
-        <CardHeader>
-          <CardTitle>Importación Masiva de Datos</CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          <FormLayout
-            title="Sube tu archivo Excel"
-            onSubmit={handleSubmit}
-            footer={
-              <CardFooter className="pt-4">
-                {success ? (
-                  <Button onClick={handleImportOtherFile} className="w-full">
-                    Importar Otro Archivo
-                  </Button>
-                ) : (
-                  <Button type="submit" disabled={loading || !file || !excelData} className="w-full">
-                    <Upload className="mr-2 h-4 w-4" />
-                    {loading ? 'Cargando...' : success ? '¡Importación Exitosa!' : 'Importar'}
-                  </Button>
-                )}
-              </CardFooter>
-            }
-          >
-            <FormFileInput
-              id="import-file"
-              label="Archivo Excel (.xlsx)"
-              accept=".xlsx"
-              required
+    <div className="min-h-screen py-2 px-2 flex flex-col items-center bg-background">
+      <div className="w-full max-w-4xl mx-auto">
+        <BulkImportHeader />
+        <Card className="w-full">
+          <CardHeader className="pb-2 pt-4">
+            <CardTitle className="text-2xl font-semibold text-center flex justify-center items-center gap-2">
+              <Upload className="h-5 w-5 text-primary" />
+              <span>Selecciona el archivo Excel que deseas importar</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 px-6 space-y-4">
+            <ImportForm
+              file={file}
+              excelData={excelData}
+              loading={loading}
+              success={success}
+              error={error}
               onChange={handleFileChange}
-              ref={fileInputRef}
+              onSubmit={handleSubmit}
+              reset={resetImport}
             />
-          </FormLayout>
-
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertTriangle className="h-5 w-5" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {success && (
-            <Alert variant="default" className="mb-4">
-              <CheckCircle className="h-5 w-5" />
-              <AlertTitle>¡Importación exitosa!</AlertTitle>
-              <AlertDescription>
-                Los datos del archivo <strong>{file?.name}</strong> fueron cargados correctamente.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {excelData ? (
-            <ExcelPreview data={excelData} />
-          ) : file && !error ? (
-            <div className="mt-4 text-center text-muted">
-              <p>¡Revisa que el archivo tenga datos válidos! No se detectaron filas de datos.</p>
-            </div>
-          ) : (
-            !file && <div className="mt-4 text-center text-muted">Por favor, sube un archivo para continuar.</div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
