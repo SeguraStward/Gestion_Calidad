@@ -8,13 +8,20 @@ export function useImportExcel() {
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  // Ahora recibe el file directo, no el evento
   const handleFileChange = (file: File | null) => {
+    if (!file) {
+      setFile(null)
+      setExcelData(null)
+      setError(null)
+      setSuccess(false)
+      return
+    }
+
     setFile(file)
     setSuccess(false)
     setError(null)
-    setExcelData(null) // Reinicia el preview cuando cambia el archivo
-
-    if (!file) return
+    setExcelData(null)
 
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -40,7 +47,9 @@ export function useImportExcel() {
         setExcelData(parsedData as any[][])
       }
     }
+
     reader.onerror = () => setError('Error al leer el archivo.')
+
     reader.readAsArrayBuffer(file)
   }
 
@@ -56,8 +65,8 @@ export function useImportExcel() {
 
     setLoading(true)
     try {
-      // Aquí va la integración con el backend
-      await new Promise((r) => setTimeout(r, 1500)) // Simulación de carga
+      // Simulación de backend
+      await new Promise((r) => setTimeout(r, 1500))
       setSuccess(true)
     } catch (err) {
       setError('Ocurrió un error al intentar importar.')
@@ -71,7 +80,7 @@ export function useImportExcel() {
     setExcelData(null)
     setError(null)
     setSuccess(false)
-    setLoading(false) // Si quieres resetear también el estado de carga
+    setLoading(false)
   }
 
   return {
