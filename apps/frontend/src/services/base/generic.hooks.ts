@@ -25,11 +25,13 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
   }
 
   /* ─────────────── Single item ─────────────── */
-  function useOne(id: string, filters?: Filters, options?: Omit<UseQueryOptions<T, Error>, 'queryKey' | 'queryFn' | 'enabled'>) {
+  // 1. Cambiar el tipo de 'options' para permitir 'enabled'
+  function useOne(id: string, filters?: Filters, options?: Omit<UseQueryOptions<T, Error>, 'queryKey' | 'queryFn'>) {
     return useQuery({
       queryKey: [queryKeyPrefix, id, filters],
       queryFn: () => service.get(id, filters as Filters),
-      enabled: !!id,
+      // 2. Usar el 'enabled' de las opciones si existe, sino usar '!!id' como fallback
+      enabled: options?.enabled !== undefined ? options.enabled : !!id,
       staleTime: 60_000,
       ...options
     })
