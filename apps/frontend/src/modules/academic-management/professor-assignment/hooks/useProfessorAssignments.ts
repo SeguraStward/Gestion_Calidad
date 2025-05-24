@@ -47,19 +47,15 @@ export const useProfessorAssignments = () => {
 
   // Validar existencia sin filtro
   const addAssignment = async (courseId: string, professorId: string): Promise<boolean> => {
-    const course = courses.find((c) => c.id === courseId)
-    const professor = professors.find((p) => p.id === professorId)
-
-    if (!course || !professor) return false
-
     const exists = assignments.some((a) => a.course.id === courseId && a.professor.id === professorId)
     if (exists) return false
 
-    const success = await professorAssignmentsService.addAssignment(courseId, professorId)
-    if (success) {
-      setAssignments((prev) => [...prev, { id: crypto.randomUUID(), course, professor }])
+    const newAssignment = await professorAssignmentsService.addAssignment(courseId, professorId)
+    if (newAssignment) {
+      setAssignments((prev) => [...prev, newAssignment])
+      return true
     }
-    return success
+    return false
   }
 
   const updateAssignment = async (id: string, courseId: string, professorId: string): Promise<boolean> => {
@@ -67,6 +63,10 @@ export const useProfessorAssignments = () => {
     const professor = professors.find((p) => p.id === professorId)
 
     if (!course || !professor) return false
+
+    // Validación para evitar duplicados, IGNORANDO el mismo registro que se está actualizando:
+    const exists = assignments.some((a) => a.course.id === courseId && a.professor.id === professorId && a.id !== id)
+    if (exists) return false
 
     const success = await professorAssignmentsService.updateAssignment(id, courseId, professorId)
 
