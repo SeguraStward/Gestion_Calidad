@@ -1,3 +1,5 @@
+'use client'
+
 import { Label } from '@una-gc/ui/components/label'
 import { FieldError, UseFormRegisterReturn } from 'react-hook-form'
 
