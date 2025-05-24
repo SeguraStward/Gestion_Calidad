@@ -22,7 +22,7 @@
     "@tanstack/react-table": "^8.21.2",
     "@una-gc/database": "workspace:*",
     "@una-gc/ui": "workspace:*",
-    "axios": "^1.7.9",
+    "axios": "^1.8.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cookies-next": "^4.2.1",

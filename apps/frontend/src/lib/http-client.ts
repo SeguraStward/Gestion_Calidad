@@ -1,74 +1,65 @@
-const API_KEY = process.env.REACT_APP_API_KEY || ''
-const NEST_API = process.env.NEST_API || ''
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 
-const BASE_URL = 'http://localhost:3000/api/v1'
+class HttpClientClass {
+  private instance: AxiosInstance
 
-const defaultHeaders = {
-  'Content-Type': 'application/json',
-  access_token: API_KEY
-}
+  constructor() {
+    this.instance = axios.create({
+      baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/api/v1',
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      withCredentials: true // Equivalente a credentials: 'include'
+    })
 
-// Request interceptor equivalent
-const createRequestConfig = (config: RequestInit = {}): RequestInit => {
-  const headers = {
-    ...defaultHeaders,
-    ...config.headers
-  }
+    // Request interceptor
+    this.instance.interceptors.request.use(
+      (config) => {
+        // Agregar token si lo necesitas en el futuro
+        // const token = localStorage.getItem('authToken')
+        // if (token) {
+        //   config.headers.Authorization = `Bearer ${token}`
+        // }
+        return config
+      },
+      (error) => Promise.reject(error)
+    )
 
-  // Ensure access token is present
-  if (!headers['access_token']) {
-    headers['access_token'] = API_KEY
-  }
-
-  return {
-    ...config,
-    headers
-  }
-}
-
-// Main HTTP client function
-export const HttpClient = {
-  async request<T = any>(url: string, config: RequestInit = {}): Promise<T> {
-    const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`
-    const requestConfig = createRequestConfig(config)
-
-    try {
-      const response = await fetch(fullUrl, requestConfig)
-
-      // Handle non-2xx responses
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`)
+    // Response interceptor
+    this.instance.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        // Manejar errores específicos
+        if (error.response?.status === 401) {
+          // Manejar logout automático si es necesario
+          // window.location.href = '/login'
+        }
+        return Promise.reject(error)
       }
+    )
+  }
 
-      // Response interceptor equivalent - extract data
-      return (await response.json()) as T
-    } catch (error) {
-      return Promise.reject(error)
-    }
-  },
+  async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.instance.get(url, config)
+  }
 
-  // Convenience methods
-  get<T = any>(url: string, config: RequestInit = {}): Promise<T> {
-    return this.request<T>(url, { ...config, method: 'GET' })
-  },
+  async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.instance.post(url, data, config)
+  }
 
-  post<T = any>(url: string, data?: any, config: RequestInit = {}): Promise<T> {
-    return this.request<T>(url, {
-      ...config,
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined
-    })
-  },
+  async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.instance.put(url, data, config)
+  }
 
-  put<T = any>(url: string, data?: any, config: RequestInit = {}): Promise<T> {
-    return this.request<T>(url, {
-      ...config,
-      method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined
-    })
-  },
+  async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.instance.patch(url, data, config)
+  }
 
-  delete<T = any>(url: string, config: RequestInit = {}): Promise<T> {
-    return this.request<T>(url, { ...config, method: 'DELETE' })
+  async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return this.instance.delete(url, config)
   }
 }
+
+export const HttpClient = new HttpClientClass()
+export default HttpClient
