@@ -1,21 +1,17 @@
-// #30
-model School {
+// #28
+model RegionalCenter {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
-  code        String @unique
-  // name        String?
-  description String
-
-  facultyId String? @db.ObjectId
+  code String @unique
+  name String
 
   status Status @default(ACTIVE)
 
-  // Relations
-  faculty Faculty? @relation(fields: [facultyId], references: [id])
-
-  courses Course[]
-  career  Career[]
+  // Relaciones inversas
+  campuses    Campus[]
+  projects    Project[]
+  commissions Commission[]
 
   // Audit fields
   createdAt DateTime @default(now())
@@ -23,5 +19,5 @@ model School {
   createdBy String?  @db.ObjectId
   updatedBy String?  @db.ObjectId
 
-  @@map("schools")
+  @@map("regional_centers")
 }

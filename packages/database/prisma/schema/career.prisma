@@ -1,21 +1,22 @@
-// #30
-model School {
+// #6
+model Career {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
-  code        String @unique
-  // name        String?
-  description String
+  code String
 
-  facultyId String? @db.ObjectId
+  name String
+
+  schoolId String @db.ObjectId
 
   status Status @default(ACTIVE)
 
   // Relations
-  faculty Faculty? @relation(fields: [facultyId], references: [id])
-
+  school  School   @relation(fields: [schoolId], references: [id])
   courses Course[]
-  career  Career[]
+
+  // Inverse relation with TFG projects
+  projects Project[]
 
   // Audit fields
   createdAt DateTime @default(now())
@@ -23,5 +24,6 @@ model School {
   createdBy String?  @db.ObjectId
   updatedBy String?  @db.ObjectId
 
-  @@map("schools")
+  @@index([schoolId])
+  @@map("careers")
 }

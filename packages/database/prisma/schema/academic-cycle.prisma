@@ -1,21 +1,20 @@
-// #30
-model School {
+// #2
+model AcademicCycle {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
-  code        String @unique
-  // name        String?
-  description String
+  name        String
+  year        Int
+  description String?
 
-  facultyId String? @db.ObjectId
+  startDate DateTime?
+  endDate   DateTime?
 
   status Status @default(ACTIVE)
 
   // Relations
-  faculty Faculty? @relation(fields: [facultyId], references: [id])
-
-  courses Course[]
-  career  Career[]
+  academicLoads AcademicLoad[]
+  Project       Project[]
 
   // Audit fields
   createdAt DateTime @default(now())
@@ -23,5 +22,6 @@ model School {
   createdBy String?  @db.ObjectId
   updatedBy String?  @db.ObjectId
 
-  @@map("schools")
+  @@unique([name, year], name: "unique_academic_cycle")
+  @@map("academic_cycles")
 }

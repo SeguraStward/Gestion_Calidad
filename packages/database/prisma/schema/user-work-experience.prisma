@@ -1,23 +1,24 @@
-// #31
-model UserLanguage {
+// #33
+model UserWorkExperience {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
-  userId String @db.ObjectId
+  company          String
+  position         String
+  responsibilities String[]
+  experienceType   String
 
-  language String
-  type     String
-
-  speaking Int
-  writing  Int
-  reading  Int
+  startDate DateTime
+  endDate   DateTime?
 
   evidence Evidence[]
+
+  userId String @db.ObjectId
 
   status Status @default(ACTIVE)
 
   // Relations
-  user User @relation("UserLanguage", fields: [userId], references: [id])
+  user User @relation("UserWorkExperience", fields: [userId], references: [id])
 
   // Audit fields
   createdAt DateTime @default(now())
@@ -25,6 +26,5 @@ model UserLanguage {
   createdBy String?  @db.ObjectId
   updatedBy String?  @db.ObjectId
 
-  @@unique([userId, language])
-  @@map("languages")
+  @@map("user_work_experiences")
 }

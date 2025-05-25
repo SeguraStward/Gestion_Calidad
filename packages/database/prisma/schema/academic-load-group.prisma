@@ -1,21 +1,14 @@
-// #30
-model School {
+// #3
+model AcademicLoadGroup {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
-  code        String @unique
-  // name        String?
-  description String
-
-  facultyId String? @db.ObjectId
+  number String @unique
 
   status Status @default(ACTIVE)
 
   // Relations
-  faculty Faculty? @relation(fields: [facultyId], references: [id])
-
-  courses Course[]
-  career  Career[]
+  academicLoads AcademicLoad[]
 
   // Audit fields
   createdAt DateTime @default(now())
@@ -23,5 +16,5 @@ model School {
   createdBy String?  @db.ObjectId
   updatedBy String?  @db.ObjectId
 
-  @@map("schools")
+  @@map("academic_load_groups")
 }

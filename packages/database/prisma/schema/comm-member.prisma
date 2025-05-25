@@ -1,23 +1,21 @@
-// #20
-model Ppaa {
+// #8
+model CommMember {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
   userId String @db.ObjectId
 
-  activityName String
-  activityType String
+  workload String?
 
-  activityDate DateTime
-
-  location String
-
-  evidence Evidence[]
+  commissionId String @db.ObjectId
 
   status Status @default(ACTIVE)
 
   // Relations
-  user User @relation("UserPpaa", fields: [userId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+  commission Commission @relation(fields: [commissionId], references: [id])
+
+  CommSessionAttendance CommSessionAttendance[] @relation("CommSessionAttendance")
 
   // Audit fields
   createdAt DateTime @default(now())
@@ -26,6 +24,6 @@ model Ppaa {
   updatedBy String?  @db.ObjectId
 
   @@index([userId])
-  @@index([activityDate])
-  @@map("ppaas")
+  @@index([commissionId])
+  @@map("comm_members")
 }
