@@ -1,7 +1,7 @@
 // src/auth/auth.service.ts
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '@src/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
