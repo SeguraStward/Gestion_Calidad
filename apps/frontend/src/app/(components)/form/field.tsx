@@ -1,30 +1,23 @@
 'use client'
 
-import { useController, Control } from 'react-hook-form'
+import { useController, Control, FieldError, Path } from 'react-hook-form'
 import { Input } from '@una-gc/ui/components/input'
 import { Label } from '@una-gc/ui/components/label'
-import { FieldError, UseFormRegisterReturn } from 'react-hook-form'
 
-// Definir el tipo FormData
-type FormData = {
-  startTime: string
-  endTime: string
-}
-
-// Componente FormField
-interface FormFieldProps {
+interface FormFieldProps<T extends Record<string, any>> {
   label: string
   id: string
   type?: 'text' | 'number' | 'email' | 'password' | 'date' | 'tel' | 'url' | 'time'
   placeholder?: string
   error?: FieldError
-  control: Control<FormData> // Asegúrate de que Control es de tipo FormData
-  name: keyof FormData // El nombre del campo debe coincidir con las claves de FormData
+  control: Control<T>
+  name: Path<T>
   required?: boolean
   disabled?: boolean
+  rules?: any // <-- esta línea nueva
 }
 
-export const FormField = ({
+export const FormField = <T extends Record<string, any>>({
   label,
   id,
   type = 'text',
@@ -33,15 +26,16 @@ export const FormField = ({
   control,
   name,
   required = false,
-  disabled = false
-}: FormFieldProps) => {
+  disabled = false,
+  rules
+}: FormFieldProps<T>) => {
   const {
     field: { onChange, value }
-  } = useController<FormData>({
-    // Asegúrate de que useController tenga el tipo FormData
+  } = useController<T>({
     control,
     name,
-    defaultValue: '' // Ajusta el valor por defecto si es necesario
+    defaultValue: '' as any, // patch sucio pero efectivo
+    rules // <-- acá usás la regla que te llegó por props
   })
 
   return (
@@ -55,9 +49,7 @@ export const FormField = ({
         type={type}
         placeholder={placeholder}
         value={value}
-        onChange={(e) => {
-          onChange(e) // Esto asegura que 'react-hook-form' maneje el cambio correctamente
-        }}
+        onChange={(e) => onChange(e)}
         disabled={disabled}
         className={error ? 'border-red-500' : ''}
       />

@@ -6,6 +6,7 @@ import {
   BarChart3,
   BookOpen,
   Briefcase,
+  Building,
   Building2,
   ClipboardList,
   FileText,
@@ -40,12 +41,12 @@ const data = {
     {
       title: 'Gestión Académica',
       url: '/gestion-academica',
-      icon: GalleryVerticalEnd,
+      icon: Building,
       items: [
         { title: 'Importación', url: '/academic-management/bulk-import' },
         { title: 'Asignación', url: '/academic-management/professor-assignment' },
         { title: 'Horarios', url: '/academic-management/schedule-assignment' },
-        { title: 'Sedes', url: '/gestion-academica/entidades-academicas/sedes' }
+        { title: 'Mantenimientos', url: '/academic-management/academic-maintenance' }
       ]
     },
     {
