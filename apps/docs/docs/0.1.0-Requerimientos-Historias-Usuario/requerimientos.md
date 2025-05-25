@@ -36,9 +36,10 @@ sidebar_position: 1
   - Subrayado de enlaces y resaltado de elementos interactivos.
   - Cambio a fuentes diseñadas para dislexia.
   - Restauración de configuraciones predeterminadas.
-- Visualización de la interfaz como otro rol por parte de los administradores.
 
 ### 1.4 Módulo de Gestión Académica (ESTEBAN JAVIER GRANADOS SIBAJA)
+
+(PAGINAR, FILTRAR, TAPS, EDITAR, CRUD)
 
 - Gestión de carga académica de docentes y estudiantes:
   - Importación masiva de datos desde Excel con validaciones. 🔄
