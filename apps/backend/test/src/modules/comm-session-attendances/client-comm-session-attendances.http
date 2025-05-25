@@ -1,0 +1,44 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+@sessionId=1
+@memberId=1
+
+###
+
+### Get all comm-session-attendances
+GET http://localhost:3000/api/v1/comm-session-attendances HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get comm-session-attendance by ID
+GET http://localhost:3000/api/v1/comm-session-attendances/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new comm-session-attendance
+POST http://localhost:3000/api/v1/comm-session-attendances HTTP/1.1
+Content-Type: application/json
+
+{
+  "sessionId": "{{sessionId}}",
+  "memberId": "{{memberId}}"
+}
+
+###
+
+### Update an existing comm-session-attendance
+PUT http://localhost:3000/api/v1/comm-session-attendances/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "sessionId": "{{sessionId}}",
+  "memberId": "{{memberId}}"
+}
+
+###
+
+### Delete a comm-session-attendance
+DELETE http://localhost:3000/api/v1/comm-session-attendances/{{id}} HTTP/1.1
+Content-Type: application/json
