@@ -1,10 +1,12 @@
 #var, use command >Rest Client: Switch Environment in search bar of vs code
-@id =1
+@id=1
+@schoolId=1
+@careerId=1
 
 ###
 
 ### Get all courses
-GET http://localhost:3000/api/v1/courses HTTP/1.1
+GET http://localhost:3000/api/v1/courses?page=1&limit=10  HTTP/1.1
 Content-Type: application/json
 
 ###
@@ -21,13 +23,14 @@ Content-Type: application/json
 
 {
   "code" : "CS101", 
-  "status" : "ACTIVE",
-  "name": "Introduction to Programming",
+  "name": "Introducción a la Programación",
+  "description": "Un curso básico sobre conceptos de programación.",
   "credits": 3,
-  "level": "Undergraduate",
+  "level": "Pregrado",
   "contactHours": 45,
-  "schoolId": "644a1f2e5f1b2c001c8e4d3a",
-  "description": "A beginner course on programming concepts."
+  "schoolId": "{{schoolId}}",
+  "careerId": "{{careerId}}",
+  "status" : "ACTIVE"
 }
 
 ###
@@ -38,13 +41,14 @@ Content-Type: application/json
 
 {
   "code" : "CS101",
-  "status" : "ACTIVE",
-  "name": "Advanced Programming",
+  "name": "Programación Avanzada",
+  "description": "Un curso avanzado sobre conceptos de programación.",
   "credits": 4,
-  "level": "Graduate",
+  "level": "Posgrado",
   "contactHours": 60,
-  "schoolId": "644a1f2e5f1b2c001c8e4d3a",
-  "description": "An advanced course on programming concepts."
+  "schoolId": "{{schoolId}}",
+  "careerId": "{{careerId}}",
+  "status" : "ACTIVE"
 }
 
 ###

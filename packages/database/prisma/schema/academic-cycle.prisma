@@ -1,0 +1,27 @@
+// #2
+model AcademicCycle {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  name        String
+  year        Int
+  description String?
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  academicLoads AcademicLoad[]
+  Project       Project[]
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([name, year], name: "unique_academic_cycle")
+  @@map("academic_cycles")
+}

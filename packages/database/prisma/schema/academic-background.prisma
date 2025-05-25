@@ -1,19 +1,29 @@
+// #1
 model AcademicBackground {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
-  degree       String
-  evidence     Evidence[]
-  observations String
-  status       Status
+  userId        String     @db.ObjectId
+  academicTitle String
+  evidence      Evidence[]
+  observations  String?
 
-  date String
-
-  userId String @db.ObjectId
-  user   User   @relation(fields: [userId], references: [id])
+  date DateTime?
 
   institution     String
-  InstitutionType String
+  institutionType String
 
+  status Status @default(ACTIVE)
+
+  // Relations
+  user User @relation("UserAcademicBackground", fields: [userId], references: [id])
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([userId, academicTitle], name: "unique_academic_background")
   @@map("academic_backgrounds")
 }

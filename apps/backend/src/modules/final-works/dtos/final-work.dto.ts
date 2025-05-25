@@ -1,20 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, IsEnum, IsDate, IsArray, ValidateNested } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsDate, IsArray, ValidateNested } from 'class-validator';
 
 import { Type } from 'class-transformer';
-import { Status } from '@una-gc/database/prisma/generated/client';
+import { Status, WorkType } from '@una-gc/database/prisma/generated/client';
 import { EvidenceDto } from '@modules/general-types-dto';
+import { BaseDto } from '@src/modules/generalDto';
 
-export class FinalWorkDto {
+export class FinalWorkDto extends BaseDto {
   @ApiPropertyOptional({ description: 'FinalWork ID' })
   @IsString()
   @IsOptional()
   id?: string;
-
-  @ApiPropertyOptional({ description: 'Version', readOnly: true })
-  @IsInt()
-  @IsOptional()
-  version?: number;
 
   @ApiProperty({ description: 'Title' })
   @IsString()
@@ -26,13 +22,9 @@ export class FinalWorkDto {
   @Type(() => EvidenceDto)
   evidence: EvidenceDto[];
 
-  @ApiProperty({ description: 'Type' })
-  @IsString()
-  type: string;
-
-  @ApiProperty({ description: 'Final Work Dto status', enum: Status, default: Status.ACTIVE })
-  @IsEnum(Status)
-  status: Status;
+  @ApiProperty({ description: 'Type of work', enum: WorkType })
+  @IsEnum(WorkType)
+  type: WorkType;
 
   @ApiProperty({ description: 'User ID' })
   @IsString()
@@ -44,7 +36,12 @@ export class FinalWorkDto {
   @IsOptional()
   date?: Date;
 
+  @ApiProperty({ description: 'Final Work Dto status', enum: Status, default: Status.ACTIVE })
+  @IsEnum(Status)
+  status: Status;
+
   constructor(dto: Partial<FinalWorkDto> = {}) {
+    super();
     Object.assign(this, dto);
   }
 }

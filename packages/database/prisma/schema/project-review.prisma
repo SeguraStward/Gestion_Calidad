@@ -1,0 +1,34 @@
+// #23
+model ProjectReview {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  commissionId String @db.ObjectId
+
+  projectId String @db.ObjectId
+
+  professorId String @db.ObjectId
+
+  submissionDate DateTime?
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  commission Commission @relation(fields: [commissionId], references: [id])
+  project    Project    @relation(fields: [projectId], references: [id])
+
+  professor    User          @relation("professorReview", fields: [professorId], references: [id])
+  observations Observation[] @relation("ReviewObservations")
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId // important
+  updatedBy String?  @db.ObjectId // important
+
+  @@unique([commissionId, projectId])
+  @@index([submissionDate])
+  @@index([commissionId])
+  @@index([projectId])
+  @@map("project_reviews")
+}

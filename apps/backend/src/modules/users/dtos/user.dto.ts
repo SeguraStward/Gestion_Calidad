@@ -1,39 +1,36 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsOptional,
   IsString,
-  IsInt,
   IsBoolean,
   IsArray,
   ValidateNested,
   IsDate,
   IsEmail,
+  IsMongoId,
 } from 'class-validator';
-import { Province, UserPermission, UserRole, Status } from '@una-gc/database/prisma/generated/client';
+
+import { Type } from 'class-transformer';
+import { Province, Status } from '@una-gc/database/prisma/generated/client';
+import { BaseDto } from '@src/modules/generalDto';
 
 class UserPhoneDto {
-  @ApiPropertyOptional({ description: 'Phone number' })
+  @ApiProperty({ description: 'Phone number' })
   @IsString()
-  @IsOptional()
-  number?: string;
+  number: string;
 
-  @ApiPropertyOptional({ description: 'Is primary phone number' })
-  @IsBoolean()
-  @IsOptional()
-  isPrimary?: boolean = false;
+  @ApiProperty({ description: 'Phone type' })
+  @IsString()
+  type: string;
 }
-export class UserDto {
+
+export class UserDto extends BaseDto {
   @ApiPropertyOptional({ description: 'User ID' })
   @IsString()
+  @IsMongoId()
   @IsOptional()
   id?: string;
-
-  @ApiPropertyOptional({ description: 'Version', readOnly: true })
-  @IsInt()
-  @IsOptional()
-  version?: number;
 
   @ApiProperty({ description: 'User email address' })
   @IsString()
@@ -43,7 +40,7 @@ export class UserDto {
   @ApiProperty({ description: 'Email verification status' })
   @IsBoolean()
   @IsOptional()
-  isVerified?: boolean = false;
+  isVerified?: boolean;
 
   @ApiProperty({ description: 'Full name' })
   @IsString()
@@ -51,7 +48,8 @@ export class UserDto {
 
   @ApiProperty({ description: 'Full last name' })
   @IsString()
-  fullLastName: string;
+  @IsOptional()
+  fullLastName?: string;
 
   @ApiPropertyOptional({ description: 'Photo URL' })
   @IsString()
@@ -117,17 +115,12 @@ export class UserDto {
   @IsOptional()
   condition?: string;
 
-  @ApiPropertyOptional({ description: 'User roles', enum: UserRole, isArray: true })
-  @IsEnum(UserRole, { each: true })
+  @ApiPropertyOptional({ description: 'Role IDs' })
   @IsArray()
+  @IsString({ each: true })
+  @IsMongoId({ each: true })
   @IsOptional()
-  roles?: UserRole[];
-
-  @ApiPropertyOptional({ description: 'User permissions', enum: UserPermission, isArray: true })
-  @IsEnum(UserPermission, { each: true })
-  @IsArray()
-  @IsOptional()
-  permissions?: UserPermission[];
+  roleIds?: string[];
 
   @ApiPropertyOptional({ description: 'Profile types', type: [String] })
   @IsArray()
@@ -135,29 +128,25 @@ export class UserDto {
   @IsOptional()
   profileTypes?: string[];
 
-  @ApiPropertyOptional({ description: 'User status', enum: Status, default: 'ACTIVE' })
-  @IsEnum(Status)
-  @IsOptional()
-  status?: Status;
-
   @ApiPropertyOptional({ description: 'Google ID' })
   @IsString()
   @IsOptional()
   googleId?: string;
 
-  @ApiPropertyOptional({ description: 'Creation date', readOnly: true })
-  @Type(() => Date)
-  @IsDate()
+  @ApiPropertyOptional({ description: 'Student project IDs' })
+  @IsArray()
+  @IsString({ each: true })
+  @IsMongoId({ each: true })
   @IsOptional()
-  createdAt?: Date;
+  studentProjectIds?: string[];
 
-  @ApiPropertyOptional({ description: 'Last update date', readOnly: true })
-  @Type(() => Date)
-  @IsDate()
+  @ApiPropertyOptional({ description: 'User status', enum: Status, default: 'ACTIVE' })
+  @IsEnum(Status)
   @IsOptional()
-  updatedAt?: Date;
+  status?: Status;
 
   constructor(dto: Partial<UserDto> = {}) {
+    super();
     Object.assign(this, dto);
   }
 }

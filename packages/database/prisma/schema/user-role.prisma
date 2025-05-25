@@ -1,0 +1,46 @@
+// #32
+model UserRole {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  name        String           @unique
+  description String?
+  permissions UserPermission[]
+
+  userIds String[] @db.ObjectId
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  users User[] @relation("UserRoles", fields: [userIds], references: [id])
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("roles")
+}
+
+type UserPermission {
+  entity      String
+  permissions PermissionType[]
+  scope       PermissionScope? // Define el alcance del permiso
+  actions     String[] // Acciones específicas permitidas
+}
+
+enum PermissionType {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  REPORT // Permiso para generar reportes
+}
+
+enum PermissionScope {
+  ALL // Acceso total a todos los registros
+  OWN // Solo a registros propios
+  DEPARTMENT // Solo a registros del mismo departamento
+  CUSTOM // Definido por acciones específicas
+}

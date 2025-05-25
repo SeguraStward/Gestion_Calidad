@@ -1,0 +1,13 @@
+import { GenericController } from '@core/common/interfaces/generic.controller';
+import { Controller, Logger } from '@nestjs/common';
+
+import { CommMemberDto } from './dtos/comm-member.dto';
+import { CommMembersService } from './comm-members.service';
+
+@Controller('comm-members')
+export class CommMembersController extends GenericController<CommMemberDto, CommMemberDto> {
+  protected readonly logger = new Logger(CommMembersController.name);
+  constructor(private readonly commMembersService: CommMembersService) {
+    super(commMembersService);
+  }
+}

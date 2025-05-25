@@ -1,9 +1,11 @@
 #var, use "command >Rest Client: Switch Environment" in search bar of vs code 
 
-@id = 1 
+@id=1
+@userId=1
+###
 
 ### Get all intellectual-productions 
-GET http://localhost:3000/api/v1/intellectual-productions HTTP/1.1 
+GET http://localhost:3000/api/v1/intellectual-productions?page=1&limit=10  HTTP/1.1 
 Content-Type: application/json 
 
 ### Get intellectual-production by ID 
@@ -16,31 +18,31 @@ Content-Type: application/json
 
 {
   "category": "Research Paper",
-  "topic": "Advances in Machine Learning",
-  "year": "2024",
-  "presentationCount": 3,
-  "presentationLocation": "International AI Conference",
-  "productionName": "Neural Networks in Educational Settings",
-  "status": "ACTIVE",
-  "userId": "6814406ec270e9b0b34acc4a",
+  "productionName": "Redes Neuronales en Entornos Educativos",
+  "topic": "Avances en Aprendizaje Automático",
   "evidence": [
     {
       "fileId": "file_12345",
-      "name": "Research Paper Document",
+      "name": "Documento de Investigación",
       "type": "pdf",
-      "uri": "/documents/papers/neural_networks.pdf",
-      "link": "https://example.com/view/neural_networks",
-      "download": "https://example.com/download/neural_networks.pdf"
+      "uri": "/documents/papers/redes_neuronales.pdf",
+      "link": "https://example.com/view/redes_neuronales",
+      "download": "https://example.com/download/redes_neuronales.pdf"
     },
     {
       "fileId": "file_67890",
-      "name": "Conference Presentation",
+      "name": "Presentación en Conferencia",
       "type": "pptx",
-      "uri": "/documents/presentations/ai_conference.pptx",
-      "link": "https://example.com/view/ai_conference",
-      "download": "https://example.com/download/ai_conference.pptx"
+      "uri": "/documents/presentations/conferencia_ia.pptx",
+      "link": "https://example.com/view/conferencia_ia",
+      "download": "https://example.com/download/conferencia_ia.pptx"
     }
-  ]
+  ],
+  "year": "2024",
+  "presentationPlace": "Conferencia Internacional de IA",
+  "presentationCount": 3,
+  "userId": "{{userId}}",
+  "status": "ACTIVE"
 }
 
 ### Update an existing intellectual-production 
@@ -49,15 +51,14 @@ Content-Type: application/json
 
 {
   "category": "Book Chapter",
-  "topic": "Advanced Data Analysis",
+  "productionName": "Métodos Estadísticos en la Investigación Educativa",
+  "topic": "Análisis Avanzado de Datos",
   "year": "2025",
+  "presentationPlace": "Conferencia Académica Virtual",
   "presentationCount": 5,
-  "presentationLocation": "Virtual Academic Conference",
-  "productionName": "Statistical Methods in Educational Research",
-  "status": "ACTIVE",
-  "userId": "60f7a5c4d5b5e40c8c234567",
-  "evidenceIds": ["60f7a5c4d5b5e40c8c234570", "60f7a5c4d5b5e40c8c234571"]
-} 
+  "userId": "{{userId}}",
+  "status": "ACTIVE"
+}  
 
 ### Delete a intellectual-production 
 DELETE http://localhost:3000/api/v1/intellectual-productions/{{id}} HTTP/1.1 

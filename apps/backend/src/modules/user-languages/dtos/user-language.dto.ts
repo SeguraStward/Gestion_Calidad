@@ -3,17 +3,17 @@ import { IsOptional, IsString, IsInt, IsEnum, IsArray, ValidateNested } from 'cl
 import { Type } from 'class-transformer';
 import { Status } from '@una-gc/database/prisma/generated/client';
 import { EvidenceDto } from '@modules/general-types-dto';
+import { BaseDto } from '@src/modules/generalDto';
 
-export class UserLanguageDto {
+export class UserLanguageDto extends BaseDto {
   @ApiPropertyOptional({ description: 'UserLanguage ID' })
   @IsString()
   @IsOptional()
   id?: string;
 
-  @ApiPropertyOptional({ description: 'Version', readOnly: true })
-  @IsInt()
-  @IsOptional()
-  version?: number;
+  @ApiProperty({ description: 'User ID' })
+  @IsString()
+  userId: string;
 
   @ApiProperty({ description: 'Language name' })
   @IsString()
@@ -39,10 +39,6 @@ export class UserLanguageDto {
   @IsEnum(Status)
   status: Status;
 
-  @ApiProperty({ description: 'User ID' })
-  @IsString()
-  userId: string;
-
   @ApiProperty({ description: 'Language evidence', type: [EvidenceDto] })
   @IsArray()
   @ValidateNested({ each: true })
@@ -50,6 +46,7 @@ export class UserLanguageDto {
   evidence: EvidenceDto[];
 
   constructor(dto: Partial<UserLanguageDto> = {}) {
+    super();
     Object.assign(this, dto);
   }
 }

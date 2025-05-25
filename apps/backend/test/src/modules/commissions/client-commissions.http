@@ -1,0 +1,50 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+@coordinatorId=1
+@regionalCenterId=1
+
+###
+
+### Get all commissions
+GET http://localhost:3000/api/v1/commissions?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get commission by ID
+GET http://localhost:3000/api/v1/commissions/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new commission
+POST http://localhost:3000/api/v1/commissions HTTP/1.1
+Content-Type: application/json
+
+{
+  "type": "ACADEMIC",
+  "name": "Comisión Académica de Informática",
+  "coordinatorId": "{{coordinatorId}}",
+  "regionalCenterId": "{{regionalCenterId}}",
+  "status": "ACTIVE"
+}
+
+###
+
+### Update an existing commission
+PUT http://localhost:3000/api/v1/commissions/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "type": "ACADEMIC",
+  "name": "Comisión Académica de CS",
+  "coordinatorId": "{{coordinatorId}}",
+  "regionalCenterId": "{{regionalCenterId}}",
+  "status": "ACTIVE"
+}
+
+###
+
+### Delete a commission
+DELETE http://localhost:3000/api/v1/commissions/{{id}} HTTP/1.1
+Content-Type: application/json

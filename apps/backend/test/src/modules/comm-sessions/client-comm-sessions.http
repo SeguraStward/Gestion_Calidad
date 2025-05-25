@@ -1,0 +1,72 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+@commissionId=1
+@reviewId=1
+@tutorId=1
+@internalReaderId=1
+@externalReaderId=1
+
+###
+
+### Get all comm-sessions
+GET http://localhost:3000/api/v1/comm-sessions HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get comm-session by ID
+GET http://localhost:3000/api/v1/comm-sessions/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new comm-session
+POST http://localhost:3000/api/v1/comm-sessions HTTP/1.1
+Content-Type: application/json
+
+{
+  "commissionId": "{{commissionId}}",
+  "url": "https://meet.google.com/nuevo-enlace-reunion",
+  "sessionNumber": 2,
+  "closingDate": "2025-07-01T15:00:00Z",
+  "projects": [
+    {
+      "review": "{{reviewId}}",
+      "status": "PENDING",
+      "type": "Trabajo Final de Grado",
+      "agreement": "Se requieren ajustes en el marco teórico",
+      "tutor": "{{tutorId}}",
+      "internalReader": "{{internalReaderId}}",
+      "externalReader": "{{externalReaderId}}",
+      "notificationSent": false
+    }
+  ],
+  "stage": "STARTED",
+  "status": "ACTIVE"
+}
+
+###
+
+### Update an existing comm-session
+PUT http://localhost:3000/api/v1/comm-sessions/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "url": "https://meet.zoom.us/j/987654321",
+  "closingDate": "2025-07-05T16:00:00Z",
+  "projects": [
+    {
+      "review": "{{reviewId}}",
+      "status": "APPROVED",
+      "agreement": "Proyecto aprobado con correcciones menores",
+      "notificationSent": true
+    }
+  ],
+  "stage": "FINISHED"
+}
+
+###
+
+### Delete a comm-session
+DELETE http://localhost:3000/api/v1/comm-sessions/{{id}} HTTP/1.1
+Content-Type: application/json

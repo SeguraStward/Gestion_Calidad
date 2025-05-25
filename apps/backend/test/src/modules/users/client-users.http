@@ -1,9 +1,11 @@
 #var, use command >Rest Client: Switch Environment in search bar of vs code
-@id =6814406ec270e9b0b34acc4a 
+@id= 
+@schoolId=1
+
 ###
 
 ### Get all users
-GET http://localhost:3000/api/v1/users HTTP/1.1
+GET http://localhost:3000/api/v1/users?page=1&limit=10  HTTP/1.1
 Content-Type: application/json
 
 ###
@@ -19,36 +21,36 @@ POST http://localhost:3000/api/v1/users HTTP/1.1
 Content-Type: application/json
 
 {
-  "email": "john.doe@example.com",
+  "email": "carlos.garcia@ejemplo.com",
   "isVerified": false,
-  "fullName": "John",
-  "fullLastName": "Doe Smith",
-  "photoUrl": "https://example.com/photos/johndoe.jpg",
-  "nationalId": "123456789",
-  "birthDate": "1990-01-15T00:00:00.000Z",
-  "primaryPhone": "88776655",
+  "fullName": "Carlos",
+  "fullLastName": "García López",
+  "photoUrl": "https://ejemplo.com/fotos/carlosgarcia.jpg",
+  "nationalId": "987654321",
+  "birthDate": "1985-05-20T00:00:00.000Z",
+  "primaryPhone": "88887777",
   "phoneNumbers": [
     {
-      "number": "88776655",
-      "isPrimary": true
+      "number": "88887777",
+      "type": "mobile"
     },
     {
-      "number": "22334455",
-      "isPrimary": false
+      "number": "22223333",
+      "type": "home"
     }
   ],
   "province": "SAN_JOSE",
-  "canton": "Central",
-  "district": "Catedral",
-  "address": "100m Norte del Parque Central",
-  "professionalTitle": "Ingeniero en Sistemas",
-  "hireDate": "2020-03-01T00:00:00.000Z",
+  "canton": "Desamparados",
+  "district": "San Miguel",
+  "address": "200m Sur del Supermercado Central",
+  "professionalTitle": "Profesor de Matemáticas",
+  "hireDate": "2018-08-15T00:00:00.000Z",
   "condition": "Tiempo completo",
-  "roles": ["USER", "PROFESSOR"],
-  "permissions": ["VIEW", "EDIT"],
+  "roleIds": ["64f8ac9034b5b7f5159236bd", "64f8ac9034b5b7f5159236be"],
   "profileTypes": ["academic", "research"],
-  "status": "ACTIVE",
-  "googleId": "g-123456789"
+  "googleId": "g-987654321",
+  "studentProjectIds": [],
+  "status": "ACTIVE"
 }
 
 ###
@@ -58,11 +60,12 @@ PATCH http://localhost:3000/api/v1/users/{{id}}/profile HTTP/1.1
 Content-Type: application/json
 
 {
-  "email": "juan.perez@est.una.ac.cr",
-  "firstName": "Juan Updated",
-  "lastName": "Perez Updated",
-  "primaryPhone": "+50687654321" 
+  "email": "maria.lopez@est.una.ac.cr",
+  "fullName": "María Actualizada",
+  "fullLastName": "López Actualizada",
+  "primaryPhone": "+50689998888"
 }
+
 ###
 
 ### Delete a user

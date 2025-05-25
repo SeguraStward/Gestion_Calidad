@@ -1,9 +1,11 @@
 #var, use "command >Rest Client: Switch Environment" in search bar of vs code 
 
-@id = 1 
+@id=1
+@userId=1
+###
 
 ### Get all user languages
-GET http://localhost:3000/api/v1/user-languages HTTP/1.1 
+GET http://localhost:3000/api/v1/user-languages?page=1&limit=10  HTTP/1.1 
 Content-Type: application/json 
 
 ### Get user language by ID 
@@ -15,23 +17,23 @@ POST http://localhost:3000/api/v1/user-languages HTTP/1.1
 Content-Type: application/json 
 
 {
-  "language": "English",
+  "userId": "{{userId}}",
+  "language": "Español",
   "type": "Foreign",
   "speaking": 5,
   "writing": 4,
   "reading": 5,
-  "status": "ACTIVE",
-  "userId": "6814406ec270e9b0b34acc4a",
   "evidence": [
     {
-      "download": "https://example.com/download/certificate.pdf",
+      "download": "https://ejemplo.com/descargar/certificado.pdf",
       "fileId": "file_123456",
-      "link": "https://example.com/view/certificate",
-      "name": "TOEFL Certificate",
+      "link": "https://ejemplo.com/ver/certificado",
+      "name": "Certificado TOEFL",
       "type": "pdf",
-      "uri": "/documents/certificates/toefl.pdf"
+      "uri": "/documentos/certificados/toefl.pdf"
     }
-  ]
+  ],
+  "status": "ACTIVE"
 }
 
 ### Update an existing user language
@@ -39,31 +41,31 @@ PUT http://localhost:3000/api/v1/user-languages/{{id}} HTTP/1.1
 Content-Type: application/json 
 
 {
-  "language": "Spanish",
+  "userId": "{{userId}}",
+  "language": "Inglés",
   "type": "Foreign",
   "speaking": 3,
   "writing": 3,
   "reading": 4,
-  "status": "ACTIVE",
-  "userId": "60f7a5c4d5b5e40c8c234567",
   "evidence": [
     {
-      "download": "https://example.com/download/dele.pdf",
+      "download": "https://ejemplo.com/descargar/dele.pdf",
       "fileId": "file_789012",
-      "link": "https://example.com/view/dele",
-      "name": "DELE Certificate",
+      "link": "https://ejemplo.com/ver/dele",
+      "name": "Certificado DELE",
       "type": "pdf",
-      "uri": "/documents/certificates/dele.pdf"
+      "uri": "/documentos/certificados/dele.pdf"
     },
     {
-      "download": "https://example.com/download/course.pdf",
+      "download": "https://ejemplo.com/descargar/curso.pdf",
       "fileId": "file_345678",
-      "link": "https://example.com/view/course",
-      "name": "Spanish Course Completion",
+      "link": "https://ejemplo.com/ver/curso",
+      "name": "Finalización Curso Español",
       "type": "pdf",
-      "uri": "/documents/certificates/spanish_course.pdf"
+      "uri": "/documentos/certificados/curso_espanol.pdf"
     }
-  ]
+  ],
+  "status": "ACTIVE"
 }
 
 ### Delete a user language

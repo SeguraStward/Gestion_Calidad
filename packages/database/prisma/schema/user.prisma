@@ -1,3 +1,4 @@
+// #34
 model User {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
@@ -23,52 +24,58 @@ model User {
   hireDate          DateTime?
   condition         String?
 
-  roles        UserRole[]
-  permissions  UserPermission[]
+  roleIds String[] @db.ObjectId
+
   profileTypes String[]
-  status       Status           @default(ACTIVE)
 
   googleId String? @unique
 
+  status Status @default(ACTIVE)
+
+  // Relations
+  roles           UserRole[]           @relation("UserRoles", fields: [roleIds], references: [id])
+  userLanguages   UserLanguage[]       @relation("UserLanguage")
+  workExperiences UserWorkExperience[] @relation("UserWorkExperience")
+
+  // Relations with Academic Information
+  academicLoads       AcademicLoad[]       @relation("ProfessorLoad")
+  academicBackgrounds AcademicBackground[] @relation("UserAcademicBackground")
+
+  // Relations with Projects and Final Works
+  ppaas                   Ppaa[]                   @relation("UserPpaa")
+  finalWorks              FinalWork[]              @relation("UserFinalWork")
+  finalReports            FinalReport[]            @relation("ProfessorFinalReport")
+  intellectualProductions IntellectualProduction[] @relation("UserIntellectualProduction")
+
+  // Relations for TFG (Trabajo Final de Graduación)
+  studentProjectIds        String[]  @db.ObjectId
+  studentProjects          Project[] @relation("ProjectStudents", fields: [studentProjectIds], references: [id])
+  projectsAsTutor          Project[] @relation("ProjectTutor")
+  projectsAsInternalReader Project[] @relation("InternalReader")
+  projectsAsExternalReader Project[] @relation("ExternalReader")
+
+  // Relations with Notifications
+  createdNotifications ProjectNotification[] @relation("NotificationCreator")
+  updatedNotifications ProjectNotification[] @relation("NotificationUpdater")
+
+  // Relations with Commissions
+  coordinatedCommissions Commission[]  @relation("CommissionCoordinator")
+  observations           Observation[] @relation("ObservationProfessor")
+
+  // Relations with Reviews and Memberships
+  projectReviews ProjectReview[] @relation("professorReview")
+  commMember     CommMember[]
+
+  // Audit fields
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  professor               Professor?
-  intellectualProductions IntellectualProduction[]
-  academicBackgrounds     AcademicBackground[]
-  enrollments             StudentEnrollment[]
-  workExperiences         WorkExperience[]
-  finalWorks              FinalWork[]
-  userLanguages           UserLanguage[]
-  ppaas                   Ppaa[]
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
 
   @@index([province, canton, district])
   @@index([fullName, fullLastName])
-  @@index([roles])
+  @@index([nationalId])
   @@map("users")
-}
-
-type UserEmail {
-  email String
-}
-
-type UserPhone {
-  number    String?
-  isPrimary Boolean @default(false)
-}
-
-enum UserPermission {
-  EDIT
-  DELETE
-  ADD
-  VIEW
-}
-
-enum UserRole {
-  ADMIN
-  USER
-  STUDENT
-  PROFESSOR
 }
 
 enum Province {
@@ -79,4 +86,9 @@ enum Province {
   GUANACASTE
   PUNTARENAS
   LIMON
+}
+
+type UserPhone {
+  number String
+  type   String
 }
