@@ -11,7 +11,7 @@ model AcademicBackground {
   date DateTime?
 
   institution     String
-  InstitutionType String
+  institutionType String
 
   status Status @default(ACTIVE)
 

@@ -1,3 +1,4 @@
+// prisma schema file for MongoDB
 generator client {
   provider        = "prisma-client-js"
   output          = "./../generated/client"
