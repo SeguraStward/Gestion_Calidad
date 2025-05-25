@@ -4,30 +4,29 @@ import { IsOptional, IsString, IsEnum } from 'class-validator';
 import { Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
 
-export class FacultyDto extends BaseDto {
-  @ApiPropertyOptional({ description: 'Faculty ID' })
+export class CareerDto extends BaseDto {
+  @ApiPropertyOptional({ description: 'Career ID' })
   @IsString()
   @IsOptional()
   id?: string;
 
-  @ApiProperty({ description: 'Faculty code' })
+  @ApiProperty({ description: 'Career code' })
   @IsString()
   code: string;
 
-  @ApiProperty({ description: 'Description' })
+  @ApiProperty({ description: 'Career name' })
   @IsString()
-  description: string;
+  name: string;
 
-  @ApiPropertyOptional({ description: 'Name' })
+  @ApiProperty({ description: 'School ID' })
   @IsString()
-  @IsOptional()
-  name?: string;
+  schoolId: string;
 
-  @ApiProperty({ description: 'Status of the faculty', enum: Status, default: Status.ACTIVE })
+  @ApiProperty({ description: 'Status of the career', enum: Status })
   @IsEnum(Status)
   status: Status;
 
-  constructor(dto: Partial<FacultyDto> = {}) {
+  constructor(dto: Partial<CareerDto> = {}) {
     super();
     Object.assign(this, dto);
   }

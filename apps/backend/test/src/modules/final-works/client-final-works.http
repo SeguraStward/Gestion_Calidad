@@ -1,10 +1,11 @@
 #var, use command >Rest Client: Switch Environment in search bar of vs code
-@id =1
+@id=1
+@userId=1
 
 ###
 
 ### Get all final-works
-GET http://localhost:3000/api/v1/final-works HTTP/1.1
+GET http://localhost:3000/api/v1/final-works?page=1&limit=10  HTTP/1.1
 Content-Type: application/json
 
 ###
@@ -20,29 +21,29 @@ POST http://localhost:3000/api/v1/final-works HTTP/1.1
 Content-Type: application/json
 
 {
-  "title": "Analysis of Machine Learning Algorithms for Natural Language Processing",
-  "type": "thesis",
+  "title": "Análisis de algoritmos de aprendizaje automático para procesamiento de lenguaje natural",
+  "type": "TFG",
   "evidence": [
     {
-      "download": "/downloads/document1.pdf",
-      "fileId": "file12345",
-      "link": "https://example.com/files/document1.pdf",
-      "name": "Literature Review",
+      "download": "/descargas/documento1.pdf",
+      "fileId": "archivo12345",
+      "link": "https://ejemplo.com/archivos/documento1.pdf",
+      "name": "Revisión de literatura",
       "type": "document",
-      "uri": "/storage/document1.pdf"
+      "uri": "/almacenamiento/documento1.pdf"
     },
     {
-      "fileId": "file67890",
-      "download": "/downloads/presentation.pptx",  
-      "link": "https://example.com/files/document1.pdf",
-      "name": "Initial Proposal",
+      "fileId": "archivo67890",
+      "download": "/descargas/presentacion.pptx",
+      "link": "https://ejemplo.com/archivos/presentacion.pptx",
+      "name": "Propuesta inicial",
       "type": "presentation",
-      "uri": "/storage/presentation.pptx"
+      "uri": "/almacenamiento/presentacion.pptx"
     }
   ],
-  "status": "ARCHIVED",
-  "userId": "65d4912a1309b10b4c6d2b65",
-  "date": "2025-04-15T10:00:00.000Z"
+  "userId": "{{userId}}",
+  "date": "2025-04-15T10:00:00.000Z",
+  "status": "ACTIVE"
 }
 
 ###
@@ -52,29 +53,30 @@ PUT http://localhost:3000/api/v1/final-works/{{id}} HTTP/1.1
 Content-Type: application/json
 
 {
-  "title": "Analysis of Machine Learning Algorithms for Natural Language Processing",
+  "title": "Análisis de algoritmos de aprendizaje automático para procesamiento de lenguaje natural",
   "type": "thesis",
   "evidence": [
     {
-      "download": "/downloads/document1.pdf",
-      "idFile": "file12345",
-      "link": "https://example.com/files/document1.pdf",
-      "name": "Literature Review",
+      "download": "/descargas/documento1.pdf",
+      "idFile": "archivo12345",
+      "link": "https://ejemplo.com/archivos/documento1.pdf",
+      "name": "Revisión de literatura",
       "type": "document",
-      "uri": "/storage/document1.pdf"
+      "uri": "/almacenamiento/documento1.pdf"
     },
     {
-      "download": "/downloads/presentation.pptx",
-      "idFile": "file67890",
-      "name": "Initial Proposal",
+      "download": "/descargas/presentacion.pptx",
+      "idFile": "archivo67890",
+      "name": "Propuesta inicial",
       "type": "presentation",
-      "uri": "/storage/presentation.pptx"
+      "uri": "/almacenamiento/presentacion.pptx"
     }
   ],
-  "status": "in_progress",
-  "userId": "65d4912a1309b10b4c6d2b65",
-  "date": "2025-04-15T10:00:00.000Z"
-} 
+  "userId": "{{userId}}",
+  "date": "2025-04-15T10:00:00.000Z",
+  "status": "in_progress"
+}
+
 ###
 
 ### Delete a final-work

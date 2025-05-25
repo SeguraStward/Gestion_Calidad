@@ -1,0 +1,47 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+@schoolId=1
+
+###
+
+### Get all careers
+GET http://localhost:3000/api/v1/careers?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get career by ID
+GET http://localhost:3000/api/v1/careers/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new career
+POST http://localhost:3000/api/v1/careers HTTP/1.1
+Content-Type: application/json
+
+{
+  "code": "COMP-SC",
+  "name": "Ciencias de la Computación",
+  "schoolId": "{{schoolId}}",
+  "status": "ACTIVE"
+}
+
+###
+
+### Update an existing career
+PUT http://localhost:3000/api/v1/careers/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "code": "COMP-SCI",
+  "name": "Ingeniería en Ciencias de la Computación",
+  "schoolId": "{{schoolId}}",
+  "status": "ACTIVE"
+}
+
+###
+
+### Delete a career
+DELETE http://localhost:3000/api/v1/careers/{{id}} HTTP/1.1
+Content-Type: application/json
