@@ -1,0 +1,48 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+
+###
+
+### Get all parameters
+GET http://localhost:3000/api/v1/parameters?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get parameter by ID
+GET http://localhost:3000/api/v1/parameters/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new parameter
+POST http://localhost:3000/api/v1/parameters HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "TAMANO_MAXIMO_ARCHIVO",
+  "value": "10485760",
+  "description": "Tamaño máximo de archivo en bytes para cargas",
+  "dataType": "NUMBER",
+  "isActive": true
+}
+
+###
+
+### Update an existing parameter
+PUT http://localhost:3000/api/v1/parameters/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "TAMANO_MAXIMO_ARCHIVO",
+  "value": "15728640",
+  "description": "Tamaño máximo de archivo en bytes para cargas (aumentado a 15MB)",
+  "dataType": "NUMBER",
+  "isActive": true
+}
+
+###
+
+### Delete a parameter
+DELETE http://localhost:3000/api/v1/parameters/{{id}} HTTP/1.1
+Content-Type: application/json
