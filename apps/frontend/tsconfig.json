@@ -3,33 +3,15 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@*": [
-        "./src*"
-      ],
-      "@/components/*": [
-        "./src/components/*"
-      ],
-      "@/hooks/*": [
-        "./src/hooks/*"
-      ],
-      "@/state/*": [
-        "./src/state/*"
-      ],
-      "@/lib/*": [
-        "./src/lib/*"
-      ],
-      "@/services/*": [
-        "./src/services/*"
-      ],
-      "@una-gc/ui/*": [
-        "../../packages/ui/src/*"
-      ],
-      "@api/*": [
-        "./src/api/*"
-      ],
-      "@app/*": [
-        "./src/app/*"
-      ],
+      "@*": ["./src*"],
+      "@/components/*": ["./src/components/*"],
+      "@/hooks/*": ["src/shared/hooks/*"],
+      "@/state/*": ["./src/state/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/services/*": ["src/shared/services/*"],
+      "@una-gc/ui/*": ["../../packages/ui/src/*"],
+      "@api/*": ["./src/api/*"],
+      "@app/*": ["./src/app/*"]
     },
     "plugins": [
       {
@@ -37,14 +19,6 @@
       }
     ]
   },
-  "include": [
-    "next-env.d.ts",
-    "next.config.mjs",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "next.config.mjs", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }
