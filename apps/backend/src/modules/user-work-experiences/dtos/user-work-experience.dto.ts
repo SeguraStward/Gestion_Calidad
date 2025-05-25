@@ -1,19 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, IsArray, ValidateNested, IsDate } from 'class-validator';
+import { IsOptional, IsString, IsArray, ValidateNested, IsDate } from 'class-validator';
 import { Type } from 'class-transformer';
 
 import { EvidenceDto } from '@modules/general-types-dto';
+import { BaseDto } from '@src/modules/generalDto';
 
-export class WorkExperienceDto {
-  @ApiPropertyOptional({ description: 'WorkExperience ID' })
+export class UserWorkExperienceDto extends BaseDto {
+  @ApiPropertyOptional({ description: 'UserWorkExperience ID' })
   @IsString()
   @IsOptional()
   id?: string;
-
-  @ApiPropertyOptional({ description: 'Version', readOnly: true })
-  @IsInt()
-  @IsOptional()
-  version?: number;
 
   @ApiProperty({ description: 'Company name' })
   @IsString()
@@ -58,12 +54,8 @@ export class WorkExperienceDto {
   @IsString()
   status: string;
 
-  @ApiPropertyOptional({ description: 'Document reference' })
-  @IsString()
-  @IsOptional()
-  document?: string;
-
-  constructor(dto: Partial<WorkExperienceDto> = {}) {
+  constructor(dto: Partial<UserWorkExperienceDto> = {}) {
+    super();
     Object.assign(this, dto);
   }
 }
