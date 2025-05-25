@@ -1,0 +1,50 @@
+#var, use command >Rest Client: Switch Environment in search bar of vs code
+@id=1
+
+###
+
+### Get all academic-cycles
+GET http://localhost:3000/api/v1/academic-cycles?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get academic-cycle by ID
+GET http://localhost:3000/api/v1/academic-cycles/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new academic-cycle
+POST http://localhost:3000/api/v1/academic-cycles HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Ciclo I",
+  "year": 2025,
+  "description": "Primer ciclo del año académico 2025",
+  "startDate": "2025-02-01T00:00:00.000Z",
+  "endDate": "2025-06-30T23:59:59.999Z",
+  "status": "ACTIVE",
+}
+
+###
+
+### Update an existing academic-cycle
+PUT http://localhost:3000/api/v1/academic-cycles/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Ciclo II",
+  "year": 2025,
+  "description": "Segundo ciclo del año académico 2025 (fechas extendidas)",
+  "startDate": "2025-02-01T00:00:00.000Z",
+  "endDate": "2025-07-15T23:59:59.999Z",
+  "status": "ACTIVE"
+}
+
+###
+
+### Delete a academic-cycle
+DELETE http://localhost:3000/api/v1/academic-cycles/{{id}} HTTP/1.1
+Content-Type: application/json
