@@ -86,9 +86,9 @@ const data = {
     },
     {
       title: 'Informe Final',
-      url: '/admin/final-report',
+      url: '/final-report',
       icon: FileText,
-      items: [{ title: 'Lista de Informes', url: '/admin/final-report' }]
+      items: [{ title: 'Lista de Informes', url: '/final-reports' }]
     },
     {
       title: 'Modelos SINAES',
