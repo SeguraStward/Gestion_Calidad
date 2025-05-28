@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components/card'
 import { useImportExcel } from '../hooks/useImportExcel'
-import { BulkImportHeader } from './bulk-import-header'
+import { BulkImportHeader } from './page-header'
 import { ImportForm } from './import-form'
 import { RefreshCw, Upload } from 'lucide-react'
 import { Skeleton } from '@una-gc/ui/components/skeleton'
