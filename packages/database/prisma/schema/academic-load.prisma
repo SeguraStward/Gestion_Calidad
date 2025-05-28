@@ -5,36 +5,33 @@ model AcademicLoad {
 
   nrc String
 
-  academicCycleId String @db.ObjectId
-
-  campusId String @db.ObjectId
-
-  courseId String @db.ObjectId
-
-  classroomId String @db.ObjectId
-
   maximumCapacity  Int
   enrolledCapacity Int
   availableSeats   Int
-
-  groupId String @db.ObjectId
-
-  scheduleId String @db.ObjectId
-
-  professorId String @db.ObjectId
 
   date DateTime?
 
   status Status @default(ACTIVE)
 
   // Relations
-  academicCycle AcademicCycle     @relation(fields: [academicCycleId], references: [id])
-  campus        Campus            @relation(fields: [campusId], references: [id])
-  course        Course            @relation(fields: [courseId], references: [id])
-  classroom     Classroom         @relation(fields: [classroomId], references: [id])
-  group         AcademicLoadGroup @relation(fields: [groupId], references: [id])
-  schedule      Schedule          @relation(fields: [scheduleId], references: [id])
+  academicCycleId String @db.ObjectId 
+  academicCycle AcademicCycle @relation(fields: [academicCycleId], references: [id])
 
+  campusId String @db.ObjectId 
+  campus Campus @relation(fields: [campusId], references: [id])
+
+  courseId String @db.ObjectId 
+  course Course @relation(fields: [courseId], references: [id])
+
+  classroomId String @db.ObjectId 
+  classroom Classroom @relation(fields: [classroomId], references: [id])
+
+  groupId String     
+
+  scheduleId String @db.ObjectId 
+  schedule Schedule @relation(fields: [scheduleId], references: [id])
+
+  professorId String @db.ObjectId 
   professor User @relation("ProfessorLoad", fields: [professorId], references: [id])
 
   finalReport FinalReport[]
