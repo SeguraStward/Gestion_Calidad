@@ -29,6 +29,7 @@ export * from './regional-centers/regional-centers.module';
 export * from './schedules/schedules.module';
 export * from './schools/schools.module';
 export * from './user-languages/user-languages.module';
+export * from './user-permissions/user-permissions.module';
 export * from './user-roles/user-roles.module';
 export * from './user-work-experiences/user-work-experiences.module';
 export * from './users/users.module';

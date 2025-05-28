@@ -5,7 +5,7 @@
 ###
 
 ### Get all user languages
-GET http://localhost:3000/api/v1/user-languages?page=1&limit=10  HTTP/1.1 
+GET http://localhost:3000/api/v1/user-languages?page=1&limit=10 HTTP/1.1 
 Content-Type: application/json 
 
 ### Get user language by ID 

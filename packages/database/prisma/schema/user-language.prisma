@@ -26,5 +26,5 @@ model UserLanguage {
   updatedBy String?  @db.ObjectId
 
   @@unique([userId, language])
-  @@map("languages")
+  @@map("user_languages")
 }

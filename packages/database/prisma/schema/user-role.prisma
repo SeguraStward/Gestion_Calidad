@@ -3,16 +3,15 @@ model UserRole {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
-  name        String           @unique
+  name        String       @unique
   description String?
-  permissions UserPermission[]
-
-  userIds String[] @db.ObjectId
+  permissions Permission[]
 
   status Status @default(ACTIVE)
 
   // Relations
-  users User[] @relation("UserRoles", fields: [userIds], references: [id])
+  userIds String[] @db.ObjectId
+  users   User[]   @relation("UserRoles", fields: [userIds], references: [id])
 
   // Audit fields
   createdAt DateTime @default(now())
@@ -20,14 +19,14 @@ model UserRole {
   createdBy String?  @db.ObjectId
   updatedBy String?  @db.ObjectId
 
-  @@map("roles")
+  @@map("user_roles")
 }
 
-type UserPermission {
-  entity      String
-  permissions PermissionType[]
-  scope       PermissionScope? // Define el alcance del permiso
-  actions     String[] // Acciones específicas permitidas
+type Permission {
+  permissionID String           @db.ObjectId
+  permissions  PermissionType[]
+  scope        PermissionScope? // Define el alcance del permiso
+  actions      String[] // Acciones específicas permitidas
 }
 
 enum PermissionType {
@@ -41,6 +40,4 @@ enum PermissionType {
 enum PermissionScope {
   ALL // Acceso total a todos los registros
   OWN // Solo a registros propios
-  DEPARTMENT // Solo a registros del mismo departamento
-  CUSTOM // Definido por acciones específicas
 }

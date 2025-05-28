@@ -5,11 +5,11 @@ import { Type } from 'class-transformer';
 import { PermissionScope, PermissionType, Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
 
-export class UserPermissionDto {
-  @ApiProperty({ description: 'Entity name' })
+export class PermissionDto {
+  @ApiProperty({ description: 'Permission ID' })
   @IsString()
   @IsNotEmpty()
-  entity: string;
+  permissionID: string;
 
   @ApiProperty({ enum: PermissionType, isArray: true })
   @IsEnum(PermissionType, { each: true })
@@ -44,11 +44,11 @@ export class UserRoleDto extends BaseDto {
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ type: [UserPermissionDto] })
+  @ApiProperty({ type: [PermissionDto] })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => UserPermissionDto)
-  permissions: UserPermissionDto[];
+  @Type(() => PermissionDto)
+  permissions: PermissionDto[];
 
   @ApiPropertyOptional({ type: [String] })
   @IsArray()

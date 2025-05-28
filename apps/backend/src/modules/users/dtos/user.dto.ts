@@ -3,7 +3,6 @@ import {
   IsEnum,
   IsOptional,
   IsString,
-  IsBoolean,
   IsArray,
   ValidateNested,
   IsDate,
@@ -12,7 +11,7 @@ import {
 } from 'class-validator';
 
 import { Type } from 'class-transformer';
-import { Province, Status } from '@una-gc/database/prisma/generated/client';
+import { Province, UserStatus } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
 
 class UserPhoneDto {
@@ -37,16 +36,11 @@ export class UserDto extends BaseDto {
   @IsEmail()
   email: string;
 
-  @ApiProperty({ description: 'Email verification status' })
-  @IsBoolean()
-  @IsOptional()
-  isVerified?: boolean;
-
   @ApiProperty({ description: 'Full name' })
   @IsString()
   fullName: string;
 
-  @ApiProperty({ description: 'Full last name' })
+  @ApiPropertyOptional({ description: 'Full last name' })
   @IsString()
   @IsOptional()
   fullLastName?: string;
@@ -122,28 +116,15 @@ export class UserDto extends BaseDto {
   @IsOptional()
   roleIds?: string[];
 
-  @ApiPropertyOptional({ description: 'Profile types', type: [String] })
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  profileTypes?: string[];
-
   @ApiPropertyOptional({ description: 'Google ID' })
   @IsString()
   @IsOptional()
   googleId?: string;
 
-  @ApiPropertyOptional({ description: 'Student project IDs' })
-  @IsArray()
-  @IsString({ each: true })
-  @IsMongoId({ each: true })
+  @ApiPropertyOptional({ description: 'User status', enum: UserStatus, default: 'ACTIVE' })
+  @IsEnum(UserStatus)
   @IsOptional()
-  studentProjectIds?: string[];
-
-  @ApiPropertyOptional({ description: 'User status', enum: Status, default: 'ACTIVE' })
-  @IsEnum(Status)
-  @IsOptional()
-  status?: Status;
+  status?: UserStatus;
 
   constructor(dto: Partial<UserDto> = {}) {
     super();
