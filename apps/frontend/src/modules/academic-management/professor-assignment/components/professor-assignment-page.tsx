@@ -121,6 +121,12 @@ export const ProfessorAssignmentPage = () => {
             assignments={filteredAssignments}
             confirmDelete={confirmDelete}
             onEdit={handleEdit}
+            editingId={formData ? formData.id : null}
+            onCancelEdit={() => {
+              setFormData(null)
+              setSelectedCourse(null)
+              setSelectedProfessor(null)
+            }}
             filter={assignmentFilter}
             setFilter={setAssignmentFilter}
           />
