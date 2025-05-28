@@ -18,7 +18,7 @@ Content-Type: application/json
 {
   "code": "FILO",
   "description": "Escuela de Filosofía y Ciencias Sociales",
-  "facultyId": "{{facultyId}}",
+  "facultyId": "68362625e5b3c3956494ca37",
   "status": "ACTIVE"
 }
 

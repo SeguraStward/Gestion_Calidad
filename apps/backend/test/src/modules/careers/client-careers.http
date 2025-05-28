@@ -23,7 +23,7 @@ Content-Type: application/json
 {
   "code": "COMP-SC",
   "name": "Ciencias de la Computación",
-  "schoolId": "{{schoolId}}",
+  "schoolId": "68362646e5b3c3956494ca38",
   "status": "ACTIVE"
 }
 
@@ -36,7 +36,7 @@ Content-Type: application/json
 {
   "code": "COMP-SCI",
   "name": "Ingeniería en Ciencias de la Computación",
-  "schoolId": "{{schoolId}}",
+  "schoolId": "68362646e5b3c3956494ca38",
   "status": "ACTIVE"
 }
 

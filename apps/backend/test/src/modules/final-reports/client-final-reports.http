@@ -20,9 +20,10 @@ Content-Type: application/json
 ### Create a new final-report
 POST http://localhost:3000/api/v1/final-reports HTTP/1.1
 Content-Type: application/json
+
 {
-  "academicLoadId": "{{academicLoadId}}",
-  "professorId": "{{professorId}}",
+  "academicLoadId": "68158a0732e9c705bd980406",
+  "professorId": "6817035e6fde93aab0b56e60",
   "statistics": {
     "passed": 12,
     "failed": 5,

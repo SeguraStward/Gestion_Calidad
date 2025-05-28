@@ -28,8 +28,8 @@ Content-Type: application/json
   "credits": 3,
   "level": "Pregrado",
   "contactHours": 45,
-  "schoolId": "{{schoolId}}",
-  "careerId": "{{careerId}}",
+  "schoolId": "68362646e5b3c3956494ca38",
+  "careerId": "683626b1e5b3c3956494ca39",
   "status" : "ACTIVE"
 }
 
