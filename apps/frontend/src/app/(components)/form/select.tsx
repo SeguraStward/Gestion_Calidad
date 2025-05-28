@@ -1,9 +1,12 @@
+'use client'
+
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@una-gc/ui/components/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@una-gc/ui/components/popover'
 import { Button } from '@una-gc/ui/components/button'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@una-gc/ui/lib/utils'
 import { useState } from 'react'
+import { FieldError } from 'react-hook-form'
 
 export interface ComboboxOption {
   id: string
@@ -13,10 +16,11 @@ export interface ComboboxOption {
 interface ComboboxProps {
   label: string
   value: string | null
-  options: ComboboxOption[] // Las opciones son las que tienen "id"
+  options: ComboboxOption[]
   onChange: (value: string) => void
   placeholder?: string
   required?: boolean
+  error?: FieldError | undefined
 }
 
 export const FormSelect = ({ label, value, options, onChange, placeholder }: ComboboxProps) => {
