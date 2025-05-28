@@ -29,8 +29,26 @@ export default function AssignmentCrud() {
 
   // Mock cursos
   const cursosMock: Course[] = [
-    { id: '1', nombre: 'Fundamentos de Redes', codigo: 'INF-101', creditos: 3, descripcion: '', programaId: '1' },
-    { id: '2', nombre: 'Cálculo I', codigo: 'MAT-101', creditos: 4, descripcion: '', programaId: '2' }
+    {
+      id: '1',
+      nombre: 'Fundamentos de Redes',
+      codigo: 'INF-101',
+      creditos: 3,
+      descripcion: '',
+      nivel: '100',
+      programaId: '1',
+      horasContacto: 60
+    },
+    {
+      id: '2',
+      nombre: 'Cálculo I',
+      codigo: 'MAT-101',
+      creditos: 4,
+      descripcion: '',
+      nivel: '100',
+      programaId: '2',
+      horasContacto: 60
+    }
   ]
 
   // Mock profesores

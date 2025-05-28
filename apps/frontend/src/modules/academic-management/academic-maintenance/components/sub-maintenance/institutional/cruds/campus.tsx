@@ -19,8 +19,8 @@ export default function CampusCrud() {
 
   // Mock sedes (o cargar de API real)
   const sedesMock: Headquarter[] = [
-    { id: '1', nombre: 'Sede Central', descripcion: 'La jefa' },
-    { id: '2', nombre: 'Sede Alajuela', descripcion: 'La pura vida' }
+    { id: '1', nombre: 'Sede Central', descripcion: 'La jefa', codigo: 'SJC' },
+    { id: '2', nombre: 'Sede Alajuela', descripcion: 'La pura vida', codigo: 'SAJ' }
   ]
 
   const {

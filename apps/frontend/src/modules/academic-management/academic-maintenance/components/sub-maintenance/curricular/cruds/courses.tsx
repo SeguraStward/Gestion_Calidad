@@ -50,12 +50,12 @@ export default function CourseCrud() {
       toast.success('¡Curso registrado!')
     }
     reset({
-      name: '',
-      description: '',
-      code: '',
-      level: '',
-      credits: 0,
-      contactHours: 0,
+      nombre: '',
+      descripcion: '',
+      codigo: '',
+      nivel: '',
+      creditos: 0,
+      horasContacto: 0,
       programaId: ''
     })
   }
@@ -69,43 +69,43 @@ export default function CourseCrud() {
       idAEliminar={idAEliminar}
       setIdAEliminar={setIdAEliminar}
       onDelete={remove}
-      getItemName={(c) => c.name}
+      getItemName={(c) => c.nombre}
       renderForm={() => (
         <Card>
           <CardContent className="p-6">
             <FormLayout onSubmit={handleSubmit(onSubmit)} title={editandoId ? 'Editar Curso' : 'Registrar Curso'}>
               <FormField
-                id="name"
+                id="nombre"
                 label="Nombre"
                 control={control}
-                name="name"
+                name="nombre"
                 required
-                error={errors.name}
+                error={errors.nombre}
                 placeholder="Ej: Fundamentos de Redes"
                 rules={{ required: 'El nombre es obligatorio' }}
               />
 
               <FormField
-                id="code"
+                id="codigo"
                 label="Código"
                 control={control}
-                name="code"
+                name="codigo"
                 required
-                error={errors.code}
+                error={errors.codigo}
                 placeholder="Ej: INF-101"
                 rules={{ required: 'El código es obligatorio' }}
               />
 
               <FormField
-                id="level"
+                id="nivel"
                 label="Nivel"
                 control={control}
-                name="level"
+                name="nivel"
                 required
                 type="number"
                 min={0}
                 step={1}
-                error={errors.level}
+                error={errors.nivel}
                 placeholder="Ej: 100"
                 rules={{
                   required: 'El nivel es obligatorio',
@@ -121,12 +121,12 @@ export default function CourseCrud() {
                 id="credits"
                 label="Créditos"
                 control={control}
-                name="credits"
+                name="creditos"
                 type="number"
                 min={0}
                 step={1}
                 required
-                error={errors.credits}
+                error={errors.creditos}
                 placeholder="Ej: 3"
                 rules={{
                   required: 'Los créditos son obligatorios',
@@ -138,12 +138,12 @@ export default function CourseCrud() {
                 id="contactHours"
                 label="Horas Totales"
                 control={control}
-                name="contactHours"
+                name="horasContacto"
                 type="number"
                 min={0}
                 step={1}
                 required
-                error={errors.contactHours}
+                error={errors.horasContacto}
                 placeholder="Ej: 48"
                 rules={{
                   required: 'Las horas totales son obligatorias',
@@ -152,10 +152,10 @@ export default function CourseCrud() {
               />
 
               <FormTextarea
-                id="description"
+                id="descripcion"
                 label="Descripción"
-                register={register('description')}
-                error={errors.description}
+                register={register('descripcion')}
+                error={errors.descripcion}
                 placeholder="Contenido general del curso..."
               />
 
@@ -186,12 +186,12 @@ export default function CourseCrud() {
                     onClick={() => {
                       setEditandoId(null)
                       reset({
-                        name: '',
-                        description: '',
-                        code: '',
-                        level: '',
-                        credits: 0,
-                        contactHours: 0,
+                        nombre: '',
+                        descripcion: '',
+                        codigo: '',
+                        nivel: '',
+                        creditos: 0,
+                        horasContacto: 0,
                         programaId: ''
                       })
                     }}
@@ -209,14 +209,14 @@ export default function CourseCrud() {
         <Card key={curso.id} className={isEditing ? 'ring-2 ring-blue-400' : ''}>
           <CardContent className="p-4 space-y-2">
             <div className="flex justify-between">
-              <h3 className="text-lg font-semibold">{curso.name}</h3>
+              <h3 className="text-lg font-semibold">{curso.nombre}</h3>
               {isEditing && <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">Editando</span>}
             </div>
-            <p className="text-sm text-muted-foreground">Código: {curso.code}</p>
-            <p className="text-sm text-muted-foreground">Nivel: {curso.level}</p>
-            <p className="text-sm text-muted-foreground">Créditos: {curso.credits}</p>
-            <p className="text-sm text-muted-foreground">Horas Totales: {curso.contactHours}</p>
-            <p className="text-sm text-muted-foreground">{curso.description}</p>
+            <p className="text-sm text-muted-foreground">Código: {curso.codigo}</p>
+            <p className="text-sm text-muted-foreground">Nivel: {curso.nivel}</p>
+            <p className="text-sm text-muted-foreground">Créditos: {curso.creditos}</p>
+            <p className="text-sm text-muted-foreground">Horas Totales: {curso.horasContacto}</p>
+            <p className="text-sm text-muted-foreground">{curso.descripcion}</p>
             <p className="text-sm text-muted-foreground font-semibold">
               Programa: {programasMock.find((p) => p.id === curso.programaId)?.nombre || 'N/A'}
             </p>
