@@ -14,7 +14,11 @@ interface FormFieldProps<T extends Record<string, any>> {
   name: Path<T>
   required?: boolean
   disabled?: boolean
-  rules?: any // <-- esta línea nueva
+  rules?: any
+  min?: number
+  max?: number
+  step?: number
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>
 }
 
 export const FormField = <T extends Record<string, any>>({
@@ -27,15 +31,19 @@ export const FormField = <T extends Record<string, any>>({
   name,
   required = false,
   disabled = false,
-  rules
+  rules,
+  min,
+  max,
+  step,
+  inputProps = {}
 }: FormFieldProps<T>) => {
   const {
     field: { onChange, value }
   } = useController<T>({
     control,
     name,
-    defaultValue: '' as any, // patch sucio pero efectivo
-    rules // <-- acá usás la regla que te llegó por props
+    defaultValue: '' as any,
+    rules
   })
 
   return (
@@ -51,7 +59,11 @@ export const FormField = <T extends Record<string, any>>({
         value={value}
         onChange={(e) => onChange(e)}
         disabled={disabled}
+        min={min}
+        max={max}
+        step={step}
         className={error ? 'border-red-500' : ''}
+        {...inputProps}
       />
       {error && <p className="text-sm text-red-500">{error.message}</p>}
     </div>
