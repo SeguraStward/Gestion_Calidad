@@ -1,20 +1,36 @@
+// #15
 model FinalReport {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
-  version Int    @default(0) @map("__v")
+  version Int    @default(0) @map("__v") // used for versioning in this model
 
-  loadId String       @db.ObjectId
-  load   AcademicLoad @relation(fields: [loadId], references: [id])
+  professorId    String @db.ObjectId
+  academicLoadId String @db.ObjectId
 
-  statistics FinalReportStatistics
-  status     Status
-
+  statistics         FinalReportStatistics
   evaluation         FinalReportEvaluation[]
   studentInformation FinalReportStudentInformation
 
-  professor   Professor @relation(fields: [professorId], references: [id])
-  professorId String    @db.ObjectId
+  status FinalReportStatus @default(PENDING)
 
+  // Relations
+  professor    User         @relation("ProfessorFinalReport", fields: [professorId], references: [id])
+  academicLoad AcademicLoad @relation(fields: [academicLoadId], references: [id])
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  // @@unique([professorId, academicLoadId])
+  @@index([status, professorId])
+  @@index([academicLoadId])
   @@map("final_reports")
+}
+
+enum FinalReportStatus {
+  PENDING
+  EVALUATED
 }
 
 type FinalReportStatistics {

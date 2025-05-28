@@ -1,44 +1,54 @@
+// #4
 model AcademicLoad {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
   nrc String
 
-  academicPeriod   AcademicPeriod @relation(fields: [academicPeriodId], references: [id])
-  academicPeriodId String         @db.ObjectId
+  academicCycleId String @db.ObjectId
 
-  campus   Campus @relation(fields: [campusId], references: [id])
   campusId String @db.ObjectId
 
-  course   Course @relation(fields: [courseId], references: [id])
   courseId String @db.ObjectId
 
-  classroom   Classroom @relation(fields: [classroomId], references: [id])
-  classroomId String    @db.ObjectId
+  classroomId String @db.ObjectId
 
   maximumCapacity  Int
   enrolledCapacity Int
   availableSeats   Int
 
-  group   AcademicLoadsGroup  @relation(fields: [groupId], references: [id])
   groupId String @db.ObjectId
 
-  schedule   Schedule @relation(fields: [scheduleId], references: [id])
-  scheduleId String   @db.ObjectId
+  scheduleId String @db.ObjectId
 
-  professor   Professor @relation(fields: [professorId], references: [id])
-  professorId String    @db.ObjectId
+  professorId String @db.ObjectId
 
   date DateTime?
 
-  status Status
+  status Status @default(ACTIVE)
 
-  FinalReport       FinalReport[]
-  StudentEnrollment StudentEnrollment[]
+  // Relations
+  academicCycle AcademicCycle     @relation(fields: [academicCycleId], references: [id])
+  campus        Campus            @relation(fields: [campusId], references: [id])
+  course        Course            @relation(fields: [courseId], references: [id])
+  classroom     Classroom         @relation(fields: [classroomId], references: [id])
+  group         AcademicLoadGroup @relation(fields: [groupId], references: [id])
+  schedule      Schedule          @relation(fields: [scheduleId], references: [id])
 
-  @@index([academicPeriodId])
+  professor User @relation("ProfessorLoad", fields: [professorId], references: [id])
+
+  finalReport FinalReport[]
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@index([academicCycleId])
   @@index([campusId])
   @@index([courseId])
   @@index([professorId])
+  @@index([academicCycleId, professorId])
   @@map("academic_loads")
 }

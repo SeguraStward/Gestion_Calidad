@@ -1,0 +1,29 @@
+// #19
+model Parameter {
+  version Int    @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name String @unique
+
+  value       String // Can store any value as string, will be converted based on dataType
+  description String? // Optional: describes the purpose of this parameter
+  dataType    DataType // Defines the type: number, boolean, string, etc.
+
+  isActive Boolean @default(true)
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("parameters")
+}
+
+enum DataType {
+  STRING
+  NUMBER
+  BOOLEAN
+  DATE
+  JSON
+}

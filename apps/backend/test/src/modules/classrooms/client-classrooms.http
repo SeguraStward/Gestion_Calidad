@@ -1,10 +1,11 @@
 #var, use command >Rest Client: Switch Environment in search bar of vs code
-@id =1
+@id=1
+@campusId=1
 
 ###
 
 ### Get all classrooms
-GET http://localhost:3000/api/v1/classrooms HTTP/1.1
+GET http://localhost:3000/api/v1/classrooms?page=1&limit=10  HTTP/1.1
 Content-Type: application/json
 
 ###
@@ -22,7 +23,8 @@ Content-Type: application/json
 {
   "roomNumber": "A-101",
   "capacity": 35,
-  "campusId": "68155584c434b0977c70af87"
+  "description": "Un aula espaciosa con comodidades modernas.",
+  "campusId": "{{campusId}}"
 }
 
 ###
@@ -34,7 +36,7 @@ Content-Type: application/json
 {
   "roomNumber": "A-102",
   "capacity": 40,
-  "campusId": "68155584c434b0977c70af87"
+  "campusId": "{{campusId}}",
 }
 
 ###

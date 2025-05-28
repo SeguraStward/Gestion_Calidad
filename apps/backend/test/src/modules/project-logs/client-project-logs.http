@@ -1,0 +1,78 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+@projectId=1
+@sessionId=1
+@reviewId=1
+@documentId=1
+@userId=1
+
+###
+
+### Get all project-logs
+GET http://localhost:3000/api/v1/project-logs?page=1&limit=10  HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get project-log by ID
+GET http://localhost:3000/api/v1/project-logs/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new project-log
+POST http://localhost:3000/api/v1/project-logs HTTP/1.1
+Content-Type: application/json
+
+{
+  "projectId": "{{projectId}}",
+  "lastSessionDate": "2025-05-24T10:00:00Z",
+  "logEntries": [
+    {
+      "version": 0,
+      "updatedBy": "{{userId}}",
+      "session": "{{sessionId}}",
+      "review": "{{reviewId}}",
+      "document": "{{documentId}}",
+      "note": "Configuración inicial del proyecto",
+      "date": "2025-05-24T10:00:00Z"
+    }
+  ]
+}
+
+###
+
+### Update an existing project-log
+PUT http://localhost:3000/api/v1/project-logs/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "projectId": "{{projectId}}",
+  "lastSessionDate": "2025-05-24T14:30:00Z",
+  "logEntries": [
+    {
+      "version": 0,
+      "updatedBy": "{{userId}}",
+      "session": "{{sessionId}}",
+      "review": "{{reviewId}}",
+      "document": "{{documentId}}",
+      "note": "Configuración inicial del proyecto",
+      "date": "2025-05-24T10:00:00Z"
+    },
+    {
+      "version": 0,
+      "updatedBy": "{{userId}}",
+      "session": "{{sessionId}}",
+      "review": "{{reviewId}}",
+      "document": "{{documentId}}",
+      "note": "Revisión del proyecto completada",
+      "date": "2025-05-24T14:30:00Z"
+    }
+  ]
+}
+
+###
+
+### Delete a project-log
+DELETE http://localhost:3000/api/v1/project-logs/{{id}} HTTP/1.1
+Content-Type: application/json

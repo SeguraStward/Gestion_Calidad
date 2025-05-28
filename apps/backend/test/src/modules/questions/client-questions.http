@@ -1,79 +1,84 @@
-#var, use "command >Rest Client: Switch Environment" in search bar of vs code 
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
 
-@id = 1 
+###
 
 ### Get all questions
-GET http://localhost:3000/api/v1/questions HTTP/1.1 
-Content-Type: application/json 
-
-### Get question by ID 
-GET http://localhost:3000/api/v1/questions/{{id}} HTTP/1.1 
-Content-Type: application/json 
-
-### Create a new question
-POST http://localhost:3000/api/v1/questions HTTP/1.1 
-Content-Type: application/json 
-
-{
-  "status": "ACTIVE",
-  "groupId": "60f7a5c4d5b5e40c8c234567",
-  "module": "Academic Assessment",
-  "question": "How would you rate the teaching effectiveness?",
-  "responseType": "MULTIPLE_CHOICE",
-  "options": [
-    {
-      "category": "rating",
-      "label": "Excellent",
-      "value": "5"
-    },
-    {
-      "category": "rating",
-      "label": "Good",
-      "value": "4"
-    },
-    {
-      "category": "rating",
-      "label": "Average",
-      "value": "3"
-    },
-    {
-      "category": "rating",
-      "label": "Poor",
-      "value": "2"
-    },
-    {
-      "category": "rating",
-      "label": "Very Poor",
-      "value": "1"
-    }
-  ]
-}
-
-### Update an existing question
-PUT http://localhost:3000/api/v1/questions/{{id}} HTTP/1.1 
-Content-Type: application/json 
-
-{
-  "status": "UPDATED",
-  "groupId": "60f7a5c4d5b5e40c8c234567",
-  "module": "Course Evaluation",
-  "question": "Rate the clarity of course materials",
-  "responseType": "SLIDER",
-  "options": [
-    {
-      "category": "range",
-      "label": "Low",
-      "value": "1"
-    },
-    {
-      "category": "range",
-      "label": "High",
-      "value": "10"
-    }
-  ]
-}
-
-### Delete a question
-DELETE http://localhost:3000/api/v1/questions/{{id}} HTTP/1.1 
+GET http://localhost:3000/api/v1/questions HTTP/1.1
 Content-Type: application/json
 
+###
+
+### Get question by ID
+GET http://localhost:3000/api/v1/questions/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new question
+POST http://localhost:3000/api/v1/questions HTTP/1.1
+Content-Type: application/json
+
+{
+  "question": "¿Cada cuánto tiempo se realiza el mantenimiento?",
+  "responseType": "SELECT",
+  "groupId": "65f784ecab0f5e4c84b1e312",
+  "module": "Mantenimiento",
+  "options": [
+    {
+      "category": "frecuencia",
+      "label": "Mensual",
+      "value": "mensual"
+    },
+    {
+      "category": "frecuencia",
+      "label": "Trimestral",
+      "value": "trimestral"
+    },
+    {
+      "category": "frecuencia",
+      "label": "Anual",
+      "value": "anual"
+    }
+  ]
+}
+
+###
+
+### Update an existing question
+PUT http://localhost:3000/api/v1/questions/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "question": "¿Con qué frecuencia se realiza el mantenimiento?",
+  "responseType": "SELECT",
+  "module": "Mantenimiento Preventivo",
+  "options": [
+    {
+      "category": "frecuencia",
+      "label": "Mensual",
+      "value": "mensual"
+    },
+    {
+      "category": "frecuencia",
+      "label": "Trimestral",
+      "value": "trimestral"
+    },
+    {
+      "category": "frecuencia",
+      "label": "Semestral",
+      "value": "semestral"
+    },
+    {
+      "category": "frecuencia",
+      "label": "Anual",
+      "value": "anual"
+    }
+  ]
+}
+
+###
+
+### Delete a question
+DELETE http://localhost:3000/api/v1/questions/{{id}} HTTP/1.1
+Content-Type: application/json

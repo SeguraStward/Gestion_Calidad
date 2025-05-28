@@ -1,9 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsInt, IsEnum, IsArray, ValidateNested, Min } from 'class-validator';
-import { Status } from '@una-gc/database/prisma/generated/client';
-import { Type } from 'class-transformer';
 
-export class FinalReportEvaluationOptionsDto {
+import { Type } from 'class-transformer';
+import { FinalReportStatus } from '@una-gc/database/prisma/generated/client';
+import { BaseDto } from '@src/modules/generalDto';
+
+export class FinalReportEvaluationOptionsDto extends BaseDto {
   @ApiProperty({ description: 'Category' })
   @IsString()
   category: string;
@@ -17,7 +19,7 @@ export class FinalReportEvaluationOptionsDto {
   value: string;
 }
 
-export class FinalReportEvaluationDto {
+export class FinalReportEvaluationDto extends BaseDto {
   @ApiProperty({ description: 'Question Group' })
   @IsString()
   questionGroup: string;
@@ -54,7 +56,7 @@ export class FinalReportEvaluationDto {
   responseType: string;
 }
 
-export class FinalReportStatisticsDto {
+export class FinalReportStatisticsDto extends BaseDto {
   @ApiProperty({ description: 'Number of students that passed' })
   @IsInt()
   @Min(0)
@@ -76,7 +78,7 @@ export class FinalReportStatisticsDto {
   totalStudents: number;
 }
 
-export class FinalReportStudentAdjustmentDto {
+export class FinalReportStudentAdjustmentDto extends BaseDto {
   @ApiProperty({ description: 'Support' })
   @IsString()
   support: string;
@@ -98,7 +100,7 @@ export class FinalReportStudentAdjustmentDto {
   observation: string;
 }
 
-export class FinalReportStudentSafeguardDto {
+export class FinalReportStudentSafeguardDto extends BaseDto {
   @ApiProperty({ description: 'ID Number' })
   @IsString()
   idNumber: string;
@@ -116,7 +118,7 @@ export class FinalReportStudentSafeguardDto {
   observation: string;
 }
 
-export class FinalReportStudentInformationDto {
+export class FinalReportStudentInformationDto extends BaseDto {
   @ApiProperty({ description: 'Student Adjustments', type: [FinalReportStudentAdjustmentDto] })
   @IsArray()
   @ValidateNested({ each: true })
@@ -130,29 +132,24 @@ export class FinalReportStudentInformationDto {
   safeguards: FinalReportStudentSafeguardDto[];
 }
 
-export class FinalReportDto {
+export class FinalReportDto extends BaseDto {
   @ApiPropertyOptional({ description: 'Final Report ID' })
   @IsString()
   @IsOptional()
   id?: string;
 
-  @ApiPropertyOptional({ description: 'Version', readOnly: true })
-  @IsInt()
-  @IsOptional()
-  version?: number;
-
   @ApiProperty({ description: 'Academic Load ID' })
   @IsString()
-  loadId: string;
+  academicLoadId: string;
+
+  @ApiProperty({ description: 'Professor ID' })
+  @IsString()
+  professorId: string;
 
   @ApiProperty({ description: 'Statistics', type: FinalReportStatisticsDto })
   @ValidateNested()
   @Type(() => FinalReportStatisticsDto)
   statistics: FinalReportStatisticsDto;
-
-  @ApiProperty({ description: 'Final Report Status', enum: Status })
-  @IsEnum(Status)
-  status: Status;
 
   @ApiProperty({ description: 'Evaluations', type: [FinalReportEvaluationDto] })
   @IsArray()
@@ -165,11 +162,16 @@ export class FinalReportDto {
   @Type(() => FinalReportStudentInformationDto)
   studentInformation: FinalReportStudentInformationDto;
 
-  @ApiProperty({ description: 'Professor ID' })
-  @IsString()
-  professorId: string;
+  @ApiProperty({
+    description: 'Final Report Status',
+    enum: FinalReportStatus,
+    default: FinalReportStatus.PENDING,
+  })
+  @IsEnum(FinalReportStatus)
+  status: FinalReportStatus;
 
   constructor(dto: Partial<FinalReportDto> = {}) {
+    super();
     Object.assign(this, dto);
   }
 }

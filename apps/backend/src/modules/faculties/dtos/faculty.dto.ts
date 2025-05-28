@@ -1,17 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, IsEnum } from 'class-validator';
-import { Status } from '@una-gc/database/prisma/generated/client';
+import { IsOptional, IsString, IsEnum } from 'class-validator';
 
-export class FacultyDto {
+import { Status } from '@una-gc/database/prisma/generated/client';
+import { BaseDto } from '@src/modules/generalDto';
+
+export class FacultyDto extends BaseDto {
   @ApiPropertyOptional({ description: 'Faculty ID' })
   @IsString()
   @IsOptional()
   id?: string;
-
-  @ApiPropertyOptional({ description: 'Version', readOnly: true })
-  @IsInt()
-  @IsOptional()
-  version?: number;
 
   @ApiProperty({ description: 'Faculty code' })
   @IsString()
@@ -21,16 +18,17 @@ export class FacultyDto {
   @IsString()
   description: string;
 
-  @ApiProperty({ description: 'Status of the faculty', enum: Status, default: Status.ACTIVE })
-  @IsEnum(Status)
-  status: Status;
-
   @ApiPropertyOptional({ description: 'Name' })
   @IsString()
   @IsOptional()
   name?: string;
 
+  @ApiProperty({ description: 'Status of the faculty', enum: Status, default: Status.ACTIVE })
+  @IsEnum(Status)
+  status: Status;
+
   constructor(dto: Partial<FacultyDto> = {}) {
+    super();
     Object.assign(this, dto);
   }
 }

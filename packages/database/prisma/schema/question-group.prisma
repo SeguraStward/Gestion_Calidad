@@ -1,10 +1,22 @@
+// #26
 model QuestionGroup {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  version  Int    @default(0) @map("__v")
-  status   String
-  question String
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  name        String  @unique
+  Title       String
+  description String?
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  questions Question[]
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
 
   @@map("question_groups")
 }
-
-//NOTE: what is the purpose of this?

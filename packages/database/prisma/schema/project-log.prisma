@@ -1,0 +1,32 @@
+// #21
+model ProjectLog {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  projectId String @unique @db.ObjectId
+
+  lastSessionDate DateTime?
+
+  logEntries ProjectLogEntry[]
+
+  // Relations
+  project Project @relation("ProjectToLog", fields: [projectId], references: [id])
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("project_logs")
+}
+
+type ProjectLogEntry {
+  version   Int      @default(0) @map("__v")
+  updatedBy String?  @db.ObjectId
+  session   String?  @db.ObjectId
+  review    String?  @db.ObjectId
+  document  String?  @db.ObjectId
+  note      String?
+  date      DateTime @default(now())
+}

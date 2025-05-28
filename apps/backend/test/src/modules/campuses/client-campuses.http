@@ -1,10 +1,11 @@
 #var, use command >Rest Client: Switch Environment in search bar of vs code
-@id =1
+@id=1
+@regionalCenterID=1
 
 ###
 
 ### Get all campuses
-GET http://localhost:3000/api/v1/campuses HTTP/1.1
+GET http://localhost:3000/api/v1/campuses?page=1&limit=10  HTTP/1.1
 Content-Type: application/json
 
 ###
@@ -21,9 +22,10 @@ Content-Type: application/json
 
 {
   "code": "CAMP-003",
+  "name": "Campus Principal",
   "description": "Campus principal ubicado en el centro de la ciudad",
+  "regionalCenterID": "{{regionalCenterID}}",
   "status": "ACTIVE",
-  "name": "Campus Principal"
 }
 
 ###
@@ -34,8 +36,8 @@ Content-Type: application/json
 
 {
   "code": "CAMP-002",
+  "name": "Campus Principal Renovado",
   "description": "Campus principal con nuevas instalaciones académicas",
-  "name": "Campus Principal Renovado"
 }
 
 ###

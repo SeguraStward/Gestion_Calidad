@@ -1,0 +1,15 @@
+// #9
+model CommSessionAttendance {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  sessionId String @db.ObjectId
+  memberId  String @db.ObjectId
+
+  // Relations
+  session CommSession @relation(fields: [sessionId], references: [id])
+  member  CommMember  @relation("CommSessionAttendance", fields: [memberId], references: [id])
+
+  @@unique([sessionId, memberId])
+  @@map("comm_session_attendance")
+}

@@ -1,0 +1,51 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+@commissionId=1
+@projectId=1
+@professorId=1
+
+###
+
+### Get all project-reviews
+GET http://localhost:3000/api/v1/project-reviews?page=1&limit=10  HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get project-review by ID
+GET http://localhost:3000/api/v1/project-reviews/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new project-review
+POST http://localhost:3000/api/v1/project-reviews HTTP/1.1
+Content-Type: application/json
+
+{ 
+  "commissionId": "{{commissionId}}",
+  "projectId": "{{projectId}}",
+  "professorId": "{{professorId}}",
+  "submissionDate": "2025-05-24T10:00:00Z",
+  "status": "ACTIVE"
+}
+
+###
+
+### Update an existing project-review
+PUT http://localhost:3000/api/v1/project-reviews/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "commissionId": "{{commissionId}}",
+  "projectId": "{{projectId}}",
+  "professorId": "{{professorId}}",
+  "submissionDate": "2025-05-25T14:00:00Z",
+  "status": "ACTIVE"
+}
+
+###
+
+### Delete a project-review
+DELETE http://localhost:3000/api/v1/project-reviews/{{id}} HTTP/1.1
+Content-Type: application/json
