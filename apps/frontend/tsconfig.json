@@ -8,7 +8,6 @@
       "@/hooks/*": ["src/shared/hooks/*"],
       "@/state/*": ["./src/state/*"],
       "@/lib/*": ["./src/lib/*"],
-      "@/services/*": ["src/shared/services/*"],
       "@/modules/*": ["src/modules/*"],
       "@una-gc/ui/*": ["../../packages/ui/src/*"],
       "@api/*": ["./src/api/*"],

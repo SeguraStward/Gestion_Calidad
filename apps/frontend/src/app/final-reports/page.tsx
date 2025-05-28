@@ -1,189 +1,132 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@una-gc/ui/components/button'
-import { MoreHorizontal, FileDown, Edit, Trash2, PlusCircle } from 'lucide-react'
+import { MoreHorizontal, FileDown, Edit, Trash2, PlusCircle, Loader2 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@una-gc/ui/components/dropdown-menu'
-import { DataTable } from '@/app/(components)/ui/data-table' // Ajusta la ruta si es necesario
-import Link from 'next/link' // Importar Link
+import { DataTable } from '@/app/(components)/ui/data-table'
+import Link from 'next/link'
+import { toast } from 'sonner'
 
-// Definimos el tipo para un informe final
-interface InformeFinal {
-  id: string
-  nrc: string
-  nombreProfesor: string
-  nombreAsignatura: string
-  codigoAsignatura: string
-  ciclo: string
-  fechaCreacion: string
-  estado: 'Borrador' | 'Enviado para revisión' | 'Con observaciones' | 'Aprobado'
+// 1. Import hooks and types
+import { useFinalReports, useDeleteFinalReport } from '@/modules/final-reports/service/final-reports.service' // Adjusted path
+import type { FullFinalReport, FinalReportStatusFE } from '@/modules/final-reports/types/final-reports.types' // Adjusted path
+
+// Helper to map status to display properties
+const getStatusDisplay = (statusValue: FinalReportStatusFE | undefined) => {
+  const status = typeof statusValue === 'string' ? statusValue.toUpperCase() : undefined
+  switch (status) {
+    case 'APPROVED':
+      return { text: 'Aprobado', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' }
+    case 'REVIEW': // Assuming 'REVIEW' is a possible backend status
+    case 'ENVIADO PARA REVISIÓN': // Legacy from mock
+      return { text: 'En Revisión', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' }
+    case 'OBSERVATIONS':
+    case 'CON OBSERVACIONES': // Legacy from mock
+      return { text: 'Con Observaciones', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' }
+    case 'DRAFT':
+    case 'BORRADOR': // Legacy from mock
+      return { text: 'Borrador', className: 'bg-gray-200 text-gray-800 dark:bg-gray-700/30 dark:text-gray-300' }
+    case 'PENDING':
+      return { text: 'Pendiente', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' }
+    case 'EVALUATED':
+      return { text: 'Evaluado', className: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' }
+    default:
+      return { text: statusValue || 'Desconocido', className: 'bg-gray-100 text-gray-700 dark:bg-gray-800/30 dark:text-gray-400' }
+  }
 }
 
-// Datos mock para la tabla
-const mockInformes: InformeFinal[] = [
-  {
-    id: '1',
-    nrc: '10234',
-    nombreProfesor: 'Dr. Alan Turing',
-    nombreAsignatura: 'Introducción a la Computación',
-    codigoAsignatura: 'CS101',
-    ciclo: '2024-01',
-    fechaCreacion: '2024-05-10',
-    estado: 'Aprobado'
-  },
-  {
-    id: '2',
-    nrc: '10235',
-    nombreProfesor: 'Dra. Ada Lovelace',
-    nombreAsignatura: 'Algoritmos Avanzados',
-    codigoAsignatura: 'CS305',
-    ciclo: '2024-01',
-    fechaCreacion: '2024-05-15',
-    estado: 'Enviado para revisión'
-  },
-  {
-    id: '3',
-    nrc: '10236',
-    nombreProfesor: 'MSc. Grace Hopper',
-    nombreAsignatura: 'Sistemas Operativos',
-    codigoAsignatura: 'CS210',
-    ciclo: '2024-01',
-    fechaCreacion: '2024-05-20',
-    estado: 'Borrador'
-  },
-  {
-    id: '4',
-    nrc: '10237',
-    nombreProfesor: 'Dr. Charles Babbage',
-    nombreAsignatura: 'Arquitectura de Computadoras',
-    codigoAsignatura: 'CS220',
-    ciclo: '2024-02',
-    fechaCreacion: '2024-11-05',
-    estado: 'Con observaciones'
-  },
-  {
-    id: '5',
-    nrc: '10238',
-    nombreProfesor: 'Dr. Edsger Dijkstra',
-    nombreAsignatura: 'Estructuras de Datos',
-    codigoAsignatura: 'CS202',
-    ciclo: '2024-01',
-    fechaCreacion: '2024-05-12',
-    estado: 'Aprobado'
-  },
-  {
-    id: '6',
-    nrc: '10239',
-    nombreProfesor: 'Dr. Donald Knuth',
-    nombreAsignatura: 'Análisis de Algoritmos',
-    codigoAsignatura: 'CS401',
-    ciclo: '2024-01',
-    fechaCreacion: '2024-05-18',
-    estado: 'Enviado para revisión'
-  },
-  {
-    id: '7',
-    nrc: '10240',
-    nombreProfesor: 'Dr. Tim Berners-Lee',
-    nombreAsignatura: 'Desarrollo Web',
-    codigoAsignatura: 'CS310',
-    ciclo: '2024-02',
-    fechaCreacion: '2024-11-10',
-    estado: 'Borrador'
-  },
-  {
-    id: '8',
-    nrc: '10241',
-    nombreProfesor: 'Dr. Vint Cerf',
-    nombreAsignatura: 'Redes de Computadoras',
-    codigoAsignatura: 'CS320',
-    ciclo: '2024-02',
-    fechaCreacion: '2024-11-15',
-    estado: 'Aprobado'
-  },
-  {
-    id: '9',
-    nrc: '10242',
-    nombreProfesor: 'Dr. Radia Perlman',
-    nombreAsignatura: 'Seguridad Informática',
-    codigoAsignatura: 'CS450',
-    ciclo: '2024-01',
-    fechaCreacion: '2024-05-22',
-    estado: 'Con observaciones'
-  },
-  {
-    id: '10',
-    nrc: '10243',
-    nombreProfesor: 'Dr. John McCarthy',
-    nombreAsignatura: 'Inteligencia Artificial',
-    codigoAsignatura: 'CS501',
-    ciclo: '2024-01',
-    fechaCreacion: '2024-05-25',
-    estado: 'Enviado para revisión'
-  },
-  {
-    id: '11',
-    nrc: '10244',
-    nombreProfesor: 'Dr. Linus Torvalds',
-    nombreAsignatura: 'Sistemas Distribuidos',
-    codigoAsignatura: 'CS510',
-    ciclo: '2024-02',
-    fechaCreacion: '2024-11-20',
-    estado: 'Borrador'
-  }
-]
-
 export default function FinalReportsPage() {
-  const [informesData, setInformesData] = useState<InformeFinal[]>(mockInformes)
+  const router = useRouter()
+
+  // 2. Fetch data using useFinalReports
+  // You can pass filter objects to useFinalReports if needed, e.g., useFinalReports({ page: 1, limit: 10 })
+  const { data: paginatedData, isLoading, error, refetch } = useFinalReports()
+  const deleteMutation = useDeleteFinalReport()
+
+  // Extract the actual data array for the table
+  const informesData: FullFinalReport[] = paginatedData?.data || []
 
   const handleEdit = (id: string) => {
     router.push(`/final-reports/edit/${id}`)
   }
 
-  const handleDelete = (id: string) => {
-    console.log('Eliminar informe:', id)
-    setInformesData((prev) => prev.filter((informe) => informe.id !== id))
+  const handleDelete = async (id: string) => {
+    // Optional: Add a confirmation dialog (e.g., using SweetAlert2 or a custom modal)
+    // For now, directly calling the mutation
+    try {
+      await deleteMutation.mutateAsync(id)
+      // Toast notifications for success/error are handled by the createGenericHooks config
+      // refetch(); // TanStack Query often handles refetching via invalidation automatically
+    } catch (err) {
+      // Error already handled by the hook's toast, but you can log it or do other things
+      console.error('Error deleting final report:', err)
+    }
   }
 
   const handleDownloadPdf = (id: string) => {
     console.log('Descargar PDF del informe:', id)
+    toast.info('Funcionalidad de descarga de PDF aún no implementada.')
   }
 
-  const columns = useMemo<ColumnDef<InformeFinal, any>[]>( // TValue can be 'any' for simplicity here
+  // 3. Adapt columns definition
+  const columns = useMemo<ColumnDef<FullFinalReport>[]>(
     () => [
-      { accessorKey: 'nrc', header: 'NRC', size: 100 },
       {
-        accessorKey: 'nombreAsignatura',
-        header: 'Asignatura',
-        cell: ({ row }) => `${row.original.nombreAsignatura} (${row.original.codigoAsignatura})`
+        accessorKey: 'academicLoad.nrc',
+        header: 'NRC',
+        size: 80,
+        cell: ({ row }) => row.original.academicLoad?.nrc || 'N/A'
       },
-      { accessorKey: 'nombreProfesor', header: 'Profesor' },
-      { accessorKey: 'ciclo', header: 'Ciclo' },
-      { accessorKey: 'fechaCreacion', header: 'Fecha Creación' },
       {
-        accessorKey: 'estado',
-        header: 'Estado',
-        cell: ({ row }) => (
-          <span
-            className={`px-2 py-1 text-xs font-semibold rounded-full ${
-              row.original.estado === 'Aprobado'
-                ? 'bg-green-100 text-green-800'
-                : row.original.estado === 'Enviado para revisión'
-                  ? 'bg-blue-100 text-blue-800'
-                  : row.original.estado === 'Con observaciones'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-gray-100 text-gray-800'
-            }`}
-          >
-            {row.original.estado}
-          </span>
-        )
+        accessorKey: 'academicLoad.course.code',
+        header: 'Código Curso',
+        size: 120,
+        cell: ({ row }) => row.original.academicLoad?.course?.code || 'N/A'
+      },
+      {
+        accessorKey: 'academicLoad.course.name',
+        header: 'Nombre Curso',
+        minSize: 200,
+        cell: ({ row }) => row.original.academicLoad?.course?.name || 'N/A'
+      },
+      {
+        accessorKey: 'academicLoad.academicCycle.name', // Assuming 'name' is the field for cycle description
+        header: 'Ciclo',
+        size: 150,
+        cell: ({ row }) => row.original.academicLoad?.academicCycle?.name || 'N/A'
+      },
+      {
+        accessorKey: 'createdAt', // Using the FinalReport's createdAt
+        header: 'Fecha Creación',
+        size: 120,
+        cell: ({ row }) => (row.original.createdAt ? new Date(row.original.createdAt).toLocaleDateString() : 'N/A')
+      },
+      {
+        accessorKey: 'statistics.totalStudents',
+        header: 'Estudiantes',
+        size: 100,
+        cell: ({ row }) => row.original.statistics?.totalStudents ?? 'N/A'
+      },
+      {
+        accessorKey: 'status',
+        header: 'Estado Reporte',
+        size: 150,
+        cell: ({ row }) => {
+          const statusDisplay = getStatusDisplay(row.original.status)
+          return (
+            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusDisplay.className}`}>
+              {statusDisplay.text}
+            </span>
+          )
+        }
       },
       {
         id: 'actions',
         header: () => <div className="text-right">Acciones</div>,
-        size: 80,
+        size: 100,
         cell: ({ row }) => (
           <div className="text-right">
             <DropdownMenu>
@@ -217,9 +160,14 @@ export default function FinalReportsPage() {
                     e.stopPropagation()
                     handleDelete(row.original.id)
                   }}
-                  className="text-red-600 hover:!text-red-600 hover:!bg-red-100"
+                  className="text-red-600 hover:!text-red-600 hover:!bg-red-100 dark:hover:!bg-red-900/50"
+                  disabled={deleteMutation.isPending && deleteMutation.variables === row.original.id}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  {deleteMutation.isPending && deleteMutation.variables === row.original.id ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="mr-2 h-4 w-4" />
+                  )}
                   Eliminar
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -229,7 +177,7 @@ export default function FinalReportsPage() {
       }
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [] // handleDelete, handleEdit, handleDownloadPdf should be stable or included if they change
+    [deleteMutation.isPending, deleteMutation.variables, router] // router is stable from next/navigation
   )
 
   const newReportButton = (
@@ -240,21 +188,39 @@ export default function FinalReportsPage() {
     </Button>
   )
 
+  // 4. Handle loading and error states
+  if (error) {
+    return (
+      <div className="container mx-auto py-8 text-center">
+        <p className="text-red-600 dark:text-red-400 mb-4">Error al cargar los informes: {error.message}</p>
+        <Button onClick={() => refetch()}>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Reintentar
+        </Button>
+      </div>
+    )
+  }
+
+  // DataTable already handles the "No results" case internally if data is empty.
+  // The isLoading prop is passed to DataTable to handle its own loading display.
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Gestión de Informes Finales</h1>
-        {/* El botón de nuevo ahora se pasa al DataTable */}
       </div>
 
       <DataTable
         columns={columns}
         data={informesData}
-        searchPlaceholder="Buscar por NRC, profesor, asignatura..."
+        isLoading={isLoading} // Pass isLoading to DataTable
+        searchPlaceholder="Buscar por NRC, curso, profesor..."
         newButton={newReportButton}
-        initialPageSize={5}
-        // Opcional: si quieres hacer algo cuando se hace clic en una fila
-        // onRowClick={(row) => console.log('Fila clickeada:', row.original)}
+        initialPageSize={10}
+        // onRowClick={(row) => router.push(`/final-reports/view/${row.original.id}`)} // Example
+        // For server-side pagination, you'd manage pageIndex, pageSize state here
+        // and pass them as filters to useFinalReports, then update DataTable props.
+        // currentPage={paginatedData?.meta?.page}
+        // totalPages={paginatedData?.meta?.totalPages}
+        // onPageChange={(page) => { /* update filters and refetch */ }}
       />
     </div>
   )
