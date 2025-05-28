@@ -45,6 +45,7 @@ export default function HeadquartersCrud() {
       toast.success('¡Sede registrada!')
     }
     reset({
+      codigo: '',
       nombre: '',
       descripcion: ''
     })
@@ -65,10 +66,22 @@ export default function HeadquartersCrud() {
           <CardContent className="p-6">
             <FormLayout onSubmit={handleSubmit(onSubmit)} title={editandoId ? 'Editar Sede' : 'Registrar Sede'}>
               <FormField
+                id="codigo"
+                label="Código"
+                control={control}
+                name="codigo"
+                type="text"
+                required
+                error={errors.codigo}
+                placeholder="Ej: 43F34"
+                rules={{ required: 'El código es obligatorio' }}
+              />
+              <FormField
                 id="nombre"
                 label="Nombre"
                 control={control}
                 name="nombre"
+                type="text"
                 required
                 error={errors.nombre}
                 placeholder="Ej: Sede Heredia"

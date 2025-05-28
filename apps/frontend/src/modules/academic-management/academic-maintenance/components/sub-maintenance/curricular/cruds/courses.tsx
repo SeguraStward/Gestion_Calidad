@@ -49,12 +49,13 @@ export default function CourseCrud() {
       add({ ...data, id: crypto.randomUUID() })
       toast.success('¡Curso registrado!')
     }
-
     reset({
-      nombre: '',
-      descripcion: '',
-      codigo: '',
-      creditos: 0,
+      name: '',
+      description: '',
+      code: '',
+      level: '',
+      credits: 0,
+      contactHours: 0,
       programaId: ''
     })
   }
@@ -68,41 +69,64 @@ export default function CourseCrud() {
       idAEliminar={idAEliminar}
       setIdAEliminar={setIdAEliminar}
       onDelete={remove}
-      getItemName={(c) => c.nombre}
+      getItemName={(c) => c.name}
       renderForm={() => (
         <Card>
           <CardContent className="p-6">
             <FormLayout onSubmit={handleSubmit(onSubmit)} title={editandoId ? 'Editar Curso' : 'Registrar Curso'}>
               <FormField
-                id="nombre"
+                id="name"
                 label="Nombre"
                 control={control}
-                name="nombre"
+                name="name"
                 required
-                error={errors.nombre}
+                error={errors.name}
                 placeholder="Ej: Fundamentos de Redes"
                 rules={{ required: 'El nombre es obligatorio' }}
               />
 
               <FormField
-                id="codigo"
+                id="code"
                 label="Código"
                 control={control}
-                name="codigo"
+                name="code"
                 required
-                error={errors.codigo}
+                error={errors.code}
                 placeholder="Ej: INF-101"
                 rules={{ required: 'El código es obligatorio' }}
               />
 
               <FormField
-                id="creditos"
+                id="level"
+                label="Nivel"
+                control={control}
+                name="level"
+                required
+                type="number"
+                min={0}
+                step={1}
+                error={errors.level}
+                placeholder="Ej: 100"
+                rules={{
+                  required: 'El nivel es obligatorio',
+                  min: { value: 1, message: 'El nivel debe ser al menos 1' },
+                  pattern: {
+                    value: /^[0-9]+$/,
+                    message: 'El nivel debe ser un número'
+                  }
+                }}
+              />
+
+              <FormField
+                id="credits"
                 label="Créditos"
                 control={control}
-                name="creditos"
+                name="credits"
                 type="number"
+                min={0}
+                step={1}
                 required
-                error={errors.creditos}
+                error={errors.credits}
                 placeholder="Ej: 3"
                 rules={{
                   required: 'Los créditos son obligatorios',
@@ -110,11 +134,28 @@ export default function CourseCrud() {
                 }}
               />
 
+              <FormField
+                id="contactHours"
+                label="Horas Totales"
+                control={control}
+                name="contactHours"
+                type="number"
+                min={0}
+                step={1}
+                required
+                error={errors.contactHours}
+                placeholder="Ej: 48"
+                rules={{
+                  required: 'Las horas totales son obligatorias',
+                  min: { value: 1, message: 'Debe ser al menos 1 hora' }
+                }}
+              />
+
               <FormTextarea
-                id="descripcion"
+                id="description"
                 label="Descripción"
-                register={register('descripcion')}
-                error={errors.descripcion}
+                register={register('description')}
+                error={errors.description}
                 placeholder="Contenido general del curso..."
               />
 
@@ -145,10 +186,12 @@ export default function CourseCrud() {
                     onClick={() => {
                       setEditandoId(null)
                       reset({
-                        nombre: '',
-                        descripcion: '',
-                        codigo: '',
-                        creditos: 0,
+                        name: '',
+                        description: '',
+                        code: '',
+                        level: '',
+                        credits: 0,
+                        contactHours: 0,
                         programaId: ''
                       })
                     }}
@@ -166,12 +209,14 @@ export default function CourseCrud() {
         <Card key={curso.id} className={isEditing ? 'ring-2 ring-blue-400' : ''}>
           <CardContent className="p-4 space-y-2">
             <div className="flex justify-between">
-              <h3 className="text-lg font-semibold">{curso.nombre}</h3>
+              <h3 className="text-lg font-semibold">{curso.name}</h3>
               {isEditing && <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">Editando</span>}
             </div>
-            <p className="text-sm text-muted-foreground">Código: {curso.codigo}</p>
-            <p className="text-sm text-muted-foreground">Créditos: {curso.creditos}</p>
-            <p className="text-sm text-muted-foreground">{curso.descripcion}</p>
+            <p className="text-sm text-muted-foreground">Código: {curso.code}</p>
+            <p className="text-sm text-muted-foreground">Nivel: {curso.level}</p>
+            <p className="text-sm text-muted-foreground">Créditos: {curso.credits}</p>
+            <p className="text-sm text-muted-foreground">Horas Totales: {curso.contactHours}</p>
+            <p className="text-sm text-muted-foreground">{curso.description}</p>
             <p className="text-sm text-muted-foreground font-semibold">
               Programa: {programasMock.find((p) => p.id === curso.programaId)?.nombre || 'N/A'}
             </p>
