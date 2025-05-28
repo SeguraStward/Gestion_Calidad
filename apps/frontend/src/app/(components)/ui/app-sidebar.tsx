@@ -43,10 +43,10 @@ const data = {
       url: '/gestion-academica',
       icon: Building,
       items: [
-        { title: 'Importación', url: '/academic-management/bulk-import' },
-        { title: 'Asignación', url: '/academic-management/professor-assignment' },
-        { title: 'Horarios', url: '/academic-management/schedule-assignment' },
-        { title: 'Mantenimientos', url: '/academic-management/academic-maintenance' }
+        { title: 'Importación de datos', url: '/academic-management/bulk-import' },
+        { title: 'Asignación de profesores', url: '/academic-management/professor-assignment' },
+        //{ title: 'Horarios', url: '/academic-management/schedule-assignment' },
+        { title: 'Mantenimientos académicos', url: '/academic-management/academic-maintenance' }
       ]
     },
     {
