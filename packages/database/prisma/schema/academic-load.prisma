@@ -3,7 +3,7 @@ model AcademicLoad {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
-  nrc String
+  nrc String @unique
 
   maximumCapacity  Int
   enrolledCapacity Int
@@ -23,13 +23,13 @@ model AcademicLoad {
   courseId String @db.ObjectId 
   course Course @relation(fields: [courseId], references: [id])
 
-  classroomId String @db.ObjectId 
-  classroom Classroom @relation(fields: [classroomId], references: [id])
+  classroomId String? @db.ObjectId 
+  classroom Classroom? @relation(fields: [classroomId], references: [id])
 
   groupId String     
 
-  scheduleId String @db.ObjectId 
-  schedule Schedule @relation(fields: [scheduleId], references: [id])
+  scheduleId String? @db.ObjectId 
+  schedule Schedule? @relation(fields: [scheduleId], references: [id])
 
   professorId String @db.ObjectId 
   professor User @relation("ProfessorLoad", fields: [professorId], references: [id])

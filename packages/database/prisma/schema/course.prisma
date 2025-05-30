@@ -11,7 +11,7 @@ model Course {
   level        String
   contactHours Int
 
-  schoolId String  @db.ObjectId
+  schoolId String?  @db.ObjectId
   careerId String? @db.ObjectId
 
   status Status @default(ACTIVE)
