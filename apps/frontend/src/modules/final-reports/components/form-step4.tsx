@@ -85,13 +85,10 @@ export function Step4Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
           <form onSubmit={formMethods.handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col">
             {/* Contenido principal */}
             <div className="flex-1">
-              <Card className="border-blue-200 dark:border-blue-700 bg-blue-50/30 dark:bg-blue-950/10">
+              <Card className="border-primary/20 bg-primary/5 h-fit">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
-                      Estudiantes con Ajustes ({fields.length})
-                    </span>
+                    <span className="flex items-center gap-2">Estudiantes con Ajustes ({fields.length})</span>
                     <Button
                       type="button"
                       variant="default"
@@ -254,15 +251,17 @@ export function Step4Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                           </div>
 
                           {/* Acción - Eliminar */}
-                          <div className="col-span-1 flex justify-center">
+                          <div className="col-span-1 flex justify-center items-center">
                             <Button
                               type="button"
-                              variant="ghost"
-                              size="sm"
+                              variant="ghost" // Use ghost variant for no background
+                              size="icon" // Use icon size for a compact button, or adjust padding if needed
                               onClick={() => remove(index)}
-                              className="h-8 w-8 p-0 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800"
+                              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 group" // group class for icon scaling
                             >
-                              <Trash2 className="h-3 w-3" />
+                              <span className="sr-only">Eliminar estudiante</span> {/* For accessibility */}
+                              <Trash2 className="h-5 w-5 transition-transform duration-150 ease-in-out group-hover:scale-125" />{' '}
+                              {/* Icon scales on parent hover */}
                             </Button>
                           </div>
                         </div>

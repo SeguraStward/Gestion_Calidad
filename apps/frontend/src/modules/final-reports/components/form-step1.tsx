@@ -188,7 +188,7 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
 
             {/* COLUMNA 2: Profesor, Código, Nivel de Grupo */}
             <div className="space-y-6">
-              <Card className="border-green-200 bg-green-50/50 h-fit">
+              <Card className="border-primary/20 bg-primary/5 h-fit">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Información del Curso</CardTitle>
                 </CardHeader>

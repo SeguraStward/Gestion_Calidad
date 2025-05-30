@@ -60,7 +60,7 @@ export function Step2Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* COLUMNA 1: Total Matriculados y Validación */}
               <div className="space-y-6">
-                <Card className="border-blue-200 bg-blue-50/50 h-fit">
+                <Card className="border-primary/20 bg-primary/5 h-fit">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
                       <Users className="w-4 h-4" />

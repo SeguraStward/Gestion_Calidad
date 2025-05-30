@@ -83,13 +83,10 @@ export function Step3Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
           <form onSubmit={formMethods.handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col">
             {/* Contenido principal */}
             <div className="flex-1">
-              <Card className="border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20">
+              <Card className="border-primary/20 bg-primary/5 h-fit">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-purple-500 dark:bg-purple-400 rounded-full"></div>
-                      Estudiantes Registrados ({fields.length})
-                    </span>
+                    <span className="flex items-center gap-2">Estudiantes Registrados ({fields.length})</span>
                     <Button
                       type="button"
                       variant="default"
@@ -235,15 +232,17 @@ export function Step3Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                           </div>
 
                           {/* Acción - Eliminar */}
-                          <div className="col-span-1 flex justify-center">
+                          <div className="col-span-1 flex justify-center items-center">
                             <Button
                               type="button"
-                              variant="ghost"
-                              size="sm"
+                              variant="ghost" // Use ghost variant for no background
+                              size="icon" // Use icon size for a compact button, or adjust padding if needed
                               onClick={() => remove(index)}
-                              className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 group" // group class for icon scaling
                             >
-                              <Trash2 className="h-3 w-3" />
+                              <span className="sr-only">Eliminar estudiante</span> {/* For accessibility */}
+                              <Trash2 className="h-5 w-5 transition-transform duration-150 ease-in-out group-hover:scale-125" />{' '}
+                              {/* Icon scales on parent hover */}
                             </Button>
                           </div>
                         </div>

@@ -1,5 +1,6 @@
 'use client'
 
+import React, { useEffect } from 'react' // Make sure React and useEffect are imported
 import { UseFormReturn, FormProvider } from 'react-hook-form'
 import * as z from 'zod'
 import { Button } from '@una-gc/ui/components/button'
@@ -95,7 +96,7 @@ interface Step6FormProps {
   totalSteps: number
 }
 
-// Función para obtener el icono según la categoría
+// Función para obtener el icono según la categoría (similar to Step 5's MessageSquareText for header)
 const getCategoryIcon = (category: string) => {
   const iconMap = {
     'Plataformas LMS': Monitor,
@@ -104,15 +105,16 @@ const getCategoryIcon = (category: string) => {
     Interacción: Users,
     'Material Multimedia': Video,
     'Software Especializado': Laptop,
-    'Métodos Tradicionales': Settings,
+    'Métodos Tradicionales': Settings, // Using Settings as a generic icon
     'Métodos Activos': Users,
-    'Metodologías Innovadoras': Settings
+    'Metodologías Innovadoras': Settings // Using Settings as a generic icon
   }
-  return iconMap[category as keyof typeof iconMap] || Settings
+  return iconMap[category as keyof typeof iconMap] || Settings // Default icon
 }
 
-// Función para obtener el color según la categoría
+// Función para obtener el color según la categoría (for badges, if needed, similar to Step 5's muted style)
 const getCategoryColor = (category: string) => {
+  // This function might not be directly used if we simplify badges to match Step 5's muted style
   const colorMap = {
     'Plataformas LMS': 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300',
     Comunicación: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300',
@@ -127,40 +129,54 @@ const getCategoryColor = (category: string) => {
   return colorMap[category as keyof typeof colorMap] || 'bg-slate-100 text-slate-700 dark:bg-slate-900/20 dark:text-slate-300'
 }
 
-// Función para obtener colores de fondo de categoría
+// Función para obtener colores de fondo de categoría (for category group boxes)
 const getCategoryBackgroundColor = (category: string) => {
-  const colorMap = {
-    'Plataformas LMS': 'border-blue-200/50 dark:border-blue-700/50 bg-blue-50/30 dark:bg-blue-950/15',
-    Comunicación: 'border-green-200/50 dark:border-green-700/50 bg-green-50/30 dark:bg-green-950/15',
-    Gamificación: 'border-purple-200/50 dark:border-purple-700/50 bg-purple-50/30 dark:bg-purple-950/15',
-    Interacción: 'border-orange-200/50 dark:border-orange-700/50 bg-orange-50/30 dark:bg-orange-950/15',
-    'Material Multimedia': 'border-pink-200/50 dark:border-pink-700/50 bg-pink-50/30 dark:bg-pink-950/15',
-    'Software Especializado': 'border-indigo-200/50 dark:border-indigo-700/50 bg-indigo-50/30 dark:bg-indigo-950/15',
-    'Métodos Tradicionales': 'border-slate-200/50 dark:border-slate-700/50 bg-slate-50/30 dark:bg-slate-950/15',
-    'Métodos Activos': 'border-emerald-200/50 dark:border-emerald-700/50 bg-emerald-50/30 dark:bg-emerald-950/15',
-    'Metodologías Innovadoras': 'border-amber-200/50 dark:border-amber-700/50 bg-amber-50/30 dark:bg-amber-950/15'
-  }
-  return (
-    colorMap[category as keyof typeof colorMap] ||
-    'border-slate-200/50 dark:border-slate-700/50 bg-slate-50/30 dark:bg-slate-950/15'
-  )
+  // To match Step 5, category groups might not need distinct background colors,
+  // but rather rely on borders and spacing. If distinct backgrounds are kept, ensure they are subtle.
+  // For now, let's use a generic subtle background for the category groups.
+  return 'bg-muted/20 dark:bg-muted/10 border border-border/30 dark:border-border/20'
+  // Original distinct colors (can be re-enabled if preferred):
+  // const colorMap = {
+  //   'Plataformas LMS': 'border-blue-200/50 dark:border-blue-700/50 bg-blue-50/30 dark:bg-blue-950/15',
+  // ...
+  // }
+  // return colorMap[category as keyof typeof colorMap] || 'border-slate-200/50 dark:border-slate-700/50 bg-slate-50/30 dark:bg-slate-950/15'
 }
 
 export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }: Step6FormProps) {
-  const { control, watch, setValue } = formMethods
+  const { control, watch, setValue, getValues, handleSubmit, formState } = formMethods
 
-  // Inicializar respuestasMultiples si es necesario
-  const respuestasMultiplesActuales = watch('respuestasMultiples')
-  if (!respuestasMultiplesActuales || respuestasMultiplesActuales.length !== preguntasPaso6Mock.length) {
-    setValue(
-      'respuestasMultiples',
-      preguntasPaso6Mock.map((p) => ({
+  useEffect(() => {
+    const currentFormState = getValues()
+    const currentRespuestasMultiples = currentFormState.respuestasMultiples
+
+    const desiredStructure = preguntasPaso6Mock.map((p) => {
+      const existingEntry = Array.isArray(currentRespuestasMultiples)
+        ? currentRespuestasMultiples.find((r) => r && r.idPregunta === p.idPregunta)
+        : undefined
+      return {
         idPregunta: p.idPregunta,
-        respuestasSeleccionadas:
-          respuestasMultiplesActuales?.find((r) => r.idPregunta === p.idPregunta)?.respuestasSeleccionadas || []
-      }))
-    )
-  }
+        respuestasSeleccionadas: existingEntry?.respuestasSeleccionadas || []
+      }
+    })
+
+    let needsUpdate = true
+    if (Array.isArray(currentRespuestasMultiples) && currentRespuestasMultiples.length === desiredStructure.length) {
+      needsUpdate = !currentRespuestasMultiples.every((cr, index) => {
+        const dr = desiredStructure[index]
+        return cr && typeof cr.idPregunta === 'string' && cr.idPregunta === dr.idPregunta
+      })
+    }
+
+    if (needsUpdate) {
+      setValue('respuestasMultiples', desiredStructure, {
+        shouldDirty: false,
+        shouldValidate: false
+      })
+    }
+  }, [setValue, getValues])
+
+  const respuestasMultiplesActuales = watch('respuestasMultiples')
 
   const groupOptionsByCategory = (options: Option[]) => {
     return options.reduce(
@@ -172,41 +188,48 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
     )
   }
 
-  // Contar selecciones totales
   const totalSelections =
-    respuestasMultiplesActuales?.reduce((total, resp) => total + (resp.respuestasSeleccionadas?.length || 0), 0) || 0
+    respuestasMultiplesActuales?.reduce((total, resp) => {
+      return total + (resp && Array.isArray(resp.respuestasSeleccionadas) ? resp.respuestasSeleccionadas.length : 0)
+    }, 0) || 0
+
+  const handleFormSubmitSuccess = (data: Step6FormData) => {
+    onSaveAndNext(data)
+  }
+
+  const handleFormSubmitError = (errors: any) => {
+    const currentValues = getValues()
+    console.error('Step 6 Form Validation Errors:', errors)
+    console.log('Form values at time of validation error:', currentValues)
+  }
 
   return (
     <div className="p-6 h-full flex flex-col">
-      {/* Header compacto */}
+      {/* Header - Styled like Step 5 */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold flex items-center gap-3">
-          <Settings className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+          <Settings className="w-5 h-5 text-foreground/70" /> {/* Generic icon like Step 5 */}
           Herramientas y Metodologías
         </h2>
         <p className="text-muted-foreground text-sm mt-1">
-          Seleccione las herramientas y metodologías utilizadas durante el curso
+          Seleccione las herramientas y metodologías utilizadas durante el curso.
         </p>
       </div>
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={formMethods.handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col">
-            {/* Contenido principal */}
+          {/* Ensure handleSubmit uses both success and error callbacks */}
+          <form onSubmit={handleSubmit(handleFormSubmitSuccess, handleFormSubmitError)} className="flex-1 flex flex-col">
             <div className="flex-1">
-              <Card className="border-teal-200/50 dark:border-teal-700/50 bg-teal-50/20 dark:bg-teal-950/10 backdrop-blur-sm shadow-sm">
+              {/* Card - Styled like Step 5 */}
+              <Card className="border-border/40 bg-card/50 backdrop-blur-sm shadow-sm">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-base font-medium text-foreground/90 flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-teal-500 dark:bg-teal-400 rounded-full"></div>
-                      Selección de Recursos
+                  {/* Modified CardTitle to always show selection count span */}
+                  <CardTitle className="text-base font-medium text-foreground/90 flex justify-between items-baseline">
+                    <span>Selección de Recursos</span>
+                    <span className="text-xs text-muted-foreground ml-2 font-normal">
+                      ({totalSelections} seleccionada{totalSelections !== 1 ? 's' : ''})
                     </span>
-                    <Badge
-                      variant="secondary"
-                      className="text-xs bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300"
-                    >
-                      {totalSelections} seleccionada{totalSelections !== 1 ? 's' : ''}
-                    </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-0">
@@ -217,53 +240,48 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                     return (
                       <div key={pregunta.idPregunta}>
                         <div className="py-5 px-1">
-                          {/* Pregunta con contador */}
                           <div className="mb-4">
                             <FormLabel className="text-sm font-medium leading-relaxed text-foreground/90 block">
                               <span className="inline-flex items-baseline gap-2">
-                                <span className="text-muted-foreground font-normal text-xs bg-teal-100/60 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 px-2 py-0.5 rounded-full min-w-[24px] text-center">
+                                <span className="text-muted-foreground font-normal text-xs bg-muted/50 px-2 py-0.5 rounded-full min-w-[24px] text-center">
                                   {preguntaIndex + 1}
                                 </span>
                                 <span className="flex-1">{pregunta.pregunta}</span>
                               </span>
                             </FormLabel>
-                            {seleccionesActuales.length > 0 && (
-                              <div className="mt-2 ml-6">
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs border-teal-300/60 text-teal-700 dark:border-teal-600/60 dark:text-teal-300"
-                                >
-                                  {seleccionesActuales.length} seleccionada{seleccionesActuales.length !== 1 ? 's' : ''}
-                                </Badge>
-                              </div>
-                            )}
+                            {/* Always render the div and Badge for per-question selection count */}
+                            <div className="mt-2 ml-8 h-7 flex items-center">
+                              {' '}
+                              {/* Added fixed height h-7 (adjust if needed) */}
+                              <Badge variant="outline" className="text-xs border-border/50 text-muted-foreground">
+                                {seleccionesActuales.length} seleccionada{seleccionesActuales.length !== 1 ? 's' : ''}
+                              </Badge>
+                            </div>
                           </div>
 
-                          {/* Opciones agrupadas por categoría */}
-                          <div className="ml-6 space-y-4">
+                          {/* Opciones agrupadas por categoría - Styled subtly */}
+                          <div className="ml-8 space-y-4">
                             {Object.entries(groupedOptions).map(([category, options]) => {
                               const IconComponent = getCategoryIcon(category)
                               const seleccionesCategoria = options.filter((opt) => seleccionesActuales.includes(opt.value)).length
-                              const categoryBgColor = getCategoryBackgroundColor(category)
+                              const categoryStyling = getCategoryBackgroundColor(category)
 
                               return (
-                                <div
-                                  key={category}
-                                  className={`border rounded-lg p-4 transition-all duration-200 ${categoryBgColor}`}
-                                >
-                                  {/* Header de categoría */}
+                                <div key={category} className={`rounded-lg p-4 transition-all duration-200 ${categoryStyling}`}>
                                   <div className="flex items-center gap-2 mb-3">
                                     <IconComponent className="w-4 h-4 text-muted-foreground" />
                                     <h4 className="font-medium text-sm text-foreground/85">{category}</h4>
-                                    {seleccionesCategoria > 0 && (
-                                      <Badge className={`text-xs ml-auto ${getCategoryColor(category)}`}>
+                                    {/* Always render the Badge for per-category selection count */}
+                                    <div className="ml-auto">
+                                      {' '}
+                                      {/* Wrapper to push badge to the right */}
+                                      <Badge variant="outline" className="text-xs border-border/50 text-muted-foreground">
                                         {seleccionesCategoria}
                                       </Badge>
-                                    )}
+                                    </div>
                                   </div>
 
-                                  {/* Opciones en grid */}
-                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                     {options.map((option) => {
                                       const isSelected = seleccionesActuales.includes(option.value)
                                       return (
@@ -274,13 +292,10 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                                           render={({ field }) => (
                                             <FormItem>
                                               <div
-                                                className={`flex items-start space-x-2 p-2 rounded-md transition-all duration-200 cursor-pointer ${
-                                                  isSelected
-                                                    ? 'bg-background/70 border border-border/60 shadow-sm'
-                                                    : 'hover:bg-background/50 hover:border hover:border-border/40'
-                                                }`}
+                                                className={`flex items-start space-x-2 p-2.5 rounded-md transition-all duration-200 cursor-pointer border border-transparent hover:border-border/30 hover:bg-muted/30 
+                                                  ${isSelected ? 'bg-muted/50 border-border/40' : 'bg-background/30'}`}
                                               >
-                                                <FormControl>
+                                                <FormControl className="mt-[3px]">
                                                   <Checkbox
                                                     checked={field.value?.includes(option.value) || false}
                                                     onCheckedChange={(checked) => {
@@ -291,10 +306,9 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                                                             currentValue.filter((value: string) => value !== option.value)
                                                           )
                                                     }}
-                                                    className="mt-0.5"
                                                   />
                                                 </FormControl>
-                                                <FormLabel className="text-sm font-normal leading-relaxed cursor-pointer flex-1">
+                                                <FormLabel className="text-sm font-normal leading-relaxed cursor-pointer flex-1 text-foreground/80">
                                                   {option.label}
                                                 </FormLabel>
                                               </div>
@@ -308,21 +322,19 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                               )
                             })}
                           </div>
-
-                          <FormMessage className="text-xs mt-2 ml-6">
-                            {formMethods.formState.errors.respuestasMultiples?.[preguntaIndex]?.respuestasSeleccionadas?.message}
+                          <FormMessage className="text-xs mt-2 ml-8 text-destructive">
+                            {formState.errors.respuestasMultiples?.[preguntaIndex]?.root?.message ||
+                              formState.errors.respuestasMultiples?.[preguntaIndex]?.respuestasSeleccionadas?.message}
                           </FormMessage>
                         </div>
-
-                        {/* Separador sutil entre preguntas */}
-                        {preguntaIndex < preguntasPaso6Mock.length - 1 && <Separator className="opacity-20" />}
+                        {preguntaIndex < preguntasPaso6Mock.length - 1 && <Separator className="opacity-30" />}
                       </div>
                     )
                   })}
 
-                  {/* Campo de otras herramientas */}
+                  {/* Otras Herramientas - Styled like Step 5's Textarea */}
                   <div className="py-5 px-1">
-                    <Separator className="opacity-20 mb-5" />
+                    <Separator className="opacity-30 mb-5" />
                     <FormField
                       control={control}
                       name="otrasHerramientas"
@@ -336,11 +348,11 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                               <Textarea
                                 placeholder="Especifique aquí otras herramientas, plataformas, o metodologías utilizadas..."
                                 rows={3}
-                                className="resize-y bg-background/60 border-border/60 focus:border-teal-400/60 focus:bg-background transition-all duration-200 text-sm leading-relaxed shadow-sm"
+                                className="resize-y bg-background/60 border-border/60 focus:border-border focus:bg-background transition-all duration-200 text-sm leading-relaxed shadow-sm"
                                 {...field}
                               />
                             </FormControl>
-                            <FormMessage className="text-xs mt-1.5" />
+                            <FormMessage className="text-xs mt-1.5 text-destructive" />
                           </div>
                         </FormItem>
                       )}
@@ -350,16 +362,12 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
               </Card>
             </div>
 
-            {/* Botones de navegación - FIJOS EN LA PARTE INFERIOR */}
+            {/* Botones de navegación - Styled like Step 5 */}
             <div className="flex justify-between pt-6 mt-auto">
               <Button type="button" variant="outline" onClick={onPrevious} className="px-8 shadow-sm">
                 Anterior
               </Button>
-
-              <Button
-                type="submit"
-                className="px-8 shadow-sm bg-teal-600 hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-800"
-              >
+              <Button type="submit" className="px-8 shadow-sm">
                 Siguiente
               </Button>
             </div>

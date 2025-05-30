@@ -1,13 +1,15 @@
 'use client'
 
-import { UseFormReturn, FormProvider, Controller } from 'react-hook-form'
-import * as z from 'zod'
-import { Button } from '@una-gc/ui/components/button'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
+import React, { useEffect, useMemo } from 'react'
+import { UseFormReturn, FormProvider } from 'react-hook-form'
+import { useRouter } from 'next/navigation' // Import useRouter
+import { Activity } from 'lucide-react'
 import { RadioGroup, RadioGroupItem } from '@una-gc/ui/components/radio-group'
 import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card'
 import { Separator } from '@una-gc/ui/components/separator'
-import { Activity } from 'lucide-react'
+import { Button } from '@una-gc/ui/components/button'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
+import * as z from 'zod'
 
 // Estructura de las opciones para las preguntas de RadioGroup
 interface OptionRadio {
@@ -91,7 +93,7 @@ export type Step7FormData = z.infer<typeof step7Schema>
 
 interface Step7FormProps {
   formMethods: UseFormReturn<Step7FormData>
-  onSaveAndNext: (data: Step7FormData) => void
+  onSaveAndNext: (data: Step7FormData) => void | Promise<void> // Allow onSaveAndNext to be async
   onPrevious: () => void
   totalSteps: number
   tipoInforme?: string
@@ -100,97 +102,129 @@ interface Step7FormProps {
 // Función para obtener colores según el valor de la opción
 const getOptionColors = (value: string, isSelected: boolean) => {
   if (!isSelected) {
-    return 'border-border/40 hover:border-border/60 hover:bg-accent/30'
+    // Style for non-selected items: very neutral border, transparent background, subtle hover
+    return 'border-border/30 bg-transparent hover:border-border/50 hover:bg-muted/20 dark:hover:bg-muted/10'
   }
 
+  // Style for selected items: distinct border and background colors
   const colorMap = {
     // Colores para escalas positivas
-    muy_bueno: 'border-emerald-300/60 bg-emerald-50/50 dark:border-emerald-600/60 dark:bg-emerald-950/30',
-    bueno: 'border-green-300/60 bg-green-50/50 dark:border-green-600/60 dark:bg-green-950/30',
-    muy_alto: 'border-emerald-300/60 bg-emerald-50/50 dark:border-emerald-600/60 dark:bg-emerald-950/30',
-    alto: 'border-green-300/60 bg-green-50/50 dark:border-green-600/60 dark:bg-green-950/30',
+    muy_bueno: 'border-emerald-500/80 bg-emerald-500/25 dark:border-emerald-600/80 dark:bg-emerald-600/30',
+    bueno: 'border-green-500/80 bg-green-500/25 dark:border-green-600/80 dark:bg-green-600/30',
+    muy_alto: 'border-emerald-500/80 bg-emerald-500/25 dark:border-emerald-600/80 dark:bg-emerald-600/30',
+    alto: 'border-green-500/80 bg-green-500/25 dark:border-green-600/80 dark:bg-green-600/30',
 
     // Colores para escalas medias
-    regular: 'border-amber-300/60 bg-amber-50/50 dark:border-amber-600/60 dark:bg-amber-950/30',
-    medio: 'border-yellow-300/60 bg-yellow-50/50 dark:border-yellow-600/60 dark:bg-yellow-950/30',
+    regular: 'border-amber-500/80 bg-amber-500/25 dark:border-amber-600/80 dark:bg-amber-600/30',
+    medio: 'border-yellow-500/80 bg-yellow-500/25 dark:border-yellow-600/80 dark:bg-yellow-600/30',
 
     // Colores para escalas bajas
-    deficiente: 'border-red-300/60 bg-red-50/50 dark:border-red-600/60 dark:bg-red-950/30',
-    bajo: 'border-orange-300/60 bg-orange-50/50 dark:border-orange-600/60 dark:bg-orange-950/30'
+    deficiente: 'border-red-500/80 bg-red-500/25 dark:border-red-600/80 dark:bg-red-600/30',
+    bajo: 'border-orange-500/80 bg-orange-500/25 dark:border-orange-600/80 dark:bg-orange-600/30'
   }
 
   return (
-    colorMap[value as keyof typeof colorMap] || 'border-blue-300/60 bg-blue-50/50 dark:border-blue-600/60 dark:bg-blue-950/30'
+    colorMap[value as keyof typeof colorMap] || 'border-blue-500/80 bg-blue-500/25 dark:border-blue-600/80 dark:bg-blue-600/30' // Default selected color
   )
 }
 
 export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, tipoInforme }: Step7FormProps) {
-  const { control, watch, setValue } = formMethods
+  const router = useRouter() // Initialize router
+  const { control, watch, setValue, getValues, handleSubmit, formState } = formMethods
 
-  // Filtrar preguntas y agruparlas
-  const gruposDePreguntas: Record<string, PreguntaStep7[]> = {}
-  preguntasPaso7Mock.forEach((p) => {
-    if (p.tipo_respuesta === 'CHECK') {
-      if (!gruposDePreguntas[p.grupo_pregunta]) {
-        gruposDePreguntas[p.grupo_pregunta] = []
-      }
-      // Lógica condicional para el primer grupo
-      if (p.grupo_pregunta === '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?') {
-        if (tipoInforme === 'INFORME_FINAL_V1') {
-          gruposDePreguntas[p.grupo_pregunta].push(p)
+  const todasLasPreguntasMostradas = useMemo(() => {
+    const grupos: Record<string, PreguntaStep7[]> = {}
+    preguntasPaso7Mock.forEach((p) => {
+      if (p.tipo_respuesta === 'CHECK') {
+        if (!grupos[p.grupo_pregunta]) {
+          grupos[p.grupo_pregunta] = []
         }
-      } else {
-        gruposDePreguntas[p.grupo_pregunta].push(p)
+        // Specific filtering based on tipoInforme
+        if (
+          p.grupo_pregunta === '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?'
+        ) {
+          if (tipoInforme === 'INFORME_FINAL_V1') {
+            grupos[p.grupo_pregunta].push(p)
+          }
+        } else {
+          grupos[p.grupo_pregunta].push(p)
+        }
+      }
+    })
+    // Clean up empty groups
+    for (const grupo in grupos) {
+      if (grupos[grupo].length === 0) {
+        delete grupos[grupo]
       }
     }
-  })
+    return Object.values(grupos).flat()
+  }, [tipoInforme]) // Dependency for useMemo
 
-  // Eliminar grupos vacíos
-  for (const grupo in gruposDePreguntas) {
-    if (gruposDePreguntas[grupo].length === 0) {
-      delete gruposDePreguntas[grupo]
+  useEffect(() => {
+    const currentRespuestasRadio = getValues('respuestasRadio')
+    const initialRespuestas = todasLasPreguntasMostradas.map((p) => {
+      const existing = Array.isArray(currentRespuestasRadio)
+        ? currentRespuestasRadio.find((r) => r && r.idPregunta === p.idPregunta)
+        : undefined
+      return {
+        idPregunta: p.idPregunta,
+        respuesta: existing?.respuesta || '' // Default to empty string if no existing answer
+      }
+    })
+
+    let needsUpdate = true
+    if (Array.isArray(currentRespuestasRadio) && currentRespuestasRadio.length === initialRespuestas.length) {
+      needsUpdate = !currentRespuestasRadio.every(
+        (cr, index) => cr && cr.idPregunta === initialRespuestas[index].idPregunta
+        // More robust check could compare 'respuesta' as well if needed
+      )
+    }
+
+    if (needsUpdate) {
+      setValue('respuestasRadio', initialRespuestas, { shouldValidate: false, shouldDirty: false })
+    }
+  }, [setValue, getValues, todasLasPreguntasMostradas])
+
+  const handleFormSubmitSuccess = async (data: Step7FormData) => {
+    try {
+      await onSaveAndNext(data) // Call the original onSaveAndNext, await if it's async
+      // console.log('Step 7 Form Data Submitted (Success), navigating...', data)
+      router.push('/final-reports') // Navigate after successful save
+    } catch (error) {
+      console.error('Error during final save or navigation:', error)
+      // Optionally, show an error toast to the user if onSaveAndNext fails
     }
   }
 
-  // Inicializar respuestasRadio si es necesario
-  const respuestasRadioActuales = watch('respuestasRadio')
-  const todasLasPreguntasMostradas = Object.values(gruposDePreguntas).flat()
-
-  if (!respuestasRadioActuales || respuestasRadioActuales.length !== todasLasPreguntasMostradas.length) {
-    setValue(
-      'respuestasRadio',
-      todasLasPreguntasMostradas.map((p) => ({
-        idPregunta: p.idPregunta,
-        respuesta: respuestasRadioActuales?.find((r) => r.idPregunta === p.idPregunta)?.respuesta || ''
-      }))
-    )
+  const handleFormSubmitError = (errors: any) => {
+    const currentValues = getValues()
+    console.error('Step 7 Form Validation Errors:', errors)
+    console.log('Form values at time of validation error (Step 7):', currentValues)
   }
 
   return (
     <div className="p-6 h-full flex flex-col">
-      {/* Header compacto y minimalista */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold flex items-center gap-3">
-          <Activity className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          <Activity className="w-5 h-5 text-foreground/70" />
           Percepción General y Desempeño
         </h2>
         <p className="text-muted-foreground text-sm mt-1">
-          Evalúe su percepción sobre los aspectos del curso y desempeño estudiantil
+          Evalúe su percepción sobre los aspectos del curso y desempeño estudiantil.
         </p>
       </div>
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={formMethods.handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col">
-            {/* Contenido principal */}
+          <form onSubmit={handleSubmit(handleFormSubmitSuccess, handleFormSubmitError)} className="flex-1 flex flex-col">
             <div className="flex-1">
-              <Card className="border-indigo-200/50 dark:border-indigo-700/50 bg-indigo-50/20 dark:bg-indigo-950/10 backdrop-blur-sm shadow-sm">
+              <Card className="border-border/40 bg-card/50 backdrop-blur-sm shadow-sm">
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-base font-medium text-foreground/90 flex items-center gap-2">
-                    <div className="w-2 h-2 bg-indigo-500 dark:bg-indigo-400 rounded-full"></div>
-                    Evaluación de Percepción
-                    <span className="text-xs text-muted-foreground ml-auto font-normal">
-                      ({Object.keys(gruposDePreguntas).length} categoría{Object.keys(gruposDePreguntas).length !== 1 ? 's' : ''})
+                  <CardTitle className="text-base font-medium text-foreground/90 flex justify-between items-baseline">
+                    <span>Evaluación de Percepción</span>
+                    <span className="text-xs text-muted-foreground ml-2 font-normal">
+                      ({todasLasPreguntasMostradas.length} pregunta{todasLasPreguntasMostradas.length !== 1 ? 's' : ''}){' '}
+                      {/* Display total questions shown */}
                     </span>
                   </CardTitle>
                 </CardHeader>
@@ -199,27 +233,39 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
                     <div className="text-center py-8 text-muted-foreground">
                       <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p className="text-sm">No hay preguntas disponibles</p>
-                      <p className="text-xs">para este tipo de informe o configuración</p>
+                      <p className="text-xs">para este tipo de informe o configuración.</p>
                     </div>
                   ) : (
-                    Object.entries(gruposDePreguntas).map(([nombreGrupo, preguntasDelGrupo], grupoIndex) => (
-                      <div key={grupoIndex}>
+                    Object.entries(
+                      // Re-group for rendering, if needed, or iterate directly if flat list is fine
+                      todasLasPreguntasMostradas.reduce(
+                        (acc, p) => {
+                          if (!acc[p.grupo_pregunta]) {
+                            acc[p.grupo_pregunta] = []
+                          }
+                          acc[p.grupo_pregunta].push(p)
+                          return acc
+                        },
+                        {} as Record<string, PreguntaStep7[]>
+                      )
+                    ).map(([nombreGrupo, preguntasDelGrupo], grupoIndex, arr) => (
+                      <div key={nombreGrupo}>
+                        {' '}
+                        {/* Use nombreGrupo for key if unique */}
                         <div className="py-5 px-1">
-                          {/* Título del grupo */}
                           <div className="mb-5">
                             <h3 className="text-sm font-medium text-foreground/90 leading-relaxed flex items-center gap-2">
-                              <div className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full"></div>
+                              <div className="w-1.5 h-1.5 bg-muted-foreground/70 rounded-full"></div>
                               {nombreGrupo}
                             </h3>
                           </div>
 
-                          {/* Preguntas del grupo */}
                           <div className="ml-4 space-y-5">
                             {preguntasDelGrupo.map((pregunta) => {
                               const globalPreguntaIndex = todasLasPreguntasMostradas.findIndex(
-                                (p) => p.idPregunta === pregunta.idPregunta
+                                (pItem) => pItem.idPregunta === pregunta.idPregunta
                               )
-                              if (globalPreguntaIndex === -1) return null
+                              if (globalPreguntaIndex === -1) return null // Should not happen if logic is correct
 
                               const currentValue = watch(`respuestasRadio.${globalPreguntaIndex}.respuesta`)
 
@@ -238,7 +284,7 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
                                           <RadioGroup
                                             onValueChange={field.onChange}
                                             value={field.value || ''}
-                                            className="grid grid-cols-2 lg:grid-cols-4 gap-3"
+                                            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
                                           >
                                             {pregunta.opciones.map((opcion) => {
                                               const isSelected = currentValue === opcion.value
@@ -252,7 +298,7 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
                                                     <FormControl>
                                                       <RadioGroupItem value={opcion.value} className="mt-0" />
                                                     </FormControl>
-                                                    <FormLabel className="text-sm font-normal cursor-pointer flex-1 leading-relaxed">
+                                                    <FormLabel className="text-sm font-normal cursor-pointer flex-1 leading-relaxed text-foreground/80">
                                                       {opcion.label}
                                                     </FormLabel>
                                                   </div>
@@ -261,7 +307,7 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
                                             })}
                                           </RadioGroup>
                                         </FormControl>
-                                        <FormMessage className="text-xs mt-2" />
+                                        <FormMessage className="text-xs mt-2 text-destructive" />
                                       </div>
                                     </FormItem>
                                   )}
@@ -270,9 +316,8 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
                             })}
                           </div>
                         </div>
-
-                        {/* Separador sutil entre grupos */}
-                        {grupoIndex < Object.keys(gruposDePreguntas).length - 1 && <Separator className="opacity-20" />}
+                        {/* Use arr.length for separator logic */}
+                        {grupoIndex < arr.length - 1 && <Separator className="opacity-30" />}
                       </div>
                     ))
                   )}
@@ -280,16 +325,11 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
               </Card>
             </div>
 
-            {/* Botones de navegación - FIJOS EN LA PARTE INFERIOR */}
             <div className="flex justify-between pt-6 mt-auto">
               <Button type="button" variant="outline" onClick={onPrevious} className="px-8 shadow-sm">
                 Anterior
               </Button>
-
-              <Button
-                type="submit"
-                className="px-8 shadow-sm bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800"
-              >
+              <Button type="submit" className="px-8 shadow-sm">
                 Finalizar Informe
               </Button>
             </div>
