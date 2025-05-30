@@ -7,8 +7,7 @@ model AcademicLoadGroup {
 
   status Status @default(ACTIVE)
 
-  // Relations
-  academicLoads AcademicLoad[]
+  // Relations 
 
   // Audit fields
   createdAt DateTime @default(now())

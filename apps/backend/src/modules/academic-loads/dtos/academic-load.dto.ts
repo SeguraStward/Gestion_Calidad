@@ -1,16 +1,23 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsInt, IsDate } from 'class-validator';
-
+import { IsOptional, IsString, IsEnum, IsInt, IsDate, ValidateNested } from 'class-validator';
+import { Expose, Type } from 'class-transformer';
 import { Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
 
+import { CourseDto } from '@src/modules/courses/dtos/course.dto';
+import { AcademicCycleDto } from '@src/modules/academic-cycles/dtos/academic-cycle.dto';
+import { UserDto } from '@src/modules/users/dtos/user.dto';
+import { CampusDto } from '@src/modules/campuses/dtos/campus.dto';
+
 export class AcademicLoadDto extends BaseDto {
-  @ApiPropertyOptional({ description: 'AcademicLoadGroup ID' })
+  @ApiPropertyOptional({ description: 'AcademicLoad ID' })
+  @Expose()
   @IsString()
   @IsOptional()
   id?: string;
 
   @ApiProperty({ description: 'NRC code' })
+  @Expose()
   @IsString()
   nrc: string;
 
@@ -31,18 +38,22 @@ export class AcademicLoadDto extends BaseDto {
   classroomId: string;
 
   @ApiProperty({ description: 'Maximum capacity' })
+  @Expose()
   @IsInt()
   maximumCapacity: number;
 
   @ApiProperty({ description: 'Enrolled capacity' })
+  @Expose()
   @IsInt()
   enrolledCapacity: number;
 
   @ApiProperty({ description: 'Available seats' })
+  @Expose()
   @IsInt()
   availableSeats: number;
 
   @ApiProperty({ description: 'Group ID' })
+  @Expose()
   @IsString()
   groupId: string;
 
@@ -55,16 +66,58 @@ export class AcademicLoadDto extends BaseDto {
   professorId: string;
 
   @ApiPropertyOptional({ description: 'Date' })
+  @Expose()
   @IsDate()
   @IsOptional()
   date?: Date;
 
-  @ApiProperty({ description: 'Status of the academic cycle' })
+  @ApiProperty({ description: 'Status of the academic load' })
+  @Expose()
   @IsEnum(Status)
   status: Status;
 
-  constructor(dto: Partial<AcademicLoadDto> = {}) {
+  @ApiPropertyOptional({ type: () => CourseDto })
+  @Expose()
+  @Type(() => CourseDto)
+  @ValidateNested()
+  @IsOptional()
+  course?: CourseDto;
+
+  @ApiPropertyOptional({ type: () => AcademicCycleDto })
+  @Expose()
+  @Type(() => AcademicCycleDto)
+  @ValidateNested()
+  @IsOptional()
+  academicCycle?: AcademicCycleDto;
+
+  @ApiPropertyOptional({ type: () => UserDto })
+  @Expose()
+  @Type(() => UserDto)
+  @ValidateNested()
+  @IsOptional()
+  professor?: UserDto;
+
+  @ApiPropertyOptional({ type: () => CampusDto })
+  @Expose()
+  @Type(() => CampusDto)
+  @ValidateNested()
+  @IsOptional()
+  campus?: CampusDto;
+
+  constructor(partial: Partial<AcademicLoadDto> | any = {}) {
     super();
-    Object.assign(this, dto);
+    Object.assign(this, partial);
+    if (partial.course && !(partial.course instanceof CourseDto)) {
+      this.course = new CourseDto(partial.course);
+    }
+    if (partial.academicCycle && !(partial.academicCycle instanceof AcademicCycleDto)) {
+      this.academicCycle = new AcademicCycleDto(partial.academicCycle);
+    }
+    if (partial.professor && !(partial.professor instanceof UserDto)) {
+      this.professor = new UserDto(partial.professor);
+    }
+    if (partial.campus && !(partial.campus instanceof CampusDto)) {
+      this.campus = new CampusDto(partial.campus);
+    }
   }
 }

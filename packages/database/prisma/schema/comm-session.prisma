@@ -21,7 +21,6 @@ model CommSession {
   commission Commission @relation(fields: [commissionId], references: [id])
 
   documents         Document[]
-  notifications     ProjectNotification[]
   sessionAttendance CommSessionAttendance[]
 
   // Audit fields

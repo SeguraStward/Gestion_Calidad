@@ -24,8 +24,8 @@ Content-Type: application/json
   "code": "CAMP-003",
   "name": "Campus Principal",
   "description": "Campus principal ubicado en el centro de la ciudad",
-  "regionalCenterID": "{{regionalCenterID}}",
-  "status": "ACTIVE",
+  "regionalCenterId": "68363108e38c9f6ea38838e6",
+  "status": "ACTIVE"
 }
 
 ###

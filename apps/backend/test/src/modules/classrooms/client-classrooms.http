@@ -24,7 +24,7 @@ Content-Type: application/json
   "roomNumber": "A-101",
   "capacity": 35,
   "description": "Un aula espaciosa con comodidades modernas.",
-  "campusId": "{{campusId}}"
+  "campusId": "683625b6e5b3c3956494ca35"
 }
 
 ###

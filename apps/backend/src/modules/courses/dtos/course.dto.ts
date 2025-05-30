@@ -1,54 +1,87 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsInt } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsInt, IsNotEmpty, ValidateNested } from 'class-validator';
+import { Expose, Type } from 'class-transformer';
 
 import { Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
+import { SchoolDto } from '@src/modules/schools/dtos/school.dto';
+import { CareerDto } from '@src/modules/careers/dtos/career.dto';
 
 export class CourseDto extends BaseDto {
   @ApiPropertyOptional({ description: 'Course ID' })
+  @Expose()
   @IsString()
   @IsOptional()
   id?: string;
 
   @ApiProperty({ description: 'Code' })
+  @Expose()
   @IsString()
+  @IsNotEmpty()
   code: string;
 
   @ApiProperty({ description: 'Name' })
+  @Expose()
   @IsString()
+  @IsNotEmpty()
   name: string;
 
   @ApiPropertyOptional({ description: 'Description' })
+  @Expose()
   @IsString()
   @IsOptional()
   description?: string;
 
   @ApiProperty({ description: 'Credits' })
+  @Expose()
   @IsInt()
   credits: number;
 
   @ApiProperty({ description: 'Level' })
+  @Expose()
   @IsString()
+  @IsNotEmpty()
   level: string;
 
   @ApiProperty({ description: 'Contact Hours' })
+  @Expose()
   @IsInt()
   contactHours: number;
 
   @ApiProperty({ description: 'School ID' })
   @IsString()
+  @IsNotEmpty()
   schoolId: string;
 
-  @ApiProperty({ description: 'Career ID' })
+  @ApiPropertyOptional({ description: 'Career ID' })
   @IsString()
-  careerId: string;
+  @IsOptional()
+  careerId?: string;
 
-  @ApiProperty({ description: 'Course Dto Status', enum: Status, default: Status.ACTIVE })
+  @ApiProperty({ description: 'Course Status', enum: Status, default: Status.ACTIVE })
+  @Expose()
   @IsEnum(Status)
   status: Status;
 
-  constructor(dto: Partial<CourseDto> = {}) {
+  @ApiPropertyOptional({ type: () => SchoolDto, description: 'Associated School' })
+  @Expose()
+  @Type(() => SchoolDto)
+  @ValidateNested()
+  @IsOptional()
+  school?: SchoolDto;
+
+  @ApiPropertyOptional({ type: () => CareerDto, description: 'Associated Career' })
+  @Expose()
+  @Type(() => CareerDto)
+  @ValidateNested()
+  @IsOptional()
+  career?: CareerDto;
+
+  constructor(dto: Partial<CourseDto> | any = {}) {
     super();
     Object.assign(this, dto);
+    if (dto.career && !(dto.career instanceof CareerDto)) {
+      this.career = new CareerDto(dto.career);
+    }
   }
 }

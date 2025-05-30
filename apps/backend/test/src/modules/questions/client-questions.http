@@ -20,38 +20,23 @@ POST http://localhost:3000/api/v1/questions HTTP/1.1
 Content-Type: application/json
 
 {
-  "question": "¿Cada cuánto tiempo se realiza el mantenimiento?",
-  "responseType": "SELECT",
+  "question": "¿Describe la participacion de los estudiantes ?",
+  "responseType": "TEXT",
   "groupId": "65f784ecab0f5e4c84b1e312",
   "module": "Mantenimiento",
-  "options": [
-    {
-      "category": "frecuencia",
-      "label": "Mensual",
-      "value": "mensual"
-    },
-    {
-      "category": "frecuencia",
-      "label": "Trimestral",
-      "value": "trimestral"
-    },
-    {
-      "category": "frecuencia",
-      "label": "Anual",
-      "value": "anual"
-    }
-  ]
+  "options" : []
 }
 
 ###
 
 ### Update an existing question
-PUT http://localhost:3000/api/v1/questions/{{id}} HTTP/1.1
+PUT http://localhost:3000/api/v1/questions/6835fb545e318d6e24bd2e8d HTTP/1.1
 Content-Type: application/json
 
 {
   "question": "¿Con qué frecuencia se realiza el mantenimiento?",
   "responseType": "SELECT",
+  "groupId": "02",
   "module": "Mantenimiento Preventivo",
   "options": [
     {

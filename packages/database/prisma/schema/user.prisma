@@ -51,10 +51,6 @@ model User {
   projectsAsInternalReader Project[] @relation("InternalReader")
   projectsAsExternalReader Project[] @relation("ExternalReader")
 
-  // Relations with Notifications
-  createdNotifications ProjectNotification[] @relation("NotificationCreator")
-  updatedNotifications ProjectNotification[] @relation("NotificationUpdater")
-
   // Relations with Commissions
   coordinatedCommissions Commission[]  @relation("CommissionCoordinator")
   observations           Observation[] @relation("ObservationProfessor")

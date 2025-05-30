@@ -30,16 +30,16 @@ Content-Type: application/json
 
 {
   "nrc": "12345",
-  "academicCycleId": "{{academicCycleId}}",
-  "campusId": "{{campusId}}",
-  "courseId": "{{courseId}}",
-  "classroomId": "{{classroomId}}",
+  "academicCycleId": "6836244ce5b3c3956494ca32",
+  "campusId": "683625b6e5b3c3956494ca35",
+  "courseId": "68362ef4e38c9f6ea38838e2",
+  "classroomId": "68362733e5b3c3956494ca3b",
   "maximumCapacity": 30,
   "enrolledCapacity": 25,
   "availableSeats": 5,
-  "groupId": "{{groupId}}",
-  "scheduleId": "{{scheduleId}}",
-  "professorId": "{{professorId}}",
+  "groupId": "",
+  "scheduleId": "68158152dcb8cfd70156e06e",
+  "professorId": "6817035e6fde93aab0b56e60",
   "date": "2025-04-19T14:30:00Z",
   "status": "ACTIVE"
 }
