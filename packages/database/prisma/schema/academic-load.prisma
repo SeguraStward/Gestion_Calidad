@@ -14,25 +14,26 @@ model AcademicLoad {
   status Status @default(ACTIVE)
 
   // Relations
-  academicCycleId String @db.ObjectId 
-  academicCycle AcademicCycle @relation(fields: [academicCycleId], references: [id])
+  academicCycleId String        @db.ObjectId
+  academicCycle   AcademicCycle @relation(fields: [academicCycleId], references: [id])
 
-  campusId String @db.ObjectId 
-  campus Campus @relation(fields: [campusId], references: [id])
+  campusId String @db.ObjectId
+  campus   Campus @relation(fields: [campusId], references: [id])
 
-  courseId String @db.ObjectId 
-  course Course @relation(fields: [courseId], references: [id])
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id])
 
-  classroomId String? @db.ObjectId 
-  classroom Classroom? @relation(fields: [classroomId], references: [id])
+  classroomId String?    @db.ObjectId
+  classroom   Classroom? @relation(fields: [classroomId], references: [id])
 
-  groupId String     
+  groupId String            @db.ObjectId
+  group   AcademicLoadGroup @relation(fields: [groupId], references: [id])
 
-  scheduleId String? @db.ObjectId 
-  schedule Schedule? @relation(fields: [scheduleId], references: [id])
+  scheduleId String?   @db.ObjectId
+  schedule   Schedule? @relation(fields: [scheduleId], references: [id])
 
-  professorId String @db.ObjectId 
-  professor User @relation("ProfessorLoad", fields: [professorId], references: [id])
+  professorId String @db.ObjectId
+  professor   User   @relation("ProfessorLoad", fields: [professorId], references: [id])
 
   finalReport FinalReport[]
 
