@@ -1,10 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsEnum, IsArray, ValidateNested } from 'class-validator';
+
 import { Expose, Type } from 'class-transformer';
 import { FinalReport, FinalReportStatus } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
 
-// Import DTOs for nested entities
 import { AcademicLoadDto } from '@src/modules/academic-loads/dtos/academic-load.dto';
 import { UserDto } from '@src/modules/users/dtos/user.dto';
 
