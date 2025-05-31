@@ -24,7 +24,9 @@ Content-Type: application/json
   "responseType": "TEXT",
   "groupId": "65f784ecab0f5e4c84b1e312",
   "module": "Mantenimiento",
-  "options" : []
+  "options" : [],
+  "questionVersion": "",
+  "status": "ACTIVE"
 }
 
 ###
@@ -59,7 +61,9 @@ Content-Type: application/json
       "label": "Anual",
       "value": "anual"
     }
-  ]
+  ],
+  "questionVersion": "",
+  "status": "ACTIVE"
 }
 
 ###

@@ -4,7 +4,6 @@ import { Expose, Type } from 'class-transformer';
 
 import { Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
-import { SchoolDto } from '@src/modules/schools/dtos/school.dto';
 import { CareerDto } from '@src/modules/careers/dtos/career.dto';
 
 export class CourseDto extends BaseDto {
@@ -48,10 +47,11 @@ export class CourseDto extends BaseDto {
   @IsInt()
   contactHours: number;
 
-  @ApiProperty({ description: 'School ID' })
-  @IsString()
-  @IsNotEmpty()
-  schoolId: string;
+  @ApiProperty({ description: 'Independent Hours' })
+  @Expose()
+  @IsInt()
+  @IsOptional()
+  independentHours: number;
 
   @ApiPropertyOptional({ description: 'Career ID' })
   @IsString()
@@ -63,13 +63,7 @@ export class CourseDto extends BaseDto {
   @IsEnum(Status)
   status: Status;
 
-  @ApiPropertyOptional({ type: () => SchoolDto, description: 'Associated School' })
-  @Expose()
-  @Type(() => SchoolDto)
-  @ValidateNested()
-  @IsOptional()
-  school?: SchoolDto;
-
+  // relations
   @ApiPropertyOptional({ type: () => CareerDto, description: 'Associated Career' })
   @Expose()
   @Type(() => CareerDto)

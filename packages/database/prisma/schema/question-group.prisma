@@ -3,9 +3,9 @@ model QuestionGroup {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
-  name        String  @unique
-  Title       String
-  description String?
+  name          String  @unique
+  questionTitle String
+  description   String?
 
   status Status @default(ACTIVE)
 

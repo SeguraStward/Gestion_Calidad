@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsEnum, IsArray, ValidateNested, IsNotEmpty } from 'class-validator';
 
-import { ResponseType } from '@una-gc/database/prisma/generated/client'; // for Prisma enum
+import { ResponseType, Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
 import { Type } from 'class-transformer';
 
@@ -54,6 +54,16 @@ export class QuestionDto extends BaseDto {
   @IsEnum(ResponseType)
   @IsNotEmpty()
   responseType: ResponseType;
+
+  @ApiPropertyOptional({ description: 'Question version' })
+  @IsString()
+  @IsOptional()
+  questionVersion?: string;
+
+  @ApiPropertyOptional({ enum: Status, default: Status.ACTIVE })
+  @IsEnum(Status)
+  @IsOptional()
+  status?: Status;
 
   constructor(dto: Partial<QuestionDto> = {}) {
     super();

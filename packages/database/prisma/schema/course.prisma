@@ -7,17 +7,18 @@ model Course {
   name        String
   description String?
 
-  credits      Int
-  level        String
-  contactHours Int
+  credits          Int
+  level            String
+  contactHours     Int
+  independentHours Int?
 
-  schoolId String?  @db.ObjectId
+  // schoolId String  @db.ObjectId
   careerId String? @db.ObjectId
 
   status Status @default(ACTIVE)
 
   // Relations
-  school School? @relation(fields: [schoolId], references: [id])
+  // school School? @relation(fields: [schoolId], references: [id])
   career Career? @relation(fields: [careerId], references: [id])
 
   academicLoads AcademicLoad[]
@@ -28,6 +29,6 @@ model Course {
   createdBy String?  @db.ObjectId
   updatedBy String?  @db.ObjectId
 
-  @@index([schoolId, careerId])
+  @@index([careerId])
   @@map("courses")
 }

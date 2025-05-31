@@ -13,6 +13,8 @@ model Question {
 
   responseType ResponseType
 
+  questionVersion String?
+
   status Status @default(ACTIVE)
 
   // Relations

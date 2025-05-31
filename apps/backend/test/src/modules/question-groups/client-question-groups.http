@@ -21,7 +21,7 @@ Content-Type: application/json
 
 {
   "name": "mantenimiento-equipos",
-  "Title": "Mantenimiento de equipos",
+  "questionTitle": "Mantenimiento de equipos",
   "description": "Grupo de preguntas sobre el mantenimiento preventivo y correctivo de equipos"
 }
 

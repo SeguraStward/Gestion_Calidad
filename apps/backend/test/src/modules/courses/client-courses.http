@@ -28,7 +28,7 @@ Content-Type: application/json
   "credits": 3,
   "level": "Pregrado",
   "contactHours": 45,
-  "schoolId": "68362646e5b3c3956494ca38",
+  "independentHours": 30,
   "careerId": "683626b1e5b3c3956494ca39",
   "status" : "ACTIVE"
 }
@@ -46,7 +46,7 @@ Content-Type: application/json
   "credits": 4,
   "level": "Posgrado",
   "contactHours": 60,
-  "schoolId": "{{schoolId}}",
+  "independentHours": 30,
   "careerId": "{{careerId}}",
   "status" : "ACTIVE"
 }
