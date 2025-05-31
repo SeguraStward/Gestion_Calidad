@@ -7,28 +7,26 @@ import { PrismaModule } from '@src/prisma/prisma.module';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { GoogleStrategy } from './strategies/google.strategy';
-import { JwtStrategy } from './strategies/jwt.strategy';
+import { GoogleStrategy } from './strategies/google-strategy';
+import { JwtStrategy } from './strategies/jwt-strategy';
+import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
 @Module({
   imports: [
     PrismaModule,
     PassportModule,
+    ConfigModule,
     JwtModule.registerAsync({
-      //import config module so we can access environment variables
       imports: [ConfigModule],
       inject: [ConfigService],
-      //configure JWT with the secret and expiration time
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRATION'),
-        },
-      }),
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      useFactory: async (configService: ConfigService) => {
+        return {};
+      },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, JwtStrategy],
+  providers: [AuthService, GoogleStrategy, JwtStrategy, JwtRefreshStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

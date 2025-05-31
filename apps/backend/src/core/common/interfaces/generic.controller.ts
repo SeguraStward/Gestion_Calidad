@@ -11,9 +11,12 @@ import {
   HttpStatus,
   HttpCode,
 } from '@nestjs/common';
-import { IGenericService } from './generic-service.interface';
+import type { IGenericService } from './generic-service.interface';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '@src/modules/auth/guards/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 export abstract class GenericController<D, C, U = Partial<C>> {
   protected abstract readonly logger: Logger;
   constructor(protected readonly service: IGenericService<D, C, U>) {}
