@@ -1,4 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import { useUserContextStore } from '../store/authStore' // Para el usuario principal y encriptado
+import { useUserStore } from '../store/userStore' // Para el otro store de usuario
 
 // --- INICIO: Lógica para manejar el proceso de refresh ---
 let isRefreshing = false
@@ -20,9 +22,11 @@ const processQueue = (error: any, token: string | null = null) => {
 // para que otros módulos (como tu store de estado) puedan reaccionar.
 // Ejemplo simple:
 const triggerLogoutProcedures = () => {
-  // Aquí puedes limpiar el estado global de tu aplicación (Zustand, Redux, Context)
-  // Por ejemplo: useAuthStore.getState().logout();
   console.log('Triggering logout procedures: clear user state, redirect, etc.')
+  // Limpiar el estado del usuario usando los stores
+  useUserContextStore.getState().logoutUser() // Limpia authStore (encriptado)
+  useUserStore.getState().clearUser() // Limpia userStore (no encriptado)
+
   // La redirección se hará después de intentar el logout en el servidor.
 }
 
