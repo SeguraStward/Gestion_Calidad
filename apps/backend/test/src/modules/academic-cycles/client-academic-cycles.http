@@ -20,11 +20,14 @@ POST http://localhost:3000/api/v1/academic-cycles HTTP/1.1
 Content-Type: application/json
 
 {
+  "code": "C1-2025",
   "name": "Ciclo I",
   "year": 2025,
   "description": "Primer ciclo del año académico 2025",
   "startDate": "2025-02-01T00:00:00.000Z",
   "endDate": "2025-06-30T23:59:59.999Z",
+  "finalMonth": 6,
+  "intMonth": 4,
   "status": "ACTIVE"
 }
 
@@ -35,11 +38,14 @@ PUT http://localhost:3000/api/v1/academic-cycles/{{id}} HTTP/1.1
 Content-Type: application/json
 
 {
+  "code": "C2-2025",
   "name": "Ciclo II",
   "year": 2025,
   "description": "Segundo ciclo del año académico 2025 (fechas extendidas)",
   "startDate": "2025-02-01T00:00:00.000Z",
   "endDate": "2025-07-15T23:59:59.999Z",
+  "finalMonth": 7,
+  "intMonth": 5,
   "status": "ACTIVE"
 }
 

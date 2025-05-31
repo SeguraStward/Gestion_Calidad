@@ -3,12 +3,16 @@ model AcademicCycle {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
+  code        String  @unique
   name        String
   year        Int
   description String?
 
   startDate DateTime?
   endDate   DateTime?
+
+  finalMonth Int?
+  intMonth   Int?
 
   status Status @default(ACTIVE)
 
