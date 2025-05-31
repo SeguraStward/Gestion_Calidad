@@ -32,9 +32,10 @@ interface Step3FormProps {
   onSaveAndNext: (data: Step3FormData) => void
   onPrevious: () => void
   totalSteps: number
+  tipoInforme?: string // Add this if Step3Form needs it
 }
 
-export function Step3Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }: Step3FormProps) {
+export function Step3Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, tipoInforme }: Step3FormProps) {
   const { control } = formMethods
   const [editingObservacion, setEditingObservacion] = useState<number | null>(null)
 
@@ -65,7 +66,9 @@ export function Step3Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
     setEditingObservacion(null)
   }
 
-  const tituloPaso = 'Registro de Estudiantes (Salvaguarda/Plan Indígena)'
+  // Potentially use tipoInforme to adjust tituloPaso or other logic
+  const tituloPaso =
+    tipoInforme === 'INFORME_FINAL_V1' ? 'Registro de Estudiantes (Plan Indígena)' : 'Registro de Estudiantes (Salvaguarda)'
 
   return (
     <div className="p-6 h-full flex flex-col">
@@ -104,7 +107,7 @@ export function Step3Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                     <div className="text-center py-8 text-muted-foreground">
                       <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p className="text-sm">No hay estudiantes registrados</p>
-                      <p className="text-xs">Haga clic en "Añadir" para agregar un estudiante</p>
+                      <p className="text-xs">Haga clic en &quot;Añadir&quot; para agregar un estudiante</p> {/* Changed here */}
                     </div>
                   ) : (
                     <>

@@ -106,7 +106,7 @@ export function Step4Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                     <div className="text-center py-8 text-muted-foreground">
                       <Settings className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p className="text-sm">No hay estudiantes con ajustes registrados</p>
-                      <p className="text-xs">Haga clic en "Añadir" para agregar un estudiante</p>
+                      <p className="text-xs">Haga clic en &quot;Añadir&quot; para agregar un estudiante</p> {/* Changed here */}
                     </div>
                   ) : (
                     <>

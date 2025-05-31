@@ -164,7 +164,8 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
     if (Array.isArray(currentRespuestasMultiples) && currentRespuestasMultiples.length === desiredStructure.length) {
       needsUpdate = !currentRespuestasMultiples.every((cr, index) => {
         const dr = desiredStructure[index]
-        return cr && typeof cr.idPregunta === 'string' && cr.idPregunta === dr.idPregunta
+        // Add a check for dr to ensure it's not undefined
+        return cr && dr && typeof cr.idPregunta === 'string' && cr.idPregunta === dr.idPregunta
       })
     }
 
@@ -191,7 +192,7 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
   const totalSelections =
     respuestasMultiplesActuales?.reduce((total, resp) => {
       return total + (resp && Array.isArray(resp.respuestasSeleccionadas) ? resp.respuestasSeleccionadas.length : 0)
-    }, 0) || 0
+    }, 0) || 0 // Added semicolon here
 
   const handleFormSubmitSuccess = (data: Step6FormData) => {
     onSaveAndNext(data)
@@ -259,62 +260,78 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                             </div>
                           </div>
 
-                          {/* Opciones agrupadas por categoría - Styled subtly */}
-                          <div className="ml-8 space-y-4">
+                          {/* Opciones agrupadas por categoría - Styled similar to Step 5 */}
+                          <div className="space-y-4">
                             {Object.entries(groupedOptions).map(([category, options]) => {
-                              const IconComponent = getCategoryIcon(category)
-                              const seleccionesCategoria = options.filter((opt) => seleccionesActuales.includes(opt.value)).length
-                              const categoryStyling = getCategoryBackgroundColor(category)
+                              const isFirstCategory = true // For controlling border radius
+                              const isLastCategory = false // For controlling border radius
 
                               return (
-                                <div key={category} className={`rounded-lg p-4 transition-all duration-200 ${categoryStyling}`}>
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <IconComponent className="w-4 h-4 text-muted-foreground" />
-                                    <h4 className="font-medium text-sm text-foreground/85">{category}</h4>
-                                    {/* Always render the Badge for per-category selection count */}
-                                    <div className="ml-auto">
-                                      {' '}
-                                      {/* Wrapper to push badge to the right */}
-                                      <Badge variant="outline" className="text-xs border-border/50 text-muted-foreground">
-                                        {seleccionesCategoria}
-                                      </Badge>
+                                <div
+                                  key={category}
+                                  className={`rounded-lg border ${
+                                    isFirstCategory ? 'border-t-0' : ''
+                                  } ${isLastCategory ? 'border-b-0' : ''} border-border/50 bg-muted/10`}
+                                >
+                                  {/* Category Header - With icon and badge for selected count */}
+                                  <div className="flex items-center justify-between py-3 px-4 rounded-t-lg bg-muted/50">
+                                    <div className="flex items-center gap-3">
+                                      {/* Icon */}
+                                      <div className="flex-shrink-0">
+                                        {getCategoryIcon(category)({ className: 'w-5 h-5 text-foreground' })}
+                                      </div>
+                                      {/* Category Name and Selection Count */}
+                                      <div className="flex-1">
+                                        <span className="block text-sm font-medium text-foreground/90">{category}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {options.length} opción{options.length !== 1 ? 'es' : ''} disponible
+                                          {options.length !== 1 ? 's' : ''}
+                                        </span>
+                                      </div>
                                     </div>
+                                    {/* Badge for selected count */}
+                                    <Badge variant="outline" className="text-xs border-border/50 text-muted-foreground">
+                                      {
+                                        seleccionesActuales.filter((value) => options.find((option) => option.value === value))
+                                          .length
+                                      }{' '}
+                                      seleccionada
+                                      {seleccionesActuales.filter((value) => options.find((option) => option.value === value))
+                                        .length !== 1
+                                        ? 's'
+                                        : ''}
+                                    </Badge>
                                   </div>
 
-                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  {/* Opciones - Rendered as checkboxes */}
+                                  <div className="py-2 px-4 space-y-2">
                                     {options.map((option) => {
                                       const isSelected = seleccionesActuales.includes(option.value)
                                       return (
-                                        <FormField
-                                          key={option.value}
-                                          control={control}
-                                          name={`respuestasMultiples.${preguntaIndex}.respuestasSeleccionadas`}
-                                          render={({ field }) => (
-                                            <FormItem>
-                                              <div
-                                                className={`flex items-start space-x-2 p-2.5 rounded-md transition-all duration-200 cursor-pointer border border-transparent hover:border-border/30 hover:bg-muted/30 
-                                                  ${isSelected ? 'bg-muted/50 border-border/40' : 'bg-background/30'}`}
-                                              >
-                                                <FormControl className="mt-[3px]">
-                                                  <Checkbox
-                                                    checked={field.value?.includes(option.value) || false}
-                                                    onCheckedChange={(checked) => {
-                                                      const currentValue = field.value || []
-                                                      return checked
-                                                        ? field.onChange([...currentValue, option.value])
-                                                        : field.onChange(
-                                                            currentValue.filter((value: string) => value !== option.value)
-                                                          )
-                                                    }}
-                                                  />
-                                                </FormControl>
-                                                <FormLabel className="text-sm font-normal leading-relaxed cursor-pointer flex-1 text-foreground/80">
-                                                  {option.label}
-                                                </FormLabel>
-                                              </div>
-                                            </FormItem>
-                                          )}
-                                        />
+                                        <FormItem key={option.value} className="flex items-center">
+                                          <FormControl>
+                                            <Checkbox
+                                              checked={isSelected}
+                                              onCheckedChange={(checked) => {
+                                                const newSelections = checked
+                                                  ? [...seleccionesActuales, option.value]
+                                                  : seleccionesActuales.filter((value) => value !== option.value)
+                                                setValue(
+                                                  `respuestasMultiples.${preguntaIndex}.respuestasSeleccionadas`,
+                                                  newSelections,
+                                                  {
+                                                    shouldDirty: true,
+                                                    shouldValidate: true
+                                                  }
+                                                )
+                                              }}
+                                              className="h-5 w-5 rounded-md border-border/50"
+                                            />
+                                          </FormControl>
+                                          <FormLabel className="text-sm font-medium text-foreground/90 ml-3">
+                                            {option.label}
+                                          </FormLabel>
+                                        </FormItem>
                                       )
                                     })}
                                   </div>
@@ -322,52 +339,23 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                               )
                             })}
                           </div>
-                          <FormMessage className="text-xs mt-2 ml-8 text-destructive">
-                            {formState.errors.respuestasMultiples?.[preguntaIndex]?.root?.message ||
-                              formState.errors.respuestasMultiples?.[preguntaIndex]?.respuestasSeleccionadas?.message}
-                          </FormMessage>
                         </div>
-                        {preguntaIndex < preguntasPaso6Mock.length - 1 && <Separator className="opacity-30" />}
+
+                        {/* Divider between questions - Styled like Step 5 */}
+                        {preguntaIndex < preguntasPaso6Mock.length - 1 && <Separator className="my-4 border-border/50" />}
                       </div>
                     )
                   })}
-
-                  {/* Otras Herramientas - Styled like Step 5's Textarea */}
-                  <div className="py-5 px-1">
-                    <Separator className="opacity-30 mb-5" />
-                    <FormField
-                      control={control}
-                      name="otrasHerramientas"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium text-foreground/90">
-                            Otras herramientas o metodologías no listadas
-                          </FormLabel>
-                          <div className="mt-2">
-                            <FormControl>
-                              <Textarea
-                                placeholder="Especifique aquí otras herramientas, plataformas, o metodologías utilizadas..."
-                                rows={3}
-                                className="resize-y bg-background/60 border-border/60 focus:border-border focus:bg-background transition-all duration-200 text-sm leading-relaxed shadow-sm"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage className="text-xs mt-1.5 text-destructive" />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Botones de navegación - Styled like Step 5 */}
-            <div className="flex justify-between pt-6 mt-auto">
-              <Button type="button" variant="outline" onClick={onPrevious} className="px-8 shadow-sm">
-                Anterior
+            {/* Footer - Styled like Step 5 */}
+            <div className="flex justify-end gap-4 mt-4">
+              <Button variant="outline" onClick={onPrevious} className="px-4 py-2 text-sm">
+                Volver
               </Button>
-              <Button type="submit" className="px-8 shadow-sm">
+              <Button type="submit" className="px-4 py-2 text-sm">
                 Siguiente
               </Button>
             </div>

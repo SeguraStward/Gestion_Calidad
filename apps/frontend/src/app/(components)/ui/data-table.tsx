@@ -15,7 +15,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@una-gc/ui/components/table'
 import { Button } from '@una-gc/ui/components/button'
 import { Input } from '@una-gc/ui/components/input'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react' // Added Loader2
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -24,6 +24,7 @@ interface DataTableProps<TData, TValue> {
   newButton?: React.ReactNode // Slot for the "New" button
   initialPageSize?: number
   onRowClick?: (row: Row<TData>) => void
+  isLoading?: boolean // Added isLoading prop
 }
 
 export function DataTable<TData, TValue>({
@@ -32,7 +33,8 @@ export function DataTable<TData, TValue>({
   searchPlaceholder = 'Buscar...',
   newButton,
   initialPageSize = 5,
-  onRowClick
+  onRowClick,
+  isLoading // Destructure isLoading
 }: DataTableProps<TData, TValue>) {
   const [globalFilter, setGlobalFilter] = React.useState('')
 
@@ -61,6 +63,7 @@ export function DataTable<TData, TValue>({
           value={globalFilter ?? ''}
           onChange={(event) => setGlobalFilter(event.target.value)}
           className="max-w-sm"
+          disabled={isLoading} // Optionally disable search while loading
         />
         {newButton}
       </div>
@@ -80,13 +83,22 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {isLoading ? ( // Conditional rendering for loading state
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <div className="flex justify-center items-center py-10">
+                    <Loader2 className="mr-2 h-8 w-8 animate-spin text-primary" />
+                    Cargando datos...
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
-                  className={onRowClick ? 'cursor-pointer' : ''}
+                  onClick={onRowClick && !isLoading ? () => onRowClick(row) : undefined} // Disable onRowClick while loading
+                  className={onRowClick && !isLoading ? 'cursor-pointer hover:bg-muted/50' : ''}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} style={{ width: cell.column.getSize() !== 150 ? cell.column.getSize() : undefined }}>
@@ -110,11 +122,21 @@ export function DataTable<TData, TValue>({
           Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount() === 0 ? 1 : table.getPageCount()}
         </div>
         <div className="space-x-2">
-          <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage() || isLoading} // Disable if loading
+          >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Anterior
           </Button>
-          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage() || isLoading} // Disable if loading
+          >
             Siguiente
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>

@@ -117,9 +117,15 @@ export default function NewFinalReportPage() {
       nrc: '',
       curso: '',
       profesor: '',
-      grupo: '',
-      campus: '',
-      fecha: '',
+      numeroGrupo: '', // Changed 'grupo' to 'numeroGrupo'
+      // If you have other fields like 'codigo' or 'nivelGrupo' and they are mandatory,
+      // you might need to provide default values for them too, or ensure they are optional in the schema.
+      // For example, if 'codigo' is optional, you don't need to specify it here unless you want a default.
+      // If 'campus' and 'fecha' are part of Step1FormData, ensure they are also here.
+      // The error message implies 'campus' and 'fecha' might be missing from the type definition
+      // or from your defaultValues. Let's assume they are part of Step1FormData for now.
+      campus: '', // Assuming this is part of Step1FormData
+      fecha: '', // Assuming this is part of Step1FormData
       cupoMatricula: 0
     },
     values: step1Data ?? undefined

@@ -136,24 +136,29 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
     const grupos: Record<string, PreguntaStep7[]> = {}
     preguntasPaso7Mock.forEach((p) => {
       if (p.tipo_respuesta === 'CHECK') {
-        if (!grupos[p.grupo_pregunta]) {
-          grupos[p.grupo_pregunta] = []
+        const groupKey = p.grupo_pregunta // Use a variable for the key
+        // Ensure the group array exists before any conditional logic that might push to it
+        if (!grupos[groupKey]) {
+          grupos[groupKey] = []
         }
+
+        const currentGroupArray = grupos[groupKey] // Assign to a new variable
+
         // Specific filtering based on tipoInforme
         if (
           p.grupo_pregunta === '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?'
         ) {
           if (tipoInforme === 'INFORME_FINAL_V1') {
-            grupos[p.grupo_pregunta].push(p)
+            currentGroupArray.push(p) // Push to the new variable
           }
         } else {
-          grupos[p.grupo_pregunta].push(p)
+          currentGroupArray.push(p) // Push to the new variable
         }
       }
     })
     // Clean up empty groups
     for (const grupo in grupos) {
-      if (grupos[grupo].length === 0) {
+      if (Object.prototype.hasOwnProperty.call(grupos, grupo) && grupos[grupo] && grupos[grupo].length === 0) {
         delete grupos[grupo]
       }
     }
@@ -174,10 +179,13 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
 
     let needsUpdate = true
     if (Array.isArray(currentRespuestasRadio) && currentRespuestasRadio.length === initialRespuestas.length) {
-      needsUpdate = !currentRespuestasRadio.every(
-        (cr, index) => cr && cr.idPregunta === initialRespuestas[index].idPregunta
-        // More robust check could compare 'respuesta' as well if needed
-      )
+      needsUpdate = !currentRespuestasRadio.every((cr, index) => {
+        const initialItem = initialRespuestas[index]
+        // Ensure both cr (current response) and initialItem are defined before accessing properties
+        return cr && initialItem && cr.idPregunta === initialItem.idPregunta
+        // More robust check could compare 'respuesta' as well:
+        // return cr && initialItem && cr.idPregunta === initialItem.idPregunta && cr.respuesta === initialItem.respuesta;
+      })
     }
 
     if (needsUpdate) {
@@ -240,18 +248,21 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
                       // Re-group for rendering, if needed, or iterate directly if flat list is fine
                       todasLasPreguntasMostradas.reduce(
                         (acc, p) => {
-                          if (!acc[p.grupo_pregunta]) {
-                            acc[p.grupo_pregunta] = []
+                          const groupKey = p.grupo_pregunta // Use a variable for the key
+                          if (!acc[groupKey]) {
+                            acc[groupKey] = []
                           }
-                          acc[p.grupo_pregunta].push(p)
+                          // After the check, acc[groupKey] is guaranteed to be PreguntaStep7[]
+                          // Assign it to a new variable for clearer type inference for the .push() operation
+                          const currentGroupArray = acc[groupKey]
+                          currentGroupArray.push(p)
                           return acc
                         },
                         {} as Record<string, PreguntaStep7[]>
                       )
                     ).map(([nombreGrupo, preguntasDelGrupo], grupoIndex, arr) => (
                       <div key={nombreGrupo}>
-                        {' '}
-                        {/* Use nombreGrupo for key if unique */}
+                        {' ' /* Use nombreGrupo for key if unique */}
                         <div className="py-5 px-1">
                           <div className="mb-5">
                             <h3 className="text-sm font-medium text-foreground/90 leading-relaxed flex items-center gap-2">

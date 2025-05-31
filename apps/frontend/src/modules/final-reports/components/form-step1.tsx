@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { useForm } from 'react-hook-form'
+// Remove useForm from here if formMethods is passed from parent
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@una-gc/ui/components/button'
@@ -9,16 +9,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components/
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
 import { Input } from '@una-gc/ui/components/input'
-import { Separator } from '@una-gc/ui/components/separator'
+// import { Separator } from '@una-gc/ui/components/separator' // Not used in the provided snippet
+import { UseFormReturn } from 'react-hook-form' // Import UseFormReturn
 
-// Schema actualizado - solo campos necesarios
+// Schema actualizado - incluir campus, fecha y cupoMatricula
 export const step1Schema = z.object({
   nrc: z.string().min(1, 'Debe seleccionar un NRC'),
   curso: z.string().optional(),
   numeroGrupo: z.string().optional(),
   profesor: z.string().optional(),
   codigo: z.string().optional(),
-  nivelGrupo: z.string().optional()
+  nivelGrupo: z.string().optional(),
+  campus: z.string().optional(), // Added campus
+  fecha: z.string().optional(), // Added fecha (consider using z.date() if it's a date object)
+  cupoMatricula: z.number().optional() // Added cupoMatricula
 })
 
 export type Step1FormData = z.infer<typeof step1Schema>
@@ -32,7 +36,9 @@ const cursosDisponibles = [
     profesor: 'Dr. Juan Pérez',
     numeroGrupo: '01',
     nivelGrupo: 'Avanzado',
-    cupoMatricula: 30
+    cupoMatricula: 30,
+    campus: 'Campus Central', // Example data
+    fecha: '2025-08-01' // Example data
   },
   {
     nrc: '67890',
@@ -41,7 +47,9 @@ const cursosDisponibles = [
     profesor: 'Dra. María García',
     numeroGrupo: '02',
     nivelGrupo: 'Intermedio',
-    cupoMatricula: 25
+    cupoMatricula: 25,
+    campus: 'Campus Tecnológico', // Example data
+    fecha: '2025-08-05' // Example data
   },
   {
     nrc: '11111',
@@ -50,57 +58,59 @@ const cursosDisponibles = [
     profesor: 'Ing. Carlos López',
     numeroGrupo: '01',
     nivelGrupo: 'Básico',
-    cupoMatricula: 35
+    cupoMatricula: 35,
+    campus: 'Campus Central', // Example data
+    fecha: '2025-08-10' // Example data
   }
 ]
 
 interface Step1FormProps {
-  formMethods: any
+  formMethods: UseFormReturn<Step1FormData> // Corrected type
   onSaveAndNext: (data: Step1FormData) => void
-  onPrevious?: () => void
+  onPrevious?: () => void // onPrevious is optional
   totalSteps: number
 }
 
 export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }: Step1FormProps) {
-  const form = useForm<Step1FormData>({
-    resolver: zodResolver(step1Schema),
-    defaultValues: {
-      nrc: '',
-      curso: '',
-      numeroGrupo: '',
-      profesor: '',
-      codigo: '',
-      nivelGrupo: ''
-    }
-  })
+  // Use form methods passed from parent
+  const { control, watch, setValue, handleSubmit, formState } = formMethods
 
-  const selectedNrc = form.watch('nrc')
+  const selectedNrc = watch('nrc')
   const selectedCourse = cursosDisponibles.find((curso) => curso.nrc === selectedNrc)
 
   // Actualizar campos automáticamente cuando se selecciona NRC
   React.useEffect(() => {
     if (selectedCourse) {
-      form.setValue('curso', selectedCourse.curso)
-      form.setValue('numeroGrupo', selectedCourse.numeroGrupo)
-      form.setValue('profesor', selectedCourse.profesor)
-      form.setValue('codigo', selectedCourse.codigo)
-      form.setValue('nivelGrupo', selectedCourse.nivelGrupo)
+      setValue('curso', selectedCourse.curso)
+      setValue('numeroGrupo', selectedCourse.numeroGrupo)
+      setValue('profesor', selectedCourse.profesor)
+      setValue('codigo', selectedCourse.codigo)
+      setValue('nivelGrupo', selectedCourse.nivelGrupo)
+      setValue('cupoMatricula', selectedCourse.cupoMatricula)
+      setValue('campus', selectedCourse.campus) // Assuming campus comes from selectedCourse
+      setValue('fecha', selectedCourse.fecha) // Assuming fecha comes from selectedCourse
     } else {
-      form.setValue('curso', '')
-      form.setValue('numeroGrupo', '')
-      form.setValue('profesor', '')
-      form.setValue('codigo', '')
-      form.setValue('nivelGrupo', '')
+      // Clear fields if no course is selected (or handle as per your logic)
+      setValue('curso', '')
+      setValue('numeroGrupo', '')
+      setValue('profesor', '')
+      setValue('codigo', '')
+      setValue('nivelGrupo', '')
+      setValue('cupoMatricula', undefined) // Or 0, depending on desired default
+      setValue('campus', '')
+      setValue('fecha', '')
     }
-  }, [selectedCourse, form])
+  }, [selectedCourse, setValue])
 
-  const onSubmit = (data: Step1FormData) => {
-    // Añadir cupoMatricula para los siguientes pasos
-    const dataWithCupo = {
+  // The data passed to onSubmit will already include cupoMatricula if set by useEffect
+  const onSubmitHandler = (data: Step1FormData) => {
+    // Ensure cupoMatricula is part of the data if not already set by setValue
+    const finalData = {
       ...data,
-      cupoMatricula: selectedCourse?.cupoMatricula || 0
+      cupoMatricula: selectedCourse?.cupoMatricula ?? data.cupoMatricula ?? 0
+      // campus and fecha should be in 'data' if set by setValue
     }
-    onSaveAndNext(dataWithCupo as any)
+    onSaveAndNext(finalData)
   }
 
   return (
@@ -111,8 +121,9 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
         <p className="text-muted-foreground text-sm">Seleccione el NRC del curso para cargar la información</p>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col">
+      {/* Pass the control from formMethods to FormProvider/Form */}
+      <Form {...formMethods}>
+        <form onSubmit={handleSubmit(onSubmitHandler)} className="flex-1 flex flex-col">
           {/* Contenido principal en 2 columnas */}
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* COLUMNA 1: NRC, Curso, Número de Grupo */}
@@ -124,14 +135,14 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                 <CardContent className="space-y-4">
                   {/* NRC Selector */}
                   <FormField
-                    control={form.control}
+                    control={control} // Use control from formMethods
                     name="nrc"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-medium">
                           NRC del Curso <span className="text-destructive">*</span>
                         </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
                           <FormControl>
                             <SelectTrigger className="h-10">
                               <SelectValue placeholder="Seleccione un NRC..." />
@@ -157,13 +168,13 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
 
                   {/* Curso */}
                   <FormField
-                    control={form.control}
+                    control={control} // Use control from formMethods
                     name="curso"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-medium">Curso</FormLabel>
                         <FormControl>
-                          <Input {...field} disabled className="bg-muted/50 h-10" />
+                          <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -171,13 +182,13 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
 
                   {/* Número de Grupo */}
                   <FormField
-                    control={form.control}
+                    control={control} // Use control from formMethods
                     name="numeroGrupo"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-medium">Número de Grupo</FormLabel>
                         <FormControl>
-                          <Input {...field} disabled className="bg-muted/50 h-10" />
+                          <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -195,13 +206,13 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                 <CardContent className="space-y-4">
                   {/* Profesor */}
                   <FormField
-                    control={form.control}
+                    control={control} // Use control from formMethods
                     name="profesor"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-medium">Profesor</FormLabel>
                         <FormControl>
-                          <Input {...field} disabled className="bg-muted/50 h-10" />
+                          <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -209,13 +220,13 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
 
                   {/* Código */}
                   <FormField
-                    control={form.control}
+                    control={control} // Use control from formMethods
                     name="codigo"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-medium">Código</FormLabel>
                         <FormControl>
-                          <Input {...field} disabled className="bg-muted/50 h-10" />
+                          <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
                         </FormControl>
                       </FormItem>
                     )}
@@ -223,17 +234,19 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
 
                   {/* Nivel de Grupo */}
                   <FormField
-                    control={form.control}
+                    control={control} // Use control from formMethods
                     name="nivelGrupo"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-medium">Nivel de Grupo</FormLabel>
                         <FormControl>
-                          <Input {...field} disabled className="bg-muted/50 h-10" />
+                          <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
                         </FormControl>
                       </FormItem>
                     )}
                   />
+                  {/* You would add FormFields for campus, fecha, cupoMatricula here if they were editable */}
+                  {/* For now, they are derived and set via setValue */}
                 </CardContent>
               </Card>
             </div>
@@ -245,7 +258,7 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
               Anterior
             </Button>
 
-            <Button type="submit" disabled={!selectedCourse} className="px-8">
+            <Button type="submit" disabled={!selectedCourse || formState.isSubmitting} className="px-8">
               Siguiente
             </Button>
           </div>

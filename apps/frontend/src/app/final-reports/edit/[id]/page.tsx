@@ -72,12 +72,27 @@ const preguntasPaso5Mock = [
     grupo_pregunta: 'Sugerencias'
   }
 ]
-const preguntasPaso6PageMock = [{ idPregunta: 'herramientas_tec' }]
+const preguntasPaso6PageMock = [{ idPregunta: 'herramientas_tec' }] // Assuming this is sufficient for step 6 initialization
+
+// Update preguntasPaso7PageMock to include grupo_pregunta
 const preguntasPaso7PageMock = [
-  { idPregunta: 'transicion_p1' },
-  { idPregunta: 'transicion_p2' },
-  { idPregunta: 'desempeno_p1' },
-  { idPregunta: 'desempeno_p2' }
+  {
+    idPregunta: 'transicion_p1',
+    grupo_pregunta: '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?'
+  },
+  {
+    idPregunta: 'transicion_p2',
+    grupo_pregunta: '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?'
+  },
+  {
+    idPregunta: 'desempeno_p1',
+    grupo_pregunta: '¿Cómo percibe el desempeño de los estudiantes con respecto a los siguientes aspectos?'
+  },
+  {
+    idPregunta: 'desempeno_p2',
+    grupo_pregunta: '¿Cómo percibe el desempeño de los estudiantes con respecto a los siguientes aspectos?'
+  }
+  // Add other questions for step 7 with their respective idPregunta and grupo_pregunta if needed for initialization
 ]
 
 // Simulación de datos de un informe existente
@@ -193,8 +208,9 @@ export default function EditFinalReportPage() {
   const formStep7Methods = useForm<Step7FormData>({
     resolver: zodResolver(step7Schema),
     values: step7Data || {
-      respuestasRadio: preguntasPaso7PageMock
+      respuestasRadio: preguntasPaso7PageMock // Now preguntasPaso7PageMock has grupo_pregunta
         .filter((p) => {
+          // This condition will now work correctly
           if (
             p.grupo_pregunta === '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?'
           ) {

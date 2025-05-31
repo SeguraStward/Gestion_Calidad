@@ -4,7 +4,7 @@ import type {
   CreateFinalReportDto, // DTO for creating
   UpdateFinalReportDto, // DTO for updating
   FinalReportFilters // Type for filtering the list
-} from '../types/final-report.types' // Adjust path if your types are elsewhere
+} from '../types/final-reports.types' // Corrected filename: final-reports.types
 import type { PaginatedResponse } from '@/services/interfaces' // Adjust path if needed
 
 const API_RESOURCE_PATH = 'final-reports' // The API endpoint for final reports
@@ -41,7 +41,11 @@ class FinalReportService extends GenericService<
    */
   async getByAcademicLoadId(academicLoadId: string): Promise<FullFinalReport | null> {
     const response = await this.list({ academicLoadId, limit: 1 } as FinalReportFilters)
-    return response.data.length > 0 ? response.data[0] : null
+    if (response.data.length > 0) {
+      const report = response.data[0]
+      return report === undefined ? null : report // Ensure undefined becomes null
+    }
+    return null
   }
 
   // If you had a specific endpoint for "form data" as discussed before:
