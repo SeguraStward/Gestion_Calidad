@@ -1,38 +1,35 @@
 import { GenericService, createGenericHooks } from '@/services/base' // Assuming base is directly in services
+import { useQuery } from '@tanstack/react-query'
+import type { PaginatedResponse } from '@/services/interfaces'
 import type {
-  FullFinalReport, // Main entity type for single and list items
-  CreateFinalReportDto, // DTO for creating
-  UpdateFinalReportDto, // DTO for updating
-  FinalReportFilters // Type for filtering the list
-} from '../types/final-reports.types' // Corrected filename: final-reports.types
-import type { PaginatedResponse } from '@/services/interfaces' // Adjust path if needed
-
+  FullFinalReport,
+  FinalReportFilters,
+  CreateFinalReportDto, // <--- ADD THIS
+  UpdateFinalReportDto // <--- ADD THIS (if not already present)
+} from '../types/final-reports.types'
 const API_RESOURCE_PATH = 'final-reports' // The API endpoint for final reports
 
 /**
  * Service class for managing Final Reports.
  * It extends the GenericService to provide common CRUD operations.
  */
-class FinalReportService extends GenericService<
-  FullFinalReport, // T: Type for a single item (get by ID) and list items
-  CreateFinalReportDto, // CreateDTO: Type for creating an item
-  UpdateFinalReportDto, // UpdateDTO: Type for updating an item
-  FinalReportFilters // Filters: Type for list filters
-> {
+class FinalReportService extends GenericService<FullFinalReport, CreateFinalReportDto, UpdateFinalReportDto, FinalReportFilters> {
   constructor() {
-    super(API_RESOURCE_PATH) // Pass the resource path to the base class
+    super(API_RESOURCE_PATH)
   }
-
-  // --- Specific methods for FinalReportService can be added here if needed ---
 
   /**
    * Example: Get all final reports for a specific professor.
    * This assumes your backend supports filtering by 'professorId' via the list endpoint.
    */
-  async getByProfessorId(professorId: string, filters?: Omit<FinalReportFilters, 'professorId'>): Promise<FullFinalReport[]> {
-    // The list method from GenericService returns PaginatedResponse<FullFinalReport>
-    const response = await this.list({ ...filters, professorId })
-    return response.data // Return just the data array
+  async getByProfessorId(
+    professorId: string,
+    filters?: Omit<FinalReportFilters, 'professorId'>
+  ): Promise<PaginatedResponse<FullFinalReport>> {
+    // Changed return type
+    // The list method from GenericService now returns the actual PaginatedResponse<FullFinalReport>
+    const response = await this.list({ ...filters, professorId } as FinalReportFilters)
+    return response // Return the full PaginatedResponse object
   }
 
   /**
@@ -41,9 +38,10 @@ class FinalReportService extends GenericService<
    */
   async getByAcademicLoadId(academicLoadId: string): Promise<FullFinalReport | null> {
     const response = await this.list({ academicLoadId, limit: 1 } as FinalReportFilters)
-    if (response.data.length > 0) {
+    // response is PaginatedResponse<FullFinalReport>
+    if (response.data && response.data.length > 0) {
       const report = response.data[0]
-      return report === undefined ? null : report // Ensure undefined becomes null
+      return report === undefined ? null : report
     }
     return null
   }
@@ -87,3 +85,23 @@ export const {
 
 // 3. Default export the service instance (matching the pattern)
 export default finalReportService
+
+export function useFinalReportsByProfessor(
+  professorId: string | null | undefined,
+  filters?: Omit<FinalReportFilters, 'professorId'>,
+  options?: { enabled?: boolean }
+) {
+  return useQuery<PaginatedResponse<FullFinalReport>, Error>({
+    // This type now matches the queryFn's return
+    queryKey: ['finalReports', 'professor', professorId, filters],
+    queryFn: () => {
+      if (!professorId) {
+        return Promise.reject(new Error('Professor ID is required.'))
+      }
+      // finalReportService.getByProfessorId now returns Promise<PaginatedResponse<FullFinalReport>>
+      return finalReportService.getByProfessorId(professorId, filters)
+    },
+    enabled: options?.enabled !== undefined ? options.enabled : !!professorId,
+    staleTime: 60_000
+  })
+}

@@ -1,7 +1,6 @@
 'use client'
 
-import React from 'react'
-// Remove useForm from here if formMethods is passed from parent
+import React, { useMemo } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@una-gc/ui/components/button'
@@ -9,152 +8,183 @@ import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components/
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
 import { Input } from '@una-gc/ui/components/input'
-// import { Separator } from '@una-gc/ui/components/separator' // Not used in the provided snippet
-import { UseFormReturn } from 'react-hook-form' // Import UseFormReturn
+import { UseFormReturn } from 'react-hook-form'
+import { Loader2 } from 'lucide-react' // For loading indicator
+import useDevStore from '@/store/devStore' // To get professor ID
+import { useAcademicLoadsByProfessor } from '@/modules/academic-loads/service/academic-loads.service' // Hook to fetch academic loads
+import type { FullAcademicLoad } from '@/modules/academic-loads/types/academic-loads.types' // Type for academic load
 
-// Schema actualizado - incluir campus, fecha y cupoMatricula
+// Updated schema - include academicLoadId and English field names for the core 5 fields
 export const step1Schema = z.object({
-  nrc: z.string().min(1, 'Debe seleccionar un NRC'),
-  curso: z.string().optional(),
-  numeroGrupo: z.string().optional(),
-  profesor: z.string().optional(),
-  codigo: z.string().optional(),
-  nivelGrupo: z.string().optional(),
-  campus: z.string().optional(), // Added campus
-  fecha: z.string().optional(), // Added fecha (consider using z.date() if it's a date object)
-  cupoMatricula: z.number().optional() // Added cupoMatricula
+  academicLoadId: z.string().optional(), // ID of the selected academic load
+  nrc: z.string().min(1, 'Debe seleccionar un NRC'), // User message in Spanish
+  courseName: z.string().optional(),
+  groupNumber: z.string().optional(),
+  professorName: z.string().optional(),
+  courseCode: z.string().optional(),
+  groupLevel: z.string().optional()
+  // Removed: campusName, cycleStartDate, enrollmentCapacity
 })
 
 export type Step1FormData = z.infer<typeof step1Schema>
 
-// Mock data actualizado
-const cursosDisponibles = [
-  {
-    nrc: '12345',
-    curso: 'Programación Avanzada',
-    codigo: 'PROG-401',
-    profesor: 'Dr. Juan Pérez',
-    numeroGrupo: '01',
-    nivelGrupo: 'Avanzado',
-    cupoMatricula: 30,
-    campus: 'Campus Central', // Example data
-    fecha: '2025-08-01' // Example data
-  },
-  {
-    nrc: '67890',
-    curso: 'Base de Datos II',
-    codigo: 'DB-302',
-    profesor: 'Dra. María García',
-    numeroGrupo: '02',
-    nivelGrupo: 'Intermedio',
-    cupoMatricula: 25,
-    campus: 'Campus Tecnológico', // Example data
-    fecha: '2025-08-05' // Example data
-  },
-  {
-    nrc: '11111',
-    curso: 'Algoritmos y Estructuras',
-    codigo: 'ALGO-201',
-    profesor: 'Ing. Carlos López',
-    numeroGrupo: '01',
-    nivelGrupo: 'Básico',
-    cupoMatricula: 35,
-    campus: 'Campus Central', // Example data
-    fecha: '2025-08-10' // Example data
-  }
-]
+// Interface for transformed data used by Select and useEffect
+interface TransformedAcademicLoad {
+  id: string // Corresponds to FullAcademicLoad.id
+  nrc: string
+  courseName?: string
+  courseCode?: string
+  professorName?: string
+  groupNumber?: string
+  groupLevel?: string
+  // Removed: enrollmentCapacity, campusName, cycleStartDate
+}
 
 interface Step1FormProps {
-  formMethods: UseFormReturn<Step1FormData> // Corrected type
+  formMethods: UseFormReturn<Step1FormData>
   onSaveAndNext: (data: Step1FormData) => void
-  onPrevious?: () => void // onPrevious is optional
+  onPrevious?: () => void
   totalSteps: number
 }
 
 export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }: Step1FormProps) {
-  // Use form methods passed from parent
   const { control, watch, setValue, handleSubmit, formState } = formMethods
+  const currentProfessorId = useDevStore((state) => state.mockProfessorId)
+
+  const {
+    data: paginatedAcademicLoads,
+    isLoading: isLoadingAcademicLoads,
+    error: academicLoadsError
+  } = useAcademicLoadsByProfessor(
+    currentProfessorId,
+    {
+      status: 'ACTIVE', // Filter by active academic loads
+      include: 'course,academicCycle,professor,group' // Include necessary relations
+    },
+    { enabled: !!currentProfessorId }
+  )
+
+  // Transform FullAcademicLoad data for the Select component and auto-completion logic
+  const availableCourses = useMemo((): TransformedAcademicLoad[] => {
+    if (!paginatedAcademicLoads?.data) return []
+    return paginatedAcademicLoads.data.map((load: FullAcademicLoad) => ({
+      id: load.id,
+      nrc: load.nrc,
+      courseName: load.course?.name,
+      courseCode: load.course?.code,
+      professorName: load.professor?.fullName, // Assuming fullName is on the professor object
+      groupNumber: load.group?.number, // Assuming number is on the group object
+      groupLevel: load.course?.level ? String(load.course.level) : undefined // Assuming level is on the course object
+      // Removed mapping for: enrollmentCapacity, campusName, cycleStartDate
+    }))
+  }, [paginatedAcademicLoads])
 
   const selectedNrc = watch('nrc')
-  const selectedCourse = cursosDisponibles.find((curso) => curso.nrc === selectedNrc)
+  // Find selected academic load data using NRC from the transformed data
+  const selectedCourseData = availableCourses.find((course) => course.nrc === selectedNrc)
 
-  // Actualizar campos automáticamente cuando se selecciona NRC
   React.useEffect(() => {
-    if (selectedCourse) {
-      setValue('curso', selectedCourse.curso)
-      setValue('numeroGrupo', selectedCourse.numeroGrupo)
-      setValue('profesor', selectedCourse.profesor)
-      setValue('codigo', selectedCourse.codigo)
-      setValue('nivelGrupo', selectedCourse.nivelGrupo)
-      setValue('cupoMatricula', selectedCourse.cupoMatricula)
-      setValue('campus', selectedCourse.campus) // Assuming campus comes from selectedCourse
-      setValue('fecha', selectedCourse.fecha) // Assuming fecha comes from selectedCourse
+    if (selectedCourseData) {
+      setValue('academicLoadId', selectedCourseData.id) // Store the academic load ID
+      setValue('courseName', selectedCourseData.courseName)
+      setValue('groupNumber', selectedCourseData.groupNumber)
+      setValue('professorName', selectedCourseData.professorName)
+      setValue('courseCode', selectedCourseData.courseCode)
+      setValue('groupLevel', selectedCourseData.groupLevel)
+      // Removed setValue for: enrollmentCapacity, campusName, cycleStartDate
     } else {
-      // Clear fields if no course is selected (or handle as per your logic)
-      setValue('curso', '')
-      setValue('numeroGrupo', '')
-      setValue('profesor', '')
-      setValue('codigo', '')
-      setValue('nivelGrupo', '')
-      setValue('cupoMatricula', undefined) // Or 0, depending on desired default
-      setValue('campus', '')
-      setValue('fecha', '')
+      // Clear fields if no course is selected or selection is cleared
+      setValue('academicLoadId', undefined)
+      setValue('courseName', '')
+      setValue('groupNumber', '')
+      setValue('professorName', '')
+      setValue('courseCode', '')
+      setValue('groupLevel', '')
+      // Removed setValue for: enrollmentCapacity, campusName, cycleStartDate
     }
-  }, [selectedCourse, setValue])
+  }, [selectedCourseData, setValue])
 
-  // The data passed to onSubmit will already include cupoMatricula if set by useEffect
   const onSubmitHandler = (data: Step1FormData) => {
-    // Ensure cupoMatricula is part of the data if not already set by setValue
+    // Data should already be updated by the useEffect hook
+    // Ensure academicLoadId is present if an NRC was selected
     const finalData = {
       ...data,
-      cupoMatricula: selectedCourse?.cupoMatricula ?? data.cupoMatricula ?? 0
-      // campus and fecha should be in 'data' if set by setValue
+      academicLoadId: selectedCourseData?.id || data.academicLoadId
     }
     onSaveAndNext(finalData)
   }
 
+  if (isLoadingAcademicLoads) {
+    return (
+      <div className="p-6 h-full flex flex-col items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="mt-2 text-muted-foreground">Cargando información de cursos...</p>
+      </div>
+    )
+  }
+
+  if (academicLoadsError) {
+    return (
+      <div className="p-6 h-full flex flex-col items-center justify-center">
+        <p className="text-destructive">Error al cargar la información de los cursos.</p>
+        <p className="text-sm text-muted-foreground">{academicLoadsError.message}</p>
+      </div>
+    )
+  }
+
+  if (!currentProfessorId) {
+    return (
+      <div className="p-6 h-full flex flex-col items-center justify-center">
+        <p className="text-destructive">No se ha configurado un profesor para la demostración.</p>
+        <p className="text-sm text-muted-foreground">Por favor, configure un ID de profesor en el store de desarrollo.</p>
+      </div>
+    )
+  }
+
   return (
     <div className="p-6 h-full flex flex-col">
-      {/* Header compacto */}
       <div className="mb-4">
         <h2 className="text-xl font-semibold">Información del Curso</h2>
         <p className="text-muted-foreground text-sm">Seleccione el NRC del curso para cargar la información</p>
       </div>
 
-      {/* Pass the control from formMethods to FormProvider/Form */}
       <Form {...formMethods}>
         <form onSubmit={handleSubmit(onSubmitHandler)} className="flex-1 flex flex-col">
-          {/* Contenido principal en 2 columnas */}
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* COLUMNA 1: NRC, Curso, Número de Grupo */}
+            {/* First Column: NRC Selector, Course Name, Group Number */}
             <div className="space-y-6">
               <Card className="border-primary/20 bg-primary/5 h-fit">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Selección de Curso</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* NRC Selector */}
                   <FormField
-                    control={control} // Use control from formMethods
+                    control={control}
                     name="nrc"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-medium">
                           NRC del Curso <span className="text-destructive">*</span>
                         </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={availableCourses.length === 0}>
                           <FormControl>
                             <SelectTrigger className="h-10">
-                              <SelectValue placeholder="Seleccione un NRC..." />
+                              <SelectValue
+                                placeholder={
+                                  availableCourses.length === 0
+                                    ? 'No hay cursos activos para este profesor'
+                                    : 'Seleccione un NRC...'
+                                }
+                              />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {cursosDisponibles.map((curso) => (
-                              <SelectItem key={curso.nrc} value={curso.nrc}>
+                            {availableCourses.map((course) => (
+                              <SelectItem key={course.nrc} value={course.nrc}>
                                 <div className="flex flex-col">
-                                  <span className="font-medium">NRC: {curso.nrc}</span>
+                                  <span className="font-medium">NRC: {course.nrc}</span>
                                   <span className="text-xs text-muted-foreground">
-                                    {curso.codigo} - {curso.curso}
+                                    {course.courseCode} - {course.courseName}
                                   </span>
                                 </div>
                               </SelectItem>
@@ -165,11 +195,9 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                       </FormItem>
                     )}
                   />
-
-                  {/* Curso */}
                   <FormField
-                    control={control} // Use control from formMethods
-                    name="curso"
+                    control={control}
+                    name="courseName"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-medium">Curso</FormLabel>
@@ -179,11 +207,9 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                       </FormItem>
                     )}
                   />
-
-                  {/* Número de Grupo */}
                   <FormField
-                    control={control} // Use control from formMethods
-                    name="numeroGrupo"
+                    control={control}
+                    name="groupNumber"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-medium">Número de Grupo</FormLabel>
@@ -197,17 +223,16 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
               </Card>
             </div>
 
-            {/* COLUMNA 2: Profesor, Código, Nivel de Grupo */}
+            {/* Second Column: Professor Name, Course Code, Group Level */}
             <div className="space-y-6">
               <Card className="border-primary/20 bg-primary/5 h-fit">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Información del Curso</CardTitle>
+                  <CardTitle className="text-base">Detalles Adicionales</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Profesor */}
                   <FormField
-                    control={control} // Use control from formMethods
-                    name="profesor"
+                    control={control}
+                    name="professorName"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-medium">Profesor</FormLabel>
@@ -217,25 +242,21 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                       </FormItem>
                     )}
                   />
-
-                  {/* Código */}
                   <FormField
-                    control={control} // Use control from formMethods
-                    name="codigo"
+                    control={control}
+                    name="courseCode"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-medium">Código</FormLabel>
+                        <FormLabel className="font-medium">Código de Curso</FormLabel>
                         <FormControl>
                           <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
                         </FormControl>
                       </FormItem>
                     )}
                   />
-
-                  {/* Nivel de Grupo */}
                   <FormField
-                    control={control} // Use control from formMethods
-                    name="nivelGrupo"
+                    control={control}
+                    name="groupLevel"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-medium">Nivel de Grupo</FormLabel>
@@ -245,20 +266,17 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                       </FormItem>
                     )}
                   />
-                  {/* You would add FormFields for campus, fecha, cupoMatricula here if they were editable */}
-                  {/* For now, they are derived and set via setValue */}
+                  {/* Removed FormFields for campusName, cycleStartDate, enrollmentCapacity */}
                 </CardContent>
               </Card>
             </div>
           </div>
 
-          {/* Botones de navegación - FIJOS EN LA PARTE INFERIOR */}
           <div className="flex justify-between pt-6 mt-auto">
             <Button type="button" variant="outline" onClick={onPrevious} disabled={!onPrevious} className="px-8">
               Anterior
             </Button>
-
-            <Button type="submit" disabled={!selectedCourse || formState.isSubmitting} className="px-8">
+            <Button type="submit" disabled={!selectedCourseData || formState.isSubmitting} className="px-8">
               Siguiente
             </Button>
           </div>

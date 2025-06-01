@@ -13,12 +13,9 @@ export class GenericService<T, CreateDTO, UpdateDTO = Partial<T>, Filters = unkn
 
   async list(filters?: Filters): Promise<PaginatedResponse<T>> {
     try {
-      const response = await HttpClient.get(`/${this.resource}`, { params: filters })
-      const data = this.extractData(response.data)
-
-      return Array.isArray(data)
-        ? { data, meta: { page: 1, limit: data.length, total: data.length } }
-        : (data as PaginatedResponse<T>)
+      const response = await HttpClient.get<PaginatedResponse<T>>(`/${this.resource}`, { params: filters })
+      // Assuming response.data from HttpClient IS the PaginatedResponse object from the API
+      return response.data
     } catch (err) {
       this.handleError(err)
     }
@@ -59,14 +56,15 @@ export class GenericService<T, CreateDTO, UpdateDTO = Partial<T>, Filters = unkn
     }
   }
 
-  // Método para extraer datos de la respuesta envuelta
+  // The extractData method is generally for single item responses or non-paginated list responses
+  // that might be wrapped in a { data: ... } structure by the backend.
+  // For paginated lists, we usually want the whole { data: [...], meta: {...} } object.
   private extractData(responseData: any): any {
-    // Si la respuesta está envuelta en { data: ... }
-    if (responseData && typeof responseData === 'object' && 'data' in responseData) {
+    // If the responseData is an object and has a 'data' key,
+    // AND it does NOT have a 'meta' key (to distinguish from PaginatedResponse)
+    if (responseData && typeof responseData === 'object' && 'data' in responseData && !('meta' in responseData)) {
       return responseData.data
     }
-
-    // Si la respuesta es directamente los datos
     return responseData
   }
 
