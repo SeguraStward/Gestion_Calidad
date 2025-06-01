@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsInt, IsString, IsDate } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 
 export class BaseDto {
   @ApiPropertyOptional({ description: 'Version', readOnly: true })
@@ -13,6 +13,7 @@ export class BaseDto {
   @IsDate()
   @IsOptional()
   @Type(() => Date)
+  @Expose()
   createdAt?: Date;
 
   @ApiPropertyOptional({ description: 'Last update timestamp', readOnly: true })

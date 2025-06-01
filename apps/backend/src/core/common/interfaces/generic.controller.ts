@@ -15,22 +15,36 @@ import type { IGenericService } from './generic-service.interface';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '@src/modules/auth/guards/jwt-auth.guard';
+import { buildPrismaInclude } from '@src/utils/prisma-include.parser';
 
-@UseGuards(JwtAuthGuard)
 export abstract class GenericController<D, C, U = Partial<C>> {
   protected abstract readonly logger: Logger;
   constructor(protected readonly service: IGenericService<D, C, U>) {}
 
   @Get()
-  @ApiOperation({ summary: 'Find all records with pagination' })
+  @ApiOperation({ summary: 'Find all records with pagination and optional relations' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({
+    name: 'orderBy',
+    required: false,
+    type: String,
+    description: 'JSON string for order by, e.g., {"name":"asc"}',
+  })
+  @ApiQuery({
+    name: 'include',
+    required: false,
+    type: String,
+    description:
+      'Comma-separated list of relations to include, e.g., academicLoad,professor,academicLoad.course',
+  })
   @ApiResponse({ status: HttpStatus.OK, description: 'Records successfully retrieved' })
   async findAll(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query() where?: any,
     @Query('orderBy') orderBy?: string,
+    @Query('include') includeQueryParam?: string,
   ) {
     const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
     const filters = { ...where };
@@ -38,12 +52,16 @@ export abstract class GenericController<D, C, U = Partial<C>> {
     delete filters.page;
     delete filters.limit;
     delete filters.orderBy;
+    delete filters.include; // Remove from 'where' filters
+
+    const prismaInclude = buildPrismaInclude(includeQueryParam);
 
     return this.service.findAll(
       page ? parseInt(String(page), 10) : 1,
       limit ? parseInt(String(limit), 10) : 10,
       Object.keys(filters).length > 0 ? filters : undefined,
       parsedOrderBy,
+      prismaInclude, // Pass parsed include to service
     );
   }
 
@@ -55,12 +73,20 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Find record by id' })
+  @ApiOperation({ summary: 'Find record by id with optional relations' })
   @ApiParam({ name: 'id', type: String })
+  @ApiQuery({
+    name: 'include',
+    required: false,
+    type: String,
+    description:
+      'Comma-separated list of relations to include, e.g., academicLoad,professor,academicLoad.course',
+  })
   @ApiResponse({ status: HttpStatus.OK, description: 'Record successfully retrieved' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
-  async findById(@Param('id') id: string) {
-    const entity = await this.service.findById(id);
+  async findById(@Param('id') id: string, @Query('include') includeQueryParam?: string) {
+    const prismaInclude = buildPrismaInclude(includeQueryParam);
+    const entity = await this.service.findById(id, prismaInclude); // Pass parsed include
     if (!entity) {
       throw new NotFoundException(`Entity with id ${id} not found`);
     }

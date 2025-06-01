@@ -23,10 +23,10 @@ Content-Type: application/json
 
 {
   "code" : "CS101", 
-  "name": "Introducción a la Programación",
-  "description": "Un curso básico sobre conceptos de programación.",
+  "name": "Programacion avanzada espacial",
+  "description": "Programacion cuantica b+.",
   "credits": 3,
-  "level": "Pregrado",
+  "level": 2,
   "contactHours": 45,
   "independentHours": 30,
   "careerId": "683626b1e5b3c3956494ca39",

@@ -1,13 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsEnum, IsInt, IsDate, ValidateNested } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
-import { Status } from '@una-gc/database/prisma/generated/client';
+import { Status } from '@una-gc/database/prisma/generated/client'; // Assuming Status is correctly generated
 import { BaseDto } from '@src/modules/generalDto';
 
 import { CourseDto } from '@src/modules/courses/dtos/course.dto';
 import { AcademicCycleDto } from '@src/modules/academic-cycles/dtos/academic-cycle.dto';
 import { UserDto } from '@src/modules/users/dtos/user.dto';
 import { CampusDto } from '@src/modules/campuses/dtos/campus.dto';
+// Import the AcademicLoadGroupDto
+import { AcademicLoadGroupDto } from '@src/modules/academic-load-groups/dtos/academic-load-group.dto'; // Adjust path if necessary
 
 export class AcademicLoadDto extends BaseDto {
   @ApiPropertyOptional({ description: 'AcademicLoad ID' })
@@ -33,9 +35,10 @@ export class AcademicLoadDto extends BaseDto {
   @IsString()
   courseId: string;
 
-  @ApiProperty({ description: 'Classroom ID' })
+  @ApiPropertyOptional({ description: 'Classroom ID' }) // Made optional as per Prisma schema
   @IsString()
-  classroomId: string;
+  @IsOptional()
+  classroomId?: string;
 
   @ApiProperty({ description: 'Maximum capacity' })
   @Expose()
@@ -53,13 +56,14 @@ export class AcademicLoadDto extends BaseDto {
   availableSeats: number;
 
   @ApiProperty({ description: 'Group ID' })
-  @Expose()
+  @Expose() // Keep Expose if you want to send groupId even if group object is not included
   @IsString()
   groupId: string;
 
-  @ApiProperty({ description: 'Schedule ID' })
+  @ApiPropertyOptional({ description: 'Schedule ID' }) // Made optional as per Prisma schema
   @IsString()
-  scheduleId: string;
+  @IsOptional()
+  scheduleId?: string;
 
   @ApiProperty({ description: 'Professor ID' })
   @IsString()
@@ -69,9 +73,10 @@ export class AcademicLoadDto extends BaseDto {
   @Expose()
   @IsDate()
   @IsOptional()
+  @Type(() => Date) // Ensure date is transformed correctly
   date?: Date;
 
-  @ApiProperty({ description: 'Status of the academic load' })
+  @ApiProperty({ description: 'Status of the academic load', enum: Status })
   @Expose()
   @IsEnum(Status)
   status: Status;
@@ -104,9 +109,19 @@ export class AcademicLoadDto extends BaseDto {
   @IsOptional()
   campus?: CampusDto;
 
+  // Add the group property
+  @ApiPropertyOptional({ type: () => AcademicLoadGroupDto })
+  @Expose()
+  @Type(() => AcademicLoadGroupDto)
+  @ValidateNested()
+  @IsOptional()
+  group?: AcademicLoadGroupDto;
+
   constructor(partial: Partial<AcademicLoadDto> | any = {}) {
     super();
     Object.assign(this, partial);
+
+    // Ensure nested DTOs are instantiated if plain objects are passed
     if (partial.course && !(partial.course instanceof CourseDto)) {
       this.course = new CourseDto(partial.course);
     }
@@ -118,6 +133,10 @@ export class AcademicLoadDto extends BaseDto {
     }
     if (partial.campus && !(partial.campus instanceof CampusDto)) {
       this.campus = new CampusDto(partial.campus);
+    }
+    // Handle group instantiation
+    if (partial.group && !(partial.group instanceof AcademicLoadGroupDto)) {
+      this.group = new AcademicLoadGroupDto(partial.group);
     }
   }
 }

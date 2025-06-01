@@ -38,9 +38,8 @@ export class CourseDto extends BaseDto {
 
   @ApiProperty({ description: 'Level' })
   @Expose()
-  @IsString()
   @IsNotEmpty()
-  level: string;
+  level: number;
 
   @ApiProperty({ description: 'Contact Hours' })
   @Expose()

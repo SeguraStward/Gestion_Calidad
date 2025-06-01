@@ -8,7 +8,7 @@ model Course {
   description String?
 
   credits          Int
-  level            String
+  level            Int
   contactHours     Int
   independentHours Int?
 

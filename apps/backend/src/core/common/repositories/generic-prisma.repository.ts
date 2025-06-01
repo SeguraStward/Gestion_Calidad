@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { GenericRepository } from '../interfaces/generic-repository.interface';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { PaginatedResponse } from '@core/http/interfaces/paginated-response.interface';
@@ -12,9 +12,16 @@ export abstract class GenericPrismaRepository<T, CreateInput, UpdateInput, Where
 
   // Optional include relations configuration
   protected readonly defaultIncludes: Record<string, boolean | object> = {};
+  protected readonly internalLogger = new Logger(GenericPrismaRepository.name);
   constructor(protected readonly prismaService: PrismaService) {}
 
-  async findAll(page = 1, limit = 10, where = {}, orderBy = {}): Promise<PaginatedResponse<T>> {
+  async findAll(
+    page = 1,
+    limit = 10,
+    where = {},
+    orderBy = {},
+    include?: Record<string, any>,
+  ): Promise<PaginatedResponse<T>> {
     const skip = (page - 1) * limit;
 
     if (!this.prismaService[this.modelName]) {
@@ -23,13 +30,21 @@ export abstract class GenericPrismaRepository<T, CreateInput, UpdateInput, Where
 
     const model = this.prismaService[this.modelName];
 
+    const finalInclude = { ...this.defaultIncludes, ...include };
+    const effectiveInclude = Object.keys(finalInclude).length > 0 ? finalInclude : undefined;
+
+    // Add this log
+    this.internalLogger.debug(
+      `[${this.modelName}] Effective include for findAll: ${JSON.stringify(effectiveInclude)}`,
+    );
+
     const [data, totalCount] = await Promise.all([
       model.findMany({
         skip,
         take: Number(limit),
         where,
         orderBy,
-        include: this.defaultIncludes,
+        include: effectiveInclude,
       }),
       model.count({ where }),
     ]);
@@ -44,11 +59,20 @@ export abstract class GenericPrismaRepository<T, CreateInput, UpdateInput, Where
     };
   }
 
-  async findById(id: string): Promise<T> {
+  async findById(id: string, include?: Record<string, any>): Promise<T> {
     const model = this.prismaService[this.modelName];
+
+    const finalInclude = { ...this.defaultIncludes, ...include };
+    const effectiveInclude = Object.keys(finalInclude).length > 0 ? finalInclude : undefined;
+
+    // Add this log
+    this.internalLogger.debug(
+      `[${this.modelName}] Effective include for findById (${id}): ${JSON.stringify(effectiveInclude)}`,
+    );
+
     const entity = await model.findUnique({
       where: { id },
-      include: this.defaultIncludes,
+      include: effectiveInclude,
     });
 
     if (!entity) {
@@ -110,11 +134,20 @@ export abstract class GenericPrismaRepository<T, CreateInput, UpdateInput, Where
     }
   }
 
-  async findOne(where: any): Promise<T | null> {
+  async findOne(where: any, include?: Record<string, any>): Promise<T | null> {
     const model = this.prismaService[this.modelName];
+
+    const finalInclude = { ...this.defaultIncludes, ...include };
+    const effectiveInclude = Object.keys(finalInclude).length > 0 ? finalInclude : undefined;
+
+    // Add this log
+    this.internalLogger.debug(
+      `[${this.modelName}] Effective include for findOne: ${JSON.stringify(effectiveInclude)}`,
+    );
+
     return model.findFirst({
       where,
-      include: this.defaultIncludes,
+      include: effectiveInclude,
     });
   }
 

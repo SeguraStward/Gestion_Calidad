@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { GenericRepository } from './generic-repository.interface';
 import { IGenericService } from './generic-service.interface';
 import { DtoValidator } from '../dto-validator';
+import { plainToClass } from 'class-transformer'; // Make sure plainToClass is imported
 
 @Injectable()
 export abstract class GenericService<E extends Record<string, any>, D, C = any, U = any>
@@ -11,42 +12,41 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
 
   constructor(
     protected readonly repository: GenericRepository<E>,
-    protected readonly dtoClass?: new (entity: E) => D,
+    protected readonly dtoClass?: new (...args: any[]) => D, // Adjusted constructor signature for dtoClass
     protected readonly dtoValidator?: DtoValidator,
   ) {}
 
   private transformDto(entity: E): D;
   private transformDto(entity: E[]): D[];
   private transformDto(entity: E | E[]): D | D[] {
-    if (!this.dtoClass) return entity as unknown as D;
+    // this.logger.debug('Bypassing DTO transformation for debugging includes.');
+    // return entity as any;
+
+    // Restore original logic:
+    if (!this.dtoClass) {
+      this.logger.warn(`dtoClass is not defined in ${this.constructor.name}, returning raw entity/entities.`);
+      if (Array.isArray(entity)) {
+        return entity as any as D[];
+      }
+      return entity as any as D;
+    }
 
     if (Array.isArray(entity)) {
-      return entity.map((item) => {
-        if (item instanceof this.dtoClass) {
-          return item as unknown as D;
-        }
-
-        return new this.dtoClass!(item);
-      });
+      // Ensure you have a consistent strategy for excludeExtraneousValues
+      // If your DTOs use @Expose(), then excludeExtraneousValues: true is appropriate.
+      // If not, you might want it to be false or omit it.
+      return entity.map((e) => plainToClass(this.dtoClass!, e, { excludeExtraneousValues: true }));
     } else {
-      if (entity instanceof this.dtoClass) {
-        return entity as unknown as D;
-      }
-
-      return new this.dtoClass(entity);
+      return plainToClass(this.dtoClass!, entity, { excludeExtraneousValues: true });
     }
   }
 
-  async findAll(page = 1, limit = 10, where?: any, orderBy?: any) {
+  async findAll(page = 1, limit = 10, where?: any, orderBy?: any, include?: any) {
     try {
-      const result = await this.repository.findAll(page, limit, where, orderBy);
+      const result = await this.repository.findAll(page, limit, where, orderBy, include);
       return {
-        data: this.transformDto(result.data),
-        meta: {
-          limit: result.meta.limit,
-          page: result.meta.page,
-          total: result.meta.total,
-        },
+        data: this.transformDto(result.data), // This will now use the restored transformation
+        meta: result.meta,
       };
     } catch (error) {
       this.logger.error('Error fetching records', error);
@@ -54,27 +54,34 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
     }
   }
 
-  async findById(id: string) {
-    this.logger.debug(`Finding entity by id: ${id}`);
+  async findById(id: string, include?: any): Promise<D | null> {
+    this.logger.debug(`Finding entity by id: ${id} with includes: ${JSON.stringify(include)}`);
     try {
-      const entity = await this.repository.findById(id).catch(() => null);
+      const entity = await this.repository.findById(id, include);
       if (!entity) {
         this.logger.warn(`Entity with id ${id} not found`);
         return null;
       }
       this.logger.debug(`Entity found: ${JSON.stringify(entity)}`);
-      return this.transformDto(entity) as D;
+      return this.transformDto(entity) as D; // This will now use the restored transformation
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException(`Entity with id ${id} not found`);
+      }
+      // Updated error logging
+      if (error instanceof Error) {
+        this.logger.error(`Error in findById for id ${id}: ${error.message}`, error.stack);
+      } else {
+        this.logger.error(`Error in findById for id ${id}:`, error);
       }
       throw error;
     }
   }
 
-  async findOne(where: any) {
+  async findOne(where: any, include?: any): Promise<D | null> {
     try {
-      const entity = await this.repository.findOne(where);
+      const entity = await this.repository.findOne(where, include);
+      if (!entity) return null;
       return this.transformDto(entity);
     } catch (error) {
       this.logger.error(`Error finding entity with criteria: ${JSON.stringify(where)}`, error);
