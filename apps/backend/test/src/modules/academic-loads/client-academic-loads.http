@@ -37,7 +37,7 @@ Content-Type: application/json
   "maximumCapacity": 30,
   "enrolledCapacity": 25,
   "availableSeats": 5,
-  "groupId": "",
+  "groupId": "5edfd80a21d6df1cb4eb1c6e",
   "scheduleId": "68158152dcb8cfd70156e06e",
   "professorId": "6817035e6fde93aab0b56e60",
   "date": "2025-04-19T14:30:00Z",

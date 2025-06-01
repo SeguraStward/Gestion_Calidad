@@ -30,13 +30,15 @@ export type User = {
 type UserStore = {
   currentUser: User | null
   setCurrentUser: (user: User | null) => void
+  logoutUser: () => void // Add this line
 }
 
 export const useUserContextStore = create<UserStore>()(
   persist(
     (set) => ({
       currentUser: null,
-      setCurrentUser: (user) => set({ currentUser: user })
+      setCurrentUser: (user) => set({ currentUser: user }),
+      logoutUser: () => set({ currentUser: null }) // Add this line to implement the method
     }),
     {
       name: 'user-storage',
