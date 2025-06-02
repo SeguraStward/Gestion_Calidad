@@ -1,31 +1,45 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  // Rutas que no requieren autenticación
+const DISABLED_AUTH = process.env.DISABLED_AUTH === 'true'
+
+function isPublicPath(pathname: string): boolean {
   const publicPaths = ['/auth/login', '/auth/error']
-  const isPublicPath = publicPaths.some((path) => request.nextUrl.pathname.startsWith(path))
+  return publicPaths.some((path) => pathname.startsWith(path))
+}
 
-  // Obtener el token desde la cookie
-  const accessToken = request.cookies.get('auth_token')?.value
+function getAccessToken(request: NextRequest): string | undefined {
+  return request.cookies.get('auth_token')?.value
+}
 
-  // Lógica para rutas públicas
-  if (isPublicPath) {
-    // Si el usuario ya está autenticado, redirigir a la página principal
-    if (accessToken) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
-    return NextResponse.next()
+function handlePublicPath(request: NextRequest, accessToken?: string) {
+  if (accessToken) {
+    //home page if already logged in
+    return NextResponse.redirect(new URL('/', request.url))
   }
+  return NextResponse.next()
+}
 
-  // Para rutas protegidas, verificar si el token existe
+function handleProtectedPath(request: NextRequest, accessToken?: string) {
   if (!accessToken) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
-
-  // En lugar de verificar el token en cada solicitud, simplemente confiar en su presencia
-  // La verificación real se hará en el componente de nivel superior o en llamadas API específicas
   return NextResponse.next()
+}
+
+export async function middleware(request: NextRequest) {
+  if (!DISABLED_AUTH) {
+    return NextResponse.next()
+  }
+
+  const pathname = request.nextUrl.pathname
+  const accessToken = getAccessToken(request)
+
+  if (isPublicPath(pathname)) {
+    return handlePublicPath(request, accessToken)
+  }
+
+  return handleProtectedPath(request, accessToken)
 }
 
 export const config = {

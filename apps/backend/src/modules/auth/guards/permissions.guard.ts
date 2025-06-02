@@ -1,8 +1,11 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PERMISSIONS_KEY, RequiredPermission } from '../decorators/require-permissions.decorator';
-import { PermissionType } from '@una-gc/database/prisma/generated/client';
+
 import { PrismaService } from '@src/prisma/prisma.service';
+import { PermissionType } from '@una-gc/database/prisma/generated/client';
+
+import { PERMISSIONS_KEY, RequiredPermission } from '../decorators/require-permissions.decorator';
+import { RESOURCE_NAME_KEY } from '../decorators/resource-name.decorator';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -15,7 +18,7 @@ export class PermissionsGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // validar si en el env está habilitado el guard
-    const disable = process.env.DISABLE_PERMISSIONS_GUARD === 'true';
+    const disable = process.env.DISABLED_PERMISSIONS_GUARD === 'true';
     if (disable) {
       return true;
     }
@@ -40,6 +43,9 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException('Tu rol no está activo o no tienes un rol seleccionado');
     }
 
+    // Obtener el nombre del recurso de los metadatos
+    const resourceName = this.reflector.getAllAndOverride<string>(RESOURCE_NAME_KEY, [context.getClass()]);
+
     // Cargar permisos si no están incluidos
     let rolePermissions = user.activeRole.permissions;
     if (!rolePermissions) {
@@ -60,14 +66,25 @@ export class PermissionsGuard implements CanActivate {
 
     // Verificar cada permiso requerido
     for (const requiredPermission of requiredPermissions) {
-      const hasPermission = await this.checkPermission(rolePermissions, requiredPermission);
+      // Reemplazar 'resourceName' con el valor real si existe
+      const resource =
+        requiredPermission.resource === 'resourceName' && resourceName
+          ? resourceName
+          : requiredPermission.resource;
+
+      const permissionToCheck = {
+        ...requiredPermission,
+        resource,
+      };
+
+      const hasPermission = await this.checkPermission(rolePermissions, permissionToCheck);
 
       if (!hasPermission) {
         this.logger.warn(
-          `Access denied for ${user.email}: Requires ${requiredPermission.action} on ${requiredPermission.resource}`,
+          `Access denied for ${user.email}: Requires ${permissionToCheck.action} on ${permissionToCheck.resource}`,
         );
         throw new ForbiddenException(
-          `No tienes permiso para ${this.getActionLabel(requiredPermission.action)} este recurso`,
+          `No tienes permiso para ${this.getActionLabel(permissionToCheck.action)} este recurso`,
         );
       }
     }

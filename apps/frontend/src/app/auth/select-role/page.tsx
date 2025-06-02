@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, Loader2, RefreshCcw } from 'lucide-react'
 
@@ -43,7 +43,7 @@ export default function SelectRolePage() {
     }
   }
 
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
     console.log('🏁 Starting to fetch user roles...')
     try {
       setLoading(true)
@@ -69,10 +69,11 @@ export default function SelectRolePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, []) // Sin dependencias ya que no usa variables externas
+
   useEffect(() => {
     fetchRoles()
-  }, [])
+  }, [fetchRoles])
 
   const handleSubmit = async () => {
     if (!selectedRole) return
