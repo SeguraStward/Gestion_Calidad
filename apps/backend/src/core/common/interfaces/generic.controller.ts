@@ -10,20 +10,24 @@ import {
   NotFoundException,
   HttpStatus,
   HttpCode,
-  UseGuards,
+  // UseGuards,
 } from '@nestjs/common';
 import type { IGenericService } from './generic-service.interface';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
-import { JwtAuthGuard } from '@src/modules/auth/guards/jwt-auth.guard';
+// import { JwtAuthGuard } from '@src/modules/auth/guards/jwt-auth.guard';
 // import { PermissionsGuard } from '@src/modules/auth/guards/permissions.guard';
 // import { RequirePermissions } from '@src/modules/auth/decorators/require-permissions.decorator';
+// import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator'; // Descomentado
 
 // import { PermissionType } from '@una-gc/database/prisma/generated/client';
 
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 export abstract class GenericController<D, C, U = Partial<C>> {
   protected abstract readonly logger: Logger;
+
+  protected abstract readonly resourceName: string; // definir el nombre del recurso en la implementacion hija
+
   constructor(protected readonly service: IGenericService<D, C, U>) {}
 
   @Get()
@@ -79,6 +83,9 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   }
 
   @Post()
+  // @UseGuards(PermissionsGuard)
+  // @RequirePermissions({ resource: 'resourceName', action: PermissionType.CREATE })
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create new record' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Record successfully created' })
   @HttpCode(HttpStatus.CREATED)
