@@ -2,35 +2,39 @@ import '@una-gc/ui/globals.css'
 import { Inter } from 'next/font/google'
 import { ReactNode } from 'react'
 
-import { ThemeProvider } from '@/providers/theme-provider'
-import { Toaster } from 'sonner'
-import { ModeToggle } from './(components)/ui/mode-toggle'
-import ReactQueryProvider from '@/providers/react-query-provider'
+import Providers from '@/providers/providers'
+import { ThemeToggle } from '@/components/toggles/theme-toggle'
+import { ContentLayout } from '@/components/layouts/content.layout'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Google Login App',
-  description: 'Login with Google and redirect to profile'
+  title: 'Gestión de Calidad - UNA',
+  description: 'Sistema de Gestión de Calidad de la Universidad Nacional'
 }
 
 interface RootLayoutProps {
   children: ReactNode
 }
 
-export default function LoginLayout({ children }: RootLayoutProps) {
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} flex min-h-screen items-center justify-center antialiased`}>
-        <ReactQueryProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            {children}
-            <Toaster />
-            <div className="fixed top-4 right-4">
-              <ModeToggle />
-            </div>
-          </ThemeProvider>
-        </ReactQueryProvider>
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+        <title>Gestión de Calidad - UNA</title>
+        <meta name="description" content="Sistema de Gestión de Calidad de la Universidad Nacional" />
+      </head>
+      <body className={inter.className}>
+        <Providers>
+          {/* Layout configuration, is aplicated for all */}
+          <ContentLayout>{children}</ContentLayout>
+
+          {/* Theme button */}
+          <div className="fixed top-4 right-4 z-50">
+            <ThemeToggle />
+          </div>
+        </Providers>
       </body>
     </html>
   )

@@ -114,6 +114,12 @@ const data = {
       url: '/admin/final-graduation-work',
       icon: Award,
       items: [{ title: 'Lista de Trabajos', url: '/admin/final-graduation-work' }]
+    },
+    {
+      title: 'Cambio de Rol',
+      url: '/auth/select-role',
+      icon: Frame,
+      items: [{ title: 'Selecciona tu rol', url: '/auth/select-role' }]
     }
   ],
   projects: [

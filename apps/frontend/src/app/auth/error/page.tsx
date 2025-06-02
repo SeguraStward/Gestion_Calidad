@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ErrorCard } from '../../../modules/auth/components/error-card'
+import { ErrorCard } from '@/modules/auth/components/error-card'
 import { Button } from '@una-gc/ui/components/button'
 
 export default function AuthErrorPage() {
