@@ -5,7 +5,7 @@ import { PrismaService } from '@src/prisma/prisma.service';
 import { PermissionType } from '@una-gc/database/prisma/generated/client';
 
 import { PERMISSIONS_KEY, RequiredPermission } from '../decorators/require-permissions.decorator';
-import { RESOURCE_NAME_KEY } from '../decorators/resource-name.decorator';
+// import { RESOURCE_NAME_KEY } from '../decorators/resource-name.decorator';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -44,7 +44,7 @@ export class PermissionsGuard implements CanActivate {
     }
 
     // Obtener el nombre del recurso de los metadatos
-    const resourceName = this.reflector.getAllAndOverride<string>(RESOURCE_NAME_KEY, [context.getClass()]);
+    const resourceName = 'fr'; //this.reflector.getAllAndOverride<string>(RESOURCE_NAME_KEY, [context.getClass()]);
 
     // Cargar permisos si no están incluidos
     let rolePermissions = user.activeRole.permissions;
