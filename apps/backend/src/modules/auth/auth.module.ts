@@ -10,6 +10,7 @@ import { AuthService } from './auth.service';
 import { GoogleStrategy } from './strategies/google-strategy';
 import { JwtStrategy } from './strategies/jwt-strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
+import { RoleManagerService } from './role-manager.service';
 
 @Module({
   imports: [
@@ -21,12 +22,22 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
       inject: [ConfigService],
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       useFactory: async (configService: ConfigService) => {
+        // Aunque las estrategias y servicios a menudo especifican el secreto explícitamente,
+        // podrías configurar un secreto predeterminado aquí si fuera necesario para otros usos de JwtService.
+        // Por ahora, devolver un objeto vacío está bien si todas las operaciones de firma/verificación
+        // proporcionan sus propias opciones (como secreto y expiración).
         return {};
       },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, JwtStrategy, JwtRefreshStrategy],
-  exports: [AuthService],
+  providers: [
+    AuthService,
+    GoogleStrategy,
+    JwtStrategy,
+    JwtRefreshStrategy,
+    RoleManagerService, // Añadir RoleManagerService a los providers
+  ],
+  exports: [AuthService, RoleManagerService], // Exportar AuthService y RoleManagerService si son usados por otros módulos
 })
 export class AuthModule {}

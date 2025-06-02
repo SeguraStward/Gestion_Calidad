@@ -17,6 +17,11 @@ import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+import { RoleManagerService } from './role-manager.service';
+import { Body } from '@nestjs/common/decorators/http/route-params.decorator';
+import { parseExpiryToMilliseconds } from './utils/expiry-parser.util';
+import { SwitchRoleDto } from './dto/switch-role.dto';
+
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
@@ -24,28 +29,19 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly roleManagerService: RoleManagerService, // Inject RoleManagerService
   ) {
     this.logger = new Logger(AuthController.name);
   }
 
   private getCookieMaxAge(key: 'JWT_EXPIRATION' | 'JWT_REFRESH_EXPIRATION'): number {
     const expiryString = this.configService.get<string>(key);
-    const unit = expiryString.slice(-1);
-    const value = parseInt(expiryString.slice(0, -1), 10);
-    if (isNaN(value)) return 0; // Default or throw error
-
-    switch (unit) {
-      case 's':
-        return value * 1000;
-      case 'm':
-        return value * 60 * 1000;
-      case 'h':
-        return value * 60 * 60 * 1000;
-      case 'd':
-        return value * 24 * 60 * 60 * 1000;
-      default:
-        return 0; // Default or throw error
+    if (!expiryString) {
+      this.logger.error(`Missing environment variable: ${key}`);
+      return 0; // Or some default value
     }
+
+    return parseExpiryToMilliseconds(expiryString);
   }
 
   @ApiOperation({ summary: 'Initiate Google OAuth flow' })
@@ -102,7 +98,7 @@ export class AuthController {
         path: '/',
       });
 
-      return res.redirect(`${this.configService.get('FRONTEND_URL')}/select-role`); // Or dashboard
+      return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/select-role`); // Or dashboard
     } catch (error) {
       this.logger.error(
         `Google authentication callback error: ${error instanceof Error ? error.message : String(error)}`,
@@ -172,6 +168,9 @@ export class AuthController {
       email: string;
       refreshTokenDbId: string;
       refreshTokenFromCookie: string;
+      fullName?: string;
+      fullLastName?: string;
+      activeRole?: any;
     };
 
     if (!userFromStrategy || !userFromStrategy.refreshTokenDbId) {
@@ -179,9 +178,19 @@ export class AuthController {
       throw new UnauthorizedException('Authentication data missing for refresh.');
     }
 
+    // Ensure required properties are present
+    const userForRefresh = {
+      id: userFromStrategy.id,
+      email: userFromStrategy.email,
+      refreshTokenDbId: userFromStrategy.refreshTokenDbId,
+      fullName: userFromStrategy.fullName ?? '',
+      fullLastName: userFromStrategy.fullLastName ?? '',
+      activeRole: userFromStrategy.activeRole,
+    };
+
     try {
       const { token: newAccessToken, refreshToken: newRawRefreshToken } =
-        await this.authService.refreshToken(userFromStrategy);
+        await this.authService.refreshToken(userForRefresh);
 
       res.cookie('auth_token', newAccessToken, {
         httpOnly: true,
@@ -225,6 +234,84 @@ export class AuthController {
         throw error;
       }
       throw new UnauthorizedException('Failed to refresh token due to an internal error.');
+    }
+  }
+
+  // In AuthController.ts
+  @Get('verify-token')
+  @ApiOperation({ summary: 'Verify if token is valid' })
+  @ApiResponse({ status: 200, description: 'Token is valid' })
+  @ApiResponse({ status: 401, description: 'Token is invalid' })
+  verifyToken(@Req() req: Request) {
+    const token = req.cookies.auth_token;
+    if (!token) {
+      throw new UnauthorizedException('No token provided');
+    }
+
+    const isValid = this.authService.validateToken(token);
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    return { valid: true };
+  }
+
+  // Add this new endpoint to your AuthController
+
+  @Get('available-roles')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get available roles for current user' })
+  @ApiResponse({ status: 200, description: 'List of available roles' })
+  async getAvailableRoles(@Req() req: Request) {
+    const userId = (req.user as any).id;
+    return this.roleManagerService.getUserAvailableRoles(userId);
+  }
+
+  // helper function to set cookies
+  private setCookies(res: Response, tokens: { accessToken?: string; refreshToken?: string }) {
+    if (tokens.accessToken) {
+      res.cookie('auth_token', tokens.accessToken, {
+        httpOnly: true,
+        secure: this.configService.get('NODE_ENV') === 'production',
+        maxAge: this.getCookieMaxAge('JWT_EXPIRATION'),
+        sameSite: 'lax',
+        path: '/',
+      });
+    }
+
+    if (tokens.refreshToken) {
+      res.cookie('refresh_token', tokens.refreshToken, {
+        httpOnly: true,
+        secure: this.configService.get('NODE_ENV') === 'production',
+        maxAge: this.getCookieMaxAge('JWT_REFRESH_EXPIRATION'),
+        sameSite: 'lax',
+        path: '/',
+      });
+    }
+  }
+
+  @Post('switch-role')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Switch to another authorized role' })
+  @ApiResponse({ status: 200, description: 'Role switched successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async switchRole(
+    @Req() req: Request,
+    @Body() switchRoleDto: SwitchRoleDto, // Usar el DTO existente
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const userId = (req.user as any).id;
+    try {
+      const result = await this.roleManagerService.switchUserRole(userId, switchRoleDto.roleId);
+      this.setCookies(res, { accessToken: result.token });
+      return { message: 'Role switched successfully' };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error switching role: ${errorMessage}`);
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Error al cambiar de rol');
     }
   }
 }
