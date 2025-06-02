@@ -7,6 +7,7 @@ import { CommSessionsService } from './comm-sessions.service';
 @Controller('comm-sessions')
 export class CommSessionsController extends GenericController<CommSessionDto, CommSessionDto> {
   protected readonly logger = new Logger(CommSessionsController.name);
+  protected readonly resourceName = 'COMM_SESSION';
   constructor(private readonly commSessionsService: CommSessionsService) {
     super(commSessionsService);
   }

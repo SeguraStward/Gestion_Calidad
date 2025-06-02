@@ -10,6 +10,7 @@ export class CommSessionAttendancesController extends GenericController<
   CommSessionAttendanceDto
 > {
   protected readonly logger = new Logger(CommSessionAttendancesController.name);
+  protected readonly resourceName = 'COMM_SESSION_ATTENDANCE';
   constructor(private readonly commSessionAttendancesService: CommSessionAttendancesService) {
     super(commSessionAttendancesService);
   }

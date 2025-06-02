@@ -7,6 +7,7 @@ import { FinalWorksService } from './final-works.service';
 @Controller('final-works')
 export class FinalWorksController extends GenericController<FinalWorkDto, FinalWorkDto> {
   protected readonly logger = new Logger(FinalWorksController.name);
+  protected readonly resourceName = 'FINAL_WORK';
   constructor(private readonly finalWorksService: FinalWorksService) {
     super(finalWorksService);
   }

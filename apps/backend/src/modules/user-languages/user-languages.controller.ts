@@ -7,6 +7,7 @@ import { UserLanguagesService } from './user-languages.service';
 @Controller('user-languages')
 export class UserLanguagesController extends GenericController<UserLanguageDto, UserLanguageDto> {
   protected readonly logger = new Logger(UserLanguagesController.name);
+  protected readonly resourceName = 'USER_LANGUAGE';
   constructor(private readonly userLanguagesService: UserLanguagesService) {
     super(userLanguagesService);
   }

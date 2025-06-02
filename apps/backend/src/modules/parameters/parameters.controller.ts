@@ -7,6 +7,7 @@ import { ParametersService } from './parameters.service';
 @Controller('parameters')
 export class ParametersController extends GenericController<ParameterDto, ParameterDto> {
   protected readonly logger = new Logger(ParametersController.name);
+  protected readonly resourceName = 'PARAMETER';
   constructor(private readonly parametersService: ParametersService) {
     super(parametersService);
   }

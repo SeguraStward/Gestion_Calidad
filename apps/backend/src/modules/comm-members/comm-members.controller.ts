@@ -7,6 +7,7 @@ import { CommMembersService } from './comm-members.service';
 @Controller('comm-members')
 export class CommMembersController extends GenericController<CommMemberDto, CommMemberDto> {
   protected readonly logger = new Logger(CommMembersController.name);
+  protected readonly resourceName = 'COMM_MEMBER';
   constructor(private readonly commMembersService: CommMembersService) {
     super(commMembersService);
   }

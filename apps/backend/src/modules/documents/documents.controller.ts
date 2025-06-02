@@ -7,6 +7,7 @@ import { DocumentsService } from './documents.service';
 @Controller('documents')
 export class DocumentsController extends GenericController<DocumentDto, DocumentDto> {
   protected readonly logger = new Logger(DocumentsController.name);
+  protected readonly resourceName = 'DOCUMENT';
   constructor(private readonly documentsService: DocumentsService) {
     super(documentsService);
   }

@@ -7,6 +7,7 @@ import { ProjectLogsService } from './project-logs.service';
 @Controller('project-logs')
 export class ProjectLogsController extends GenericController<ProjectLogDto, ProjectLogDto> {
   protected readonly logger = new Logger(ProjectLogsController.name);
+  protected readonly resourceName = 'PROJECT_LOG';
   constructor(private readonly projectLogsService: ProjectLogsService) {
     super(projectLogsService);
   }

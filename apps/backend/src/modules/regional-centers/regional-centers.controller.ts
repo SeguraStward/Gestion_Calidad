@@ -7,6 +7,7 @@ import { RegionalCentersService } from './regional-centers.service';
 @Controller('regional-centers')
 export class RegionalCentersController extends GenericController<RegionalCenterDto, RegionalCenterDto> {
   protected readonly logger = new Logger(RegionalCentersController.name);
+  protected readonly resourceName = 'REGIONAL_CENTER';
   constructor(private readonly regionalCentersService: RegionalCentersService) {
     super(regionalCentersService);
   }

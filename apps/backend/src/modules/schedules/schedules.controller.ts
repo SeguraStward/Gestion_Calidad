@@ -7,6 +7,7 @@ import { SchedulesService } from './schedules.service';
 @Controller('schedules')
 export class SchedulesController extends GenericController<ScheduleDto, ScheduleDto> {
   protected readonly logger = new Logger(SchedulesController.name);
+  protected readonly resourceName = 'SCHEDULE';
   constructor(private readonly schedulesService: SchedulesService) {
     super(schedulesService);
   }

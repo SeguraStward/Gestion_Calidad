@@ -7,6 +7,7 @@ import { ProjectsService } from './projects.service';
 @Controller('projects')
 export class ProjectsController extends GenericController<ProjectDto, ProjectDto> {
   protected readonly logger = new Logger(ProjectsController.name);
+  protected readonly resourceName = 'PROJECT';
   constructor(private readonly projectsService: ProjectsService) {
     super(projectsService);
   }

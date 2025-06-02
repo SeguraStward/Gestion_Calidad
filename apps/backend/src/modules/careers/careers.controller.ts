@@ -7,6 +7,7 @@ import { CareersService } from './careers.service';
 @Controller('careers')
 export class CareersController extends GenericController<CareerDto, CareerDto> {
   protected readonly logger = new Logger(CareersController.name);
+  protected readonly resourceName = 'CAREER';
   constructor(private readonly careersService: CareersService) {
     super(careersService);
   }

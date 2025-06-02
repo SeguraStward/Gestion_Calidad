@@ -7,6 +7,7 @@ import { UserPermissionsService } from './user-permissions.service';
 @Controller('user-permissions')
 export class UserPermissionsController extends GenericController<UserPermissionDto, UserPermissionDto> {
   protected readonly logger = new Logger(UserPermissionsController.name);
+  protected readonly resourceName = 'USER_PERMISSION';
   constructor(private readonly userPermissionsService: UserPermissionsService) {
     super(userPermissionsService);
   }

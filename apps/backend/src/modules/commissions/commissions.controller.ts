@@ -7,6 +7,7 @@ import { CommissionsService } from './commissions.service';
 @Controller('commissions')
 export class CommissionsController extends GenericController<CommissionDto, CommissionDto> {
   protected readonly logger = new Logger(CommissionsController.name);
+  protected readonly resourceName = 'COMMISSION';
   constructor(private readonly commissionsService: CommissionsService) {
     super(commissionsService);
   }

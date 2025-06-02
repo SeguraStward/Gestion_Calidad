@@ -7,6 +7,7 @@ import { QuestionGroupsService } from './question-groups.service';
 @Controller('question-groups')
 export class QuestionGroupsController extends GenericController<QuestionGroupDto, QuestionGroupDto> {
   protected readonly logger = new Logger(QuestionGroupsController.name);
+  protected readonly resourceName = 'QUESTION_GROUP';
   constructor(private readonly questionGroupsService: QuestionGroupsService) {
     super(questionGroupsService);
   }

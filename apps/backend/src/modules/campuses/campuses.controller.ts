@@ -7,6 +7,7 @@ import { CampusesService } from './campuses.service';
 @Controller('campuses')
 export class CampusesController extends GenericController<CampusDto, CampusDto> {
   protected readonly logger = new Logger(CampusesController.name);
+  protected readonly resourceName = 'CAMPUS';
   constructor(private readonly campusesService: CampusesService) {
     super(campusesService);
   }

@@ -10,6 +10,7 @@ export class IntellectualProductionsController extends GenericController<
   IntellectualProductionDto
 > {
   protected readonly logger = new Logger(IntellectualProductionsController.name);
+  protected readonly resourceName = 'INTELLECTUAL_PRODUCTION';
   constructor(private readonly intellectualProductionsService: IntellectualProductionsService) {
     super(intellectualProductionsService);
   }
