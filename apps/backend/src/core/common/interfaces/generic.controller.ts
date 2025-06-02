@@ -10,11 +10,16 @@ import {
   NotFoundException,
   HttpStatus,
   HttpCode,
+  UseGuards,
 } from '@nestjs/common';
 import type { IGenericService } from './generic-service.interface';
-import { ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
-import { UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+
 import { JwtAuthGuard } from '@src/modules/auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '@src/modules/auth/guards/permissions.guard';
+import { RequirePermissions } from '@src/modules/auth/decorators/require-permissions.decorator';
+
+import { PermissionType } from '@una-gc/database/prisma/generated/client';
 
 @UseGuards(JwtAuthGuard)
 export abstract class GenericController<D, C, U = Partial<C>> {
@@ -22,6 +27,9 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   constructor(protected readonly service: IGenericService<D, C, U>) {}
 
   @Get()
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'resourceName', action: PermissionType.READ })
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Find all records with pagination' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -55,6 +63,9 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   }
 
   @Get(':id')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'resourceName', action: PermissionType.READ })
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Find record by id' })
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: HttpStatus.OK, description: 'Record successfully retrieved' })
@@ -76,6 +87,9 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   }
 
   @Put(':id')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'resourceName', action: PermissionType.UPDATE })
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update record by id' })
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: HttpStatus.OK, description: 'Record successfully updated' })
@@ -84,6 +98,9 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   }
 
   @Delete(':id')
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: 'resourceName', action: PermissionType.DELETE })
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete record by id' })
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Record successfully deleted' })

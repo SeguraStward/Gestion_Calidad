@@ -10,6 +10,7 @@ export class AcademicLoadGroupsController extends GenericController<
   AcademicLoadGroupDto
 > {
   protected readonly logger = new Logger(AcademicLoadGroupsController.name);
+  protected readonly resourceName = 'ACADEMIC_LOAD_GROUP';
   constructor(private readonly academicLoadGroupsService: AcademicLoadGroupsService) {
     super(academicLoadGroupsService);
   }

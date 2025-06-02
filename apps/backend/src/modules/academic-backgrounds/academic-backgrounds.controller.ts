@@ -10,6 +10,7 @@ export class AcademicBackgroundsController extends GenericController<
   AcademicBackgroundDto
 > {
   protected readonly logger = new Logger(AcademicBackgroundsController.name);
+  protected readonly resourceName = 'ACADEMIC_BACKGROUND';
   constructor(private readonly academicBackgroundsService: AcademicBackgroundsService) {
     super(academicBackgroundsService);
   }

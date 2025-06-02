@@ -7,6 +7,7 @@ import { AcademicLoadsService } from './academic-loads.service';
 @Controller('academic-loads')
 export class AcademicLoadsController extends GenericController<AcademicLoadDto, AcademicLoadDto> {
   protected readonly logger = new Logger(AcademicLoadsController.name);
+  protected readonly resourceName = 'ACADEMIC_LOAD';
   constructor(private readonly academicLoadsService: AcademicLoadsService) {
     super(academicLoadsService);
   }
