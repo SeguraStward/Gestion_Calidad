@@ -15,9 +15,13 @@ import { FinalReportStatus } from '@una-gc/database/prisma/generated/client';
 import { FinalReportDto } from './dtos/final-report.dto';
 import { FinalReportsService } from './final-reports.service';
 
+import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
+
+@ResourceName('FINAL_REPORT')
 @Controller('final-reports')
 export class FinalReportsController extends GenericController<FinalReportDto, FinalReportDto> {
   protected readonly logger = new Logger(FinalReportsController.name);
+  protected readonly resourceName = 'FINAL_REPORT';
   constructor(private readonly finalReportsService: FinalReportsService) {
     super(finalReportsService);
   }

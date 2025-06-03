@@ -3,6 +3,8 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import { parseExpiryToMilliseconds } from './utils/expiry-parser.util';
+import { RoleManagerService } from './role-manager.service';
 
 @Injectable()
 export class AuthService {
@@ -12,32 +14,11 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private readonly roleManagerService: RoleManagerService,
   ) {}
 
   private hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
-  }
-
-  private parseExpiryToMilliseconds(expiryString: string): number {
-    const unit = expiryString.slice(-1);
-    const value = parseInt(expiryString.slice(0, -1), 10);
-    if (isNaN(value)) {
-      this.logger.error(`Invalid expiry string format: ${expiryString}`);
-      throw new Error('Invalid expiry string format');
-    }
-    switch (unit) {
-      case 's':
-        return value * 1000;
-      case 'm':
-        return value * 60 * 1000;
-      case 'h':
-        return value * 60 * 60 * 1000;
-      case 'd':
-        return value * 24 * 60 * 60 * 1000;
-      default:
-        this.logger.error(`Invalid expiry unit: ${unit} in ${expiryString}`);
-        throw new Error('Invalid expiry unit');
-    }
   }
 
   async googleLogin(googleUser: any) {
@@ -52,10 +33,9 @@ export class AuthService {
         data: {
           email: googleUser.email,
           fullName: googleUser.firstName,
-          fullLastName: googleUser.fullLastName || googleUser.familyName || '', // Ensure fullLastName is handled
+          fullLastName: googleUser.fullLastName || googleUser.familyName || '',
           googleId: googleUser.googleId,
           photoUrl: googleUser.picture,
-          // Ensure other required User fields are handled or have defaults
         },
       });
     } else if (!user.googleId && googleUser.googleId) {
@@ -68,37 +48,77 @@ export class AuthService {
       });
     }
 
-    const accessToken = this.generateAccessToken(user.id, user.email);
+    // Establecer rol activo inicial
+    const userWithActiveRole = await this.roleManagerService.setInitialActiveRole(user.id);
+    const accessToken = this.generateAccessToken(userWithActiveRole);
     const { rawRefreshToken } = await this.generateAndStoreRefreshToken(user.id);
 
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        fullLastName: user.fullLastName,
-        profilePicture: user.photoUrl,
-      },
+      user: userWithActiveRole,
       token: accessToken,
       refreshToken: rawRefreshToken,
     };
   }
 
-  generateAccessToken(userId: string, email: string): string {
-    const payload = { sub: userId, email };
-    const accessTokenExpirationString = this.configService.get<string>('JWT_EXPIRATION') || '1m';
-    const expiresIn = this.parseExpiryToMilliseconds(accessTokenExpirationString);
-    this.logger.debug(`stward: Generating access token with expiresIn: ${accessTokenExpirationString}`);
-    const token = this.jwtService.sign(payload, {
+  generateAccessToken(userData: any): string {
+    const payload = {
+      sub: userData.id,
+      email: userData.email,
+      fullName: userData.fullName,
+      fullLastName: userData.fullLastName,
+      activeRole: userData.activeRole,
+    };
+
+    const accessTokenExpirationString = this.configService.get<string>('JWT_EXPIRATION') || '15m';
+    const expiresIn = parseExpiryToMilliseconds(accessTokenExpirationString);
+
+    this.logger.debug(`Generating access token with expiresIn: ${accessTokenExpirationString}`);
+
+    return this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
       expiresIn: expiresIn,
     });
-    return token;
+  }
+
+  async refreshToken(userFromGuard: {
+    id: string;
+    email: string;
+    fullName: string;
+    fullLastName: string;
+    refreshTokenDbId: string;
+    activeRole?: any;
+  }): Promise<{ token: string; refreshToken: string }> {
+    const { id: userId, refreshTokenDbId } = userFromGuard;
+
+    // Marcar el token anterior como usado
+    try {
+      await this.prisma.refreshToken.update({
+        where: { id: refreshTokenDbId },
+        data: { usedAt: new Date() },
+      });
+      this.logger.log(`Refresh token (DB ID: ${refreshTokenDbId}) marked as used for user ${userId}.`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to mark refresh token (DB ID: ${refreshTokenDbId}) as used for user ${userId}: ${error}`,
+      );
+      throw new UnauthorizedException('Error processing refresh token. Please try logging in again.');
+    }
+
+    // Generar nuevo token de acceso incluyendo el rol activo
+    const newAccessToken = this.generateAccessToken(userFromGuard);
+
+    // Generar y almacenar nuevo token de refresco
+    const { rawRefreshToken: newRawRefreshToken } = await this.generateAndStoreRefreshToken(userId);
+
+    return {
+      token: newAccessToken,
+      refreshToken: newRawRefreshToken,
+    };
   }
 
   async generateAndStoreRefreshToken(userId: string): Promise<{ rawRefreshToken: string; expiresAt: Date }> {
-    const refreshTokenExpirationString = this.configService.get<string>('JWT_REFRESH_EXPIRATION');
-    const expiresInMilliseconds = this.parseExpiryToMilliseconds(refreshTokenExpirationString);
+    const refreshTokenExpirationString = this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d';
+    const expiresInMilliseconds = parseExpiryToMilliseconds(refreshTokenExpirationString);
     const expiresAt = new Date(Date.now() + expiresInMilliseconds);
 
     const payload = { sub: userId };
@@ -118,45 +138,6 @@ export class AuthService {
     });
     this.logger.log(`New refresh token stored for user ${userId}. Expires at: ${expiresAt.toISOString()}`);
     return { rawRefreshToken, expiresAt };
-  }
-
-  // userFromGuard is the object returned by JwtRefreshStrategy.validate
-  async refreshToken(userFromGuard: {
-    id: string;
-    email: string;
-    refreshTokenDbId: string;
-    refreshTokenFromCookie: string;
-  }): Promise<{ token: string; refreshToken: string }> {
-    const { id: userId, email, refreshTokenDbId } = userFromGuard;
-
-    // 1. Mark the old refresh token as used.
-    //    The JwtRefreshStrategy already validated it (not used, not revoked, belongs to user, etc.)
-    //    If a compromised token was detected by the strategy, it would have thrown and invalidated the family.
-    try {
-      await this.prisma.refreshToken.update({
-        where: { id: refreshTokenDbId },
-        data: { usedAt: new Date() },
-      });
-      this.logger.log(`Refresh token (DB ID: ${refreshTokenDbId}) marked as used for user ${userId}.`);
-    } catch (error) {
-      this.logger.error(
-        `Failed to mark refresh token (DB ID: ${refreshTokenDbId}) as used for user ${userId}: ${error}`,
-      );
-      // This is critical. If we can't mark as used, we risk allowing reuse if an error occurs before new token is set.
-      // Depending on policy, might need to invalidate family here too.
-      throw new UnauthorizedException('Error processing refresh token. Please try logging in again.');
-    }
-
-    // 2. Generate new access token
-    const newAccessToken = this.generateAccessToken(userId, email);
-
-    // 3. Generate and store new refresh token
-    const { rawRefreshToken: newRawRefreshToken } = await this.generateAndStoreRefreshToken(userId);
-
-    return {
-      token: newAccessToken,
-      refreshToken: newRawRefreshToken,
-    };
   }
 
   async revokeRefreshToken(rawRefreshTokenFromCookie: string): Promise<void> {
@@ -185,11 +166,10 @@ export class AuthService {
       }
     } catch (error) {
       this.logger.error(`Error revoking refresh token (hash: ${hashedToken}) on logout: ${error}`);
-      // Decide if to throw or log. For logout, usually logging is sufficient.
+      // Para logout, normalmente es suficiente con logear el error
     }
   }
 
-  // validateToken (for access tokens) remains the same
   validateToken(token: string) {
     try {
       return this.jwtService.verify(token, {

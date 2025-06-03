@@ -10,6 +10,7 @@ import {
   NotFoundException,
   HttpStatus,
   HttpCode,
+  // UseGuards,
 } from '@nestjs/common';
 import type { IGenericService } from './generic-service.interface';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
@@ -19,6 +20,9 @@ import { buildPrismaInclude } from '@src/utils/prisma-include.parser';
 
 export abstract class GenericController<D, C, U = Partial<C>> {
   protected abstract readonly logger: Logger;
+
+  protected abstract readonly resourceName: string; // definir el nombre del recurso en la implementacion hija
+
   constructor(protected readonly service: IGenericService<D, C, U>) {}
 
   @Get()
@@ -94,6 +98,9 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   }
 
   @Post()
+  // @UseGuards(PermissionsGuard)
+  // @RequirePermissions({ resource: 'resourceName', action: PermissionType.CREATE })
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create new record' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Record successfully created' })
   @HttpCode(HttpStatus.CREATED)
@@ -102,6 +109,9 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   }
 
   @Put(':id')
+  //@UseGuards(PermissionsGuard)
+  //@RequirePermissions({ resource: 'resourceName', action: PermissionType.UPDATE })
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update record by id' })
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: HttpStatus.OK, description: 'Record successfully updated' })
@@ -110,6 +120,9 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   }
 
   @Delete(':id')
+  //@UseGuards(PermissionsGuard)
+  //@RequirePermissions({ resource: 'resourceName', action: PermissionType.DELETE })
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete record by id' })
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Record successfully deleted' })

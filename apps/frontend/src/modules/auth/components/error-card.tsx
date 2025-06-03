@@ -1,4 +1,3 @@
-// src/(components)/auth/error-card.tsx
 import { AlertTriangle } from 'lucide-react'
 import { Card, CardContent } from '@una-gc/ui/components/card'
 

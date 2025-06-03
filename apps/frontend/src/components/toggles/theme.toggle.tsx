@@ -6,7 +6,7 @@ import { useTheme } from 'next-themes'
 import { Button } from '@una-gc/ui/components/button'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@una-gc/ui/components/dropdown-menu'
 
-export function ModeToggle() {
+export function ThemeToggle() {
   const { setTheme } = useTheme()
 
   return (
