@@ -256,8 +256,6 @@ export class AuthController {
     return { valid: true };
   }
 
-  // Add this new endpoint to your AuthController
-
   @Get('available-roles')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get available roles for current user' })

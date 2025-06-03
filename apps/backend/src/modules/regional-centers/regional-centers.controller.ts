@@ -4,6 +4,9 @@ import { Controller, Logger } from '@nestjs/common';
 import { RegionalCenterDto } from './dtos/regional-center.dto';
 import { RegionalCentersService } from './regional-centers.service';
 
+import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
+
+@ResourceName('REGIONAL_CENTER')
 @Controller('regional-centers')
 export class RegionalCentersController extends GenericController<RegionalCenterDto, RegionalCenterDto> {
   protected readonly logger = new Logger(RegionalCentersController.name);

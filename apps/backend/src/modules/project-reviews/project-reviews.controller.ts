@@ -4,6 +4,9 @@ import { Controller, Logger } from '@nestjs/common';
 import { ProjectReviewDto } from './dtos/project-review.dto';
 import { ProjectReviewsService } from './project-reviews.service';
 
+import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
+
+@ResourceName('PROJECT_REVIEW')
 @Controller('project-reviews')
 export class ProjectReviewsController extends GenericController<ProjectReviewDto, ProjectReviewDto> {
   protected readonly logger = new Logger(ProjectReviewsController.name);

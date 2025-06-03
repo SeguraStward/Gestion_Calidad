@@ -4,6 +4,9 @@ import { Controller, Logger } from '@nestjs/common';
 import { UserPermissionDto } from './dtos/user-permission.dto';
 import { UserPermissionsService } from './user-permissions.service';
 
+import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
+
+@ResourceName('USER_PERMISSION')
 @Controller('user-permissions')
 export class UserPermissionsController extends GenericController<UserPermissionDto, UserPermissionDto> {
   protected readonly logger = new Logger(UserPermissionsController.name);

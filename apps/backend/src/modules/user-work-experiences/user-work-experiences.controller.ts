@@ -4,6 +4,9 @@ import { Controller, Logger } from '@nestjs/common';
 import { UserWorkExperienceDto } from './dtos/user-work-experience.dto';
 import { UserWorkExperiencesService } from './user-work-experiences.service';
 
+import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
+
+@ResourceName('USER_WORK_EXPERIENCE')
 @Controller('user-work-experiences')
 export class UserWorkExperiencesController extends GenericController<
   UserWorkExperienceDto,

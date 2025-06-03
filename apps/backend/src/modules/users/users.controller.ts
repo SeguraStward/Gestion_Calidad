@@ -8,6 +8,8 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserDto } from './dtos/user.dto';
 import { UsersService } from './users.service';
 
+import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
+@ResourceName('USER')
 @ApiTags('Users')
 @Controller('users')
 export class UsersController extends GenericController<UserDto, UserDto> {

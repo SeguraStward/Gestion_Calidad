@@ -4,6 +4,9 @@ import { Controller, Logger } from '@nestjs/common';
 import { ObservationDto } from './dtos/observation.dto';
 import { ObservationsService } from './observations.service';
 
+import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
+
+@ResourceName('OBSERVATION')
 @Controller('observations')
 export class ObservationsController extends GenericController<ObservationDto, ObservationDto> {
   protected readonly logger = new Logger(ObservationsController.name);

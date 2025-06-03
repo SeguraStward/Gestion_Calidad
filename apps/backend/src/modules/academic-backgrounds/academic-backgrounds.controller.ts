@@ -4,6 +4,9 @@ import { Controller, Logger } from '@nestjs/common';
 import { AcademicBackgroundDto } from './dtos/academic-background.dto';
 import { AcademicBackgroundsService } from './academic-backgrounds.service';
 
+import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
+
+@ResourceName('ACADEMIC_BACKGROUND')
 @Controller('academic-backgrounds')
 export class AcademicBackgroundsController extends GenericController<
   AcademicBackgroundDto,
