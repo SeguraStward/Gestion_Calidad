@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger } from '@una-gc/ui/components/tabs'
 import { CrudTabPanel } from '@/app/(components)/crud/crud-tab-panel'
 import CampusCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/institutional/cruds/campus'
 import FacultiesCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/institutional/cruds/faculties'
-import HeadquartersCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/institutional/cruds/headquarters'
+import HeadquartersCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/institutional/cruds/regional-centers'
 import SchoolsCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/institutional/cruds/schools'
 import ClassroomsCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/institutional/cruds/classrooms'
 
