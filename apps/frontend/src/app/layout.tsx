@@ -28,8 +28,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body className={inter.className}>
         <Providers>
           {/* Layout configuration, is aplicated for all */}
-          <ContentLayout>{children}</ContentLayout>
-
+          <ContentLayout>
+            <div className="transition-opacity transition-transform duration-700 ease-in opacity-0 animate-fadeInComponent">
+              {children}
+            </div>
+          </ContentLayout>
           {/* Theme button */}
           <div className="fixed top-4 right-4 z-50">
             <ThemeToggle />
