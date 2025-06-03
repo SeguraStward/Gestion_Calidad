@@ -27,7 +27,7 @@ interface PreguntaStep7 {
 }
 
 // Mock data para las preguntas del Paso 7
-const preguntasPaso7Mock: PreguntaStep7[] = [
+export const preguntasPaso7FormMock: PreguntaStep7[] = [
   {
     idPregunta: 'transicion_p1',
     pregunta: 'Acceso a recursos tecnológicos por parte de los estudiantes',
@@ -93,10 +93,11 @@ export type Step7FormData = z.infer<typeof step7Schema>
 
 interface Step7FormProps {
   formMethods: UseFormReturn<Step7FormData>
-  onSaveAndNext: (data: Step7FormData) => void | Promise<void> // Allow onSaveAndNext to be async
+  onSaveAndNext: (data: Step7FormData) => void | Promise<void>
   onPrevious: () => void
   totalSteps: number
   tipoInforme?: string
+  isSubmitting?: boolean // <--- AÑADIR PROP
 }
 
 // Función para obtener colores según el valor de la opción
@@ -128,13 +129,21 @@ const getOptionColors = (value: string, isSelected: boolean) => {
   )
 }
 
-export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, tipoInforme }: Step7FormProps) {
+export function Step7Form({
+  formMethods,
+  onSaveAndNext,
+  onPrevious,
+  totalSteps,
+  tipoInforme,
+  isSubmitting // <--- USAR PROP
+}: Step7FormProps) {
   const router = useRouter() // Initialize router
   const { control, watch, setValue, getValues, handleSubmit, formState } = formMethods
 
   const todasLasPreguntasMostradas = useMemo(() => {
     const grupos: Record<string, PreguntaStep7[]> = {}
-    preguntasPaso7Mock.forEach((p) => {
+    preguntasPaso7FormMock.forEach((p) => {
+      // <--- CORREGIDO AQUÍ
       if (p.tipo_respuesta === 'CHECK') {
         const groupKey = p.grupo_pregunta // Use a variable for the key
         // Ensure the group array exists before any conditional logic that might push to it
@@ -163,7 +172,7 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
       }
     }
     return Object.values(grupos).flat()
-  }, [tipoInforme]) // Dependency for useMemo
+  }, [tipoInforme]) // Dependency for useMemo; // <--- AÑADIDO PUNTO Y COMA (BUENA PRÁCTICA)
 
   useEffect(() => {
     const currentRespuestasRadio = getValues('respuestasRadio')
@@ -337,11 +346,21 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
             </div>
 
             <div className="flex justify-between pt-6 mt-auto">
-              <Button type="button" variant="outline" onClick={onPrevious} className="px-8 shadow-sm">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onPrevious}
+                className="px-8 shadow-sm"
+                disabled={isSubmitting} // <--- AÑADIR DISABLED
+              >
                 Anterior
               </Button>
-              <Button type="submit" className="px-8 shadow-sm">
-                Finalizar Informe
+              <Button
+                type="submit"
+                className="px-8 shadow-sm"
+                disabled={isSubmitting} // <--- AÑADIR DISABLED
+              >
+                {isSubmitting ? 'Finalizando...' : 'Finalizar Informe'}
               </Button>
             </div>
           </form>

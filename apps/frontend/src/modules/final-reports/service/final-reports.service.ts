@@ -4,24 +4,16 @@ import type { PaginatedResponse } from '@/services/interfaces'
 import type {
   FullFinalReport,
   FinalReportFilters,
-  CreateFinalReportDto, // <--- ADD THIS
-  UpdateFinalReportDto // <--- ADD THIS (if not already present)
+  CreateFinalReportDto,
+  UpdateFinalReportDto
 } from '../types/final-reports.types'
-const API_RESOURCE_PATH = 'final-reports' // The API endpoint for final reports
+const API_RESOURCE_PATH = 'final-reports'
 
-/**
- * Service class for managing Final Reports.
- * It extends the GenericService to provide common CRUD operations.
- */
 class FinalReportService extends GenericService<FullFinalReport, CreateFinalReportDto, UpdateFinalReportDto, FinalReportFilters> {
   constructor() {
     super(API_RESOURCE_PATH)
   }
 
-  /**
-   * Example: Get all final reports for a specific professor.
-   * This assumes your backend supports filtering by 'professorId' via the list endpoint.
-   */
   async getByProfessorId(
     professorId: string,
     filters?: Omit<FinalReportFilters, 'professorId'>

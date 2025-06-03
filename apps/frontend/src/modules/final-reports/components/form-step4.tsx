@@ -14,7 +14,11 @@ import { PlusCircle, Trash2, Settings, Edit3, Check, X } from 'lucide-react'
 // Esquema para un solo estudiante con ajustes
 const ajusteEstudianteSchema = z.object({
   id: z.string().optional(),
-  cedula: z.string().min(1, 'La cédula es requerida.'),
+  cedula: z
+    .string()
+    .min(1, 'La cédula es requerida.')
+    .regex(/^[0-9]+$/, 'La cédula solo debe contener números') // <--- VALIDACIÓN AÑADIDA
+    .min(9, 'La cédula debe tener al menos 9 dígitos'), // <--- VALIDACIÓN AÑADIDA
   nombre: z.string().min(1, 'El nombre es requerido.'),
   apoyo: z.string().min(1, 'El tipo de apoyo es requerido.'),
   nota: z.coerce.number().min(0, 'La nota debe ser 0 o más.').max(100, 'La nota no puede ser mayor a 100.'),

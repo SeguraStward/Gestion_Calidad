@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@una-gc/ui/components/button'
@@ -9,35 +9,33 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
 import { Input } from '@una-gc/ui/components/input'
 import { UseFormReturn } from 'react-hook-form'
-import { Loader2 } from 'lucide-react' // For loading indicator
-import useDevStore from '@/store/devStore' // To get professor ID
-import { useAcademicLoadsByProfessor } from '@/modules/academic-loads/service/academic-loads.service' // Hook to fetch academic loads
-import type { FullAcademicLoad } from '@/modules/academic-loads/types/academic-loads.types' // Type for academic load
+import { Loader2 } from 'lucide-react'
+import useDevStore from '@/store/devStore'
+import { useAcademicLoadsByProfessor } from '@/modules/academic-loads/service/academic-loads.service'
+import type { FullAcademicLoad } from '@/modules/academic-loads/types/academic-loads.types'
 
-// Updated schema - include academicLoadId and English field names for the core 5 fields
 export const step1Schema = z.object({
-  academicLoadId: z.string().optional(), // ID of the selected academic load
-  nrc: z.string().min(1, 'Debe seleccionar un NRC'), // User message in Spanish
+  academicLoadId: z.string().min(1, 'Debe seleccionar una carga académica.'), // Ahora siempre requerido
+  nrc: z.string().min(1, 'Debe seleccionar un NRC'),
   courseName: z.string().optional(),
   groupNumber: z.string().optional(),
   professorName: z.string().optional(),
   courseCode: z.string().optional(),
-  groupLevel: z.string().optional()
-  // Removed: campusName, cycleStartDate, enrollmentCapacity
+  groupLevel: z.string().optional(),
+  enrolledCapacity: z.number().optional()
 })
 
 export type Step1FormData = z.infer<typeof step1Schema>
 
-// Interface for transformed data used by Select and useEffect
 interface TransformedAcademicLoad {
-  id: string // Corresponds to FullAcademicLoad.id
+  id: string
   nrc: string
   courseName?: string
   courseCode?: string
   professorName?: string
   groupNumber?: string
   groupLevel?: string
-  // Removed: enrollmentCapacity, campusName, cycleStartDate
+  enrolledCapacity?: number
 }
 
 interface Step1FormProps {
@@ -45,10 +43,19 @@ interface Step1FormProps {
   onSaveAndNext: (data: Step1FormData) => void
   onPrevious?: () => void
   totalSteps: number
+  isEditing?: boolean
+  initialData?: Step1FormData | null
 }
 
-export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }: Step1FormProps) {
-  const { control, watch, setValue, handleSubmit, formState } = formMethods
+export function Step1Form({
+  formMethods,
+  onSaveAndNext,
+  onPrevious,
+  totalSteps,
+  isEditing = false,
+  initialData = null
+}: Step1FormProps) {
+  const { control, watch, setValue, handleSubmit, formState, reset } = formMethods
   const currentProfessorId = useDevStore((state) => state.mockProfessorId)
 
   const {
@@ -58,63 +65,90 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
   } = useAcademicLoadsByProfessor(
     currentProfessorId,
     {
-      status: 'ACTIVE', // Filter by active academic loads
-      include: 'course,academicCycle,professor,group' // Include necessary relations
+      // status: 'ACTIVE', // Considerar si se deben mostrar cargas no activas para selección
+      include: 'course,academicCycle,professor,group'
     },
-    { enabled: !!currentProfessorId }
+    { enabled: !!currentProfessorId } // Cargar siempre si hay professorId, para creación y edición
   )
 
-  // Transform FullAcademicLoad data for the Select component and auto-completion logic
   const availableCourses = useMemo((): TransformedAcademicLoad[] => {
-    if (!paginatedAcademicLoads?.data) return []
-    return paginatedAcademicLoads.data.map((load: FullAcademicLoad) => ({
-      id: load.id,
-      nrc: load.nrc,
-      courseName: load.course?.name,
-      courseCode: load.course?.code,
-      professorName: load.professor?.fullName, // Assuming fullName is on the professor object
-      groupNumber: load.group?.number, // Assuming number is on the group object
-      groupLevel: load.course?.level ? String(load.course.level) : undefined // Assuming level is on the course object
-      // Removed mapping for: enrollmentCapacity, campusName, cycleStartDate
-    }))
-  }, [paginatedAcademicLoads])
+    let courses: TransformedAcademicLoad[] = []
+    if (paginatedAcademicLoads?.data) {
+      courses = paginatedAcademicLoads.data.map((load: FullAcademicLoad) => ({
+        id: load.id,
+        nrc: load.nrc,
+        courseName: load.course?.name,
+        courseCode: load.course?.code,
+        professorName: load.professor?.fullName || undefined,
+        groupNumber: load.group?.number,
+        groupLevel: load.course?.level ? String(load.course.level) : undefined,
+        enrolledCapacity: load.enrolledCapacity
+      }))
+    }
+
+    // Si estamos editando y tenemos datos iniciales, y la carga del informe no está en la lista
+    // (ej. porque no está "activa" o el filtro la excluyó), la añadimos para que se pueda seleccionar.
+    if (isEditing && initialData?.nrc && initialData.academicLoadId) {
+      const editingCourseInList = courses.find((c) => c.id === initialData.academicLoadId)
+      if (!editingCourseInList) {
+        courses.unshift({
+          // Añadir al principio
+          id: initialData.academicLoadId,
+          nrc: initialData.nrc,
+          courseName: initialData.courseName,
+          courseCode: initialData.courseCode,
+          professorName: initialData.professorName,
+          groupNumber: initialData.groupNumber,
+          groupLevel: initialData.groupLevel,
+          enrolledCapacity: initialData.enrolledCapacity
+        })
+      }
+    }
+    return courses
+  }, [paginatedAcademicLoads, isEditing, initialData])
 
   const selectedNrc = watch('nrc')
-  // Find selected academic load data using NRC from the transformed data
-  const selectedCourseData = availableCourses.find((course) => course.nrc === selectedNrc)
+  const selectedAcademicLoadId = watch('academicLoadId')
 
-  React.useEffect(() => {
-    if (selectedCourseData) {
-      setValue('academicLoadId', selectedCourseData.id) // Store the academic load ID
-      setValue('courseName', selectedCourseData.courseName)
-      setValue('groupNumber', selectedCourseData.groupNumber)
-      setValue('professorName', selectedCourseData.professorName)
-      setValue('courseCode', selectedCourseData.courseCode)
-      setValue('groupLevel', selectedCourseData.groupLevel)
-      // Removed setValue for: enrollmentCapacity, campusName, cycleStartDate
-    } else {
-      // Clear fields if no course is selected or selection is cleared
-      setValue('academicLoadId', undefined)
+  // Efecto para poblar el formulario con initialData cuando estamos en modo edición (SOLO LA PRIMERA VEZ)
+  useEffect(() => {
+    if (isEditing && initialData && formState.isDirty === false && !selectedAcademicLoadId) {
+      // Solo si no está sucio y no hay academicLoadId ya
+      reset(initialData)
+    }
+  }, [isEditing, initialData, reset, formState.isDirty, selectedAcademicLoadId])
+
+  // Efecto para actualizar campos cuando selectedNrc cambia (para creación y edición si se cambia el NRC)
+  useEffect(() => {
+    const courseData = availableCourses.find((course) => course.nrc === selectedNrc)
+    if (courseData) {
+      setValue('academicLoadId', courseData.id, { shouldValidate: true, shouldDirty: true })
+      setValue('courseName', courseData.courseName, { shouldValidate: true, shouldDirty: true })
+      setValue('groupNumber', courseData.groupNumber, { shouldValidate: true, shouldDirty: true })
+      setValue('professorName', courseData.professorName, { shouldValidate: true, shouldDirty: true })
+      setValue('courseCode', courseData.courseCode, { shouldValidate: true, shouldDirty: true })
+      setValue('groupLevel', courseData.groupLevel, { shouldValidate: true, shouldDirty: true })
+      setValue('enrolledCapacity', courseData.enrolledCapacity, { shouldValidate: true, shouldDirty: true })
+    } else if (!selectedNrc) {
+      // Si se deselecciona (selectedNrc es vacío)
+      setValue('academicLoadId', '') // Limpiar academicLoadId también
       setValue('courseName', '')
       setValue('groupNumber', '')
       setValue('professorName', '')
       setValue('courseCode', '')
       setValue('groupLevel', '')
-      // Removed setValue for: enrollmentCapacity, campusName, cycleStartDate
+      setValue('enrolledCapacity', undefined)
     }
-  }, [selectedCourseData, setValue])
+  }, [selectedNrc, availableCourses, setValue])
 
   const onSubmitHandler = (data: Step1FormData) => {
-    // Data should already be updated by the useEffect hook
-    // Ensure academicLoadId is present if an NRC was selected
-    const finalData = {
-      ...data,
-      academicLoadId: selectedCourseData?.id || data.academicLoadId
-    }
-    onSaveAndNext(finalData)
+    // El academicLoadId y nrc ya deberían estar correctos por la selección y el useEffect.
+    // Los demás campos también.
+    console.log('Step 1 Data to Save:', data)
+    onSaveAndNext(data)
   }
 
-  if (isLoadingAcademicLoads) {
+  if (isLoadingAcademicLoads && availableCourses.length === 0) {
     return (
       <div className="p-6 h-full flex flex-col items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -144,14 +178,17 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
   return (
     <div className="p-6 h-full flex flex-col">
       <div className="mb-4">
-        <h2 className="text-xl font-semibold">Información del Curso</h2>
-        <p className="text-muted-foreground text-sm">Seleccione el NRC del curso para cargar la información</p>
+        <h2 className="text-xl font-semibold">{isEditing ? 'Información del Curso (Edición)' : 'Información del Curso'}</h2>
+        <p className="text-muted-foreground text-sm">
+          {isEditing
+            ? 'Verifique o modifique el curso asociado al informe.'
+            : 'Seleccione el NRC del curso para cargar la información.'}
+        </p>
       </div>
 
       <Form {...formMethods}>
         <form onSubmit={handleSubmit(onSubmitHandler)} className="flex-1 flex flex-col">
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* First Column: NRC Selector, Course Name, Group Number */}
             <div className="space-y-6">
               <Card className="border-primary/20 bg-primary/5 h-fit">
                 <CardHeader className="pb-3">
@@ -160,27 +197,40 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                 <CardContent className="space-y-4">
                   <FormField
                     control={control}
-                    name="nrc"
+                    name="nrc" // El Select controla el campo 'nrc'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-medium">
                           NRC del Curso <span className="text-destructive">*</span>
                         </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={availableCourses.length === 0}>
+                        <Select
+                          onValueChange={(value) => {
+                            // Cuando cambia el NRC, actualizamos el campo 'nrc'
+                            // El useEffect se encargará de actualizar los demás campos y 'academicLoadId'
+                            field.onChange(value)
+                          }}
+                          value={field.value || ''}
+                          // No deshabilitar en modo edición para permitir el cambio
+                          disabled={availableCourses.length === 0 && !isLoadingAcademicLoads}
+                        >
                           <FormControl>
                             <SelectTrigger className="h-10">
                               <SelectValue
                                 placeholder={
-                                  availableCourses.length === 0
-                                    ? 'No hay cursos activos para este profesor'
-                                    : 'Seleccione un NRC...'
+                                  isLoadingAcademicLoads && availableCourses.length === 0
+                                    ? 'Cargando NRCs...'
+                                    : availableCourses.length === 0
+                                      ? 'No hay cursos disponibles'
+                                      : 'Seleccione un NRC...'
                                 }
                               />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {availableCourses.map((course) => (
-                              <SelectItem key={course.nrc} value={course.nrc}>
+                              <SelectItem key={course.id} value={course.nrc}>
+                                {' '}
+                                {/* Usar course.nrc como value para el Select */}
                                 <div className="flex flex-col">
                                   <span className="font-medium">NRC: {course.nrc}</span>
                                   <span className="text-xs text-muted-foreground">
@@ -191,6 +241,22 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                             ))}
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {/* Campo oculto o de solo lectura para academicLoadId, se llena por el useEffect */}
+                  <FormField
+                    control={control}
+                    name="academicLoadId"
+                    render={({ field }) => (
+                      <FormItem className="hidden">
+                        {' '}
+                        {/* Opcional: hacerlo visible pero deshabilitado para debug */}
+                        <FormLabel>Academic Load ID</FormLabel>
+                        <FormControl>
+                          <Input {...field} readOnly disabled />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -223,7 +289,6 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
               </Card>
             </div>
 
-            {/* Second Column: Professor Name, Course Code, Group Level */}
             <div className="space-y-6">
               <Card className="border-primary/20 bg-primary/5 h-fit">
                 <CardHeader className="pb-3">
@@ -266,7 +331,6 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                       </FormItem>
                     )}
                   />
-                  {/* Removed FormFields for campusName, cycleStartDate, enrollmentCapacity */}
                 </CardContent>
               </Card>
             </div>
@@ -276,7 +340,7 @@ export function Step1Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
             <Button type="button" variant="outline" onClick={onPrevious} disabled={!onPrevious} className="px-8">
               Anterior
             </Button>
-            <Button type="submit" disabled={!selectedCourseData || formState.isSubmitting} className="px-8">
+            <Button type="submit" disabled={!selectedAcademicLoadId || formState.isSubmitting} className="px-8">
               Siguiente
             </Button>
           </div>

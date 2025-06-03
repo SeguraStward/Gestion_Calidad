@@ -13,10 +13,16 @@ import { PlusCircle, Trash2, Users, Edit3, Check, X } from 'lucide-react'
 
 // Esquema para un solo estudiante de salvaguarda
 const salvaguardaEstudianteSchema = z.object({
-  id: z.string().optional(),
-  cedula: z.string().min(1, 'La cédula es requerida.'),
-  nombre: z.string().min(1, 'El nombre es requerido.'),
-  nota: z.coerce.number().min(0, 'La nota debe ser 0 o más.').max(100, 'La nota no puede ser mayor a 100.'),
+  cedula: z
+    .string()
+    .min(1, 'La cédula es requerida')
+    .regex(/^[0-9]+$/, 'La cédula solo debe contener números')
+    .min(9, 'La cédula debe tener al menos 9 dígitos'), // <--- NUEVA VALIDACIÓN
+  nombre: z.string().min(1, 'El nombre es requerido'),
+  nota: z.coerce
+    .number({ invalid_type_error: 'La nota debe ser un número' })
+    .min(0, 'La nota no puede ser negativa')
+    .max(100, 'La nota no puede ser mayor a 100'),
   observacion: z.string().optional()
 })
 
@@ -46,7 +52,6 @@ export function Step3Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
 
   const addNewStudent = () => {
     append({
-      id: crypto.randomUUID(),
       cedula: '',
       nombre: '',
       nota: 0,
@@ -66,7 +71,6 @@ export function Step3Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
     setEditingObservacion(null)
   }
 
-  // Potentially use tipoInforme to adjust tituloPaso or other logic
   const tituloPaso =
     tipoInforme === 'INFORME_FINAL_V1' ? 'Registro de Estudiantes (Plan Indígena)' : 'Registro de Estudiantes (Salvaguarda)'
 

@@ -22,7 +22,7 @@ export class FinalReportsService extends GenericService<FinalReport, FinalReport
     professorId: string,
     page = 1,
     limit = 10,
-    status?: FinalReportStatus, // <--- CHANGE TYPE HERE
+    status?: FinalReportStatus,
     orderBy?: Prisma.FinalReportOrderByWithRelationInput,
     include?: Prisma.FinalReportInclude,
   ): Promise<PaginatedResponse<FinalReportDto>> {
@@ -34,7 +34,6 @@ export class FinalReportsService extends GenericService<FinalReport, FinalReport
     };
 
     if (status) {
-      // This assignment should now be type-correct
       where.status = status;
     }
 

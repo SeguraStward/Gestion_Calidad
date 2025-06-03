@@ -10,7 +10,7 @@ import { Separator } from '@una-gc/ui/components/separator'
 import { MessageSquareText } from 'lucide-react'
 
 // Mock data para las preguntas
-const preguntasMock = [
+export const preguntasPaso5FormMock = [
   {
     idPregunta: 'p1',
     pregunta: '¿Cuáles fueron las principales fortalezas observadas en el desarrollo del curso?',
@@ -63,7 +63,7 @@ const respuestaSchema = z.object({
 
 // Esquema de validación con Zod para el Paso 5
 export const step5Schema = z.object({
-  respuestas: z.array(respuestaSchema).min(preguntasMock.length, 'Debe responder todas las preguntas.')
+  respuestas: z.array(respuestaSchema).min(preguntasPaso5FormMock.length, 'Debe responder todas las preguntas.')
 })
 
 export type Step5FormData = z.infer<typeof step5Schema>
@@ -80,10 +80,10 @@ export function Step5Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
 
   // Inicializar los campos del array si no existen
   const respuestasActuales = watch('respuestas')
-  if (!respuestasActuales || respuestasActuales.length !== preguntasMock.length) {
+  if (!respuestasActuales || respuestasActuales.length !== preguntasPaso5FormMock.length) {
     formMethods.setValue(
       'respuestas',
-      preguntasMock.map((p) => ({
+      preguntasPaso5FormMock.map((p) => ({
         idPregunta: p.idPregunta,
         respuesta: respuestasActuales?.find((r) => r.idPregunta === p.idPregunta)?.respuesta || ''
       }))
@@ -112,11 +112,13 @@ export function Step5Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                 <CardHeader className="pb-4">
                   <CardTitle className="text-base font-medium text-foreground/90">
                     Cuestionario de Evaluación
-                    <span className="text-xs text-muted-foreground ml-2 font-normal">({preguntasMock.length} preguntas)</span>
+                    <span className="text-xs text-muted-foreground ml-2 font-normal">
+                      ({preguntasPaso5FormMock.length} preguntas)
+                    </span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-0">
-                  {preguntasMock.map((pregunta, index) => (
+                  {preguntasPaso5FormMock.map((pregunta, index) => (
                     <div key={pregunta.idPregunta}>
                       <div className="py-5 px-1">
                         <FormField
@@ -148,7 +150,7 @@ export function Step5Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                         />
                       </div>
                       {/* Separador sutil entre preguntas */}
-                      {index < preguntasMock.length - 1 && <Separator className="opacity-30" />}
+                      {index < preguntasPaso5FormMock.length - 1 && <Separator className="opacity-30" />}
                     </div>
                   ))}
                 </CardContent>

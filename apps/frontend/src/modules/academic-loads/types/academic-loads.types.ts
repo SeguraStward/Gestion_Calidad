@@ -3,7 +3,8 @@ interface Course {
   id: string
   code: string
   name: string
-  // ... other course properties
+  level?: string
+  credits?: number
 }
 
 interface Professor {

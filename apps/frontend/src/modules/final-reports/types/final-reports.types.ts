@@ -79,7 +79,7 @@ export interface FinalReportTableItem {
 // --- Detailed types for Form Data (when fetching a single report for editing) ---
 
 export interface FinalReportEvaluationOptionFE {
-  category: string
+  category?: string
   label: string
   value: string
 }

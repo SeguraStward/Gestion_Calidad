@@ -4,142 +4,71 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Button } from '@una-gc/ui/components/button'
 import { Card, CardContent } from '@una-gc/ui/components/card'
-import { Progress } from '@una-gc/ui/components/progress'
 import { CheckCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 // Importar los componentes de los pasos y sus esquemas/tipos
 import { Step1Form, step1Schema, Step1FormData } from '@/modules/final-reports/components/form-step1'
 import { Step2Form, step2Schema, Step2FormData } from '@/modules/final-reports/components/form-step2'
 import { Step3Form, step3Schema, Step3FormData } from '@/modules/final-reports/components/form-step3'
 import { Step4Form, step4Schema, Step4FormData } from '@/modules/final-reports/components/form-step4'
-import { Step5Form, step5Schema, Step5FormData } from '@/modules/final-reports/components/form-step5'
-import { Step6Form, step6Schema, Step6FormData } from '@/modules/final-reports/components/form-step6'
-import { Step7Form, step7Schema, Step7FormData } from '@/modules/final-reports/components/form-step7'
+import { Step5Form, step5Schema, Step5FormData, preguntasPaso5FormMock } from '@/modules/final-reports/components/form-step5'
+import { Step6Form, step6Schema, Step6FormData, preguntasPaso6FormMock } from '@/modules/final-reports/components/form-step6'
+import { Step7Form, step7Schema, Step7FormData, preguntasPaso7FormMock } from '@/modules/final-reports/components/form-step7'
+
+// Importar el hook de creación y el tipo DTO
+import { useCreateFinalReport } from '@/modules/final-reports/service/final-reports.service'
+import type { CreateFinalReportDto } from '@/modules/final-reports/types/final-reports.types'
+import useDevStore from '@/store/devStore' // Para obtener el professorId (placeholder)
 
 const TOTAL_STEPS = 7
-
 const STEP_LABELS = ['Información ', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
-
-// Mock de preguntas para el Paso 5
-const preguntasPaso5Mock = [
-  {
-    idPregunta: 'p1',
-    pregunta: '¿Cuáles fueron las principales fortalezas observadas en el desarrollo del curso?',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Desempeño General'
-  },
-  {
-    idPregunta: 'p2',
-    pregunta: '¿Cuáles fueron las principales debilidades o áreas de mejora identificadas?',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Desempeño General'
-  },
-  {
-    idPregunta: 'p3',
-    pregunta: '¿Se cumplieron los objetivos de aprendizaje propuestos? Justifique.',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Objetivos de Aprendizaje'
-  },
-  {
-    idPregunta: 'p4',
-    pregunta: '¿Qué estrategias metodológicas resultaron más efectivas?',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Metodología'
-  },
-  {
-    idPregunta: 'p5',
-    pregunta: '¿Qué ajustes se realizaron durante el curso y cuál fue su impacto?',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Metodología'
-  },
-  {
-    idPregunta: 'p6',
-    pregunta: '¿Cómo fue la participación y el compromiso de los estudiantes?',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Participación Estudiantil'
-  },
-  {
-    idPregunta: 'p7',
-    pregunta: 'Sugerencias para futuras iteraciones de este curso.',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Sugerencias'
-  }
-]
-
-// Mock de preguntas para el Paso 6
-const preguntasPaso6PageMock = [
-  {
-    idPregunta: 'herramientas_tec',
-    pregunta: '¿Qué herramientas tecnológicas utilizó principalmente durante el curso?'
-  }
-]
-
-// Mock de preguntas para el Paso 7
-const preguntasPaso7PageMock = [
-  {
-    idPregunta: 'transicion_p1',
-    grupo_pregunta: '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?'
-  },
-  {
-    idPregunta: 'transicion_p2',
-    grupo_pregunta: '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?'
-  },
-  {
-    idPregunta: 'desempeno_p1',
-    grupo_pregunta: '¿Cómo percibe el desempeño de los estudiantes con respecto a los siguientes aspectos?'
-  },
-  {
-    idPregunta: 'desempeno_p2',
-    grupo_pregunta: '¿Cómo percibe el desempeño de los estudiantes con respecto a los siguientes aspectos?'
-  }
-]
-
-const TIPO_INFORME_ACTUAL = 'INFORME_FINAL_V1'
+const TIPO_INFORME_ACTUAL = 'INFORME_FINAL_V1' // O obtener dinámicamente
 
 export default function NewFinalReportPage() {
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
 
-  // Estados para cada paso
+  // Estados para almacenar los datos de cada paso
   const [step1Data, setStep1Data] = useState<Step1FormData | null>(null)
   const [step2Data, setStep2Data] = useState<Step2FormData | null>(null)
   const [step3Data, setStep3Data] = useState<Step3FormData | null>(null)
   const [step4Data, setStep4Data] = useState<Step4FormData | null>(null)
   const [step5Data, setStep5Data] = useState<Step5FormData | null>(null)
   const [step6Data, setStep6Data] = useState<Step6FormData | null>(null)
-  const [step7Data, setStep7Data] = useState<Step7FormData | null>(null)
+  // No es necesario step7Data en el estado si se envía directamente
 
-  // Form methods para cada paso
+  // Hook para la mutación de creación
+  const createFinalReportMutation = useCreateFinalReport()
+  const currentProfessorId = useDevStore((state) => state.mockProfessorId) // Placeholder
+
+  // Métodos de formulario para cada paso
   const formStep1Methods = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
       nrc: '',
-      curso: '',
-      profesor: '',
-      numeroGrupo: '', // Changed 'grupo' to 'numeroGrupo'
-      // If you have other fields like 'codigo' or 'nivelGrupo' and they are mandatory,
-      // you might need to provide default values for them too, or ensure they are optional in the schema.
-      // For example, if 'codigo' is optional, you don't need to specify it here unless you want a default.
-      // If 'campus' and 'fecha' are part of Step1FormData, ensure they are also here.
-      // The error message implies 'campus' and 'fecha' might be missing from the type definition
-      // or from your defaultValues. Let's assume they are part of Step1FormData for now.
-      campus: '', // Assuming this is part of Step1FormData
-      fecha: '', // Assuming this is part of Step1FormData
-      cupoMatricula: 0
-    },
-    values: step1Data ?? undefined
+      courseName: '',
+      groupNumber: '',
+      professorName: '',
+      courseCode: '',
+      groupLevel: '',
+      enrolledCapacity: undefined // <--- USANDO enrolledCapacity
+    }
   })
 
+  // Inicializa formStep2Methods sin un totalEnrolled específico, o con undefined
+  // ya que se establecerá dinámicamente.
   const formStep2Methods = useForm<Step2FormData>({
     resolver: zodResolver(step2Schema),
     defaultValues: {
-      totalMatriculados: 0,
-      totalRetirados: 0,
-      totalAprobados: 0,
-      totalReprobados: 0
-    },
-    values: step2Data ?? undefined
+      // totalEnrolled: 0, // <--- ELIMINAR O CAMBIAR A UNDEFINED
+      totalEnrolled: undefined,
+      totalWithdrawn: 0, // Puedes mantener estos si quieres que empiecen en 0
+      totalPassed: 0,
+      totalFailed: 0
+    }
   })
 
   const formStep3Methods = useForm<Step3FormData>({
@@ -161,7 +90,7 @@ export default function NewFinalReportPage() {
   const formStep5Methods = useForm<Step5FormData>({
     resolver: zodResolver(step5Schema),
     defaultValues: {
-      respuestas: preguntasPaso5Mock.map((p) => ({
+      respuestas: preguntasPaso5FormMock.map((p) => ({
         idPregunta: p.idPregunta,
         respuesta: ''
       }))
@@ -172,7 +101,7 @@ export default function NewFinalReportPage() {
   const formStep6Methods = useForm<Step6FormData>({
     resolver: zodResolver(step6Schema),
     defaultValues: {
-      respuestasMultiples: preguntasPaso6PageMock.map((p) => ({
+      respuestasMultiples: preguntasPaso6FormMock.map((p) => ({
         idPregunta: p.idPregunta,
         respuestasSeleccionadas: []
       })),
@@ -184,7 +113,7 @@ export default function NewFinalReportPage() {
   const formStep7Methods = useForm<Step7FormData>({
     resolver: zodResolver(step7Schema),
     defaultValues: {
-      respuestasRadio: preguntasPaso7PageMock
+      respuestasRadio: preguntasPaso7FormMock
         .filter((p) => {
           if (
             p.grupo_pregunta === '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?'
@@ -197,24 +126,15 @@ export default function NewFinalReportPage() {
           idPregunta: p.idPregunta,
           respuesta: ''
         }))
-    },
-    values: step7Data ?? undefined
+    }
+    // values: step7Data ?? undefined // <--- ELIMINAR ESTA LÍNEA
   })
 
   // Handlers para cada paso
   const handleSaveStep1Data = (data: Step1FormData) => {
+    console.log('Step 1 Data Saved (page.tsx):', data)
     setStep1Data(data)
-    if (data.cupoMatricula !== undefined) {
-      setStep2Data((prev) => ({
-        ...(prev || {
-          totalMatriculados: 0,
-          totalRetirados: 0,
-          totalAprobados: 0,
-          totalReprobados: 0
-        }),
-        totalMatriculados: data.cupoMatricula as number
-      }))
-    }
+    // El useEffect de abajo se encargará de actualizar formStep2Methods
     setCurrentStep(2)
   }
 
@@ -243,57 +163,147 @@ export default function NewFinalReportPage() {
     setCurrentStep(7)
   }
 
-  const handleSaveStep7Data = (data: Step7FormData) => {
-    console.log('Paso 7 Data Guardada:', data)
-    setStep7Data(data)
+  const handleSaveStep7Data = async (step7CurrentData: Step7FormData) => {
+    if (!step1Data || !step2Data || !step3Data || !step4Data || !step5Data || !step6Data) {
+      toast.error('Faltan datos de pasos anteriores. Por favor, revise el formulario.')
+      return
+    }
 
-    // Aquí enviarías todos los datos al backend
-    console.log('TODOS LOS DATOS DEL INFORME:', {
-      step1: step1Data,
-      step2: step2Data,
-      step3: step3Data,
-      step4: step4Data,
-      step5: step5Data,
-      step6: step6Data,
-      step7: data
-    })
+    // !!! IMPORTANTE: Obtener el ID del profesor real desde la sesión/autenticación !!!
+    // El currentProfessorId de useDevStore es un placeholder.
+    const professorIdToUse = currentProfessorId // Reemplazar con la lógica real
+    if (!professorIdToUse) {
+      toast.error('ID del profesor no disponible. No se puede crear el informe.')
+      return
+    }
+    if (!step1Data.academicLoadId) {
+      toast.error('ID de la carga académica no disponible. Verifique el Paso 1.')
+      return
+    }
 
-    toast.success('Informe Final completado y guardado (simulado).')
+    const finalReportPayload: CreateFinalReportDto = {
+      professorId: professorIdToUse,
+      academicLoadId: step1Data.academicLoadId,
+      statistics: {
+        totalStudents: step2Data.totalEnrolled ?? 0,
+        passed: step2Data.totalPassed ?? 0,
+        failed: step2Data.totalFailed ?? 0,
+        dropouts: step2Data.totalWithdrawn ?? 0
+      },
+      studentInformation: {
+        safeguards: step3Data.salvaguardaEstudiantes.map((s) => ({
+          idNumber: s.cedula,
+          name: s.nombre,
+          grade: String(s.nota),
+          observation: s.observacion || ''
+        })),
+        adjustments: step4Data.ajustesEstudiantes.map((a) => ({
+          idNumber: a.cedula,
+          name: a.nombre,
+          support: a.apoyo,
+          grade: String(a.nota),
+          observation: a.observacion || ''
+        }))
+      },
+      evaluation: [
+        ...step5Data.respuestas.map((r) => {
+          const preguntaOriginal = preguntasPaso5FormMock.find((p) => p.idPregunta === r.idPregunta)
+          return {
+            questionId: r.idPregunta,
+            question: preguntaOriginal?.pregunta || 'Pregunta no encontrada',
+            questionGroup: preguntaOriginal?.grupo_pregunta || 'General',
+            responseType: preguntaOriginal?.tipo_respuesta || 'TEXTO_LARGO',
+            response: r.respuesta || undefined, // <--- CORRECCIÓN AQUÍ (si r.respuesta puede ser null o string vacío)
+            multipleResponse: [],
+            options: [],
+            otherResponse: undefined
+          }
+        }),
+        ...step6Data.respuestasMultiples.map((r) => {
+          const preguntaOriginal = preguntasPaso6FormMock.find((p) => p.idPregunta === r.idPregunta)
+          return {
+            questionId: r.idPregunta,
+            question: preguntaOriginal?.pregunta || 'Pregunta no encontrada',
+            questionGroup: preguntaOriginal?.grupo_pregunta || 'General',
+            responseType: 'SELECCION_MULTIPLE',
+            multipleResponse: r.respuestasSeleccionadas,
+            options: preguntaOriginal?.opciones.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
+            response: undefined, // <--- CORRECCIÓN AQUÍ
+            otherResponse: undefined
+          }
+        }),
+        ...(step6Data.otrasHerramientas
+          ? [
+              {
+                questionId: 'otras_herramientas_utilizadas',
+                question: 'Otras herramientas o metodologías utilizadas no listadas anteriormente:',
+                questionGroup: 'Recursos Adicionales',
+                responseType: 'TEXTO_ADICIONAL',
+                response: step6Data.otrasHerramientas, // Esto es string, compatible con string | undefined
+                multipleResponse: [],
+                options: [],
+                otherResponse: step6Data.otrasHerramientas // Esto es string, compatible con string | undefined
+              }
+            ]
+          : []),
+        ...step7CurrentData.respuestasRadio.map((r) => {
+          const preguntaOriginal = preguntasPaso7FormMock.find((p) => p.idPregunta === r.idPregunta)
+          return {
+            questionId: r.idPregunta,
+            question: preguntaOriginal?.pregunta || 'Pregunta no encontrada',
+            questionGroup: preguntaOriginal?.grupo_pregunta || 'General',
+            responseType: preguntaOriginal?.tipo_respuesta || 'SELECCION_UNICA',
+            response: r.respuesta || undefined,
+            multipleResponse: [],
+            options:
+              preguntaOriginal?.opciones.map((op) => ({
+                value: op.value,
+                label: op.label,
+                category: 'General' // <--- CORREGIDO: Asignar directamente 'General'
+              })) || [],
+            otherResponse: undefined
+          }
+        })
+      ]
+    }
+
+    console.log('Payload del Informe Final a Enviar:', JSON.stringify(finalReportPayload, null, 2)) // Log para depuración
+
+    try {
+      const createdReport = await createFinalReportMutation.mutateAsync(finalReportPayload)
+      // El hook genérico ya maneja el toast de éxito y la invalidación de queries.
+      // `createdReport` es el informe devuelto por el backend.
+      console.log('Informe creado exitosamente:', createdReport)
+      router.push('/final-reports') // Redirigir a la lista de informes
+    } catch (error) {
+      // El hook genérico ya maneja el toast de error.
+      console.error('Error explícito al intentar crear el informe en page.tsx:', error)
+      // Puedes añadir lógica adicional aquí si es necesario.
+    }
   }
 
   const handlePreviousStep = () => {
     setCurrentStep((prev) => Math.max(1, prev - 1))
   }
-
-  const progress = (currentStep / TOTAL_STEPS) * 100
+  const totalEnrolledFromStep1 = step1Data?.enrolledCapacity
 
   return (
     <div className="container mx-auto py-4 max-w-7xl min-h-screen">
-      {/* Header más compacto */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Nuevo Informe Final</h1>
         <p className="text-muted-foreground text-sm">Complete todos los pasos para crear el informe final del curso</p>
       </div>
-
-      {/* Steps horizontales - COMPACTOS CON LABELS DENTRO */}
+      {/* Indicador de Pasos */}
       <div className="mb-6">
         <div className="flex justify-between items-center px-4">
           {STEP_LABELS.map((label, index) => {
             const stepNumber = index + 1
             const isCompleted = currentStep > stepNumber
             const isCurrent = currentStep === stepNumber
-            const isUpcoming = currentStep < stepNumber
-
             return (
               <div key={stepNumber} className="flex items-center flex-1">
-                {/* Círculo del paso con label dentro */}
                 <div
-                  className={`
-                  h-16 rounded-full flex items-center justify-center px-4 py-2 text-xs font-medium transition-all duration-300 text-center leading-tight min-w-[120px] max-w-[140px] mx-1
-                  ${isCompleted ? 'bg-primary text-primary-foreground shadow-md' : ''}
-                  ${isCurrent ? 'bg-primary text-primary-foreground ring-2 ring-primary/30 shadow-lg font-semibold' : ''}
-                  ${isUpcoming ? 'bg-muted text-muted-foreground border border-muted-foreground/30' : ''}
-                `}
+                  className={`h-16 rounded-full flex items-center justify-center px-4 py-2 text-xs font-medium transition-all duration-300 text-center leading-tight min-w-[120px] max-w-[140px] mx-1 ${isCompleted ? 'bg-primary text-primary-foreground shadow-md' : ''} ${isCurrent ? 'bg-primary text-primary-foreground ring-2 ring-primary/30 shadow-lg font-semibold' : ''} ${!isCompleted && !isCurrent ? 'bg-muted text-muted-foreground border border-muted-foreground/30' : ''}`}
                 >
                   {isCompleted ? (
                     <div className="flex items-center gap-1">
@@ -304,14 +314,9 @@ export default function NewFinalReportPage() {
                     <span className="truncate">{label}</span>
                   )}
                 </div>
-
-                {/* Línea conectora */}
                 {index < STEP_LABELS.length - 1 && (
                   <div
-                    className={`
-                    flex-1 h-0.5 mx-2 rounded-full min-w-[20px]
-                    ${currentStep > stepNumber ? 'bg-primary' : 'bg-muted'}
-                  `}
+                    className={`flex-1 h-0.5 mx-2 rounded-full min-w-[20px] ${currentStep > stepNumber ? 'bg-primary' : 'bg-muted'}`}
                   />
                 )}
               </div>
@@ -320,7 +325,6 @@ export default function NewFinalReportPage() {
         </div>
       </div>
 
-      {/* Card del contenido del step - SIN PADDING EXTRA */}
       <Card className="shadow-sm border-border/40 flex-1">
         <CardContent className="p-0 h-full">
           {currentStep === 1 && (
@@ -332,6 +336,7 @@ export default function NewFinalReportPage() {
               onSaveAndNext={handleSaveStep2Data}
               onPrevious={handlePreviousStep}
               totalSteps={TOTAL_STEPS}
+              initialTotalEnrolled={totalEnrolledFromStep1}
             />
           )}
           {currentStep === 3 && (
@@ -340,6 +345,7 @@ export default function NewFinalReportPage() {
               onSaveAndNext={handleSaveStep3Data}
               onPrevious={handlePreviousStep}
               totalSteps={TOTAL_STEPS}
+              tipoInforme={TIPO_INFORME_ACTUAL}
             />
           )}
           {currentStep === 4 && (
@@ -373,6 +379,7 @@ export default function NewFinalReportPage() {
               onPrevious={handlePreviousStep}
               totalSteps={TOTAL_STEPS}
               tipoInforme={TIPO_INFORME_ACTUAL}
+              isSubmitting={createFinalReportMutation.isPending}
             />
           )}
         </CardContent>

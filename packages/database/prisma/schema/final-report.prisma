@@ -43,18 +43,18 @@ type FinalReportStatistics {
 }
 
 type FinalReportEvaluation {
-  questionGroup    String
+  questionGroup    String?
   questionId       String
   options          FinalReportEvaluationOptions[]
-  otherResponse    String
+  otherResponse    String?
   question         String
-  response         String
+  response         String?
   multipleResponse String[]
   responseType     String
 }
 
 type FinalReportEvaluationOptions {
-  category String
+  category String?
   label    String
   value    String
 }

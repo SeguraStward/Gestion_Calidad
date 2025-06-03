@@ -12,23 +12,21 @@ import { Separator } from '@una-gc/ui/components/separator'
 import { Badge } from '@una-gc/ui/components/badge'
 import { Settings, Monitor, MessageCircle, Gamepad2, Users, Video, Laptop } from 'lucide-react'
 
-// Estructura de las opciones para las preguntas de selección múltiple
 interface Option {
   value: string
   label: string
   category: string
 }
 
-// Estructura de una pregunta para el Paso 6
 interface PreguntaStep6 {
   idPregunta: string
   pregunta: string
+  grupo_pregunta: string
   opciones: Option[]
-  grupo_pregunta?: string
 }
 
 // Mock data expandido basado en el proyecto anterior
-const preguntasPaso6Mock: PreguntaStep6[] = [
+export const preguntasPaso6FormMock: PreguntaStep6[] = [
   {
     idPregunta: 'herramientas_tec',
     pregunta: '¿Qué herramientas tecnológicas utilizó principalmente durante el curso?',
@@ -98,7 +96,7 @@ interface Step6FormProps {
 
 // Función para obtener el icono según la categoría (similar to Step 5's MessageSquareText for header)
 const getCategoryIcon = (category: string) => {
-  const iconMap = {
+  const iconMap: Record<string, React.ElementType> = {
     'Plataformas LMS': Monitor,
     Comunicación: MessageCircle,
     Gamificación: Gamepad2,
@@ -109,39 +107,14 @@ const getCategoryIcon = (category: string) => {
     'Métodos Activos': Users,
     'Metodologías Innovadoras': Settings // Using Settings as a generic icon
   }
-  return iconMap[category as keyof typeof iconMap] || Settings // Default icon
+  return iconMap[category] || Settings // Default icon
 }
 
 // Función para obtener el color según la categoría (for badges, if needed, similar to Step 5's muted style)
-const getCategoryColor = (category: string) => {
-  // This function might not be directly used if we simplify badges to match Step 5's muted style
-  const colorMap = {
-    'Plataformas LMS': 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300',
-    Comunicación: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300',
-    Gamificación: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300',
-    Interacción: 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300',
-    'Material Multimedia': 'bg-pink-100 text-pink-700 dark:bg-pink-900/20 dark:text-pink-300',
-    'Software Especializado': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300',
-    'Métodos Tradicionales': 'bg-slate-100 text-slate-700 dark:bg-slate-900/20 dark:text-slate-300',
-    'Métodos Activos': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300',
-    'Metodologías Innovadoras': 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300'
-  }
-  return colorMap[category as keyof typeof colorMap] || 'bg-slate-100 text-slate-700 dark:bg-slate-900/20 dark:text-slate-300'
-}
+// const getCategoryColor = (category: string) => { ... } // No se usa actualmente, se puede eliminar o mantener comentado
 
 // Función para obtener colores de fondo de categoría (for category group boxes)
-const getCategoryBackgroundColor = (category: string) => {
-  // To match Step 5, category groups might not need distinct background colors,
-  // but rather rely on borders and spacing. If distinct backgrounds are kept, ensure they are subtle.
-  // For now, let's use a generic subtle background for the category groups.
-  return 'bg-muted/20 dark:bg-muted/10 border border-border/30 dark:border-border/20'
-  // Original distinct colors (can be re-enabled if preferred):
-  // const colorMap = {
-  //   'Plataformas LMS': 'border-blue-200/50 dark:border-blue-700/50 bg-blue-50/30 dark:bg-blue-950/15',
-  // ...
-  // }
-  // return colorMap[category as keyof typeof colorMap] || 'border-slate-200/50 dark:border-slate-700/50 bg-slate-50/30 dark:bg-slate-950/15'
-}
+// const getCategoryBackgroundColor = (category: string) => { ... } // No se usa actualmente, se puede eliminar o mantener comentado
 
 export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }: Step6FormProps) {
   const { control, watch, setValue, getValues, handleSubmit, formState } = formMethods
@@ -150,7 +123,8 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
     const currentFormState = getValues()
     const currentRespuestasMultiples = currentFormState.respuestasMultiples
 
-    const desiredStructure = preguntasPaso6Mock.map((p) => {
+    const desiredStructure = preguntasPaso6FormMock.map((p) => {
+      // <--- CORREGIDO AQUÍ
       const existingEntry = Array.isArray(currentRespuestasMultiples)
         ? currentRespuestasMultiples.find((r) => r && r.idPregunta === p.idPregunta)
         : undefined
@@ -164,7 +138,6 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
     if (Array.isArray(currentRespuestasMultiples) && currentRespuestasMultiples.length === desiredStructure.length) {
       needsUpdate = !currentRespuestasMultiples.every((cr, index) => {
         const dr = desiredStructure[index]
-        // Add a check for dr to ensure it's not undefined
         return cr && dr && typeof cr.idPregunta === 'string' && cr.idPregunta === dr.idPregunta
       })
     }
@@ -175,14 +148,15 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
         shouldValidate: false
       })
     }
-  }, [setValue, getValues])
+  }, [setValue, getValues]) // No es necesario agregar preguntasPaso6FormMock a las dependencias si es constante
 
   const respuestasMultiplesActuales = watch('respuestasMultiples')
 
   const groupOptionsByCategory = (options: Option[]) => {
     return options.reduce(
       (acc, option) => {
-        ;(acc[option.category] = acc[option.category] || []).push(option)
+        const categoryKey = option.category || 'Sin Categoría' // Manejar opciones sin categoría
+        ;(acc[categoryKey] = acc[categoryKey] || []).push(option)
         return acc
       },
       {} as Record<string, Option[]>
@@ -192,7 +166,7 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
   const totalSelections =
     respuestasMultiplesActuales?.reduce((total, resp) => {
       return total + (resp && Array.isArray(resp.respuestasSeleccionadas) ? resp.respuestasSeleccionadas.length : 0)
-    }, 0) || 0 // Added semicolon here
+    }, 0) || 0
 
   const handleFormSubmitSuccess = (data: Step6FormData) => {
     onSaveAndNext(data)
@@ -206,10 +180,9 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
 
   return (
     <div className="p-6 h-full flex flex-col">
-      {/* Header - Styled like Step 5 */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold flex items-center gap-3">
-          <Settings className="w-5 h-5 text-foreground/70" /> {/* Generic icon like Step 5 */}
+          <Settings className="w-5 h-5 text-foreground/70" />
           Herramientas y Metodologías
         </h2>
         <p className="text-muted-foreground text-sm mt-1">
@@ -219,13 +192,10 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          {/* Ensure handleSubmit uses both success and error callbacks */}
           <form onSubmit={handleSubmit(handleFormSubmitSuccess, handleFormSubmitError)} className="flex-1 flex flex-col">
             <div className="flex-1">
-              {/* Card - Styled like Step 5 */}
               <Card className="border-border/40 bg-card/50 backdrop-blur-sm shadow-sm">
                 <CardHeader className="pb-4">
-                  {/* Modified CardTitle to always show selection count span */}
                   <CardTitle className="text-base font-medium text-foreground/90 flex justify-between items-baseline">
                     <span>Selección de Recursos</span>
                     <span className="text-xs text-muted-foreground ml-2 font-normal">
@@ -234,7 +204,8 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-0">
-                  {preguntasPaso6Mock.map((pregunta, preguntaIndex) => {
+                  {preguntasPaso6FormMock.map((pregunta, preguntaIndex) => {
+                    // <--- CORREGIDO AQUÍ
                     const groupedOptions = groupOptionsByCategory(pregunta.opciones)
                     const seleccionesActuales = watch(`respuestasMultiples.${preguntaIndex}.respuestasSeleccionadas`) || []
 
@@ -250,46 +221,42 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                                 <span className="flex-1">{pregunta.pregunta}</span>
                               </span>
                             </FormLabel>
-                            {/* Always render the div and Badge for per-question selection count */}
                             <div className="mt-2 ml-8 h-7 flex items-center">
-                              {' '}
-                              {/* Added fixed height h-7 (adjust if needed) */}
                               <Badge variant="outline" className="text-xs border-border/50 text-muted-foreground">
                                 {seleccionesActuales.length} seleccionada{seleccionesActuales.length !== 1 ? 's' : ''}
                               </Badge>
                             </div>
                           </div>
 
-                          {/* Opciones agrupadas por categoría - Styled similar to Step 5 */}
                           <div className="space-y-4">
                             {Object.entries(groupedOptions).map(([category, options]) => {
-                              const isFirstCategory = true // For controlling border radius
-                              const isLastCategory = false // For controlling border radius
+                              const isFirstCategory = Object.keys(groupedOptions)[0] === category
+                              const isLastCategory =
+                                Object.keys(groupedOptions)[Object.keys(groupedOptions).length - 1] === category
 
                               return (
                                 <div
                                   key={category}
                                   className={`rounded-lg border ${
-                                    isFirstCategory ? 'border-t-0' : ''
-                                  } ${isLastCategory ? 'border-b-0' : ''} border-border/50 bg-muted/10`}
+                                    isFirstCategory ? '' : 'border-t' // Ajuste para que el borde superior no se duplique
+                                  } ${isLastCategory ? '' : ''} border-border/50 bg-muted/10`}
                                 >
-                                  {/* Category Header - With icon and badge for selected count */}
                                   <div className="flex items-center justify-between py-3 px-4 rounded-t-lg bg-muted/50">
                                     <div className="flex items-center gap-3">
-                                      {/* Icon */}
                                       <div className="flex-shrink-0">
-                                        {getCategoryIcon(category)({ className: 'w-5 h-5 text-foreground' })}
+                                        {(() => {
+                                          const IconComponent = getCategoryIcon(category)
+                                          return <IconComponent className="w-5 h-5 text-foreground" />
+                                        })()}
                                       </div>
-                                      {/* Category Name and Selection Count */}
                                       <div className="flex-1">
                                         <span className="block text-sm font-medium text-foreground/90">{category}</span>
                                         <span className="text-xs text-muted-foreground">
                                           {options.length} opción{options.length !== 1 ? 'es' : ''} disponible
-                                          {options.length !== 1 ? 's' : ''}
+                                          {/* Removido el plural extra 's' que estaba aquí */}
                                         </span>
                                       </div>
                                     </div>
-                                    {/* Badge for selected count */}
                                     <Badge variant="outline" className="text-xs border-border/50 text-muted-foreground">
                                       {
                                         seleccionesActuales.filter((value) => options.find((option) => option.value === value))
@@ -303,7 +270,6 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                                     </Badge>
                                   </div>
 
-                                  {/* Opciones - Rendered as checkboxes */}
                                   <div className="py-2 px-4 space-y-2">
                                     {options.map((option) => {
                                       const isSelected = seleccionesActuales.includes(option.value)
@@ -313,9 +279,11 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                                             <Checkbox
                                               checked={isSelected}
                                               onCheckedChange={(checked) => {
+                                                const currentSelectionsForQuestion =
+                                                  getValues(`respuestasMultiples.${preguntaIndex}.respuestasSeleccionadas`) || []
                                                 const newSelections = checked
-                                                  ? [...seleccionesActuales, option.value]
-                                                  : seleccionesActuales.filter((value) => value !== option.value)
+                                                  ? [...currentSelectionsForQuestion, option.value]
+                                                  : currentSelectionsForQuestion.filter((value) => value !== option.value)
                                                 setValue(
                                                   `respuestasMultiples.${preguntaIndex}.respuestasSeleccionadas`,
                                                   newSelections,
@@ -328,7 +296,7 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                                               className="h-5 w-5 rounded-md border-border/50"
                                             />
                                           </FormControl>
-                                          <FormLabel className="text-sm font-medium text-foreground/90 ml-3">
+                                          <FormLabel className="text-sm font-medium text-foreground/90 ml-3 cursor-pointer">
                                             {option.label}
                                           </FormLabel>
                                         </FormItem>
@@ -340,24 +308,48 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                             })}
                           </div>
                         </div>
-
-                        {/* Divider between questions - Styled like Step 5 */}
-                        {preguntaIndex < preguntasPaso6Mock.length - 1 && <Separator className="my-4 border-border/50" />}
+                        {preguntaIndex < preguntasPaso6FormMock.length - 1 && <Separator className="my-4 border-border/50" />}{' '}
+                        {/* <--- CORREGIDO AQUÍ */}
                       </div>
                     )
                   })}
                 </CardContent>
               </Card>
             </div>
+            <div className="mt-6">
+              <FormField
+                control={control}
+                name="otrasHerramientas"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-foreground/90">
+                      Otras herramientas o metodologías utilizadas (opcional)
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Describa brevemente otras herramientas o metodologías que haya utilizado y no estén listadas arriba."
+                        className="min-h-[80px] bg-background/70 border-border/50"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            {/* Footer - Styled like Step 5 */}
-            <div className="flex justify-end gap-4 mt-4">
-              <Button variant="outline" onClick={onPrevious} className="px-4 py-2 text-sm">
-                Volver
+            <div className="flex justify-between items-center mt-8 pt-6 border-t border-border/30">
+              <Button variant="outline" onClick={onPrevious} className="px-6">
+                Anterior
               </Button>
-              <Button type="submit" className="px-4 py-2 text-sm">
-                Siguiente
-              </Button>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  Paso {6} de {totalSteps}
+                </span>
+                <Button type="submit" className="px-6">
+                  Siguiente
+                </Button>
+              </div>
             </div>
           </form>
         </Form>

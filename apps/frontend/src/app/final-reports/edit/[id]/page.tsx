@@ -100,7 +100,7 @@ const mockExistingReportData = {
   reportId: 'informe-123',
   tipoInformeActual: 'INFORME_FINAL_V1',
   step1Data: {
-    selectedCourseLoadId: 'cl1',
+    academicLoadId: 'cl1',
     nrc: '10234',
     nombreProfesor: 'Dr. Alan Turing',
     nombreAsignatura: 'Introducción a la Computación',
@@ -110,7 +110,16 @@ const mockExistingReportData = {
     nivelGrupo: 'Nivel I',
     cupoMatricula: 30
   },
-  step2Data: { totalMatriculados: 30, totalRetirados: 2, totalAprobados: 25, totalReprobados: 3 },
+  step2Data: {
+    // totalMatriculados: 30, // Changed this line
+    // totalRetirados: 2,    // Changed this line
+    // totalAprobados: 25,   // Changed this line
+    // totalReprobados: 3    // Changed this line
+    totalEnrolled: 30, // To this line
+    totalWithdrawn: 2, // To this line
+    totalPassed: 25, // To this line
+    totalFailed: 3 // To this line
+  },
   step3Data: {
     salvaguardaEstudiantes: [
       { id: 's1', cedula: '111', nombre: 'Estudiante Salvaguarda Uno', nota: 85, observacion: 'Buen progreso' }
@@ -167,17 +176,21 @@ export default function EditFinalReportPage() {
 
   useEffect(() => {
     setIsLoading(true)
-    console.log(`Cargando datos para el informe: ${reportId}`)
     // Simulación de carga de datos
-    setStep1Data(mockExistingReportData.step1Data)
-    setStep2Data(mockExistingReportData.step2Data)
-    setStep3Data(mockExistingReportData.step3Data)
-    setStep4Data(mockExistingReportData.step4Data)
-    setStep5Data(mockExistingReportData.step5Data)
-    setStep6Data(mockExistingReportData.step6Data)
-    setStep7Data(mockExistingReportData.step7Data)
-    setTipoInforme(mockExistingReportData.tipoInformeActual)
-    setIsLoading(false)
+    // Esto es solo para desarrollo y debe reemplazarse con la carga real de datos
+    if (reportId === mockExistingReportData.reportId) {
+      console.log(`Cargando datos para el informe: ${reportId}`)
+      // Simulación de carga de datos
+      setStep1Data(mockExistingReportData.step1Data)
+      setStep2Data(mockExistingReportData.step2Data)
+      setStep3Data(mockExistingReportData.step3Data)
+      setStep4Data(mockExistingReportData.step4Data)
+      setStep5Data(mockExistingReportData.step5Data)
+      setStep6Data(mockExistingReportData.step6Data)
+      setStep7Data(mockExistingReportData.step7Data)
+      setTipoInforme(mockExistingReportData.tipoInformeActual)
+    }
+    setIsLoading(false) // Simular fin de carga
   }, [reportId])
 
   const allStepsData: { [key: number]: any } = {
