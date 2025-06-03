@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const DISABLED_AUTH = process.env.DISABLED_AUTH === 'true'
+const DISABLED_AUTH = process.env.DISABLED_AUTH == 'true'
 
 function isPublicPath(pathname: string): boolean {
   const publicPaths = ['/auth/login', '/auth/error']
@@ -28,7 +28,7 @@ function handleProtectedPath(request: NextRequest, accessToken?: string) {
 }
 
 export async function middleware(request: NextRequest) {
-  if (!DISABLED_AUTH) {
+  if (DISABLED_AUTH) {
     return NextResponse.next()
   }
 

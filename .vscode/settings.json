@@ -9,5 +9,8 @@
   "editor.tabSize": 2,
   "[prisma]": {
     "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
   }
 }
