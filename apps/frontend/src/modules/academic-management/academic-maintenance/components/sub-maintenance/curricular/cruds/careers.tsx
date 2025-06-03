@@ -11,8 +11,8 @@ import { Button } from '@una-gc/ui/components/button'
 import { Card, CardContent } from '@una-gc/ui/components/card'
 import { FormSelect } from '@/app/(components)/form/select'
 import { useEffect } from 'react'
-import { Career } from '@/modules/types/curricular/career'
-import { School } from '@/modules/types/institutional/school'
+import { Career } from '@/modules/academic-management/academic-maintenance/types/curricular/career'
+import { School } from '@/modules/academic-management/academic-maintenance/types/institutional/school'
 
 export default function CareerCrud() {
   const { items: careers, add, update, remove, editandoId, setEditandoId, idAEliminar, setIdAEliminar } = useCrud<Career>()
