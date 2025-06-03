@@ -1,45 +1,12 @@
 'use client'
 
-import { UseFormReturn, FormProvider, Controller } from 'react-hook-form'
-import * as z from 'zod'
+import { UseFormReturn, FormProvider } from 'react-hook-form'
 import { Button } from '@una-gc/ui/components/button'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
-import { Checkbox } from '@una-gc/ui/components/checkbox'
-import { Textarea } from '@una-gc/ui/components/textarea'
-import { CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@una-gc/ui/components/card'
-import { Separator } from '@una-gc/ui/components/separator'
-import { Step6FormData, step6Schema } from './form-step6' // Reutilizamos schema y tipo
-import { useEffect } from 'react'
-
-interface Option {
-  value: string
-  label: string
-  category: string
-}
-interface PreguntaStep6 {
-  idPregunta: string
-  pregunta: string
-  opciones: Option[]
-  grupo_pregunta?: string
-}
-
-// Mock data para las preguntas del Paso 6 (DEBE SER CONSISTENTE)
-const preguntasPaso6Mock: PreguntaStep6[] = [
-  {
-    idPregunta: 'herramientas_tec',
-    pregunta: '¿Qué herramientas tecnológicas utilizó principalmente durante el curso?',
-    grupo_pregunta: 'Recursos Tecnológicos',
-    opciones: [
-      { value: 'moodle', label: 'Campus Virtual (Moodle)', category: 'Plataformas LMS' },
-      { value: 'teams', label: 'Microsoft Teams', category: 'Comunicación' },
-      { value: 'zoom', label: 'Zoom', category: 'Comunicación' },
-      { value: 'kahoot', label: 'Kahoot!', category: 'Gamificación' },
-      { value: 'mentimeter', label: 'Mentimeter', category: 'Interacción' },
-      { value: 'videos_propios', label: 'Videos Propios', category: 'Material Multimedia' },
-      { value: 'simuladores', label: 'Simuladores Específicos', category: 'Software Especializado' }
-    ]
-  }
-]
+import { Form, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@una-gc/ui/components/card'
+import { Step6FormData } from './form-step6'
+import { useState, useEffect } from 'react'
+import { preguntasPaso6FormMock } from './form-step6'
 
 interface Step6EditFormProps {
   formMethods: UseFormReturn<Step6FormData>
@@ -49,107 +16,131 @@ interface Step6EditFormProps {
 }
 
 export function Step6EditForm({ formMethods, onSaveAndNext, onPrevious, totalSteps }: Step6EditFormProps) {
-  const { control, watch, setValue } = formMethods
+  const { control, setValue, getValues, watch } = formMethods
 
-  const respuestasMultiplesActuales = watch('respuestasMultiples')
-  useEffect(() => {
-    if (!respuestasMultiplesActuales || respuestasMultiplesActuales.length !== preguntasPaso6Mock.length) {
-      const currentAnswersMap = new Map(respuestasMultiplesActuales?.map((r) => [r.idPregunta, r.respuestasSeleccionadas]))
-      setValue(
-        'respuestasMultiples',
-        preguntasPaso6Mock.map((p) => ({
-          idPregunta: p.idPregunta,
-          respuestasSeleccionadas: currentAnswersMap.get(p.idPregunta) || []
-        })),
-        { shouldValidate: true, shouldDirty: true }
-      )
-    }
-  }, [respuestasMultiplesActuales, setValue])
+  // Solo mostramos el primer bloque de preguntas (puedes adaptar si tienes más)
+  const pregunta = preguntasPaso6FormMock[0]
+  const allOptions = pregunta.opciones
 
-  const groupOptionsByCategory = (options: Option[]) => {
-    return options.reduce(
-      (acc, option) => {
-        ;(acc[option.category] = acc[option.category] || []).push(option)
-        return acc
-      },
-      {} as Record<string, Option[]>
-    )
+  // Estado local para selección en cada lista
+  const [selectedAvailable, setSelectedAvailable] = useState<string[]>([])
+  const [selectedUsed, setSelectedUsed] = useState<string[]>([])
+
+  // Estado reactivo para las seleccionadas en el formulario
+  const respuestasMultiples = watch('respuestasMultiples') || [{ idPregunta: pregunta.idPregunta, respuestasSeleccionadas: [] }]
+  const usadas = respuestasMultiples[0]?.respuestasSeleccionadas || []
+
+  // Calcula disponibles y usadas
+  const disponibles = allOptions.filter((opt) => !usadas.includes(opt.value))
+  const usadasOptions = allOptions.filter((opt) => usadas.includes(opt.value))
+
+  // Mover a usadas
+  const handleAdd = () => {
+    const nuevasUsadas = Array.from(new Set([...usadas, ...selectedAvailable]))
+    setValue('respuestasMultiples', [{ idPregunta: pregunta.idPregunta, respuestasSeleccionadas: nuevasUsadas }], {
+      shouldDirty: true
+    })
+    setSelectedAvailable([])
   }
+
+  // Mover a disponibles
+  const handleRemove = () => {
+    const nuevasUsadas = usadas.filter((val) => !selectedUsed.includes(val))
+    setValue('respuestasMultiples', [{ idPregunta: pregunta.idPregunta, respuestasSeleccionadas: nuevasUsadas }], {
+      shouldDirty: true
+    })
+    setSelectedUsed([])
+  }
+
+  // Sincroniza el estado local si cambia el formulario
+  useEffect(() => {
+    setSelectedAvailable([])
+    setSelectedUsed([])
+  }, [usadas.length])
 
   return (
     <FormProvider {...formMethods}>
       <Form {...formMethods}>
         <form onSubmit={formMethods.handleSubmit(onSaveAndNext)} className="space-y-8">
-          <CardHeader>
-            <CardTitle>Paso 6 de {totalSteps}: Herramientas y Metodologías (Editando)</CardTitle>
-            <CardDescription>
-              Seleccione las herramientas y metodologías utilizadas y especifique otras si es necesario.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {preguntasPaso6Mock.map((pregunta, preguntaIndex) => {
-              const groupedOptions = groupOptionsByCategory(pregunta.opciones)
-              return (
-                <div key={pregunta.idPregunta} className="space-y-4 p-4 border rounded-md">
-                  <FormLabel className="text-base font-semibold">
-                    {preguntaIndex + 1}. {pregunta.pregunta}
-                  </FormLabel>
-                  {Object.entries(groupedOptions).map(([category, options]) => (
-                    <div key={category} className="space-y-2">
-                      <h4 className="font-medium text-sm text-muted-foreground">{category}</h4>
-                      {options.map((option) => (
-                        <FormField
-                          key={option.value}
-                          control={control}
-                          name={`respuestasMultiples.${preguntaIndex}.respuestasSeleccionadas`}
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(option.value)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([...(field.value || []), option.value])
-                                      : field.onChange((field.value || []).filter((value: string) => value !== option.value))
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="font-normal">{option.label}</FormLabel>
-                            </FormItem>
-                          )}
-                        />
+          <Card>
+            <CardHeader>
+              <CardTitle>Herramientas utilizadas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Lista de disponibles */}
+                <div className="flex-1">
+                  <FormLabel className="block mb-2 font-semibold">No usadas</FormLabel>
+                  <div className="border rounded min-h-[200px] max-h-[300px] overflow-auto">
+                    <ul>
+                      {disponibles.map((opt) => (
+                        <li key={opt.value} className="px-3 py-2 flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedAvailable.includes(opt.value)}
+                            onChange={(e) => {
+                              setSelectedAvailable((sel) =>
+                                e.target.checked ? [...sel, opt.value] : sel.filter((v) => v !== opt.value)
+                              )
+                            }}
+                            className="mr-2"
+                          />
+                          <span>{opt.label}</span>
+                        </li>
                       ))}
-                    </div>
-                  ))}
-                  <FormMessage>
-                    {formMethods.formState.errors.respuestasMultiples?.[preguntaIndex]?.respuestasSeleccionadas?.message}
-                  </FormMessage>
+                      {disponibles.length === 0 && (
+                        <li className="px-3 py-2 text-muted-foreground text-sm">Sin herramientas disponibles</li>
+                      )}
+                    </ul>
+                  </div>
                 </div>
-              )
-            })}
-            <Separator />
-            <FormField
-              control={control}
-              name="otrasHerramientas"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    <strong>En caso de utilizar otras herramientas o metodologías no listadas, especifique:</strong>
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Especifique aquí..." rows={3} className="resize-y" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button type="button" variant="outline" onClick={onPrevious}>
-              Anterior
-            </Button>
-            <Button type="submit">Siguiente Paso</Button>
-          </CardFooter>
+
+                {/* Botones de mover */}
+                <div className="flex flex-col justify-center items-center gap-2">
+                  <Button type="button" onClick={handleAdd} disabled={selectedAvailable.length === 0}>
+                    &gt;
+                  </Button>
+                  <Button type="button" onClick={handleRemove} disabled={selectedUsed.length === 0}>
+                    &lt;
+                  </Button>
+                </div>
+
+                {/* Lista de usadas */}
+                <div className="flex-1">
+                  <FormLabel className="block mb-2 font-semibold">Usadas</FormLabel>
+                  <div className="border rounded min-h-[200px] max-h-[300px] overflow-auto">
+                    <ul>
+                      {usadasOptions.map((opt) => (
+                        <li key={opt.value} className="px-3 py-2 flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedUsed.includes(opt.value)}
+                            onChange={(e) => {
+                              setSelectedUsed((sel) =>
+                                e.target.checked ? [...sel, opt.value] : sel.filter((v) => v !== opt.value)
+                              )
+                            }}
+                            className="mr-2"
+                          />
+                          <span>{opt.label}</span>
+                        </li>
+                      ))}
+                      {usadasOptions.length === 0 && (
+                        <li className="px-3 py-2 text-muted-foreground text-sm">Sin herramientas usadas</li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <FormMessage name="respuestasMultiples.0.respuestasSeleccionadas" />
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button type="button" variant="outline" onClick={onPrevious}>
+                Anterior
+              </Button>
+              <Button type="submit">Siguiente Paso</Button>
+            </CardFooter>
+          </Card>
         </form>
       </Form>
     </FormProvider>
