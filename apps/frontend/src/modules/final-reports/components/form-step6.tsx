@@ -84,7 +84,6 @@ interface Step6FormProps {
 export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }: Step6FormProps) {
   const { control, handleSubmit, reset, watch, setValue, getValues } = formMethods
 
-  // Focus on the first (and now only) question defined in preguntasPaso6FormMock for tools
   const preguntaHerramientas = useMemo(() => {
     return preguntasPaso6FormMock.find((p) => p.idPregunta === 'herramientas_tec')
   }, [])
@@ -93,22 +92,19 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
     return preguntaHerramientas?.opciones || []
   }, [preguntaHerramientas])
 
-  // Watch for changes in the selected tools for the first (and only) question
   const usadas = watch('respuestasMultiples.0.respuestasSeleccionadas') || []
 
   useEffect(() => {
-    // Initialize the form structure for the single "herramientas_tec" question
-    // This ensures the form data structure matches what the UI expects.
     reset({
       respuestasMultiples: [
         {
           idPregunta: preguntaHerramientas?.idPregunta || 'herramientas_tec',
-          respuestasSeleccionadas: [] // Start with no tools selected
+          respuestasSeleccionadas: []
         }
       ],
       otrasHerramientas: ''
     })
-  }, [reset, preguntaHerramientas]) // Depend on reset and preguntaHerramientas
+  }, [reset, preguntaHerramientas])
 
   const disponibles = useMemo(() => {
     return opcionesHerramientas.filter((opt) => !usadas.includes(opt.value))
@@ -121,117 +117,156 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
   const handleMoveToUsed = (optionValue: string) => {
     const currentSelected = getValues('respuestasMultiples.0.respuestasSeleccionadas') || []
     if (!currentSelected.includes(optionValue)) {
-      const newSelected = [...currentSelected, optionValue]
-      setValue('respuestasMultiples.0.respuestasSeleccionadas', newSelected, { shouldDirty: true, shouldValidate: true })
+      setValue('respuestasMultiples.0.respuestasSeleccionadas', [...currentSelected, optionValue], {
+        shouldDirty: true,
+        shouldValidate: true
+      })
     }
   }
 
   const handleMoveToAvailable = (optionValue: string) => {
     const currentSelected = getValues('respuestasMultiples.0.respuestasSeleccionadas') || []
-    const newSelected = currentSelected.filter((v) => v !== optionValue)
-    setValue('respuestasMultiples.0.respuestasSeleccionadas', newSelected, { shouldDirty: true, shouldValidate: true })
+    setValue(
+      'respuestasMultiples.0.respuestasSeleccionadas',
+      currentSelected.filter((v) => v !== optionValue),
+      { shouldDirty: true, shouldValidate: true }
+    )
   }
 
   const handleFormSubmitError = (errors: any) => {
     console.error('Step 6 Form Validation Errors:', errors)
-    console.log('Form values at time of validation error:', getValues())
   }
 
   return (
     <FormProvider {...formMethods}>
       <Form {...formMethods}>
-        <form onSubmit={handleSubmit(onSaveAndNext, handleFormSubmitError)} className="space-y-8">
+        <form onSubmit={handleSubmit(onSaveAndNext, handleFormSubmitError)} className="space-y-6">
+          {' '}
+          {/* Reduced space-y-8 */}
           <Card>
-            <CardHeader>
-              <CardTitle>
+            <CardHeader className="py-4 px-6">
+              {' '}
+              {/* Consistent compact padding */}
+              <CardTitle className="text-lg">
+                {' '}
+                {/* Slightly smaller title if needed, or keep as is */}
                 Paso {totalSteps > 0 ? `6 de ${totalSteps}: ` : ''}
-                Herramientas Tecnológicas
+                Herramientas Tecnológicas y Metodologías
               </CardTitle>
+              {/* <CardDescription>Optional description if needed</CardDescription> */}
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 p-4 md:p-6">
+              {' '}
+              {/* Consistent padding, reduced space-y */}
               {preguntaHerramientas && (
-                <div className="mb-4">
+                <div className="mb-3">
+                  {' '}
+                  {/* Reduced margin */}
                   <FormLabel className="text-base font-semibold">{preguntaHerramientas.pregunta}</FormLabel>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {' '}
+                    {/* Reduced top margin */}
                     {preguntaHerramientas.descripcion || 'Haga clic en una herramienta para moverla entre las listas.'}
                   </p>
                 </div>
               )}
-              <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                {' '}
+                {/* Reduced gap */}
                 {/* Lista de disponibles */}
-                <div className="flex-1">
-                  <FormLabel className="block mb-2 font-semibold">No usadas ({disponibles.length})</FormLabel>
-                  <div className="border rounded h-[200px] overflow-y-scroll p-2 space-y-1">
+                <div className="flex-1 space-y-1.5">
+                  {' '}
+                  {/* Added space-y for label and list */}
+                  <FormLabel className="block font-medium text-sm">No usadas ({disponibles.length})</FormLabel>
+                  <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
+                    {' '}
+                    {/* Adjusted padding, added bg */}
                     {disponibles.map((opt) => (
                       <div
                         key={`disponible-${opt.value}`}
-                        className="p-2 rounded hover:bg-muted/80 cursor-pointer flex items-center justify-between group min-h-[2.5rem]"
+                        className="p-1.5 rounded hover:bg-primary/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm" // Adjusted padding, min-height, text size
                         onClick={() => handleMoveToUsed(opt.value)}
                         title={`Mover "${opt.label}" a usadas`}
                       >
-                        <span className="flex-grow text-center truncate mx-1">{opt.label}</span>
-                        <MoveRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                        <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
+                        <MoveRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                       </div>
                     ))}
                     {disponibles.length === 0 && (
-                      <div className="p-2 text-muted-foreground text-sm min-h-[2.5rem] flex items-center justify-center">
+                      <div className="p-1.5 text-muted-foreground text-xs min-h-[2.25rem] flex items-center justify-center">
+                        {' '}
+                        {/* Adjusted text size */}
                         Todas las herramientas seleccionadas
                       </div>
                     )}
                   </div>
                 </div>
-
                 {/* Lista de usadas */}
-                <div className="flex-1">
-                  <FormLabel className="block mb-2 font-semibold">Usadas ({usadasOptions.length})</FormLabel>
-                  <div className="border rounded h-[200px] overflow-y-scroll p-2 space-y-1">
+                <div className="flex-1 space-y-1.5">
+                  {' '}
+                  {/* Added space-y */}
+                  <FormLabel className="block font-medium text-sm">Usadas ({usadasOptions.length})</FormLabel>
+                  <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
+                    {' '}
+                    {/* Adjusted padding, added bg */}
                     {usadasOptions.map((opt) => (
                       <div
                         key={`usada-${opt.value}`}
-                        className="p-2 rounded hover:bg-muted/80 cursor-pointer flex items-center justify-between group min-h-[2.5rem]"
+                        className="p-1.5 rounded hover:bg-destructive/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm" // Adjusted padding, min-height, text size
                         onClick={() => handleMoveToAvailable(opt.value)}
                         title={`Mover "${opt.label}" a no usadas`}
                       >
-                        <MoveLeft className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                        <span className="flex-grow text-center truncate mx-1">{opt.label}</span>
+                        <MoveLeft className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                        <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
                       </div>
                     ))}
                     {usadasOptions.length === 0 && (
-                      <div className="p-2 text-muted-foreground text-sm min-h-[2.5rem] flex items-center justify-center">
+                      <div className="p-1.5 text-muted-foreground text-xs min-h-[2.25rem] flex items-center justify-center">
+                        {' '}
+                        {/* Adjusted text size */}
                         Ninguna herramienta seleccionada
                       </div>
                     )}
                   </div>
                 </div>
               </div>
+              {/* FormMessage for the array itself, if needed for array-level errors */}
               <FormField
                 control={control}
-                name="respuestasMultiples.0.respuestasSeleccionadas" // Path to the array for validation messages
-                render={({ fieldState }) => (fieldState.error ? <FormMessage>{fieldState.error.message}</FormMessage> : null)}
+                name="respuestasMultiples.0.respuestasSeleccionadas"
+                render={({ fieldState }) =>
+                  fieldState.error ? <FormMessage className="text-xs">{fieldState.error.message}</FormMessage> : null
+                }
               />
               <FormField
                 control={control}
                 name="otrasHerramientas"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Otras herramientas utilizadas (opcional)</FormLabel>
+                  <FormItem className="mt-3">
+                    {' '}
+                    {/* Reduced top margin */}
+                    <FormLabel className="text-sm font-medium">Otras herramientas o metodologías utilizadas (opcional)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Si utilizó otras herramientas no listadas, descríbalas aquí..."
+                        placeholder="Si utilizó otras no listadas, descríbalas aquí..."
                         {...field}
-                        className="min-h-[80px]"
+                        className="min-h-[70px] text-sm bg-background/60" /* Adjusted min-height, text size */
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button type="button" variant="outline" onClick={onPrevious}>
+            <CardFooter className="flex justify-between py-3 px-6">
+              {' '}
+              {/* Consistent compact padding */}
+              <Button type="button" variant="outline" onClick={onPrevious} className="px-6 py-1.5 text-xs shadow-sm">
                 Anterior
               </Button>
-              <Button type="submit">Siguiente</Button>
+              <Button type="submit" className="px-6 py-1.5 text-xs shadow-sm">
+                Siguiente
+              </Button>
             </CardFooter>
           </Card>
         </form>

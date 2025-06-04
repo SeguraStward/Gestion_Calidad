@@ -129,15 +129,8 @@ const getOptionColors = (value: string, isSelected: boolean) => {
   )
 }
 
-export function Step7Form({
-  formMethods,
-  onSaveAndNext,
-  onPrevious,
-  totalSteps,
-  tipoInforme,
-  isSubmitting // <--- USAR PROP
-}: Step7FormProps) {
-  const router = useRouter() // Initialize router
+export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, tipoInforme, isSubmitting }: Step7FormProps) {
+  const router = useRouter()
   const { control, watch, setValue, getValues, handleSubmit, formState } = formMethods
 
   const todasLasPreguntasMostradas = useMemo(() => {
@@ -172,7 +165,7 @@ export function Step7Form({
       }
     }
     return Object.values(grupos).flat()
-  }, [tipoInforme]) // Dependency for useMemo; // <--- AÑADIDO PUNTO Y COMA (BUENA PRÁCTICA)
+  }, [tipoInforme])
 
   useEffect(() => {
     const currentRespuestasRadio = getValues('respuestasRadio')
@@ -223,38 +216,32 @@ export function Step7Form({
     <FormProvider {...formMethods}>
       <Form {...formMethods}>
         <form onSubmit={handleSubmit(handleFormSubmitSuccess, handleFormSubmitError)} className="space-y-6">
-          {' '}
-          {/* Reduced space-y-8 to space-y-6 */}
           <Card>
             <CardHeader className="py-4 px-6">
-              {' '}
-              {/* Adjusted padding */}
               <CardTitle className="flex items-center gap-2 text-lg">
                 {' '}
-                {/* Reduced gap and text size */}
-                <Activity className="w-4 h-4 text-foreground/70" /> {/* Slightly smaller icon */}
+                {/* Consistent: text-lg */}
+                <Activity className="w-5 h-5 text-foreground/70" /> {/* Adjusted icon size slightly for text-lg */}
                 Paso {totalSteps > 0 ? `7 de ${totalSteps}: ` : ''}
                 Percepción General y Desempeño
               </CardTitle>
-              <CardDescription className="text-xs">
+              <CardDescription className="text-sm pt-0.5">
                 {' '}
-                {/* Smaller text */}
+                {/* Consistent: text-sm */}
                 Evalúe su percepción sobre los aspectos del curso y desempeño estudiantil. ({
                   todasLasPreguntasMostradas.length
                 }{' '}
                 pregunta{todasLasPreguntasMostradas.length !== 1 ? 's' : ''})
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-4 space-y-3 overflow-y-auto max-h-[calc(60vh-40px)]">
+            <CardContent className="p-4 md:p-6 space-y-4">
               {' '}
-              {/* MODIFIED: Reduced padding, space-y, adjusted max-h */}
+              {/* Adjusted space-y for new font sizes */}
               {todasLasPreguntasMostradas.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground">
-                  {' '}
-                  {/* Reduced py-8 */}
-                  <Activity className="w-10 h-10 mx-auto mb-2 opacity-50" /> {/* Reduced size and margin */}
-                  <p className="text-xs">No hay preguntas disponibles</p> {/* Smaller text */}
-                  <p className="text-xs">para este tipo de informe o configuración.</p>
+                  <Activity className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No hay preguntas disponibles</p> {/* Consistent: text-sm */}
+                  <p className="text-sm">para este tipo de informe o configuración.</p>
                 </div>
               ) : (
                 Object.entries(
@@ -264,8 +251,7 @@ export function Step7Form({
                       if (!acc[groupKey]) {
                         acc[groupKey] = []
                       }
-                      const currentGroupArray = acc[groupKey]
-                      currentGroupArray.push(p)
+                      acc[groupKey].push(p)
                       return acc
                     },
                     {} as Record<string, PreguntaStep7[]>
@@ -273,21 +259,17 @@ export function Step7Form({
                 ).map(([nombreGrupo, preguntasDelGrupo], grupoIndex, arr) => (
                   <div key={nombreGrupo}>
                     <div className="py-3 px-1">
-                      {' '}
-                      {/* MODIFIED: Reduced py-5 to py-3 */}
                       <div className="mb-3">
-                        {' '}
-                        {/* MODIFIED: Reduced mb-5 to mb-3 */}
-                        <h3 className="text-xs font-medium text-foreground/90 leading-normal flex items-center gap-1.5">
+                        <h3 className="text-sm font-medium text-foreground/90 leading-normal flex items-center gap-1.5">
                           {' '}
-                          {/* Smaller text, gap, leading */}
-                          <div className="w-1 h-1 bg-muted-foreground/70 rounded-full"></div> {/* Smaller dot */}
+                          {/* Consistent: text-sm font-medium */}
+                          <div className="w-1.5 h-1.5 bg-muted-foreground/70 rounded-full"></div> {/* Slightly larger dot */}
                           {nombreGrupo}
                         </h3>
                       </div>
-                      <div className="ml-3 space-y-3">
+                      <div className="ml-3 space-y-4">
                         {' '}
-                        {/* MODIFIED: Reduced ml-4 to ml-3, space-y-5 to space-y-3 */}
+                        {/* Adjusted space-y */}
                         {preguntasDelGrupo.map((pregunta) => {
                           const globalPreguntaIndex = todasLasPreguntasMostradas.findIndex(
                             (pItem) => pItem.idPregunta === pregunta.idPregunta
@@ -302,44 +284,39 @@ export function Step7Form({
                               control={control}
                               name={`respuestasRadio.${globalPreguntaIndex}.respuesta`}
                               render={({ field }) => (
-                                <FormItem className="space-y-1.5">
+                                <FormItem className="space-y-2">
                                   {' '}
-                                  {/* MODIFIED: Reduced space-y-3 to space-y-1.5 */}
-                                  <FormLabel className="text-xs font-medium text-foreground/85 leading-normal block">
+                                  {/* Adjusted space-y */}
+                                  <FormLabel className="text-sm font-medium text-foreground/85 leading-normal block">
                                     {' '}
-                                    {/* Smaller text, leading */}
+                                    {/* Consistent: text-sm font-medium */}
                                     {pregunta.pregunta}
                                   </FormLabel>
                                   <div className="ml-2">
-                                    {' '}
-                                    {/* Reduced ml-3 to ml-2 */}
                                     <FormControl>
                                       <RadioGroup
                                         onValueChange={field.onChange}
                                         value={field.value || ''}
-                                        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2" /* MODIFIED: Reduced gap-3 to gap-2 */
+                                        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5" /* Slightly increased gap */
                                       >
                                         {pregunta.opciones.map((opcion) => {
                                           const isSelected = currentValue === opcion.value
                                           const colorClasses = getOptionColors(opcion.value, isSelected)
                                           return (
-                                            // Each option is a FormItem for layout and click handling
                                             <FormItem key={opcion.value} className="space-y-0">
-                                              {/* This div is the clickable area and handles styling */}
                                               <div
-                                                className={`flex items-center space-x-1.5 p-2 rounded-md border transition-all duration-200 cursor-pointer ${colorClasses}`}
-                                                // onClick={() => field.onChange(opcion.value)} // Optional: if you want the whole div to be clickable to change value
+                                                className={`flex items-center space-x-2 p-2.5 rounded-md border transition-all duration-200 cursor-pointer ${colorClasses}`} /* Adjusted padding and space */
                                               >
                                                 <FormControl>
                                                   <RadioGroupItem
                                                     value={opcion.value}
-                                                    id={`${field.name}-${opcion.value}`} // Add unique id for accessibility
-                                                    className="mt-0 w-3.5 h-3.5"
+                                                    id={`${field.name}-${opcion.value}`}
+                                                    className="mt-0 w-4 h-4" /* Slightly larger radio item */
                                                   />
                                                 </FormControl>
                                                 <FormLabel
-                                                  htmlFor={`${field.name}-${opcion.value}`} // Associate label with RadioGroupItem
-                                                  className="text-xs font-normal cursor-pointer flex-1 leading-normal text-foreground/80"
+                                                  htmlFor={`${field.name}-${opcion.value}`}
+                                                  className="text-sm font-normal cursor-pointer flex-1 leading-snug text-foreground/90" /* Consistent: text-sm, adjusted leading and color */
                                                 >
                                                   {opcion.label}
                                                 </FormLabel>
@@ -349,7 +326,7 @@ export function Step7Form({
                                         })}
                                       </RadioGroup>
                                     </FormControl>
-                                    <FormMessage className="text-xs mt-1 text-destructive" /> {/* Reduced mt-2 to mt-1 */}
+                                    <FormMessage className="text-xs mt-1.5 text-destructive" /> {/* Consistent: text-xs */}
                                   </div>
                                 </FormItem>
                               )}
@@ -358,26 +335,26 @@ export function Step7Form({
                         })}
                       </div>
                     </div>
-                    {grupoIndex < arr.length - 1 && <Separator className="opacity-20 my-2" />} {/* Reduced opacity, added my-2 */}
+                    {grupoIndex < arr.length - 1 && <Separator className="opacity-20 my-3" />} {/* Adjusted margin */}
                   </div>
                 ))
               )}
             </CardContent>
-            <CardFooter className="flex justify-between py-3 px-6">
+            <CardFooter className="flex justify-between py-4 px-6">
               {' '}
               {/* Adjusted padding */}
               <Button
                 type="button"
                 variant="outline"
                 onClick={onPrevious}
-                className="px-6 py-1.5 text-xs shadow-sm" /* Adjusted padding, text size */
+                className="px-6 py-2 text-sm shadow-sm" /* Consistent: text-sm, adjusted padding */
                 disabled={isSubmitting}
               >
                 Anterior
               </Button>
               <Button
                 type="submit"
-                className="px-6 py-1.5 text-xs shadow-sm" /* Adjusted padding, text size */
+                className="px-6 py-2 text-sm shadow-sm" /* Consistent: text-sm, adjusted padding */
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'Finalizando...' : 'Finalizar Informe'}

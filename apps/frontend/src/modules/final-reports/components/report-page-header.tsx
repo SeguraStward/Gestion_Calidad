@@ -1,0 +1,90 @@
+'use client'
+
+import React from 'react'
+import { useRouter } from 'next/navigation'
+import { Button } from '@una-gc/ui/components/button'
+import { CheckCircle, ArrowLeft } from 'lucide-react'
+
+interface ReportPageHeaderProps {
+  pageTitle: string
+  pageDescription?: string
+  stepLabels: string[]
+  currentStep: number
+  backButton?: {
+    href: string
+    text: string
+  }
+  isLoading?: boolean // To show loading state for NRC or other dynamic parts in description
+  nrc?: string | null // For edit page description
+}
+
+export function ReportPageHeader({
+  pageTitle,
+  pageDescription,
+  stepLabels,
+  currentStep,
+  backButton,
+  isLoading,
+  nrc
+}: ReportPageHeaderProps) {
+  const router = useRouter()
+
+  const defaultDescription =
+    pageDescription ||
+    (nrc
+      ? `Modifique los datos del informe final del curso. NRC: ${isLoading ? 'Cargando...' : nrc || 'N/A'}`
+      : 'Complete todos los pasos para crear el informe.')
+
+  return (
+    <div className="w-full mb-6 md:mb-8 sticky top-0 bg-background z-10 py-4 border-b border-border/40">
+      {backButton && (
+        <Button variant="outline" onClick={() => router.push(backButton.href)} className="mb-4 text-sm">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {backButton.text}
+        </Button>
+      )}
+      <h1 className="text-2xl md:text-3xl font-bold">{pageTitle}</h1>
+      <p className="text-muted-foreground text-sm">{defaultDescription}</p>
+
+      {/* Indicador de Pasos */}
+      <div className="mt-6 w-full">
+        <div className="flex justify-between items-center px-1 md:px-0">
+          {stepLabels.map((label, index) => {
+            const stepNumber = index + 1
+            const isCompleted = currentStep > stepNumber
+            const isCurrent = currentStep === stepNumber
+            return (
+              <div key={stepNumber} className="flex items-center flex-1">
+                <div
+                  className={`h-14 md:h-16 rounded-full flex items-center justify-center px-3 py-1 md:px-4 md:py-2 text-xs font-medium transition-all duration-300 text-center leading-tight min-w-[100px] md:min-w-[120px] max-w-[130px] md:max-w-[140px] mx-1 ${
+                    isCompleted
+                      ? 'bg-primary text-primary-foreground shadow-md'
+                      : isCurrent
+                        ? 'bg-primary text-primary-foreground ring-2 ring-primary/30 shadow-lg font-semibold'
+                        : 'bg-muted text-muted-foreground border border-muted-foreground/30'
+                  }`}
+                >
+                  {isCompleted ? (
+                    <div className="flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+                      <span className="truncate">{label}</span>
+                    </div>
+                  ) : (
+                    <span className="truncate">{label}</span>
+                  )}
+                </div>
+                {index < stepLabels.length - 1 && (
+                  <div
+                    className={`flex-1 h-0.5 mx-1 md:mx-2 rounded-full min-w-[10px] md:min-w-[20px] ${
+                      currentStep > stepNumber ? 'bg-primary' : 'bg-muted'
+                    }`}
+                  />
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}

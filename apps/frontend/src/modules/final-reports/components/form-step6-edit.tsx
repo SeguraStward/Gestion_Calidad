@@ -2,22 +2,23 @@
 
 import React, { useEffect, useMemo } from 'react'
 import { UseFormReturn, FormProvider } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+// zodResolver is usually handled by the page component that instantiates the form
 import * as z from 'zod'
 import { Button } from '@una-gc/ui/components/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@una-gc/ui/components/card'
 import { Textarea } from '@una-gc/ui/components/textarea'
-import { preguntasPaso6PageMock } from '@/modules/final-reports/mocks/questions'
+// Standardize to use the same mock as form-step6.tsx
+import { preguntasPaso6FormMock, PreguntaStep6, Option } from './form-step6' // Assuming types are exported from form-step6.tsx or a shared types file
 import { MoveRight, MoveLeft } from 'lucide-react'
 
-// Schema for a single multiple response item
+// Schema for a single multiple response item (matches create form)
 const respuestaMultipleSchema = z.object({
   idPregunta: z.string(),
-  respuestasSeleccionadas: z.array(z.string()) // Removed .min(1, 'Debe seleccionar al menos una herramienta.')
+  respuestasSeleccionadas: z.array(z.string())
 })
 
-// Schema for the entire step 6 form data
+// Schema for the entire step 6 form data (matches create form)
 export const step6Schema = z.object({
   respuestasMultiples: z.array(respuestaMultipleSchema).length(1, 'Debe haber exactamente un conjunto de respuestas múltiples.'),
   otrasHerramientas: z.string().optional()
@@ -31,7 +32,7 @@ interface Step6EditFormProps {
   onPrevious?: () => void
   totalSteps: number
   initialData?: Step6FormData | null
-  isEditing?: boolean
+  isEditing?: boolean // Should be true for this form
 }
 
 export function Step6EditForm({
@@ -40,12 +41,13 @@ export function Step6EditForm({
   onPrevious,
   totalSteps,
   initialData,
-  isEditing = false
+  isEditing = true // Default to true for edit form
 }: Step6EditFormProps) {
   const { control, handleSubmit, reset, watch, setValue, getValues } = formMethods
 
   const preguntaHerramientas = useMemo(() => {
-    return preguntasPaso6PageMock.find((p) => p.idPregunta === 'herramientas_utilizadas')
+    // Standardize to 'herramientas_tec'
+    return preguntasPaso6FormMock.find((p) => p.idPregunta === 'herramientas_tec')
   }, [])
 
   const opcionesHerramientas = useMemo(() => {
@@ -56,12 +58,34 @@ export function Step6EditForm({
 
   useEffect(() => {
     if (isEditing && initialData) {
-      reset(initialData)
+      // Ensure the idPregunta in initialData matches if it's different, or transform if necessary
+      const transformedInitialData = {
+        ...initialData,
+        respuestasMultiples: initialData.respuestasMultiples.map((rm) => ({
+          ...rm,
+          idPregunta: preguntaHerramientas?.idPregunta || 'herramientas_tec' // Ensure correct ID
+        }))
+      }
+      reset(transformedInitialData)
     } else if (!isEditing) {
+      // Should ideally not happen for an "edit" form, but good for completeness
       reset({
         respuestasMultiples: [
           {
-            idPregunta: preguntaHerramientas?.idPregunta || 'herramientas_utilizadas',
+            idPregunta: preguntaHerramientas?.idPregunta || 'herramientas_tec',
+            respuestasSeleccionadas: []
+          }
+        ],
+        otrasHerramientas: ''
+      })
+    }
+    // If initialData is not present but we are in edit mode, initialize with empty structure
+    // This handles the case where the form is for editing but no data was previously saved for this step.
+    else if (isEditing && !initialData) {
+      reset({
+        respuestasMultiples: [
+          {
+            idPregunta: preguntaHerramientas?.idPregunta || 'herramientas_tec',
             respuestasSeleccionadas: []
           }
         ],
@@ -92,111 +116,124 @@ export function Step6EditForm({
     setValue('respuestasMultiples.0.respuestasSeleccionadas', newSelected, { shouldDirty: true, shouldValidate: true })
   }
 
+  const handleFormSubmitError = (errors: any) => {
+    console.error('Step 6 Edit Form Validation Errors:', errors)
+  }
+
   return (
     <FormProvider {...formMethods}>
       <Form {...formMethods}>
-        <form onSubmit={handleSubmit(onSaveAndNext)} className="space-y-8">
+        {/* Match className from form-step6.tsx */}
+        <form onSubmit={handleSubmit(onSaveAndNext, handleFormSubmitError)} className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>
+            {/* Match CardHeader styling */}
+            <CardHeader className="py-4 px-6">
+              <CardTitle className="text-lg">
                 Paso {totalSteps > 0 ? `6 de ${totalSteps}: ` : ''}
-                Herramientas Tecnológicas {isEditing ? '(Editando)' : ''}
+                Herramientas Tecnológicas y Metodologías (Editando)
               </CardTitle>
+              {/* <CardDescription>Optional description if needed</CardDescription> */}
             </CardHeader>
-            <CardContent className="space-y-6">
+            {/* Match CardContent styling */}
+            <CardContent className="space-y-4 p-4 md:p-6">
               {preguntaHerramientas && (
-                <div className="mb-4">
+                // Match main question label and description styling
+                <div className="mb-3">
                   <FormLabel className="text-base font-semibold">{preguntaHerramientas.pregunta}</FormLabel>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mt-0.5">
                     {preguntaHerramientas.descripcion || 'Haga clic en una herramienta para moverla entre las listas.'}
                   </p>
                 </div>
               )}
-              <div className="flex flex-col md:flex-row gap-6">
-                {/* Lista de disponibles */}
-                <div className="flex-1">
-                  <FormLabel className="block mb-2 font-semibold">No usadas ({disponibles.length})</FormLabel>
-                  <div className="border rounded h-[200px] overflow-y-scroll p-2 space-y-1">
-                    {' '}
-                    {/* Fixed height */}
+              {/* Match dual list container styling */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 space-y-1.5">
+                  <FormLabel className="block font-medium text-sm">No usadas ({disponibles.length})</FormLabel>
+                  {/* Match list box styling */}
+                  <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
                     {disponibles.map((opt) => (
+                      // Match list item styling
                       <div
                         key={`disponible-${opt.value}`}
-                        className="p-2 rounded hover:bg-muted/80 cursor-pointer flex items-center justify-between group min-h-[2.5rem]"
+                        className="p-1.5 rounded hover:bg-primary/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
                         onClick={() => handleMoveToUsed(opt.value)}
                         title={`Mover "${opt.label}" a usadas`}
                       >
-                        <span className="flex-grow text-center truncate mx-1">{opt.label}</span>
-                        <MoveRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                        <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
+                        <MoveRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                       </div>
                     ))}
                     {disponibles.length === 0 && (
-                      <div className="p-2 text-muted-foreground text-sm min-h-[2.5rem] flex items-center justify-center">
-                        {' '}
-                        {/* Added justify-center */}
+                      // Match empty list message styling
+                      <div className="p-1.5 text-muted-foreground text-xs min-h-[2.25rem] flex items-center justify-center">
                         Todas las herramientas seleccionadas
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Lista de usadas */}
-                <div className="flex-1">
-                  <FormLabel className="block mb-2 font-semibold">Usadas ({usadasOptions.length})</FormLabel>
-                  <div className="border rounded h-[200px] overflow-y-scroll p-2 space-y-1">
-                    {' '}
-                    {/* Fixed height */}
+                <div className="flex-1 space-y-1.5">
+                  <FormLabel className="block font-medium text-sm">Usadas ({usadasOptions.length})</FormLabel>
+                  {/* Match list box styling */}
+                  <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
                     {usadasOptions.map((opt) => (
+                      // Match list item styling (hover color differs)
                       <div
                         key={`usada-${opt.value}`}
-                        className="p-2 rounded hover:bg-muted/80 cursor-pointer flex items-center justify-between group min-h-[2.5rem]"
+                        className="p-1.5 rounded hover:bg-destructive/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
                         onClick={() => handleMoveToAvailable(opt.value)}
                         title={`Mover "${opt.label}" a no usadas`}
                       >
-                        <MoveLeft className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                        <span className="flex-grow text-center truncate mx-1">{opt.label}</span>
+                        <MoveLeft className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                        <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
                       </div>
                     ))}
                     {usadasOptions.length === 0 && (
-                      <div className="p-2 text-muted-foreground text-sm min-h-[2.5rem] flex items-center justify-center">
-                        {' '}
-                        {/* Added justify-center */}
+                      // Match empty list message styling
+                      <div className="p-1.5 text-muted-foreground text-xs min-h-[2.25rem] flex items-center justify-center">
                         Ninguna herramienta seleccionada
                       </div>
                     )}
                   </div>
                 </div>
               </div>
+              {/* Match FormMessage styling for array validation */}
               <FormField
                 control={control}
                 name="respuestasMultiples.0.respuestasSeleccionadas"
-                render={({ fieldState }) => (fieldState.error ? <FormMessage>{fieldState.error.message}</FormMessage> : null)}
+                render={({ fieldState }) =>
+                  fieldState.error ? <FormMessage className="text-xs">{fieldState.error.message}</FormMessage> : null
+                }
               />
+              {/* Match "Otras herramientas" styling */}
               <FormField
                 control={control}
                 name="otrasHerramientas"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Otras herramientas utilizadas (opcional)</FormLabel>
+                  <FormItem className="mt-3">
+                    <FormLabel className="text-sm font-medium">Otras herramientas o metodologías utilizadas (opcional)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Si utilizó otras herramientas no listadas, descríbalas aquí..."
+                        placeholder="Si utilizó otras no listadas, descríbalas aquí..."
                         {...field}
-                        className="min-h-[80px]"
+                        className="min-h-[70px] text-sm bg-background/60"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs" />
                   </FormItem>
                 )}
               />
             </CardContent>
-            <CardFooter className="flex justify-between">
+            {/* Match CardFooter and button styling */}
+            <CardFooter className="flex justify-between py-3 px-6">
               {onPrevious && (
-                <Button type="button" variant="outline" onClick={onPrevious}>
+                <Button type="button" variant="outline" onClick={onPrevious} className="px-6 py-1.5 text-xs shadow-sm">
                   Anterior
                 </Button>
               )}
-              <Button type="submit">{isEditing ? 'Guardar y Continuar' : 'Siguiente'}</Button>
+              <Button type="submit" className="px-6 py-1.5 text-xs shadow-sm">
+                {isEditing ? 'Guardar Cambios' : 'Siguiente'}
+              </Button>
             </CardFooter>
           </Card>
         </form>

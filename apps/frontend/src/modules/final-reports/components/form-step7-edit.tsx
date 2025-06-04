@@ -2,22 +2,24 @@
 
 import React, { useEffect, useMemo } from 'react'
 import { UseFormReturn, FormProvider } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
+// import { zodResolver } from '@hookform/resolvers/zod' // Already in page
+import * as z from 'zod' // Already in page
 import { Button } from '@una-gc/ui/components/button'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@una-gc/ui/components/card'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { RadioGroup, RadioGroupItem } from '@una-gc/ui/components/radio-group'
-import { preguntasPaso7PageMock, PreguntaPaso7, TipoInforme } from '@/modules/final-reports/mocks/questions' // Using central mock
+import { preguntasPaso7PageMock, PreguntaPaso7, TipoInforme } from '@/modules/final-reports/mocks/questions'
 import { Separator } from '@una-gc/ui/components/separator'
+// useRouter, CheckCircle, ArrowLeft are not directly used in this component's JSX anymore
+import { Activity } from 'lucide-react' // For consistency with form-step7
 
-// Schema for a single radio response item
+// Schema for a single radio response item (ensure this is identical to form-step7.tsx if it's not already)
 const respuestaRadioStep7Schema = z.object({
   idPregunta: z.string(),
-  respuesta: z.string().min(1, 'Debe seleccionar una opción.') // Each question requires an answer
+  respuesta: z.string().min(1, 'Debe seleccionar una opción.')
 })
 
-// Schema for the entire step 7 form data
+// Schema for the entire step 7 form data (ensure this is identical)
 export const step7Schema = z.object({
   respuestasRadio: z.array(respuestaRadioStep7Schema)
 })
@@ -28,34 +30,50 @@ interface Step7EditFormProps {
   formMethods: UseFormReturn<Step7FormData>
   onSaveAndNext: (data: Step7FormData) => void
   onPrevious?: () => void
-  totalSteps: number
+  totalSteps: number // Retained for consistency if step number is shown in card title
   initialData?: Step7FormData | null
-  isEditing?: boolean
-  tipoInforme: TipoInforme // To filter questions based on report type
+  isEditing?: boolean // Should be true for this form
+  tipoInforme: TipoInforme
 }
 
-// Helper to group questions by 'grupo'
+// Helper to group questions (ensure this logic is robust and matches form-step7.tsx if it has similar needs)
 const groupQuestions = (questions: PreguntaPaso7[], tipoInforme: TipoInforme) => {
   const grupos: Record<string, PreguntaPaso7[]> = {}
-
-  // Filter questions based on tipoInforme first
   const filteredQuestions = questions.filter((q) => {
-    // Ensure q.aplicaPara exists and is an array before calling .includes
     if (Array.isArray(q.aplicaPara)) {
       return q.aplicaPara.includes(tipoInforme) || q.aplicaPara.includes('TODOS')
     }
-    return false // Or handle as appropriate if aplicaPara can be missing/not an array
+    return false
   })
 
   filteredQuestions.forEach((p) => {
-    const groupName = p.grupo || 'General' // Use 'General' or any default if p.grupo is undefined
-
+    const groupName = p.grupo || 'General'
     if (!grupos[groupName]) {
       grupos[groupName] = []
     }
-    grupos[groupName].push(p) // Now groupName is guaranteed to be a string
+    grupos[groupName].push(p)
   })
-  return grupos
+  return { gruposDePreguntas: grupos, todasLasPreguntasFiltradas: filteredQuestions }
+}
+
+// Re-introduce getOptionColors from form-step7.tsx
+const getOptionColors = (value: string, isSelected: boolean) => {
+  if (!isSelected) {
+    return 'border-border/30 bg-transparent hover:border-border/50 hover:bg-muted/20 dark:hover:bg-muted/10'
+  }
+  const colorMap = {
+    muy_bueno: 'border-emerald-500/80 bg-emerald-500/25 dark:border-emerald-600/80 dark:bg-emerald-600/30',
+    bueno: 'border-green-500/80 bg-green-500/25 dark:border-green-600/80 dark:bg-green-600/30',
+    muy_alto: 'border-emerald-500/80 bg-emerald-500/25 dark:border-emerald-600/80 dark:bg-emerald-600/30',
+    alto: 'border-green-500/80 bg-green-500/25 dark:border-green-600/80 dark:bg-green-600/30',
+    regular: 'border-amber-500/80 bg-amber-500/25 dark:border-amber-600/80 dark:bg-amber-600/30',
+    medio: 'border-yellow-500/80 bg-yellow-500/25 dark:border-yellow-600/80 dark:bg-yellow-600/30',
+    deficiente: 'border-red-500/80 bg-red-500/25 dark:border-red-600/80 dark:bg-red-600/30',
+    bajo: 'border-orange-500/80 bg-orange-500/25 dark:border-orange-600/80 dark:bg-orange-600/30'
+  }
+  return (
+    colorMap[value as keyof typeof colorMap] || 'border-blue-500/80 bg-blue-500/25 dark:border-blue-600/80 dark:bg-blue-600/30'
+  )
 }
 
 export function Step7EditForm({
@@ -64,140 +82,163 @@ export function Step7EditForm({
   onPrevious,
   totalSteps,
   initialData,
-  isEditing = false,
+  isEditing = true,
   tipoInforme
 }: Step7EditFormProps) {
-  const { control, handleSubmit, reset, watch } = formMethods // Removed setValue as it's not used directly here now
+  const { control, handleSubmit, reset, watch, register } = formMethods
 
-  // Option 1: Use the corrected groupQuestions helper
-  const groupedQuestionsFromHelper = useMemo(() => groupQuestions(preguntasPaso7PageMock, tipoInforme), [tipoInforme])
-
-  // Option 2: Your existing, more integrated grouping logic (RECOMMENDED to keep this one)
-  const { gruposDePreguntas, todasLasPreguntasFiltradas } = useMemo(() => {
-    const grupos: Record<string, PreguntaPaso7[]> = {}
-    const filtradas: PreguntaPaso7[] = []
-
-    preguntasPaso7PageMock.forEach((p) => {
-      // Ensure 'aplicaPara' is the correct property and an array
-      if (Array.isArray(p.aplicaPara) && (p.aplicaPara.includes(tipoInforme) || p.aplicaPara.includes('TODOS'))) {
-        filtradas.push(p)
-        const groupName = p.grupo || 'General'
-        if (!grupos[groupName]) {
-          grupos[groupName] = []
-        }
-        grupos[groupName].push(p)
-      }
-    })
-    return { gruposDePreguntas: grupos, todasLasPreguntasFiltradas: filtradas }
-  }, [tipoInforme])
-
-  // Decide which grouping to use. If `gruposDePreguntas` from the second useMemo is used for rendering,
-  // then `groupedQuestionsFromHelper` might be redundant.
-  // For the rest of the logic (useEffect, rendering), I'll assume you use `gruposDePreguntas` and `todasLasPreguntasFiltradas`.
+  const { gruposDePreguntas, todasLasPreguntasFiltradas } = useMemo(
+    () => groupQuestions(preguntasPaso7PageMock, tipoInforme),
+    [tipoInforme]
+  )
 
   useEffect(() => {
-    if (isEditing && initialData) {
-      const relevantInitialData = {
-        respuestasRadio: initialData.respuestasRadio.filter((r) =>
-          todasLasPreguntasFiltradas.some((p) => p.idPregunta === r.idPregunta)
-        )
-      }
-      todasLasPreguntasFiltradas.forEach((p) => {
-        if (!relevantInitialData.respuestasRadio.some((r) => r.idPregunta === p.idPregunta)) {
-          relevantInitialData.respuestasRadio.push({ idPregunta: p.idPregunta, respuesta: '' })
-        }
-      })
-      reset(relevantInitialData)
-    } else if (!isEditing) {
-      const initialRespuestas = todasLasPreguntasFiltradas.map((p) => ({
+    // Consolidate initialization logic
+    const currentAnswers = initialData?.respuestasRadio || []
+    const initialFormValues = todasLasPreguntasFiltradas.map((p) => {
+      const existing = currentAnswers.find((r) => r.idPregunta === p.idPregunta)
+      return {
         idPregunta: p.idPregunta,
-        respuesta: '' // Default empty answer for new forms
-      }))
-      reset({ respuestasRadio: initialRespuestas })
-    }
-  }, [isEditing, initialData, reset, todasLasPreguntasFiltradas, tipoInforme])
+        respuesta: existing?.respuesta || ''
+      }
+    })
+    reset({ respuestasRadio: initialFormValues })
+  }, [initialData, reset, todasLasPreguntasFiltradas, tipoInforme])
 
   return (
     <FormProvider {...formMethods}>
       <Form {...formMethods}>
-        <form onSubmit={handleSubmit(onSaveAndNext)} className="space-y-8">
+        <form onSubmit={handleSubmit(onSaveAndNext)} className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>
+            <CardHeader className="py-4 px-6">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                {' '}
+                {/* Consistent: text-lg */}
+                <Activity className="w-5 h-5 text-foreground/70" />
                 Paso {totalSteps > 0 ? `7 de ${totalSteps}: ` : ''}
-                Percepción General y Desempeño {isEditing ? '(Editando)' : ''}
+                Percepción General y Desempeño (Editando)
               </CardTitle>
-              <CardDescription>Responda a las siguientes afirmaciones según su percepción.</CardDescription>
+              <CardDescription className="text-sm pt-0.5">
+                {' '}
+                {/* Consistent: text-sm */}
+                Modifique su percepción sobre los aspectos del curso y desempeño estudiantil. ({
+                  todasLasPreguntasFiltradas.length
+                }{' '}
+                pregunta{todasLasPreguntasFiltradas.length !== 1 ? 's' : ''})
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6 p-6 overflow-y-auto max-h-[60vh]">
+            <CardContent className="p-4 md:p-6 space-y-4">
               {' '}
-              {/* Added p-6, overflow-y-auto, max-h-[60vh] */}
-              {Object.entries(gruposDePreguntas).map(([nombreGrupo, preguntasDelGrupo], grupoIndex) => (
-                <div key={nombreGrupo}>
-                  <h3 className="text-lg font-semibold mb-3 mt-4">{nombreGrupo}</h3>
-                  {preguntasDelGrupo.map((pregunta, indexWithinGrupo) => {
-                    // Find the overall index of this question in the form's respuestasRadio array
-                    const overallIndex = watch('respuestasRadio')?.findIndex((r) => r.idPregunta === pregunta.idPregunta) ?? -1
-
-                    if (overallIndex === -1 && !isEditing) {
-                      // This case should ideally be handled by the useEffect initialization
-                      // console.warn(`Question ${pregunta.idPregunta} not found in form state during render.`);
-                      return null
-                    }
-                    if (overallIndex === -1 && isEditing && initialData) {
-                      // If editing and question is new for this tipoInforme but was not in initialData
-                      // This also should be handled by useEffect. If still -1, it means it's missing.
-                      // console.warn(`Question ${pregunta.idPregunta} missing in form state for editing.`);
-                      return null
-                    }
-
-                    return (
-                      <FormField
-                        key={pregunta.idPregunta}
-                        control={control}
-                        name={`respuestasRadio.${overallIndex}.respuesta`}
-                        render={({ field }) => (
-                          <FormItem className="space-y-3 mb-6 border-b pb-4">
-                            <FormLabel className="text-base font-medium">{pregunta.pregunta}</FormLabel>
-                            <FormControl>
-                              <RadioGroup
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                                value={field.value}
-                                className="flex flex-col space-y-1"
-                              >
-                                {pregunta.opciones?.map((opcion) => (
-                                  <FormItem key={opcion.value} className="flex items-center space-x-3 space-y-0">
-                                    <FormControl>
-                                      <RadioGroupItem value={opcion.value} />
-                                    </FormControl>
-                                    <FormLabel className="font-normal">{opcion.label}</FormLabel>
-                                  </FormItem>
-                                ))}
-                              </RadioGroup>
-                            </FormControl>
-                            <FormMessage />
-                            <input
-                              type="hidden"
-                              {...formMethods.register(`respuestasRadio.${overallIndex}.idPregunta`)}
-                              value={pregunta.idPregunta}
-                            />
-                          </FormItem>
-                        )}
-                      />
-                    )
-                  })}
-                  {grupoIndex < Object.keys(gruposDePreguntas).length - 1 && <Separator className="my-6" />}
+              {/* Adjusted space-y */}
+              {todasLasPreguntasFiltradas.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Activity className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No hay preguntas disponibles para este tipo de informe.</p> {/* Consistent: text-sm */}
                 </div>
-              ))}
+              ) : (
+                Object.entries(gruposDePreguntas).map(([nombreGrupo, preguntasDelGrupo], grupoIndex, arr) => (
+                  <div key={nombreGrupo}>
+                    <div className="py-3 px-1">
+                      <div className="mb-3">
+                        <h3 className="text-sm font-medium text-foreground/90 leading-normal flex items-center gap-1.5">
+                          {' '}
+                          {/* Consistent: text-sm font-medium */}
+                          <div className="w-1.5 h-1.5 bg-muted-foreground/70 rounded-full"></div>
+                          {nombreGrupo}
+                        </h3>
+                      </div>
+                      <div className="ml-3 space-y-4">
+                        {' '}
+                        {/* Adjusted space-y */}
+                        {preguntasDelGrupo.map((pregunta) => {
+                          const overallIndex = todasLasPreguntasFiltradas.findIndex((p) => p.idPregunta === pregunta.idPregunta)
+                          if (overallIndex === -1) return null
+
+                          const currentValue = watch(`respuestasRadio.${overallIndex}.respuesta`)
+
+                          return (
+                            <FormField
+                              key={pregunta.idPregunta}
+                              control={control}
+                              name={`respuestasRadio.${overallIndex}.respuesta`}
+                              render={({ field }) => (
+                                <FormItem className="space-y-2">
+                                  {' '}
+                                  {/* Adjusted space-y */}
+                                  <FormLabel className="text-sm font-medium text-foreground/85 leading-normal block">
+                                    {' '}
+                                    {/* Consistent: text-sm font-medium */}
+                                    {pregunta.pregunta}
+                                  </FormLabel>
+                                  <div className="ml-2">
+                                    <FormControl>
+                                      <RadioGroup
+                                        onValueChange={field.onChange}
+                                        value={field.value || ''}
+                                        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5" /* Slightly increased gap */
+                                      >
+                                        {pregunta.opciones?.map((opcion) => {
+                                          const isSelected = currentValue === opcion.value
+                                          const colorClasses = getOptionColors(opcion.value, isSelected)
+                                          return (
+                                            <FormItem key={opcion.value} className="space-y-0">
+                                              <div
+                                                className={`flex items-center space-x-2 p-2.5 rounded-md border transition-all duration-200 cursor-pointer ${colorClasses}`} /* Adjusted padding and space */
+                                              >
+                                                <FormControl>
+                                                  <RadioGroupItem
+                                                    value={opcion.value}
+                                                    id={`${field.name}-${overallIndex}-${opcion.value}`}
+                                                    className="mt-0 w-4 h-4" /* Slightly larger radio item */
+                                                  />
+                                                </FormControl>
+                                                <FormLabel
+                                                  htmlFor={`${field.name}-${overallIndex}-${opcion.value}`}
+                                                  className="text-sm font-normal cursor-pointer flex-1 leading-snug text-foreground/90" /* Consistent: text-sm, adjusted leading and color */
+                                                >
+                                                  {opcion.label}
+                                                </FormLabel>
+                                              </div>
+                                            </FormItem>
+                                          )
+                                        })}
+                                      </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage className="text-xs mt-1.5 text-destructive" /> {/* Consistent: text-xs */}
+                                    <input
+                                      type="hidden"
+                                      {...register(`respuestasRadio.${overallIndex}.idPregunta`)}
+                                      value={pregunta.idPregunta}
+                                    />
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+                          )
+                        })}
+                      </div>
+                    </div>
+                    {grupoIndex < arr.length - 1 && <Separator className="opacity-20 my-3" />} {/* Adjusted margin */}
+                  </div>
+                ))
+              )}
             </CardContent>
-            <CardFooter className="flex justify-between">
+            <CardFooter className="flex justify-between py-4 px-6">
+              {' '}
+              {/* Adjusted padding */}
               {onPrevious && (
-                <Button type="button" variant="outline" onClick={onPrevious}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onPrevious}
+                  className="px-6 py-2 text-sm shadow-sm" /* Consistent: text-sm, adjusted padding */
+                >
                   Anterior
                 </Button>
               )}
-              <Button type="submit">{isEditing ? 'Guardar Cambios' : 'Finalizar y Guardar'}</Button>
+              <Button type="submit" className="px-6 py-2 text-sm shadow-sm" /* Consistent: text-sm, adjusted padding */>
+                {isEditing ? 'Guardar Cambios' : 'Siguiente'}
+              </Button>
             </CardFooter>
           </Card>
         </form>
