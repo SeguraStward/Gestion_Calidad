@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { usePagination } from '../../../hooks/usePagination'
 import { Button, Card, CardContent } from '@una-gc/ui/components'
 import { CrudConfig, CrudItemBase, ColumnUtilities } from './crud-types'
-import { CrudDeleteDialog } from './crud-delete-dialog'
+import { AlertMessage } from '../ui/alert-message'
 import { DataTable } from '../ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import { Loader2, PlusCircle } from "lucide-react"
@@ -40,12 +40,14 @@ export const CrudModuleBase = <
   const [idToDelete, setIdToDelete] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [previousTotalItems, setPreviousTotalItems] = useState<number | undefined>(undefined)
-
   // Obtener el elemento que se está editando cuando editingId no es nulo y no es 'new'
   const { data: editingItemData, isLoading: isLoadingEditingItem } = useOneQuery
-    ? useOneQuery(editingId !== 'new' && editingId ? editingId : '', undefined, {
-        enabled: !!useOneQuery && !!editingId && editingId !== 'new',
-      })
+    ? useOneQuery(
+        editingId !== 'new' && editingId ? editingId : '', 
+        { 
+          enabled: !!useOneQuery && !!editingId && editingId !== 'new',
+        }
+      )
     : { data: undefined, isLoading: false }
   
   // Procesar el elemento para edición si existe processItemForEditing
@@ -97,10 +99,9 @@ export const CrudModuleBase = <
       setPreviousTotalItems(paginatedData.meta.total)
     }
   }, [paginatedData?.meta?.total, previousTotalItems, currentPage, itemsPerPage, paginatedData?.data?.length, paginatedData?.meta?.totalPages, setCurrentPage])
-
   // Formulario
-  const { control, handleSubmit, reset, formState: { errors } } = useForm({
-    defaultValues: defaultFormValues,
+  const { control, handleSubmit, reset, formState: { errors } } = useForm<TCreateInput | TUpdateInput>({
+    defaultValues: defaultFormValues as any,
     mode: 'onChange',
   })
 
@@ -114,46 +115,62 @@ export const CrudModuleBase = <
     return processItem 
       ? (paginatedData?.data || []).map(processItem) 
       : (paginatedData?.data as TItem[]) || []
-  }, [paginatedData?.data, processItem])
-
-  // Manejar envío de formulario
+  }, [paginatedData?.data, processItem])  // Manejar envío de formulario
   const handleSubmitForm = handleSubmit(async (formData) => {
     setIsProcessing(true)
     try {
       if (editingId && editingId !== 'new') {
-        await updateMutation.mutateAsync({ id: editingId, data: formData as TUpdateInput })
+        // Conversión segura utilizando unknown como intermediario
+        const updateData = formData as unknown as TUpdateInput;
+        await updateMutation.mutateAsync({ id: editingId, data: updateData })
         toast.success(`${entityName} actualizado exitosamente`)
       } else {
         await createMutation.mutateAsync(formData as TCreateInput)
         toast.success(`${entityName} creado exitosamente`)
       }
+      
+      // Refrescar datos
       await refetch()
+      
+      // Limpiar el formulario y cerrar panel de edición
       setEditingId(null)
       reset(defaultFormValues)
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || `Error al guardar ${entityName.toLowerCase()}`)
+      console.error('Error al guardar:', error)
+      toast.error(
+        error?.response?.data?.message || 
+        error?.message || 
+        `Error al guardar ${entityName.toLowerCase()}`
+      )
     } finally {
       setIsProcessing(false)
     }
   })
-
   // Manejar eliminación
   const handleDelete = async () => {
     if (!idToDelete) return
     setIsProcessing(true)
     
     try {
+      // Buscar el item a eliminar
       const item = processedItems.find(i => i.id === idToDelete)
+      
+      // Verificar si hay restricciones para eliminar
       if (preDeleteCheck && item) {
-        const error = preDeleteCheck(item)
-        if (error) {
-          toast.error(error)
+        const errorMessage = preDeleteCheck(item)
+        if (errorMessage) {
+          toast.error(errorMessage)
+          setIdToDelete(null)
+          setIsProcessing(false)
           return
         }
       }
       
+      // Proceder con la eliminación
       await deleteMutation.mutateAsync(idToDelete)
       toast.success(`${entityName} eliminado exitosamente`)
+      
+      // Refrescar datos
       await refetch()
       
       // Ajustar paginación si es necesario
@@ -161,7 +178,8 @@ export const CrudModuleBase = <
         setCurrentPage(currentPage - 1)
       }
     } catch (error: any) {
-      toast.error(error.message || `Error al eliminar ${entityName.toLowerCase()}`)
+      console.error('Error al eliminar:', error)
+      toast.error(error?.response?.data?.message || error?.message || `Error al eliminar ${entityName.toLowerCase()}`)
     } finally {
       setIdToDelete(null)
       setIsProcessing(false)
@@ -202,26 +220,23 @@ export const CrudModuleBase = <
               <div className="flex justify-center p-6">
                 <Loader2 className="animate-spin h-8 w-8 text-primary" />
                 <span className="ml-3">Cargando datos...</span>
-              </div>
-            ) : (
-              renderForm({
+              </div>            ) : (              renderForm({
                 control,
                 errors,
                 isProcessing,
                 isUpdate: editingId !== 'new',
                 handleCancel: () => {
                   setEditingId(null)
-                  reset(defaultFormValues)
+                  reset(defaultFormValues as any)
                 },
                 handleSubmitForm: handleSubmitForm,
                 editingId: editingId !== 'new' ? editingId : null,
-                editingItem: editingItem
+                editingItem: editingItem as any // Necesario para manejar la discrepancia de tipos
               })
             )}
           </CardContent>
         </Card>
-      )}
-
+      )}      
       <DataTable 
         columns={columns}
         data={processedItems}
@@ -229,14 +244,20 @@ export const CrudModuleBase = <
         newButton={!editingId ? newButton : undefined}
         initialPageSize={10}
         isLoading={isLoadingList}
-      />
-
-      <CrudDeleteDialog
-        isOpen={!!idToDelete}
-        entityName={entityName}
-        onCancel={() => setIdToDelete(null)}
+      />       <AlertMessage
+        open={!!idToDelete}
+        onOpenChange={(open) => {
+          // Solo permitir cerrar el diálogo si no está procesando
+          if (!open && !isProcessing) {
+            setIdToDelete(null);
+          }
+        }}
+        title={`Eliminar ${entityName}`}
+        description={`¿Está seguro de eliminar este ${entityName.toLowerCase()}? Esta acción no se puede deshacer.`}
+        confirmText={isProcessing ? 'Eliminando...' : 'Eliminar'}
+        cancelText="Cancelar"
         onConfirm={handleDelete}
-        isProcessing={isProcessing}
+        variant="danger"
       />
     </div>
   )

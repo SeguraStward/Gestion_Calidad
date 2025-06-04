@@ -1,7 +1,7 @@
 'use client'
 
 import { ReactNode, useMemo } from 'react'
-import { FieldValues, UseFormReturn, Controller, Path } from 'react-hook-form'
+import { FieldValues, UseFormReturn, Controller, Path, FieldError } from 'react-hook-form'
 import { 
   Card,
   CardContent,
@@ -144,8 +144,7 @@ export function CrudForm<T extends FieldValues>({
                 })}
                 {helperText && (
                   <p className="text-xs text-muted-foreground mt-1">{helperText}</p>
-                )}
-                {errors[name] && (
+                )}                {errors[name] && (
                   <p className="text-sm text-destructive">{errors[name]?.message as string}</p>
                 )}
               </>
@@ -165,8 +164,8 @@ export function CrudForm<T extends FieldValues>({
             name={name}
             control={control}
             rules={{ required: required ? `${label} es requerido` : false }}
-            render={({ field: { value, onChange } }) => (
-              <FormSelect
+            render={({ field: { value, onChange } }) => (             
+             <FormSelect
                 id={String(name)}
                 label={label}
                 options={options}
@@ -174,7 +173,7 @@ export function CrudForm<T extends FieldValues>({
                 onChange={onChange}
                 placeholder={field.isLoading ? 'Cargando...' : placeholder}
                 required={required}
-                error={errors[name]}
+                error={errors[name] ? { message: errors[name]?.message as string } as FieldError : undefined}
               />
             )}
           />
@@ -187,15 +186,15 @@ export function CrudForm<T extends FieldValues>({
     
     // Renderizar campos de texto y numéricos
     return (
-      <div key={String(name)} className={`space-y-1 ${className || ''}`}>
-        <FormField
+      <div key={String(name)} className={`space-y-1 ${className || ''}`}>       
+       <FormField
           control={control}
           name={name}
           label={label}
           id={String(name)}
           type={field.type}
           placeholder={placeholder}
-          error={errors[name]}
+          error={errors[name] ? { message: errors[name]?.message as string } as FieldError : undefined}
           required={required}
           disabled={disabled || isSubmitting}
           min={field.type === 'number' ? field.min : undefined}

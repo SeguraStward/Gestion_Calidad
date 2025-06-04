@@ -10,8 +10,7 @@ export interface CrudFormAdapterProps<
   TItem extends CrudItemBase,
   TCreateInput extends FieldValues,
   TUpdateInput extends FieldValues = TCreateInput
-> {
-  // Props recibidas del CrudModuleBase
+> {  // Props recibidas del CrudModuleBase
   control: UseFormReturn<TCreateInput | TUpdateInput>['control']
   errors: UseFormReturn<TCreateInput | TUpdateInput>['formState']['errors']
   isProcessing: boolean
@@ -20,7 +19,8 @@ export interface CrudFormAdapterProps<
   handleSubmitForm: () => void
   editingId?: string | null
   editingItem?: TItem | null
-  
+  // Props adicionales para el CrudForm
+    
   // Props adicionales para el CrudForm
   title?: string
   description?: string
@@ -84,8 +84,7 @@ export function CrudFormAdapter<
     editingItem,
     isUpdate
   })
-  
-  // Generar títulos predeterminados basados en el estado de edición
+    // Generar títulos predeterminados basados en el estado de edición
   const defaultTitle = isUpdate ? 'Editar registro' : 'Crear nuevo registro'
   
   return (
@@ -95,8 +94,7 @@ export function CrudFormAdapter<
       onSubmit={handleSubmitForm}
       onCancel={handleCancel}
       isSubmitting={isProcessing}
-      isUpdate={isUpdate}
-      title={title || defaultTitle}
+      isUpdate={isUpdate}      title={title || defaultTitle}
       description={description}
       submitButtonText={submitButtonText}
       cancelButtonText={cancelButtonText}
