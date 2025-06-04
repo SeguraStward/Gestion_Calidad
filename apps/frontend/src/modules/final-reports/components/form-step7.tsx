@@ -5,7 +5,7 @@ import { UseFormReturn, FormProvider } from 'react-hook-form'
 import { useRouter } from 'next/navigation' // Import useRouter
 import { Activity } from 'lucide-react'
 import { RadioGroup, RadioGroupItem } from '@una-gc/ui/components/radio-group'
-import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card'
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@una-gc/ui/components/card'
 import { Separator } from '@una-gc/ui/components/separator'
 import { Button } from '@una-gc/ui/components/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
@@ -220,152 +220,172 @@ export function Step7Form({
   }
 
   return (
-    <div className="p-6 h-full flex flex-col">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold flex items-center gap-3">
-          <Activity className="w-5 h-5 text-foreground/70" />
-          Percepción General y Desempeño
-        </h2>
-        <p className="text-muted-foreground text-sm mt-1">
-          Evalúe su percepción sobre los aspectos del curso y desempeño estudiantil.
-        </p>
-      </div>
-
-      <FormProvider {...formMethods}>
-        <Form {...formMethods}>
-          <form onSubmit={handleSubmit(handleFormSubmitSuccess, handleFormSubmitError)} className="flex-1 flex flex-col">
-            <div className="flex-1">
-              <Card className="border-border/40 bg-card/50 backdrop-blur-sm shadow-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-base font-medium text-foreground/90 flex justify-between items-baseline">
-                    <span>Evaluación de Percepción</span>
-                    <span className="text-xs text-muted-foreground ml-2 font-normal">
-                      ({todasLasPreguntasMostradas.length} pregunta{todasLasPreguntasMostradas.length !== 1 ? 's' : ''}){' '}
-                      {/* Display total questions shown */}
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-0">
-                  {todasLasPreguntasMostradas.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Activity className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p className="text-sm">No hay preguntas disponibles</p>
-                      <p className="text-xs">para este tipo de informe o configuración.</p>
-                    </div>
-                  ) : (
-                    Object.entries(
-                      // Re-group for rendering, if needed, or iterate directly if flat list is fine
-                      todasLasPreguntasMostradas.reduce(
-                        (acc, p) => {
-                          const groupKey = p.grupo_pregunta // Use a variable for the key
-                          if (!acc[groupKey]) {
-                            acc[groupKey] = []
-                          }
-                          // After the check, acc[groupKey] is guaranteed to be PreguntaStep7[]
-                          // Assign it to a new variable for clearer type inference for the .push() operation
-                          const currentGroupArray = acc[groupKey]
-                          currentGroupArray.push(p)
-                          return acc
-                        },
-                        {} as Record<string, PreguntaStep7[]>
-                      )
-                    ).map(([nombreGrupo, preguntasDelGrupo], grupoIndex, arr) => (
-                      <div key={nombreGrupo}>
-                        {' ' /* Use nombreGrupo for key if unique */}
-                        <div className="py-5 px-1">
-                          <div className="mb-5">
-                            <h3 className="text-sm font-medium text-foreground/90 leading-relaxed flex items-center gap-2">
-                              <div className="w-1.5 h-1.5 bg-muted-foreground/70 rounded-full"></div>
-                              {nombreGrupo}
-                            </h3>
-                          </div>
-
-                          <div className="ml-4 space-y-5">
-                            {preguntasDelGrupo.map((pregunta) => {
-                              const globalPreguntaIndex = todasLasPreguntasMostradas.findIndex(
-                                (pItem) => pItem.idPregunta === pregunta.idPregunta
-                              )
-                              if (globalPreguntaIndex === -1) return null // Should not happen if logic is correct
-
-                              const currentValue = watch(`respuestasRadio.${globalPreguntaIndex}.respuesta`)
-
-                              return (
-                                <FormField
-                                  key={pregunta.idPregunta}
-                                  control={control}
-                                  name={`respuestasRadio.${globalPreguntaIndex}.respuesta`}
-                                  render={({ field }) => (
-                                    <FormItem className="space-y-3">
-                                      <FormLabel className="text-sm font-medium text-foreground/85 leading-relaxed block">
-                                        {pregunta.pregunta}
-                                      </FormLabel>
-                                      <div className="ml-3">
-                                        <FormControl>
-                                          <RadioGroup
-                                            onValueChange={field.onChange}
-                                            value={field.value || ''}
-                                            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
-                                          >
-                                            {pregunta.opciones.map((opcion) => {
-                                              const isSelected = currentValue === opcion.value
-                                              const colorClasses = getOptionColors(opcion.value, isSelected)
-
-                                              return (
-                                                <FormItem key={opcion.value} className="space-y-0">
-                                                  <div
-                                                    className={`flex items-center space-x-2 p-3 rounded-lg border transition-all duration-200 cursor-pointer ${colorClasses}`}
-                                                  >
-                                                    <FormControl>
-                                                      <RadioGroupItem value={opcion.value} className="mt-0" />
-                                                    </FormControl>
-                                                    <FormLabel className="text-sm font-normal cursor-pointer flex-1 leading-relaxed text-foreground/80">
-                                                      {opcion.label}
-                                                    </FormLabel>
-                                                  </div>
-                                                </FormItem>
-                                              )
-                                            })}
-                                          </RadioGroup>
-                                        </FormControl>
-                                        <FormMessage className="text-xs mt-2 text-destructive" />
-                                      </div>
-                                    </FormItem>
-                                  )}
-                                />
-                              )
-                            })}
-                          </div>
-                        </div>
-                        {/* Use arr.length for separator logic */}
-                        {grupoIndex < arr.length - 1 && <Separator className="opacity-30" />}
+    <FormProvider {...formMethods}>
+      <Form {...formMethods}>
+        <form onSubmit={handleSubmit(handleFormSubmitSuccess, handleFormSubmitError)} className="space-y-6">
+          {' '}
+          {/* Reduced space-y-8 to space-y-6 */}
+          <Card>
+            <CardHeader className="py-4 px-6">
+              {' '}
+              {/* Adjusted padding */}
+              <CardTitle className="flex items-center gap-2 text-lg">
+                {' '}
+                {/* Reduced gap and text size */}
+                <Activity className="w-4 h-4 text-foreground/70" /> {/* Slightly smaller icon */}
+                Paso {totalSteps > 0 ? `7 de ${totalSteps}: ` : ''}
+                Percepción General y Desempeño
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {' '}
+                {/* Smaller text */}
+                Evalúe su percepción sobre los aspectos del curso y desempeño estudiantil. ({
+                  todasLasPreguntasMostradas.length
+                }{' '}
+                pregunta{todasLasPreguntasMostradas.length !== 1 ? 's' : ''})
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3 overflow-y-auto max-h-[calc(60vh-40px)]">
+              {' '}
+              {/* MODIFIED: Reduced padding, space-y, adjusted max-h */}
+              {todasLasPreguntasMostradas.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  {' '}
+                  {/* Reduced py-8 */}
+                  <Activity className="w-10 h-10 mx-auto mb-2 opacity-50" /> {/* Reduced size and margin */}
+                  <p className="text-xs">No hay preguntas disponibles</p> {/* Smaller text */}
+                  <p className="text-xs">para este tipo de informe o configuración.</p>
+                </div>
+              ) : (
+                Object.entries(
+                  todasLasPreguntasMostradas.reduce(
+                    (acc, p) => {
+                      const groupKey = p.grupo_pregunta
+                      if (!acc[groupKey]) {
+                        acc[groupKey] = []
+                      }
+                      const currentGroupArray = acc[groupKey]
+                      currentGroupArray.push(p)
+                      return acc
+                    },
+                    {} as Record<string, PreguntaStep7[]>
+                  )
+                ).map(([nombreGrupo, preguntasDelGrupo], grupoIndex, arr) => (
+                  <div key={nombreGrupo}>
+                    <div className="py-3 px-1">
+                      {' '}
+                      {/* MODIFIED: Reduced py-5 to py-3 */}
+                      <div className="mb-3">
+                        {' '}
+                        {/* MODIFIED: Reduced mb-5 to mb-3 */}
+                        <h3 className="text-xs font-medium text-foreground/90 leading-normal flex items-center gap-1.5">
+                          {' '}
+                          {/* Smaller text, gap, leading */}
+                          <div className="w-1 h-1 bg-muted-foreground/70 rounded-full"></div> {/* Smaller dot */}
+                          {nombreGrupo}
+                        </h3>
                       </div>
-                    ))
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                      <div className="ml-3 space-y-3">
+                        {' '}
+                        {/* MODIFIED: Reduced ml-4 to ml-3, space-y-5 to space-y-3 */}
+                        {preguntasDelGrupo.map((pregunta) => {
+                          const globalPreguntaIndex = todasLasPreguntasMostradas.findIndex(
+                            (pItem) => pItem.idPregunta === pregunta.idPregunta
+                          )
+                          if (globalPreguntaIndex === -1) return null
 
-            <div className="flex justify-between pt-6 mt-auto">
+                          const currentValue = watch(`respuestasRadio.${globalPreguntaIndex}.respuesta`)
+
+                          return (
+                            <FormField
+                              key={pregunta.idPregunta}
+                              control={control}
+                              name={`respuestasRadio.${globalPreguntaIndex}.respuesta`}
+                              render={({ field }) => (
+                                <FormItem className="space-y-1.5">
+                                  {' '}
+                                  {/* MODIFIED: Reduced space-y-3 to space-y-1.5 */}
+                                  <FormLabel className="text-xs font-medium text-foreground/85 leading-normal block">
+                                    {' '}
+                                    {/* Smaller text, leading */}
+                                    {pregunta.pregunta}
+                                  </FormLabel>
+                                  <div className="ml-2">
+                                    {' '}
+                                    {/* Reduced ml-3 to ml-2 */}
+                                    <FormControl>
+                                      <RadioGroup
+                                        onValueChange={field.onChange}
+                                        value={field.value || ''}
+                                        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2" /* MODIFIED: Reduced gap-3 to gap-2 */
+                                      >
+                                        {pregunta.opciones.map((opcion) => {
+                                          const isSelected = currentValue === opcion.value
+                                          const colorClasses = getOptionColors(opcion.value, isSelected)
+                                          return (
+                                            // Each option is a FormItem for layout and click handling
+                                            <FormItem key={opcion.value} className="space-y-0">
+                                              {/* This div is the clickable area and handles styling */}
+                                              <div
+                                                className={`flex items-center space-x-1.5 p-2 rounded-md border transition-all duration-200 cursor-pointer ${colorClasses}`}
+                                                // onClick={() => field.onChange(opcion.value)} // Optional: if you want the whole div to be clickable to change value
+                                              >
+                                                <FormControl>
+                                                  <RadioGroupItem
+                                                    value={opcion.value}
+                                                    id={`${field.name}-${opcion.value}`} // Add unique id for accessibility
+                                                    className="mt-0 w-3.5 h-3.5"
+                                                  />
+                                                </FormControl>
+                                                <FormLabel
+                                                  htmlFor={`${field.name}-${opcion.value}`} // Associate label with RadioGroupItem
+                                                  className="text-xs font-normal cursor-pointer flex-1 leading-normal text-foreground/80"
+                                                >
+                                                  {opcion.label}
+                                                </FormLabel>
+                                              </div>
+                                            </FormItem>
+                                          )
+                                        })}
+                                      </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage className="text-xs mt-1 text-destructive" /> {/* Reduced mt-2 to mt-1 */}
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+                          )
+                        })}
+                      </div>
+                    </div>
+                    {grupoIndex < arr.length - 1 && <Separator className="opacity-20 my-2" />} {/* Reduced opacity, added my-2 */}
+                  </div>
+                ))
+              )}
+            </CardContent>
+            <CardFooter className="flex justify-between py-3 px-6">
+              {' '}
+              {/* Adjusted padding */}
               <Button
                 type="button"
                 variant="outline"
                 onClick={onPrevious}
-                className="px-8 shadow-sm"
-                disabled={isSubmitting} // <--- AÑADIR DISABLED
+                className="px-6 py-1.5 text-xs shadow-sm" /* Adjusted padding, text size */
+                disabled={isSubmitting}
               >
                 Anterior
               </Button>
               <Button
                 type="submit"
-                className="px-8 shadow-sm"
-                disabled={isSubmitting} // <--- AÑADIR DISABLED
+                className="px-6 py-1.5 text-xs shadow-sm" /* Adjusted padding, text size */
+                disabled={isSubmitting}
               >
                 {isSubmitting ? 'Finalizando...' : 'Finalizar Informe'}
               </Button>
-            </div>
-          </form>
-        </Form>
-      </FormProvider>
-    </div>
+            </CardFooter>
+          </Card>
+        </form>
+      </Form>
+    </FormProvider>
   )
 }

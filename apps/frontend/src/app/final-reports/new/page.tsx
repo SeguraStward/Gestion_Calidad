@@ -1,13 +1,14 @@
 'use client'
 
+import React, { useState, useEffect, useMemo, useRef } from 'react' // Added useMemo
+import { useForm, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
 import { Button } from '@una-gc/ui/components/button'
 import { Card, CardContent } from '@una-gc/ui/components/card'
 import { CheckCircle } from 'lucide-react'
-import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 
 // Importar los componentes de los pasos y sus esquemas/tipos
 import { Step1Form, step1Schema, Step1FormData } from '@/modules/final-reports/components/form-step1'
@@ -33,12 +34,13 @@ export default function NewFinalReportPage() {
 
   // Estados para almacenar los datos de cada paso
   const [step1Data, setStep1Data] = useState<Step1FormData | null>(null)
-  const [step2Data, setStep2Data] = useState<Step2FormData | null>(null)
+  const [step2Data, setStep2Data] = useState<Step2FormData | null>(null) // Re-added or uncommented
   const [step3Data, setStep3Data] = useState<Step3FormData | null>(null)
   const [step4Data, setStep4Data] = useState<Step4FormData | null>(null)
   const [step5Data, setStep5Data] = useState<Step5FormData | null>(null)
   const [step6Data, setStep6Data] = useState<Step6FormData | null>(null)
   // No es necesario step7Data en el estado si se envía directamente
+  const [tipoInforme, setTipoInforme] = useState<TipoInforme>('INFORME_FINAL_V1') // Default or from Step 1
 
   // Hook para la mutación de creación
   const createFinalReportMutation = useCreateFinalReport()
@@ -101,13 +103,16 @@ export default function NewFinalReportPage() {
   const formStep6Methods = useForm<Step6FormData>({
     resolver: zodResolver(step6Schema),
     defaultValues: {
-      respuestasMultiples: preguntasPaso6FormMock.map((p) => ({
-        idPregunta: p.idPregunta,
-        respuestasSeleccionadas: []
-      })),
+      respuestasMultiples: [
+        // Initialize with one entry for the tools question
+        {
+          idPregunta: 'herramientas_tec', // Matches the idPregunta in preguntasPaso6FormMock
+          respuestasSeleccionadas: []
+        }
+      ],
       otrasHerramientas: ''
-    },
-    values: step6Data ?? undefined
+    }
+    // Removed: values: step6Data ?? undefined // The component's useEffect now handles initialization via reset
   })
 
   const formStep7Methods = useForm<Step7FormData>({
@@ -130,6 +135,16 @@ export default function NewFinalReportPage() {
     // values: step7Data ?? undefined // <--- ELIMINAR ESTA LÍNEA
   })
 
+  // Memoize initialData for Step2Form
+  const step2InitialData = useMemo(() => {
+    return {
+      totalEnrolled: step1Data?.enrolledCapacity ?? undefined,
+      totalWithdrawn: 0, // Or load from a persisted state if available
+      totalPassed: 0, // Or load from a persisted state if available
+      totalFailed: 0 // Or load from a persisted state if available
+    }
+  }, [step1Data?.enrolledCapacity]) // Dependency: only re-create if enrolledCapacity changes
+
   // Handlers para cada paso
   const handleSaveStep1Data = (data: Step1FormData) => {
     console.log('Step 1 Data Saved (page.tsx):', data)
@@ -139,7 +154,7 @@ export default function NewFinalReportPage() {
   }
 
   const handleSaveStep2Data = (data: Step2FormData) => {
-    setStep2Data(data)
+    setStep2Data(data) // This will now work
     setCurrentStep(3)
   }
 
@@ -288,13 +303,14 @@ export default function NewFinalReportPage() {
   const totalEnrolledFromStep1 = step1Data?.enrolledCapacity
 
   return (
-    <div className="container mx-auto py-4 max-w-7xl min-h-screen">
-      <div className="mb-6">
+    <div className="container mx-auto py-16 max-w-7xl min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center">
+      <div className="w-full mb-8 text-left">
         <h1 className="text-2xl font-bold">Nuevo Informe Final</h1>
         <p className="text-muted-foreground text-sm">Complete todos los pasos para crear el informe final del curso</p>
       </div>
+
       {/* Indicador de Pasos */}
-      <div className="mb-6">
+      <div className="mb-8 w-full">
         <div className="flex justify-between items-center px-4">
           {STEP_LABELS.map((label, index) => {
             const stepNumber = index + 1
@@ -325,10 +341,15 @@ export default function NewFinalReportPage() {
         </div>
       </div>
 
-      <Card className="shadow-sm border-border/40 flex-1">
-        <CardContent className="p-0 h-full">
+      <Card className="shadow-sm border-border/40 w-full">
+        <CardContent className="p-0">
           {currentStep === 1 && (
-            <Step1Form formMethods={formStep1Methods} onSaveAndNext={handleSaveStep1Data} totalSteps={TOTAL_STEPS} />
+            <Step1Form
+              formMethods={formStep1Methods}
+              onSaveAndNext={handleSaveStep1Data}
+              totalSteps={TOTAL_STEPS}
+              onCancel={() => router.push('/final-reports')} // Añadir esta prop
+            />
           )}
           {currentStep === 2 && (
             <Step2Form
@@ -336,7 +357,8 @@ export default function NewFinalReportPage() {
               onSaveAndNext={handleSaveStep2Data}
               onPrevious={handlePreviousStep}
               totalSteps={TOTAL_STEPS}
-              initialTotalEnrolled={totalEnrolledFromStep1}
+              initialData={step2InitialData} // Pass the memoized object
+              isEditing={false}
             />
           )}
           {currentStep === 3 && (

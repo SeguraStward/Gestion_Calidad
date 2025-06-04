@@ -42,15 +42,14 @@ export const step2Schema = z
       const failed = data.totalFailed ?? 0
 
       if (typeof data.totalEnrolled !== 'number') {
+        // If totalEnrolled is not a number (e.g., still loading/undefined), don't validate sum yet
         return true
       }
-      // Solo se activa el error de suma si totalEnrolled es un número
-      // y la suma no coincide. Si totalEnrolled es 0 y los demás también (o undefined), es válido.
       return withdrawn + passed + failed === enrolled
     },
     {
       message: 'La suma de Retirados, Aprobados y Reprobados debe ser igual al Total de Matriculados.',
-      path: ['totalEnrolled']
+      path: ['totalEnrolled'] // Or a more general path if preferred, e.g., ['_root']
     }
   )
   .refine(
@@ -75,62 +74,67 @@ interface Step2FormProps {
   onSaveAndNext: (data: Step2FormData) => void
   onPrevious?: () => void
   totalSteps: number
-  initialTotalEnrolled?: number
+  initialData?: Step2FormData | null
+  isEditing?: boolean
 }
 
-export function Step2Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, initialTotalEnrolled }: Step2FormProps) {
-  const { control, handleSubmit, watch, setValue, reset, formState, getValues } = formMethods
+export function Step2Form({
+  formMethods,
+  onSaveAndNext,
+  onPrevious,
+  totalSteps,
+  initialData,
+  isEditing = false
+}: Step2FormProps) {
+  const { control, handleSubmit, reset, watch, formState } = formMethods
 
   useEffect(() => {
-    const currentFormTotalEnrolled = getValues('totalEnrolled')
-    if (initialTotalEnrolled !== undefined && initialTotalEnrolled !== currentFormTotalEnrolled) {
-      const existingValues = getValues()
-      reset(
-        {
-          totalEnrolled: initialTotalEnrolled,
-          totalWithdrawn: existingValues.totalWithdrawn,
-          totalPassed: existingValues.totalPassed,
-          totalFailed: existingValues.totalFailed
-        },
-        { keepDirtyValues: true, keepDefaultValues: false }
-      )
-    } else if (initialTotalEnrolled === undefined && currentFormTotalEnrolled !== undefined) {
-      const existingValues = getValues()
-      reset(
-        {
-          ...existingValues,
-          totalEnrolled: undefined
-        },
-        { keepDirtyValues: true }
-      )
+    if (!isEditing && initialData) {
+      // CREATE MODE: initialData is provided by the parent (new/page.tsx).
+      // This initialData should contain totalEnrolled derived from Step 1.
+      // When step1Data.enrolledCapacity updates in the parent, the initialData prop
+      // passed to this component will be a new object, triggering this effect.
+      // console.log('[Step2Form] Create Mode: Resetting with initialData from parent:', initialData);
+      reset(initialData)
+    } else if (!isEditing && !initialData) {
+      // CREATE MODE (fallback): If Step2Form is somehow used in create mode
+      // WITHOUT initialData being passed from the parent (e.g. initialData={null}).
+      // This is not the current case for new/page.tsx, which always passes an object.
+      // console.log('[Step2Form] Create Mode: No initialData object passed, resetting to defaults.');
+      reset({
+        totalEnrolled: 0,
+        totalWithdrawn: 0,
+        totalPassed: 0,
+        totalFailed: 0
+      })
     }
-  }, [initialTotalEnrolled, reset, getValues])
+    // EDIT MODE (isEditing is true):
+    // The parent page (edit/[id]/page.tsx) is responsible for calling
+    // formStep2Methods.reset() directly with its own 'step2Data' state.
+    // So, this useEffect doesn't need to handle 'initialData' for edit mode.
+  }, [isEditing, initialData, reset])
 
   const watchedValues = watch()
 
   const { currentSum, isValidSum } = useMemo(() => {
-    // Asegurarse de que los valores sean números para la suma.
-    // `watchedValues` debería tener números si la coerción de Zod y el `onChange` funcionan.
-    // Si aún son strings aquí, el problema está en `onChange` o en cómo RHF actualiza `watchedValues`.
-    console.log('Watched values in useMemo:', watchedValues) // DEBUG
-
     const enrolled = typeof watchedValues.totalEnrolled === 'number' ? watchedValues.totalEnrolled : 0
     const withdrawn = typeof watchedValues.totalWithdrawn === 'number' ? watchedValues.totalWithdrawn : 0
     const passed = typeof watchedValues.totalPassed === 'number' ? watchedValues.totalPassed : 0
     const failed = typeof watchedValues.totalFailed === 'number' ? watchedValues.totalFailed : 0
 
     const sum = withdrawn + passed + failed
-    // La suma es válida si `totalEnrolled` es un número y la suma coincide.
     const valid = typeof watchedValues.totalEnrolled === 'number' && sum === enrolled
     return { currentSum: sum, isValidSum: valid }
   }, [watchedValues])
 
   const onSubmitHandler = (data: Step2FormData) => {
-    const processedData = {
-      totalEnrolled: data.totalEnrolled ?? 0,
-      totalWithdrawn: data.totalWithdrawn ?? 0,
-      totalPassed: data.totalPassed ?? 0,
-      totalFailed: data.totalFailed ?? 0
+    // Ensure that null values are converted to 0 or handled as per backend requirements
+    // The schema already coerces, but this ensures submission consistency if needed.
+    const processedData: Step2FormData = {
+      totalEnrolled: data.totalEnrolled ?? undefined, // Keep undefined if that's what schema expects for optional
+      totalWithdrawn: data.totalWithdrawn ?? undefined,
+      totalPassed: data.totalPassed ?? undefined,
+      totalFailed: data.totalFailed ?? undefined
     }
     onSaveAndNext(processedData)
   }
@@ -183,7 +187,7 @@ export function Step2Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
                         type="text" // Cambiado a text para mejor control, pero se mostrará como número
                         placeholder="Cargando..."
                         {...field}
-                        value={field.value === undefined ? '' : String(field.value)}
+                        value={field.value === undefined || field.value === null ? '' : String(field.value)} // Handle null as well
                         disabled
                         className="bg-muted/70 h-10"
                         readOnly // Adicional a disabled para inputs de texto
@@ -225,7 +229,7 @@ export function Step2Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
                             pattern="[0-9]*" // Ayuda a la validación del navegador
                             placeholder="0"
                             {...field}
-                            value={field.value === undefined ? '' : String(field.value)}
+                            value={field.value === undefined || field.value === null ? '' : String(field.value)} // Handle null
                             onChange={(e) => handleNumericInputChange(e, field)}
                             className="h-10"
                           />
@@ -242,20 +246,20 @@ export function Step2Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
           {/* Indicador de validación de suma */}
           {(typeof watchedValues.totalEnrolled === 'number' ||
             currentSum > 0 ||
-            Object.values(formState.dirtyFields).some(Boolean)) && (
+            Object.values(formState.dirtyFields).some(Boolean)) && ( // Show if totalEnrolled is loaded, or if there's any sum, or if any field is dirty
             <div
               className={`p-3 rounded-md flex items-center text-sm ${
                 isValidSum && typeof watchedValues.totalEnrolled === 'number'
                   ? 'bg-green-100 text-green-700'
-                  : typeof watchedValues.totalEnrolled !== 'number'
-                    ? 'bg-gray-100 text-gray-700'
-                    : 'bg-red-100 text-red-700'
+                  : typeof watchedValues.totalEnrolled !== 'number' && currentSum === 0 // Special case: no enrolled, no sum yet
+                    ? 'bg-blue-100 text-blue-700' // A different state for "waiting for enrolled"
+                    : 'bg-red-100 text-red-700' // Error state
               }`}
             >
               {isValidSum && typeof watchedValues.totalEnrolled === 'number' ? (
                 <CheckCircle2 className="mr-2 h-5 w-5" />
-              ) : typeof watchedValues.totalEnrolled !== 'number' ? (
-                <AlertCircle className="mr-2 h-5 w-5 text-gray-500" />
+              ) : typeof watchedValues.totalEnrolled !== 'number' && currentSum === 0 ? (
+                <AlertCircle className="mr-2 h-5 w-5 text-blue-500" />
               ) : (
                 <AlertTriangle className="mr-2 h-5 w-5" />
               )}
@@ -264,8 +268,8 @@ export function Step2Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
                 <strong>{typeof watchedValues.totalEnrolled === 'number' ? watchedValues.totalEnrolled : 'N/A'}</strong>.
                 {isValidSum && typeof watchedValues.totalEnrolled === 'number'
                   ? ' Los totales coinciden.'
-                  : typeof watchedValues.totalEnrolled !== 'number'
-                    ? ' Esperando total de matriculados...'
+                  : typeof watchedValues.totalEnrolled !== 'number' && currentSum === 0
+                    ? ' Ingrese los datos. El total de matriculados se cargará.'
                     : ' Los totales NO coinciden o faltan datos.'}
               </span>
             </div>
@@ -277,7 +281,18 @@ export function Step2Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
             </Button>
             <Button
               type="submit"
-              disabled={!(typeof watchedValues.totalEnrolled === 'number' && isValidSum) || formState.isSubmitting}
+              // Enable submit if totalEnrolled is a number AND the sum is valid, OR if totalEnrolled is not yet loaded (allowing submission of 0s if that's intended)
+              // This might need refinement based on whether submitting with "N/A" for enrolled is allowed.
+              disabled={
+                !(
+                  (
+                    (typeof watchedValues.totalEnrolled === 'number' && isValidSum) ||
+                    (typeof watchedValues.totalEnrolled !== 'number' &&
+                      currentSum === 0 &&
+                      !Object.values(formState.dirtyFields).some(Boolean))
+                  ) // Allow submitting if nothing is entered and enrolled not loaded
+                ) || formState.isSubmitting // Use formState.isSubmitting here
+              }
               className="px-8"
             >
               Siguiente

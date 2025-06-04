@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react' // Added useEffect
 import { UseFormReturn, FormProvider, useFieldArray } from 'react-hook-form'
 import * as z from 'zod'
 import { Button } from '@una-gc/ui/components/button'
@@ -8,17 +8,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@una-gc/ui/components/input'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card'
-import { Separator } from '@una-gc/ui/components/separator'
 import { PlusCircle, Trash2, Settings, Edit3, Check, X } from 'lucide-react'
 
 // Esquema para un solo estudiante con ajustes
 const ajusteEstudianteSchema = z.object({
-  id: z.string().optional(),
+  id: z.string().optional(), // Keep this for existing items, new ones will get UUID
   cedula: z
     .string()
     .min(1, 'La cédula es requerida.')
-    .regex(/^[0-9]+$/, 'La cédula solo debe contener números') // <--- VALIDACIÓN AÑADIDA
-    .min(9, 'La cédula debe tener al menos 9 dígitos'), // <--- VALIDACIÓN AÑADIDA
+    .regex(/^[0-9]+$/, 'La cédula solo debe contener números')
+    .min(9, 'La cédula debe tener al menos 9 dígitos'),
   nombre: z.string().min(1, 'El nombre es requerido.'),
   apoyo: z.string().min(1, 'El tipo de apoyo es requerido.'),
   nota: z.coerce.number().min(0, 'La nota debe ser 0 o más.').max(100, 'La nota no puede ser mayor a 100.'),
@@ -27,7 +26,7 @@ const ajusteEstudianteSchema = z.object({
 
 // Esquema de validación con Zod para el Paso 4
 export const step4Schema = z.object({
-  ajustesEstudiantes: z.array(ajusteEstudianteSchema).min(0)
+  ajustesEstudiantes: z.array(ajusteEstudianteSchema).min(0) // Allow empty array
 })
 
 export type Step4FormData = z.infer<typeof step4Schema>
@@ -37,10 +36,19 @@ interface Step4FormProps {
   onSaveAndNext: (data: Step4FormData) => void
   onPrevious: () => void
   totalSteps: number
+  initialData?: Step4FormData | null // Added initialData prop
+  isEditing?: boolean // Added isEditing prop
 }
 
-export function Step4Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }: Step4FormProps) {
-  const { control } = formMethods
+export function Step4Form({
+  formMethods,
+  onSaveAndNext,
+  onPrevious,
+  totalSteps,
+  initialData, // Added initialData
+  isEditing = false // Added isEditing
+}: Step4FormProps) {
+  const { control, reset } = formMethods // Added reset
   const [editingObservacion, setEditingObservacion] = useState<number | null>(null)
 
   const { fields, append, remove } = useFieldArray({
@@ -48,9 +56,20 @@ export function Step4Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
     name: 'ajustesEstudiantes'
   })
 
+  // Effect to populate form with initialData when editing
+  useEffect(() => {
+    if (isEditing && initialData) {
+      console.log('[Step4Form] Resetting with initialData:', initialData)
+      reset(initialData) // This will populate the form, including the field array
+    } else if (!isEditing) {
+      // Optionally, ensure it's clean for new entries, though defaultValues in page.tsx might handle this
+      reset({ ajustesEstudiantes: [] }) // Reset to empty array for new form
+    }
+  }, [isEditing, initialData, reset])
+
   const addNewStudent = () => {
     append({
-      id: crypto.randomUUID(),
+      id: crypto.randomUUID(), // Generate a new UUID for new students
       cedula: '',
       nombre: '',
       apoyo: '',
@@ -79,7 +98,8 @@ export function Step4Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
       <div className="mb-4">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Settings className="w-5 h-5" />
-          {tituloPaso}
+          Paso {totalSteps > 0 ? `3 de ${totalSteps}: ` : ''} {/* Corrected step number display logic */}
+          {tituloPaso} {isEditing ? '(Editando)' : ''}
         </h2>
         <p className="text-muted-foreground text-sm">Estudiantes que requirieron algún tipo de adecuación o apoyo pedagógico</p>
       </div>
@@ -110,7 +130,7 @@ export function Step4Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                     <div className="text-center py-8 text-muted-foreground">
                       <Settings className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p className="text-sm">No hay estudiantes con ajustes registrados</p>
-                      <p className="text-xs">Haga clic en &quot;Añadir&quot; para agregar un estudiante</p> {/* Changed here */}
+                      <p className="text-xs">Haga clic en &quot;Añadir&quot; para agregar un estudiante</p>
                     </div>
                   ) : (
                     <>
@@ -121,14 +141,14 @@ export function Step4Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                         <div className="col-span-2">Tipo de Apoyo</div>
                         <div className="col-span-1">Nota</div>
                         <div className="col-span-3">Observaciones</div>
-                        <div className="col-span-1">Acción</div>
+                        <div className="col-span-1 text-center">Acción</div> {/* Centered Action Header */}
                       </div>
 
                       {/* Filas de estudiantes */}
                       {fields.map((item, index) => (
                         <div
-                          key={item.id}
-                          className="grid grid-cols-12 gap-2 p-3 border border-slate-200 dark:border-slate-700 rounded-md bg-card hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
+                          key={item.id} // Use item.id which is managed by useFieldArray
+                          className="grid grid-cols-12 gap-2 p-3 border border-slate-200 dark:border-slate-700 rounded-md bg-card hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors items-center" // Added items-center
                         >
                           {/* Cédula */}
                           <div className="col-span-2">
@@ -191,7 +211,13 @@ export function Step4Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                                       placeholder="0-100"
                                       className="h-8 text-xs bg-background"
                                       {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      onChange={(e) => {
+                                        const value = e.target.value
+                                        // Allow empty string for clearing, otherwise parse to float
+                                        field.onChange(value === '' ? undefined : parseFloat(value))
+                                      }}
+                                      // Ensure value is a number for the input type="number" or empty string
+                                      value={field.value === undefined || field.value === null ? '' : field.value}
                                     />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
@@ -256,16 +282,17 @@ export function Step4Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
 
                           {/* Acción - Eliminar */}
                           <div className="col-span-1 flex justify-center items-center">
+                            {' '}
+                            {/* Centered Trash Icon */}
                             <Button
                               type="button"
-                              variant="ghost" // Use ghost variant for no background
-                              size="icon" // Use icon size for a compact button, or adjust padding if needed
+                              variant="ghost"
+                              size="icon"
                               onClick={() => remove(index)}
-                              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 group" // group class for icon scaling
+                              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 group"
                             >
-                              <span className="sr-only">Eliminar estudiante</span> {/* For accessibility */}
-                              <Trash2 className="h-5 w-5 transition-transform duration-150 ease-in-out group-hover:scale-125" />{' '}
-                              {/* Icon scales on parent hover */}
+                              <span className="sr-only">Eliminar estudiante</span>
+                              <Trash2 className="h-5 w-5 transition-transform duration-150 ease-in-out group-hover:scale-125" />
                             </Button>
                           </div>
                         </div>

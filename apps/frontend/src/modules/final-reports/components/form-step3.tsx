@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react' // Added useEffect
 import { UseFormReturn, FormProvider, useFieldArray, Controller } from 'react-hook-form'
 import * as z from 'zod'
 import { Button } from '@una-gc/ui/components/button'
@@ -13,11 +13,12 @@ import { PlusCircle, Trash2, Users, Edit3, Check, X } from 'lucide-react'
 
 // Esquema para un solo estudiante de salvaguarda
 const salvaguardaEstudianteSchema = z.object({
+  // id: z.string().optional(), // RHF's useFieldArray provides a stable id, not needed in schema unless from DB
   cedula: z
     .string()
     .min(1, 'La cédula es requerida')
     .regex(/^[0-9]+$/, 'La cédula solo debe contener números')
-    .min(9, 'La cédula debe tener al menos 9 dígitos'), // <--- NUEVA VALIDACIÓN
+    .min(9, 'La cédula debe tener al menos 9 dígitos'),
   nombre: z.string().min(1, 'El nombre es requerido'),
   nota: z.coerce
     .number({ invalid_type_error: 'La nota debe ser un número' })
@@ -28,7 +29,7 @@ const salvaguardaEstudianteSchema = z.object({
 
 // Esquema de validación con Zod para el Paso 3
 export const step3Schema = z.object({
-  salvaguardaEstudiantes: z.array(salvaguardaEstudianteSchema).min(0)
+  salvaguardaEstudiantes: z.array(salvaguardaEstudianteSchema).min(0) // Allow empty array
 })
 
 export type Step3FormData = z.infer<typeof step3Schema>
@@ -38,17 +39,36 @@ interface Step3FormProps {
   onSaveAndNext: (data: Step3FormData) => void
   onPrevious: () => void
   totalSteps: number
-  tipoInforme?: string // Add this if Step3Form needs it
+  tipoInforme?: string
+  initialData?: Step3FormData | null // Added initialData
+  isEditing?: boolean // Added isEditing
 }
 
-export function Step3Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, tipoInforme }: Step3FormProps) {
-  const { control } = formMethods
+export function Step3Form({
+  formMethods,
+  onSaveAndNext,
+  onPrevious,
+  totalSteps,
+  tipoInforme,
+  initialData, // Added
+  isEditing = false // Added
+}: Step3FormProps) {
+  const { control, reset } = formMethods // Added reset
   const [editingObservacion, setEditingObservacion] = useState<number | null>(null)
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'salvaguardaEstudiantes'
   })
+
+  useEffect(() => {
+    if (isEditing && initialData) {
+      console.log('[Step3Form] Resetting with initialData:', initialData)
+      reset(initialData)
+    } else if (!isEditing) {
+      reset({ salvaguardaEstudiantes: [] }) // Ensure clean state for new form
+    }
+  }, [isEditing, initialData, reset])
 
   const addNewStudent = () => {
     append({
