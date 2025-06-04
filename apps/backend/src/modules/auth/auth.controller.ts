@@ -8,6 +8,7 @@ import {
   Logger,
   UnauthorizedException,
   ForbiddenException,
+  Body,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
@@ -15,12 +16,17 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import { RoleManagerService } from './role-manager.service';
-import { Body } from '@nestjs/common/decorators/http/route-params.decorator';
-import { parseExpiryToMilliseconds } from './utils/expiry-parser.util';
-import { SwitchRoleDto } from './dto/switch-role.dto';
+// Definir una interfaz para GoogleUser
+interface GoogleUser {
+  googleId: string;
+  email: string;
+  firstName: string;
+  fullLastName?: string;
+  familyName?: string;
+  picture?: string;
+}
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -29,19 +35,28 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
-    private readonly roleManagerService: RoleManagerService, // Inject RoleManagerService
   ) {
     this.logger = new Logger(AuthController.name);
   }
 
   private getCookieMaxAge(key: 'JWT_EXPIRATION' | 'JWT_REFRESH_EXPIRATION'): number {
     const expiryString = this.configService.get<string>(key);
-    if (!expiryString) {
-      this.logger.error(`Missing environment variable: ${key}`);
-      return 0; // Or some default value
-    }
+    const unit = expiryString.slice(-1);
+    const value = parseInt(expiryString.slice(0, -1), 10);
+    if (isNaN(value)) return 0; // Default or throw error
 
-    return parseExpiryToMilliseconds(expiryString);
+    switch (unit) {
+      case 's':
+        return value * 1000;
+      case 'm':
+        return value * 60 * 1000;
+      case 'h':
+        return value * 60 * 60 * 1000;
+      case 'd':
+        return value * 24 * 60 * 60 * 1000;
+      default:
+        return 0; // Default or throw error
+    }
   }
 
   @ApiOperation({ summary: 'Initiate Google OAuth flow' })
@@ -79,7 +94,7 @@ export class AuthController {
         // throw new ForbiddenException(`Access restricted to ${allowedDomain} emails.`);
       }
 
-      const result = await this.authService.googleLogin(req.user);
+      const result = await this.authService.googleLogin(req.user as GoogleUser);
       this.logger.debug(`User ${result.user.email} authenticated successfully via Google.`);
 
       res.cookie('auth_token', result.token, {
@@ -124,7 +139,6 @@ export class AuthController {
   getProfile(@Req() req: Request) {
     return req.user;
   }
-
   @ApiOperation({ summary: 'Logout current user' })
   @ApiResponse({ status: 200, description: 'User logged out successfully' })
   @Get('logout')
@@ -137,10 +151,10 @@ export class AuthController {
         this.logger.warn(
           `Failed to revoke refresh token on logout: ${error instanceof Error ? error.message : String(error)}`,
         );
-        // Continue with clearing cookies even if DB revocation fails
       }
     }
 
+    // Limpiar todas las cookies relacionadas con autenticación
     res.clearCookie('auth_token', {
       httpOnly: true,
       secure: this.configService.get('NODE_ENV') === 'production',
@@ -153,6 +167,13 @@ export class AuthController {
       sameSite: 'lax',
       path: '/',
     });
+    res.clearCookie('active_role_id', {
+      httpOnly: true,
+      secure: this.configService.get('NODE_ENV') === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+
     return { message: 'Logged out successfully' };
   }
 
@@ -168,9 +189,6 @@ export class AuthController {
       email: string;
       refreshTokenDbId: string;
       refreshTokenFromCookie: string;
-      fullName?: string;
-      fullLastName?: string;
-      activeRole?: any;
     };
 
     if (!userFromStrategy || !userFromStrategy.refreshTokenDbId) {
@@ -178,19 +196,9 @@ export class AuthController {
       throw new UnauthorizedException('Authentication data missing for refresh.');
     }
 
-    // Ensure required properties are present
-    const userForRefresh = {
-      id: userFromStrategy.id,
-      email: userFromStrategy.email,
-      refreshTokenDbId: userFromStrategy.refreshTokenDbId,
-      fullName: userFromStrategy.fullName ?? '',
-      fullLastName: userFromStrategy.fullLastName ?? '',
-      activeRole: userFromStrategy.activeRole,
-    };
-
     try {
       const { token: newAccessToken, refreshToken: newRawRefreshToken } =
-        await this.authService.refreshToken(userForRefresh);
+        await this.authService.refreshToken(userFromStrategy);
 
       res.cookie('auth_token', newAccessToken, {
         httpOnly: true,
@@ -237,79 +245,51 @@ export class AuthController {
     }
   }
 
-  // In AuthController.ts
-  @Get('verify-token')
-  @ApiOperation({ summary: 'Verify if token is valid' })
-  @ApiResponse({ status: 200, description: 'Token is valid' })
-  @ApiResponse({ status: 401, description: 'Token is invalid' })
-  verifyToken(@Req() req: Request) {
-    const token = req.cookies.auth_token;
-    if (!token) {
-      throw new UnauthorizedException('No token provided');
-    }
-
-    const isValid = this.authService.validateToken(token);
-    if (!isValid) {
-      throw new UnauthorizedException('Invalid token');
-    }
-
-    return { valid: true };
-  }
-
-  @Get('available-roles')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Get available roles for current user' })
-  @ApiResponse({ status: 200, description: 'List of available roles' })
-  async getAvailableRoles(@Req() req: Request) {
-    const userId = (req.user as any).id;
-    return this.roleManagerService.getUserAvailableRoles(userId);
-  }
-
-  // helper function to set cookies
-  private setCookies(res: Response, tokens: { accessToken?: string; refreshToken?: string }) {
-    if (tokens.accessToken) {
-      res.cookie('auth_token', tokens.accessToken, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_EXPIRATION'),
-        sameSite: 'lax',
-        path: '/',
-      });
-    }
-
-    if (tokens.refreshToken) {
-      res.cookie('refresh_token', tokens.refreshToken, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_REFRESH_EXPIRATION'),
-        sameSite: 'lax',
-        path: '/',
-      });
-    }
-  }
-
-  @Post('switch-role')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Switch to another authorized role' })
-  @ApiResponse({ status: 200, description: 'Role switched successfully' })
+  @ApiOperation({ summary: 'Change user role' })
+  @ApiResponse({ status: 200, description: 'Role changed successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async switchRole(
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        roleId: { type: 'string', description: 'ID of the role to assign to the user' },
+      },
+      required: ['roleId'],
+    },
+  })
+  @Post('change-role')
+  @UseGuards(JwtAuthGuard) // Ensure user is authenticated
+  @Post('change-role')
+  @UseGuards(JwtAuthGuard) // Ensure user is authenticated
+  async changeRole(
     @Req() req: Request,
-    @Body() switchRoleDto: SwitchRoleDto, // Usar el DTO existente
+    @Body() body: { roleId: string },
     @Res({ passthrough: true }) res: Response,
   ) {
-    const userId = (req.user as any).id;
+    const user = req.user as { id: string; email: string };
+
     try {
-      const result = await this.roleManagerService.switchUserRole(userId, switchRoleDto.roleId);
-      this.setCookies(res, { accessToken: result.token });
-      return { message: 'Role switched successfully' };
+      const result = await this.authService.changeRole(user.id, body.roleId);
+
+      // Guardar el ID del rol en una cookie separada
+      res.cookie('active_role_id', body.roleId, {
+        httpOnly: true,
+        secure: this.configService.get('NODE_ENV') === 'production',
+        maxAge: this.getCookieMaxAge('JWT_EXPIRATION'), // Misma duración que el access token
+        sameSite: 'lax',
+        path: '/',
+      });
+
+      this.logger.log(`Role changed successfully for user ${user.id} to ${body.roleId}`);
+
+      // Return the user information with the updated role
+      return result.user;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      this.logger.error(`Error switching role: ${errorMessage}`);
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-      throw new UnauthorizedException('Error al cambiar de rol');
+      this.logger.error(
+        `Error changing role for user ${user.id}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
     }
   }
 }

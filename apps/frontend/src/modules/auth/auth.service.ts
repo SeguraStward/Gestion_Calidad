@@ -16,12 +16,30 @@ export interface Role {
 }
 
 export interface SwitchRoleResponse {
-  success: boolean
+  user: {
+    id: string
+    email: string
+    fullName: string
+    fullLastName: string
+    profilePicture: string
+    role: {
+      id: string
+      name: string
+      description: string
+      permissions: Array<{
+        permissionID: string
+        permissions: string[]
+        scope: string | null
+        actions: string[]
+      }>
+    }
+  }
+  token: string
 }
 
 export class AuthService {
   private static readonly API_URL = process.env.NEXT_PUBLIC_API_URL
-  private static readonly LOG_PREFIX = '[UserService]'
+  private static readonly LOG_PREFIX = '[AuthService]'
 
   /**
    * Gets the active roles with their permissions for the current authenticated user
@@ -52,7 +70,7 @@ export class AuthService {
                 id: perm.id,
                 name: perm.name,
                 code: perm.code,
-                description: perm.description || '', // Manejar ausencia de description
+                description: perm.description || '',
                 // Mantener campos adicionales que puedan ser útiles
                 status: perm.status,
                 type: perm.type,
@@ -90,13 +108,20 @@ export class AuthService {
   }
 
   /**
-   * Switch the user's active role
+   * Cambia el rol activo del usuario autenticado.
    *
-   * @param roleId The ID of the role to switch to
-   * @returns Promise resolving to a success response
-   * @throws Error if the role switch fails
+   * @param roleId ID del rol al que se desea cambiar.
+   * @returns Promesa que resuelve con la respuesta del cambio de rol.
+   * @throws Error si el cambio de rol falla.
    */
-  static async switchRole(roleId: string): Promise<SwitchRoleResponse> {
+  /**
+   * Cambia el rol activo del usuario autenticado.
+   *
+   * @param roleId ID del rol al que se desea cambiar.
+   * @returns Promesa que resuelve con la respuesta del cambio de rol.
+   * @throws Error si el cambio de rol falla.
+   */
+  static async changeRole(roleId: string): Promise<SwitchRoleResponse> {
     console.log(`${this.LOG_PREFIX} Switching to role with ID: ${roleId}`)
 
     if (!roleId) {
@@ -106,15 +131,44 @@ export class AuthService {
     }
 
     try {
-      // This endpoint matches what's defined in auth.controller.ts
-      const response = await axios.post<SwitchRoleResponse>(
-        `${this.API_URL}/auth/switch-role`,
+      // El endpoint espera un objeto con la propiedad roleId
+      const response = await axios.post<{
+        id: string
+        email: string
+        fullName: string
+        fullLastName: string
+        profilePicture: string
+        role: {
+          id: string
+          name: string
+          description: string
+          permissions: Array<any>
+        }
+      }>(
+        `${this.API_URL}/auth/change-role`,
         { roleId },
         { withCredentials: true } // Important for cookies
       )
 
-      console.log(`${this.LOG_PREFIX} Successfully switched to role: ${roleId}`)
-      return { success: true }
+      // Transformar la respuesta del backend al formato SwitchRoleResponse
+      const switchRoleResponse: SwitchRoleResponse = {
+        user: {
+          id: response.data.id,
+          email: response.data.email,
+          fullName: response.data.fullName,
+          fullLastName: response.data.fullLastName,
+          profilePicture: response.data.profilePicture,
+          role: response.data.role
+        },
+        token: '' // Ya no se necesita el token, se maneja con cookies
+      }
+
+      console.log(`${this.LOG_PREFIX} Successfully switched to role: ${roleId}`, switchRoleResponse)
+
+      // Ya no es necesario recargar la página, solo actualizar el estado local si es necesario
+      // La cookie se establece automáticamente en el backend y estará disponible en las próximas requests
+
+      return switchRoleResponse
     } catch (error) {
       const axiosError = error as AxiosError
       const statusCode = axiosError.response?.status
@@ -141,20 +195,5 @@ export class AuthService {
       const errorMessage = responseData?.message || axiosError.message || 'Unknown error occurred'
       throw new Error(`Failed to switch role: ${errorMessage}`)
     }
-  }
-
-  /**
-   * Check if user has a specific permission
-   *
-   * @param roles User's active roles
-   * @param permissionCode The permission code to check
-   * @returns Boolean indicating if the user has the permission
-   */
-  static hasPermission(roles: Role[], permissionCode: string): boolean {
-    if (!roles?.length || !permissionCode) {
-      return false
-    }
-
-    return roles.some((role) => role.permissions?.some((permission) => permission.code === permissionCode))
   }
 }

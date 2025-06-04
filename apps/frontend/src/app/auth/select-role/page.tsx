@@ -81,10 +81,10 @@ export default function SelectRolePage() {
     try {
       setSubmitting(true)
       console.log('🔄 Starting role switch for role:', selectedRole)
-      const response = await AuthService.switchRole(selectedRole.id)
+      const response = await AuthService.changeRole(selectedRole.id)
       console.log('✅ Role switch successful, response:', response)
 
-      if (!response.success) {
+      if (!response) {
         throw new Error('Role switch was unsuccessful')
       }
 

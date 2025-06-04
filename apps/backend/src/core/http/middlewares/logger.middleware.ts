@@ -5,8 +5,8 @@ interface RequestLogData {
   method: string;
   originalUrl: string;
   statusCode: number;
-  ip: string;
-  userAgent: string;
+  // ip: string;
+  // userAgent: string;
   contentLength: string;
   responseTimeMs: number;
   timestamp: string;
@@ -61,8 +61,8 @@ export class LoggerMiddleware implements NestMiddleware {
       method: req.method,
       originalUrl: req.originalUrl,
       statusCode: res.statusCode,
-      ip: this.getClientIp(req),
-      userAgent: req.get('user-agent') || 'Unknown',
+      // ip: this.getClientIp(req),
+      // userAgent: req.get('user-agent') || 'Unknown',
       contentLength: `${res.get('content-length') || 0}b`,
       responseTimeMs: responseTime,
       timestamp: new Date().toISOString(),
