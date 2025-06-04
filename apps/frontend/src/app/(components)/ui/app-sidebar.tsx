@@ -136,6 +136,12 @@ const data = {
       url: '#',
       icon: Map
     }*/
+    {
+      title: 'Cambio de Rol',
+      url: '/auth/select-role',
+      icon: Users,
+      items: [{ title: 'Seleccionar Rol', url: '/auth/select-role' }]
+    }
   ]
 }
 
