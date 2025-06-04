@@ -3,6 +3,7 @@
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@una-gc/ui/components/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@una-gc/ui/components/popover'
 import { Button } from '@una-gc/ui/components/button'
+import { Label } from '@una-gc/ui/components/label' // Import ShadCN Label
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@una-gc/ui/lib/utils'
 import { useState } from 'react'
@@ -21,19 +22,24 @@ interface ComboboxProps {
   placeholder?: string
   required?: boolean
   error?: FieldError | undefined
+  id?: string // Added id for Label htmlFor
 }
 
-export const FormSelect = ({ label, value, options, onChange, placeholder }: ComboboxProps) => {
+export const FormSelect = ({ label, value, options, onChange, placeholder, id, required, error }: ComboboxProps) => {
   const [open, setOpen] = useState(false)
 
   const selected = options.find((opt) => opt.id === value)
 
   return (
     <div className="space-y-1">
-      <label className="text-sm font-medium">{label}</label>
+      {/* Use ShadCN Label component */}
+      <Label htmlFor={id}>
+        {label}
+        {required && <span className="text-red-500">*</span>}
+      </Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
+          <Button id={id} variant="outline" role="combobox" aria-expanded={open} className={cn('w-full justify-between', error ? 'border-red-500' : '')}>
             {selected?.name || placeholder || 'Seleccionar...'}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -59,6 +65,7 @@ export const FormSelect = ({ label, value, options, onChange, placeholder }: Com
           </Command>
         </PopoverContent>
       </Popover>
+      {error && <p className="text-sm text-red-500">{error.message}</p>}
     </div>
   )
 }

@@ -13,7 +13,7 @@ export function AcademicMaintenancePage() {
 
   if (!seccion) {
     return (
-      <div className="min-h-screen flex items-start justify-center pt-20 px-4">
+      <div className="min-h-screen flex items-center justify-center px-4">
         <Card className="w-full max-w-5xl shadow-md p-8">
           <div className="grid gap-6">
             <PageHeader title="Mantenimiento Universitario" icon={LucideBookMarked} />

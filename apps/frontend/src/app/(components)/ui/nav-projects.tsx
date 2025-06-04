@@ -1,4 +1,4 @@
-'use client'
+/*'use client'
 
 import { Folder, Forward, MoreHorizontal, Trash2, type LucideIcon } from 'lucide-react'
 
@@ -81,3 +81,4 @@ export function NavProjects({
     </SidebarGroup>
   )
 }
+*/

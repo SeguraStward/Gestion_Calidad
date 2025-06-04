@@ -22,13 +22,8 @@ export function ContentLayout({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <AppSidebar />
       <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          width: '100%'
-        }}
+        key={pathname}
+        className="flex flex-col justify-center items-center h-full w-full px-4 md:px-8 py-8 md:py-16 gap-12 transition-opacity transition-transform duration-700 ease-in opacity-0 animate-fadeInComponent"
       >
         {children}
       </div>
