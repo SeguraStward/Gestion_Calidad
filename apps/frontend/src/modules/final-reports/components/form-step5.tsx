@@ -1,70 +1,26 @@
 'use client'
 
+import React, { useEffect } from 'react' // Added React for clarity
 import { UseFormReturn, FormProvider } from 'react-hook-form'
 import * as z from 'zod'
 import { Button } from '@una-gc/ui/components/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Textarea } from '@una-gc/ui/components/textarea'
-import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card'
+// import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card' // No longer needed for main layout
 import { Separator } from '@una-gc/ui/components/separator'
-import { MessageSquareText } from 'lucide-react'
-import { useEffect } from 'react'
-
-// Mock data para las preguntas
-export const preguntasPaso5FormMock = [
-  {
-    idPregunta: 'p1',
-    pregunta: '¿Cuáles fueron las principales fortalezas observadas en el desarrollo del curso?',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Desempeño General'
-  },
-  {
-    idPregunta: 'p2',
-    pregunta: '¿Cuáles fueron las principales debilidades o áreas de mejora identificadas?',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Desempeño General'
-  },
-  {
-    idPregunta: 'p3',
-    pregunta: '¿Se cumplieron los objetivos de aprendizaje propuestos? Justifique.',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Objetivos de Aprendizaje'
-  },
-  {
-    idPregunta: 'p4',
-    pregunta: '¿Qué estrategias metodológicas resultaron más efectivas?',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Metodología'
-  },
-  {
-    idPregunta: 'p5',
-    pregunta: '¿Qué ajustes se realizaron durante el curso y cuál fue su impacto?',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Metodología'
-  },
-  {
-    idPregunta: 'p6',
-    pregunta: '¿Cómo fue la participación y el compromiso de los estudiantes?',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Participación Estudiantil'
-  },
-  {
-    idPregunta: 'p7',
-    pregunta: 'Sugerencias para futuras iteraciones de este curso.',
-    tipo_respuesta: 'texto_largo',
-    grupo_pregunta: 'Sugerencias'
-  }
-]
+import { MessageSquareText, AlertTriangle } from 'lucide-react' // Added AlertTriangle
+import { preguntasPaso5Mock } from '@/modules/final-reports/mocks/questions' // Use centralized mock
+import { cn } from '@una-gc/ui/lib/utils' // For conditional class names
 
 // Esquema para una sola respuesta
 const respuestaSchema = z.object({
   idPregunta: z.string(),
-  respuesta: z.string().min(1, 'La respuesta no puede estar vacía.')
+  respuesta: z.string().min(1, 'Este campo es requerido.') // Updated error message for consistency
 })
 
 // Esquema de validación con Zod para el Paso 5
 export const step5Schema = z.object({
-  respuestas: z.array(respuestaSchema).min(preguntasPaso5FormMock.length, 'Debe responder todas las preguntas.')
+  respuestas: z.array(respuestaSchema).min(preguntasPaso5Mock.length, 'Debe responder todas las preguntas.') // Use imported mock
 })
 
 export type Step5FormData = z.infer<typeof step5Schema>
@@ -74,75 +30,74 @@ interface Step5FormProps {
   onSaveAndNext: (data: Step5FormData) => void
   onPrevious: () => void
   totalSteps: number
+  // Removed initialData and isEditing as they are not typically used in the non-edit version
 }
 
 export function Step5Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }: Step5FormProps) {
-  const { control, watch, setValue, register } = formMethods // Added register
+  const { control, handleSubmit, reset, register, formState } = formMethods // Added handleSubmit, reset, formState
 
-  // Ensure initial values are set, including idPregunta for each item
   useEffect(() => {
-    const respuestasActuales = watch('respuestas')
-    const needsInitialization =
-      !respuestasActuales ||
-      respuestasActuales.length !== preguntasPaso5FormMock.length ||
-      respuestasActuales.some((r, idx) => r.idPregunta !== preguntasPaso5FormMock[idx].idPregunta)
+    // Initialize form with question IDs and empty answers
+    const initialFormValues = preguntasPaso5Mock.map((p) => ({
+      idPregunta: p.idPregunta,
+      respuesta: ''
+    }))
+    reset({ respuestas: initialFormValues })
+  }, [reset]) // Dependency array only needs reset
 
-    if (needsInitialization) {
-      setValue(
-        'respuestas',
-        preguntasPaso5FormMock.map((p) => ({
-          idPregunta: p.idPregunta,
-          respuesta: respuestasActuales?.find((r) => r.idPregunta === p.idPregunta)?.respuesta || ''
-        })),
-        { shouldDirty: false, shouldValidate: false } // Avoid validation on init
-      )
-    }
-  }, [watch, setValue, preguntasPaso5FormMock])
-
-  // The root of this component will now be a div providing padding.
-  // The parent CardContent (in page.tsx) handles scrolling.
   return (
-    <div className="p-4 md:p-6">
-      {' '}
-      {/* Provides padding for the step content */}
+    <div className="p-4 md:p-6 h-full flex flex-col">
+      {/* Header Section (Stays Visible) */}
       <div className="mb-4">
-        {' '}
-        {/* Header section for the step */}
         <h2 className="text-xl font-semibold flex items-center gap-3">
           <MessageSquareText className="w-5 h-5 text-foreground/70" />
           Paso {totalSteps > 0 ? `5 de ${totalSteps}: ` : ''} Reflexión y Análisis del Curso
         </h2>
         <p className="text-muted-foreground text-sm mt-1">
-          Responda las siguientes preguntas sobre el desarrollo y resultados del curso
+          Responda las siguientes preguntas sobre el desarrollo y resultados del curso.
         </p>
       </div>
+
+      {/* General Form Error Message */}
+      {formState.errors.respuestas?.root && (
+        <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
+          <AlertTriangle className="mr-2 h-5 w-5" />
+          <span>{formState.errors.respuestas.root.message}</span>
+        </div>
+      )}
+      {formState.errors.respuestas &&
+        !formState.errors.respuestas.root &&
+        typeof formState.errors.respuestas.message === 'string' && (
+          <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
+            <AlertTriangle className="mr-2 h-5 w-5" />
+            <span>{formState.errors.respuestas.message}</span>
+          </div>
+        )}
+
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          {/* The form itself will not be flex-col or manage its own height/scroll */}
-          <form onSubmit={formMethods.handleSubmit(onSaveAndNext)} className="space-y-6">
-            {/* Removed the Card and CardHeader/CardContent that were here for question grouping */}
-            {/* Directly map questions */}
-            <div className="space-y-0">
+          <form onSubmit={handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col min-h-0">
+            {' '}
+            {/* Ensure form can shrink and grow */}
+            {/* Scrollable Questions Area */}
+            <div className="flex-1 space-y-0 overflow-y-auto pr-2 pb-4">
               {' '}
-              {/* Container for questions */}
-              {preguntasPaso5FormMock.map((pregunta, index) => (
+              {/* Added pb-4 for spacing */}
+              {preguntasPaso5Mock.map((pregunta, index) => (
                 <div key={pregunta.idPregunta}>
                   <div className="py-4 px-1">
-                    {' '}
-                    {/* Adjusted padding */}
                     <FormField
                       control={control}
                       name={`respuestas.${index}.respuesta`}
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <FormItem className="space-y-2.5">
-                          {' '}
-                          {/* Adjusted spacing */}
                           <FormLabel className="text-sm font-medium leading-relaxed text-foreground/90 block">
                             <span className="inline-flex items-baseline gap-2">
                               <span className="text-muted-foreground font-normal text-xs bg-muted/50 px-2 py-0.5 rounded-full min-w-[24px] text-center">
                                 {index + 1}
                               </span>
                               <span className="flex-1">{pregunta.pregunta}</span>
+                              <span className="text-destructive ml-1">*</span> {/* Required indicator */}
                             </span>
                           </FormLabel>
                           <div className="ml-6">
@@ -150,26 +105,26 @@ export function Step5Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                               <Textarea
                                 placeholder="Escriba su respuesta aquí..."
                                 rows={3}
-                                className="resize-y bg-background/60 border-border/60 focus:border-border focus:bg-background transition-all duration-200 text-sm leading-relaxed shadow-sm"
+                                className={cn(
+                                  'resize-y bg-background/60 border-border/60 focus:border-border focus:bg-background transition-all duration-200 text-sm leading-relaxed shadow-sm',
+                                  fieldState.error && 'border-destructive focus-visible:ring-destructive/50' // Red border on error
+                                )}
                                 {...field}
                               />
                             </FormControl>
-                            <FormMessage className="text-xs mt-1.5" />
+                            {/* Individual FormMessage removed */}
                           </div>
-                          {/* Hidden field for idPregunta, ensure it's registered */}
                           <input type="hidden" {...register(`respuestas.${index}.idPregunta`)} value={pregunta.idPregunta} />
                         </FormItem>
                       )}
                     />
                   </div>
-                  {index < preguntasPaso5FormMock.length - 1 && <Separator className="opacity-20 my-1" />}{' '}
-                  {/* More subtle separator */}
+                  {index < preguntasPaso5Mock.length - 1 && <Separator className="opacity-20 my-1" />}
                 </div>
               ))}
             </div>
-
-            {/* Navigation buttons are now part of the normal form flow, not sticky */}
-            <div className="flex justify-between pt-4">
+            {/* Navigation Buttons (Stays Visible at the bottom) */}
+            <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
               <Button type="button" variant="outline" onClick={onPrevious} className="px-8 shadow-sm">
                 Anterior
               </Button>

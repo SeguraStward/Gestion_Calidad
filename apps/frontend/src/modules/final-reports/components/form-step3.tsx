@@ -50,10 +50,10 @@ export function Step3Form({
   onPrevious,
   totalSteps,
   tipoInforme,
-  initialData, // Added
-  isEditing = false // Added
+  initialData,
+  isEditing = false
 }: Step3FormProps) {
-  const { control, reset } = formMethods // Added reset
+  const { control, reset, handleSubmit } = formMethods // Added handleSubmit
   const [editingObservacion, setEditingObservacion] = useState<number | null>(null)
 
   const { fields, append, remove } = useFieldArray({
@@ -63,10 +63,9 @@ export function Step3Form({
 
   useEffect(() => {
     if (isEditing && initialData) {
-      console.log('[Step3Form] Resetting with initialData:', initialData)
       reset(initialData)
     } else if (!isEditing) {
-      reset({ salvaguardaEstudiantes: [] }) // Ensure clean state for new form
+      reset({ salvaguardaEstudiantes: [] })
     }
   }, [isEditing, initialData, reset])
 
@@ -74,44 +73,44 @@ export function Step3Form({
     append({
       cedula: '',
       nombre: '',
-      nota: 0,
+      nota: 0, // Default to 0 or undefined based on schema preference
       observacion: ''
     })
   }
 
-  const handleEditObservacion = (index: number) => {
-    setEditingObservacion(index)
-  }
-
-  const handleSaveObservacion = () => {
-    setEditingObservacion(null)
-  }
-
-  const handleCancelObservacion = () => {
-    setEditingObservacion(null)
-  }
+  const handleEditObservacion = (index: number) => setEditingObservacion(index)
+  const handleSaveObservacion = () => setEditingObservacion(null)
+  const handleCancelObservacion = () => setEditingObservacion(null)
 
   const tituloPaso =
     tipoInforme === 'INFORME_FINAL_V1' ? 'Registro de Estudiantes (Plan Indígena)' : 'Registro de Estudiantes (Salvaguarda)'
 
   return (
-    <div className="p-6 h-full flex flex-col">
-      {/* Header compacto */}
-      <div className="mb-4">
+    <div className="p-4 md:p-6 h-full flex flex-col">
+      {' '}
+      {/* Consistent padding */}
+      <div className="mb-4 md:mb-6">
+        {' '}
+        {/* Consistent margin */}
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Users className="w-5 h-5" />
-          {tituloPaso}
+          Paso {totalSteps > 0 ? `3 de ${totalSteps}: ` : ''} {/* Step number */}
+          {tituloPaso} {isEditing ? '(Editando)' : ''}
         </h2>
-        <p className="text-muted-foreground text-sm">Registre la información de los estudiantes del programa de salvaguarda</p>
+        <p className="text-muted-foreground text-sm">
+          Registre la información de los estudiantes{' '}
+          {tipoInforme === 'INFORME_FINAL_V1' ? 'del plan indígena' : 'del programa de salvaguarda'}.
+        </p>
       </div>
-
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={formMethods.handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col">
-            {/* Contenido principal */}
-            <div className="flex-1">
+          <form onSubmit={handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col space-y-4">
+            {/* Scrollable content area for the student list card */}
+            <div className="flex-1 space-y-3 md:space-y-4 overflow-y-auto pr-2">
               <Card className="border-primary/20 bg-primary/5 h-fit">
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 pt-4 px-4 md:px-6">
+                  {' '}
+                  {/* Consistent padding */}
                   <CardTitle className="text-base flex items-center justify-between">
                     <span className="flex items-center gap-2">Estudiantes Registrados ({fields.length})</span>
                     <Button
@@ -119,19 +118,21 @@ export function Step3Form({
                       variant="default"
                       size="sm"
                       onClick={addNewStudent}
-                      className="h-8 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-700 dark:hover:bg-emerald-800 text-white"
+                      className="h-8 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white" // Dark mode consistency
                     >
                       <PlusCircle className="h-4 w-4 mr-1" />
                       Añadir
                     </Button>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-3 px-4 pb-4 md:px-6 md:pb-6">
+                  {' '}
+                  {/* Consistent padding */}
                   {fields.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
+                    <div className="text-center py-8 text-muted-foreground border border-dashed border-border/50 rounded-md mt-2">
                       <Users className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p className="text-sm">No hay estudiantes registrados</p>
-                      <p className="text-xs">Haga clic en &quot;Añadir&quot; para agregar un estudiante</p> {/* Changed here */}
+                      <p className="text-xs">Haga clic en &quot;Añadir&quot; para agregar un estudiante</p>
                     </div>
                   ) : (
                     <>
@@ -141,14 +142,14 @@ export function Step3Form({
                         <div className="col-span-4">Nombre Completo</div>
                         <div className="col-span-1">Nota</div>
                         <div className="col-span-4">Observaciones</div>
-                        <div className="col-span-1">Acción</div>
+                        <div className="col-span-1 text-center">Acción</div>
                       </div>
 
                       {/* Filas de estudiantes */}
                       {fields.map((item, index) => (
                         <div
                           key={item.id}
-                          className="grid grid-cols-12 gap-2 p-3 border border-border rounded-md bg-card hover:bg-accent/50 transition-colors"
+                          className="grid grid-cols-12 gap-2 p-3 border border-border rounded-md bg-card hover:bg-accent/50 transition-colors items-center" // Added items-center
                         >
                           {/* Cédula */}
                           <div className="col-span-2">
@@ -165,7 +166,6 @@ export function Step3Form({
                               )}
                             />
                           </div>
-
                           {/* Nombre */}
                           <div className="col-span-4">
                             <FormField
@@ -181,7 +181,6 @@ export function Step3Form({
                               )}
                             />
                           </div>
-
                           {/* Nota */}
                           <div className="col-span-1">
                             <FormField
@@ -195,7 +194,11 @@ export function Step3Form({
                                       placeholder="0-100"
                                       className="h-8 text-xs bg-background"
                                       {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      onChange={(e) => {
+                                        const value = e.target.value
+                                        field.onChange(value === '' ? undefined : parseFloat(value))
+                                      }}
+                                      value={field.value === undefined || field.value === null ? '' : field.value}
                                     />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
@@ -203,7 +206,6 @@ export function Step3Form({
                               )}
                             />
                           </div>
-
                           {/* Observaciones */}
                           <div className="col-span-4">
                             <FormField
@@ -225,7 +227,7 @@ export function Step3Form({
                                             size="sm"
                                             variant="default"
                                             onClick={handleSaveObservacion}
-                                            className="h-6 px-2 text-xs"
+                                            className="h-6 px-2 text-xs bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white" // Standardized save button
                                           >
                                             <Check className="w-3 h-3" />
                                           </Button>
@@ -257,19 +259,17 @@ export function Step3Form({
                               )}
                             />
                           </div>
-
                           {/* Acción - Eliminar */}
                           <div className="col-span-1 flex justify-center items-center">
                             <Button
                               type="button"
-                              variant="ghost" // Use ghost variant for no background
-                              size="icon" // Use icon size for a compact button, or adjust padding if needed
+                              variant="ghost"
+                              size="icon"
                               onClick={() => remove(index)}
-                              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 group" // group class for icon scaling
+                              className="h-8 w-8 p-0 text-red-500 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 group"
                             >
-                              <span className="sr-only">Eliminar estudiante</span> {/* For accessibility */}
-                              <Trash2 className="h-5 w-5 transition-transform duration-150 ease-in-out group-hover:scale-125" />{' '}
-                              {/* Icon scales on parent hover */}
+                              <span className="sr-only">Eliminar estudiante</span>
+                              <Trash2 className="h-5 w-5 transition-transform duration-150 ease-in-out group-hover:scale-125" />
                             </Button>
                           </div>
                         </div>
@@ -280,12 +280,13 @@ export function Step3Form({
               </Card>
             </div>
 
-            {/* Botones de navegación - FIJOS EN LA PARTE INFERIOR */}
-            <div className="flex justify-between pt-6 mt-auto">
+            {/* Navigation Buttons */}
+            <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
+              {' '}
+              {/* Consistent padding and border */}
               <Button type="button" variant="outline" onClick={onPrevious} className="px-8">
                 Anterior
               </Button>
-
               <Button type="submit" className="px-8">
                 Siguiente
               </Button>

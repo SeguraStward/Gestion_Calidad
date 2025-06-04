@@ -68,10 +68,9 @@ export function Step1Form({
   } = useAcademicLoadsByProfessor(
     currentProfessorId,
     {
-      // status: 'ACTIVE', // Considerar si se deben mostrar cargas no activas para selección
       include: 'course,academicCycle,professor,group'
     },
-    { enabled: !!currentProfessorId } // Cargar siempre si hay professorId, para creación y edición
+    { enabled: !!currentProfessorId }
   )
 
   const availableCourses = useMemo((): TransformedAcademicLoad[] => {
@@ -179,9 +178,11 @@ export function Step1Form({
   }
 
   return (
-    <div className="p-6 h-full flex flex-col">
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold">{isEditing ? 'Información del Curso (Edición)' : 'Información del Curso'}</h2>
+    <div className="p-4 md:p-6 h-full flex flex-col">
+      <div className="mb-4 md:mb-6">
+        <h2 className="text-xl font-semibold">
+          {isEditing ? 'Información del Curso (Edición)' : `Paso 1 de ${totalSteps}: Información del Curso`}
+        </h2>
         <p className="text-muted-foreground text-sm">
           {isEditing
             ? 'Verifique o modifique el curso asociado al informe.'
@@ -191,167 +192,169 @@ export function Step1Form({
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={handleSubmit(onSubmitHandler)} className="flex-1 flex flex-col">
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <Card className="border-primary/20 bg-primary/5 h-fit">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Selección de Curso</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={control}
-                      name="nrc" // El Select controla el campo 'nrc'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-medium">
-                            NRC del Curso <span className="text-destructive">*</span>
-                          </FormLabel>
-                          <Select
-                            onValueChange={(value) => {
-                              // Cuando cambia el NRC, actualizamos el campo 'nrc'
-                              // El useEffect se encargará de actualizar los demás campos y 'academicLoadId'
-                              field.onChange(value)
-                            }}
-                            value={field.value || ''}
-                            // No deshabilitar en modo edición para permitir el cambio
-                            disabled={availableCourses.length === 0 && !isLoadingAcademicLoads}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="h-10">
-                                <SelectValue
-                                  placeholder={
-                                    isLoadingAcademicLoads && availableCourses.length === 0
-                                      ? 'Cargando NRCs...'
-                                      : availableCourses.length === 0
-                                        ? 'No hay cursos disponibles'
-                                        : 'Seleccione un NRC...'
-                                  }
-                                />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {availableCourses.map((course) => (
-                                <SelectItem key={course.id} value={course.nrc}>
-                                  {' '}
-                                  {/* Usar course.nrc como value para el Select */}
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">NRC: {course.nrc}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      {course.courseCode} - {course.courseName}
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    {/* Campo oculto o de solo lectura para academicLoadId, se llena por el useEffect */}
-                    <FormField
-                      control={control}
-                      name="academicLoadId"
-                      render={({ field }) => (
-                        <FormItem className="hidden">
-                          {' '}
-                          {/* Opcional: hacerlo visible pero deshabilitado para debug */}
-                          <FormLabel>Academic Load ID</FormLabel>
-                          <FormControl>
-                            <Input {...field} readOnly disabled />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={control}
-                      name="courseName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-medium">Curso</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={control}
-                      name="groupNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-medium">Número de Grupo</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
+          <form onSubmit={handleSubmit(onSubmitHandler)} className="flex-1 flex flex-col space-y-4">
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 overflow-y-auto pr-2">
+              {/* Section 1: Selección de Curso */}
+              <div className="space-y-4 border border-border/20 p-4 rounded-lg bg-card/50">
+                <h3 className="text-base font-medium">Selección de Curso</h3>
+                <FormField
+                  control={control}
+                  name="nrc"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">
+                        NRC del Curso <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value)
+                        }}
+                        value={field.value || ''}
+                        disabled={availableCourses.length === 0 && !isLoadingAcademicLoads}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-10">
+                            <SelectValue
+                              placeholder={
+                                isLoadingAcademicLoads && availableCourses.length === 0
+                                  ? 'Cargando NRCs...'
+                                  : availableCourses.length === 0
+                                    ? 'No hay cursos disponibles'
+                                    : 'Seleccione un NRC...'
+                              }
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableCourses.map((course) => (
+                            <SelectItem key={course.id} value={course.nrc}>
+                              <div className="flex flex-col">
+                                <span className="font-medium">NRC: {course.nrc}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {course.courseCode} - {course.courseName}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {/* Campo oculto o de solo lectura para academicLoadId, se llena por el useEffect */}
+                <FormField
+                  control={control}
+                  name="academicLoadId"
+                  render={({ field }) => (
+                    <FormItem className="hidden">
+                      <FormLabel>Academic Load ID</FormLabel>
+                      <FormControl>
+                        <Input {...field} readOnly disabled />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="courseName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">Curso</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="groupNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">Número de Grupo</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
 
-              <div className="space-y-6">
-                <Card className="border-primary/20 bg-primary/5 h-fit">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Detalles Adicionales</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <FormField
-                      control={control}
-                      name="professorName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-medium">Profesor</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={control}
-                      name="courseCode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-medium">Código de Curso</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={control}
-                      name="groupLevel"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-medium">Nivel de Grupo</FormLabel>
-                          <FormControl>
-                            <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
+              {/* Section 2: Detalles Adicionales */}
+              <div className="space-y-4 border border-border/20 p-4 rounded-lg bg-card/50">
+                <h3 className="text-base font-medium">Detalles Adicionales</h3>
+                <FormField
+                  control={control}
+                  name="professorName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">Profesor</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="courseCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">Código de Curso</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="groupLevel"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">Nivel de Grupo</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value || ''} disabled className="bg-muted/50 h-10" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="enrolledCapacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">Matriculados (según sistema)</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} value={field.value ?? ''} disabled className="bg-muted/50 h-10" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
 
-            <div className="pt-6 mt-auto">
-              <CardFooter className="flex justify-between">
-                {/* Add a Cancel button if onCancel prop is provided */}
-                {onCancel && (
-                  <Button type="button" variant="outline" onClick={onCancel}>
+            {/* Standardized Navigation Buttons Container */}
+            <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
+              <div>
+                {' '}
+                {/* Wrapper for optional cancel/previous button */}
+                {onCancel && !isEditing && (
+                  <Button type="button" variant="outline" onClick={onCancel} className="px-8">
                     Cancelar
                   </Button>
                 )}
-                <Button type="submit" disabled={!selectedAcademicLoadId || formState.isSubmitting} className="px-8">
-                  {isEditing ? 'Guardar y Continuar' : 'Siguiente'}
-                </Button>
-              </CardFooter>
+                {onPrevious && ( // Show Previous if onPrevious is provided (can be create or edit mode)
+                  <Button type="button" variant="outline" onClick={onPrevious} className="px-8">
+                    Anterior
+                  </Button>
+                )}
+              </div>
+              <Button type="submit" disabled={!selectedAcademicLoadId || formState.isSubmitting} className="px-8">
+                {isEditing ? 'Guardar y Continuar' : 'Siguiente'}
+              </Button>
             </div>
           </form>
         </Form>

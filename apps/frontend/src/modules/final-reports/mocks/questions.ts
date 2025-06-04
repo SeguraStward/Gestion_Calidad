@@ -18,15 +18,34 @@ export interface PreguntaPaso5 {
 export const preguntasPaso5Mock: PreguntaPaso5[] = [
   {
     idPregunta: 'logros_alcanzados',
-    pregunta: '¿Cuáles han sido los principales logros alcanzados durante el ciclo académico?'
+    pregunta:
+      '¿Cuáles han sido los principales logros alcanzados durante el ciclo académico en relación con los objetivos del curso?'
   },
   {
     idPregunta: 'dificultades_presentadas',
-    pregunta: '¿Cuáles han sido las principales dificultades presentadas y cómo se abordaron?'
+    pregunta: '¿Cuáles han sido las principales dificultades presentadas por los estudiantes y cómo se abordaron?'
   },
   {
-    idPregunta: 'recomendaciones_mejora',
-    pregunta: '¿Qué recomendaciones podría ofrecer para la mejora continua del curso/programa?'
+    idPregunta: 'aspectos_positivos_curso',
+    pregunta: '¿Qué aspectos positivos destacaría del curso (metodología, recursos, evaluación, etc.)?'
+  },
+  {
+    idPregunta: 'aspectos_a_mejorar_curso',
+    pregunta: '¿Qué aspectos considera que podrían mejorarse en futuras ediciones del curso?'
+  },
+  {
+    idPregunta: 'estrategias_exitosas_ensenanza',
+    pregunta:
+      '¿Qué estrategias de enseñanza o actividades resultaron particularmente exitosas para el aprendizaje de los estudiantes?'
+  },
+  {
+    idPregunta: 'adecuacion_contenidos_tiempo',
+    pregunta: '¿Considera que la cantidad de contenidos fue adecuada para el tiempo disponible en el ciclo?'
+  },
+  {
+    idPregunta: 'recomendaciones_mejora_generales',
+    pregunta:
+      '¿Qué recomendaciones generales podría ofrecer para la mejora continua del proceso de enseñanza-aprendizaje en este curso o programa?'
   }
 ]
 

@@ -45,10 +45,10 @@ export function Step4Form({
   onSaveAndNext,
   onPrevious,
   totalSteps,
-  initialData, // Added initialData
-  isEditing = false // Added isEditing
+  initialData,
+  isEditing = false
 }: Step4FormProps) {
-  const { control, reset } = formMethods // Added reset
+  const { control, reset, handleSubmit } = formMethods // Added handleSubmit
   const [editingObservacion, setEditingObservacion] = useState<number | null>(null)
 
   const { fields, append, remove } = useFieldArray({
@@ -73,44 +73,40 @@ export function Step4Form({
       cedula: '',
       nombre: '',
       apoyo: '',
-      nota: 0,
+      nota: 0, // Default to 0 or undefined
       observacion: ''
     })
   }
 
-  const handleEditObservacion = (index: number) => {
-    setEditingObservacion(index)
-  }
-
-  const handleSaveObservacion = () => {
-    setEditingObservacion(null)
-  }
-
-  const handleCancelObservacion = () => {
-    setEditingObservacion(null)
-  }
+  const handleEditObservacion = (index: number) => setEditingObservacion(index)
+  const handleSaveObservacion = () => setEditingObservacion(null)
+  const handleCancelObservacion = () => setEditingObservacion(null)
 
   const tituloPaso = 'Ajustes Metodológicos y de Evaluación'
 
   return (
-    <div className="p-6 h-full flex flex-col">
-      {/* Header compacto */}
-      <div className="mb-4">
+    <div className="p-4 md:p-6 h-full flex flex-col">
+      {' '}
+      {/* Consistent padding */}
+      <div className="mb-4 md:mb-6">
+        {' '}
+        {/* Consistent margin */}
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Settings className="w-5 h-5" />
-          Paso {totalSteps > 0 ? `3 de ${totalSteps}: ` : ''} {/* Corrected step number display logic */}
+          Paso {totalSteps > 0 ? `4 de ${totalSteps}: ` : ''} {/* Corrected Step number */}
           {tituloPaso} {isEditing ? '(Editando)' : ''}
         </h2>
-        <p className="text-muted-foreground text-sm">Estudiantes que requirieron algún tipo de adecuación o apoyo pedagógico</p>
+        <p className="text-muted-foreground text-sm">Estudiantes que requirieron algún tipo de adecuación o apoyo pedagógico.</p>
       </div>
-
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={formMethods.handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col">
-            {/* Contenido principal */}
-            <div className="flex-1">
+          <form onSubmit={handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col space-y-4">
+            {/* Scrollable content area for the student list card */}
+            <div className="flex-1 space-y-3 md:space-y-4 overflow-y-auto pr-2">
               <Card className="border-primary/20 bg-primary/5 h-fit">
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 pt-4 px-4 md:px-6">
+                  {' '}
+                  {/* Consistent padding */}
                   <CardTitle className="text-base flex items-center justify-between">
                     <span className="flex items-center gap-2">Estudiantes con Ajustes ({fields.length})</span>
                     <Button
@@ -118,16 +114,18 @@ export function Step4Form({
                       variant="default"
                       size="sm"
                       onClick={addNewStudent}
-                      className="h-8 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-700 dark:hover:bg-emerald-800 text-white"
+                      className="h-8 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white" // Dark mode consistency
                     >
                       <PlusCircle className="h-4 w-4 mr-1" />
                       Añadir
                     </Button>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-3 px-4 pb-4 md:px-6 md:pb-6">
+                  {' '}
+                  {/* Consistent padding */}
                   {fields.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
+                    <div className="text-center py-8 text-muted-foreground border border-dashed border-border/50 rounded-md mt-2">
                       <Settings className="w-12 h-12 mx-auto mb-3 opacity-50" />
                       <p className="text-sm">No hay estudiantes con ajustes registrados</p>
                       <p className="text-xs">Haga clic en &quot;Añadir&quot; para agregar un estudiante</p>
@@ -135,20 +133,22 @@ export function Step4Form({
                   ) : (
                     <>
                       {/* Header de la tabla */}
-                      <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-slate-100/50 dark:bg-slate-800/30 rounded-md text-xs font-medium text-muted-foreground">
+                      <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-muted/50 dark:bg-muted/20 rounded-md text-xs font-medium text-muted-foreground">
+                        {' '}
+                        {/* Standardized background */}
                         <div className="col-span-2">Cédula</div>
                         <div className="col-span-3">Nombre Completo</div>
                         <div className="col-span-2">Tipo de Apoyo</div>
                         <div className="col-span-1">Nota</div>
                         <div className="col-span-3">Observaciones</div>
-                        <div className="col-span-1 text-center">Acción</div> {/* Centered Action Header */}
+                        <div className="col-span-1 text-center">Acción</div>
                       </div>
 
                       {/* Filas de estudiantes */}
                       {fields.map((item, index) => (
                         <div
-                          key={item.id} // Use item.id which is managed by useFieldArray
-                          className="grid grid-cols-12 gap-2 p-3 border border-slate-200 dark:border-slate-700 rounded-md bg-card hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors items-center" // Added items-center
+                          key={item.id}
+                          className="grid grid-cols-12 gap-2 p-3 border border-border rounded-md bg-card hover:bg-accent/50 transition-colors items-center" // Standardized border and hover
                         >
                           {/* Cédula */}
                           <div className="col-span-2">
@@ -165,7 +165,6 @@ export function Step4Form({
                               )}
                             />
                           </div>
-
                           {/* Nombre */}
                           <div className="col-span-3">
                             <FormField
@@ -181,7 +180,6 @@ export function Step4Form({
                               )}
                             />
                           </div>
-
                           {/* Tipo de Apoyo */}
                           <div className="col-span-2">
                             <FormField
@@ -197,7 +195,6 @@ export function Step4Form({
                               )}
                             />
                           </div>
-
                           {/* Nota */}
                           <div className="col-span-1">
                             <FormField
@@ -213,10 +210,8 @@ export function Step4Form({
                                       {...field}
                                       onChange={(e) => {
                                         const value = e.target.value
-                                        // Allow empty string for clearing, otherwise parse to float
                                         field.onChange(value === '' ? undefined : parseFloat(value))
                                       }}
-                                      // Ensure value is a number for the input type="number" or empty string
                                       value={field.value === undefined || field.value === null ? '' : field.value}
                                     />
                                   </FormControl>
@@ -225,7 +220,6 @@ export function Step4Form({
                               )}
                             />
                           </div>
-
                           {/* Observaciones */}
                           <div className="col-span-3">
                             <FormField
@@ -247,7 +241,7 @@ export function Step4Form({
                                             size="sm"
                                             variant="default"
                                             onClick={handleSaveObservacion}
-                                            className="h-6 px-2 text-xs bg-emerald-500 hover:bg-emerald-600"
+                                            className="h-6 px-2 text-xs bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white" // Standardized save button
                                           >
                                             <Check className="w-3 h-3" />
                                           </Button>
@@ -279,11 +273,8 @@ export function Step4Form({
                               )}
                             />
                           </div>
-
                           {/* Acción - Eliminar */}
                           <div className="col-span-1 flex justify-center items-center">
-                            {' '}
-                            {/* Centered Trash Icon */}
                             <Button
                               type="button"
                               variant="ghost"
@@ -303,12 +294,13 @@ export function Step4Form({
               </Card>
             </div>
 
-            {/* Botones de navegación - FIJOS EN LA PARTE INFERIOR */}
-            <div className="flex justify-between pt-6 mt-auto">
+            {/* Navigation Buttons */}
+            <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
+              {' '}
+              {/* Consistent padding and border */}
               <Button type="button" variant="outline" onClick={onPrevious} className="px-8">
                 Anterior
               </Button>
-
               <Button type="submit" className="px-8">
                 Siguiente
               </Button>

@@ -13,8 +13,10 @@ import { Step1Form, step1Schema, Step1FormData } from '@/modules/final-reports/c
 import { Step2Form, step2Schema, Step2FormData } from '@/modules/final-reports/components/form-step2'
 import { Step3Form, step3Schema, Step3FormData } from '@/modules/final-reports/components/form-step3'
 import { Step4Form, step4Schema, Step4FormData } from '@/modules/final-reports/components/form-step4'
-import { Step5Form, step5Schema, Step5FormData, preguntasPaso5FormMock } from '@/modules/final-reports/components/form-step5'
-import { Step6Form, step6Schema, Step6FormData, preguntasPaso6FormMock } from '@/modules/final-reports/components/form-step6'
+import { Step5Form, step5Schema, Step5FormData } from '@/modules/final-reports/components/form-step5' // Add Step5Form to this import
+// Ensure you import the correct mock data for Step 5
+import { preguntasPaso5Mock } from '@/modules/final-reports/mocks/questions'
+import { Step6Form, step6Schema, Step6FormData } from '@/modules/final-reports/components/form-step6' // Add Step6Form to this import
 import { Step7Form, step7Schema, Step7FormData, preguntasPaso7FormMock } from '@/modules/final-reports/components/form-step7'
 import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header' // Import the new header
 
@@ -61,7 +63,7 @@ export default function NewFinalReportPage() {
   })
   const formStep5Methods = useForm<Step5FormData>({
     resolver: zodResolver(step5Schema),
-    defaultValues: { respuestas: preguntasPaso5FormMock.map((p) => ({ idPregunta: p.idPregunta, respuesta: '' })) }
+    defaultValues: { respuestas: preguntasPaso5Mock.map((p) => ({ idPregunta: p.idPregunta, respuesta: '' })) }
   })
   const formStep6Methods = useForm<Step6FormData>({
     resolver: zodResolver(step6Schema),
