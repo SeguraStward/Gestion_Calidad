@@ -32,7 +32,7 @@ const triggerLogoutProcedures = () => {
 
 class HttpClientClass {
   private instance: AxiosInstance
-  private readonly BASE_API_URL = process.env.PUBLIC_API_URL
+  private readonly BASE_API_URL = process.env.NEXT_PUBLIC_API_URL
   private readonly REFRESH_TOKEN_URL = `${this.BASE_API_URL}/auth/refresh`
   private readonly LOGOUT_URL = `${this.BASE_API_URL}/auth/logout` // URL para el endpoint de logout del backend
 
