@@ -22,8 +22,8 @@ const FULL_INCLUDE: Prisma.AcademicLoadInclude = {
       fullLastName: true,
       email: true,
       photoUrl: true,
-      status: true
-    }
+      status: true,
+    },
   },
   finalReport: true,
 };
@@ -106,9 +106,9 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
     status?: Status,
     orderBy?: Prisma.AcademicLoadOrderByWithRelationInput,
   ): Promise<PaginatedResponse<AcademicLoadDto>> {
-    const where: Prisma.AcademicLoadWhereInput = { 
+    const where: Prisma.AcademicLoadWhereInput = {
       professorId,
-      ...(status && { status })
+      ...(status && { status }),
     };
     return super.findAll(page, limit, where, orderBy, FULL_INCLUDE);
   }

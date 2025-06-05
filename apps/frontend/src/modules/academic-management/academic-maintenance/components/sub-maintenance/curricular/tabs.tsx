@@ -37,7 +37,6 @@ export function CurricularMaintenanceTabs({ loading, SkeletonCrud }: Props) {
         <AssignmentCrud />
       </CrudTabPanel> 
       */}
-      
     </Tabs>
   )
 }

@@ -9,17 +9,17 @@ export function useRegionalCenterFormData() {
     queryKey: ['campuses'],
     queryFn: async () => {
       const response = await HttpClient.get('/campuses', {
-        params: { 
+        params: {
           status: 'ACTIVE',
           limit: 100
         }
-      });
-      return response.data.data;
+      })
+      return response.data.data
     }
-  });
+  })
 
   return {
     campuses: campuses || [],
-    isLoadingCampuses,
-  };
-} 
+    isLoadingCampuses
+  }
+}

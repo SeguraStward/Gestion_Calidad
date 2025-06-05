@@ -42,12 +42,6 @@ export class RegionalCentersController extends GenericController<RegionalCenterD
     const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
     const prismaInclude = buildPrismaInclude(includeQueryParam);
 
-    return this.regionalCentersService.findAllByCampusId(
-      campusId,
-      page,
-      limit,
-      status,
-      parsedOrderBy
-    );
+    return this.regionalCentersService.findAllByCampusId(campusId, page, limit, status, parsedOrderBy);
   }
 }

@@ -44,15 +44,15 @@ export function AlertMessage({
   const handleConfirm = () => {
     if (onConfirm) {
       try {
-        onConfirm();
+        onConfirm()
       } catch (error) {
-        console.error('Error en onConfirm:', error);
+        console.error('Error en onConfirm:', error)
       }
     }
-    
+
     // Solo cerramos el diálogo si no es controlado externamente
     if (!isControlled) {
-      setOpen(false);
+      setOpen(false)
     }
   }
 

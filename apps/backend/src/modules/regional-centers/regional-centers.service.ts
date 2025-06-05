@@ -71,9 +71,9 @@ export class RegionalCentersService extends GenericService<
     status?: Status,
     orderBy?: Prisma.RegionalCenterOrderByWithRelationInput,
   ): Promise<PaginatedResponse<RegionalCenterDto>> {
-    const where: Prisma.RegionalCenterWhereInput = { 
+    const where: Prisma.RegionalCenterWhereInput = {
       campuses: { some: { id: campusId } },
-      ...(status && { status })
+      ...(status && { status }),
     };
     return super.findAll(page, limit, where, orderBy, FULL_INCLUDE);
   }

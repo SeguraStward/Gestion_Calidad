@@ -1,44 +1,42 @@
-import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
-import { academicLoadService } from '../services/academic-load.service';
+import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import { academicLoadService } from '../services/academic-load.service'
 
 // Define types for form data
 interface FormDataItem {
-  id: string;
-  name: string;
-  [key: string]: any;
+  id: string
+  name: string
+  [key: string]: any
 }
 
 interface FormData {
-  courses: FormDataItem[];
-  isLoadingCourses: boolean;
-  professors: FormDataItem[];
-  isLoadingProfessors: boolean;
-  academicCycles: FormDataItem[];
-  isLoadingAcademicCycles: boolean;
-  campuses: FormDataItem[];
-  isLoadingCampuses: boolean;
-  groups: FormDataItem[];
-  isLoadingGroups: boolean;
-  classrooms: FormDataItem[];
-  isLoadingClassrooms: boolean;
-  schedules: FormDataItem[];
-  isLoadingSchedules: boolean;
+  courses: FormDataItem[]
+  isLoadingCourses: boolean
+  professors: FormDataItem[]
+  isLoadingProfessors: boolean
+  academicCycles: FormDataItem[]
+  isLoadingAcademicCycles: boolean
+  campuses: FormDataItem[]
+  isLoadingCampuses: boolean
+  groups: FormDataItem[]
+  isLoadingGroups: boolean
+  classrooms: FormDataItem[]
+  isLoadingClassrooms: boolean
+  schedules: FormDataItem[]
+  isLoadingSchedules: boolean
 }
 
 // Helper function to fetch and transform data
 async function fetchAndTransformData(endpoint: string, transform: (item: any) => FormDataItem) {
   try {
-    const res = await academicLoadService.list({ include: endpoint });
+    const res = await academicLoadService.list({ include: endpoint })
     return res.data
       .map((item: any) => transform(item[endpoint]))
       .filter(Boolean)
-      .filter((item: FormDataItem, index: number, self: FormDataItem[]) => 
-        index === self.findIndex((t) => t.id === item.id)
-      );
+      .filter((item: FormDataItem, index: number, self: FormDataItem[]) => index === self.findIndex((t) => t.id === item.id))
   } catch (error) {
-    console.error(`Error fetching ${endpoint}:`, error);
-    return [];
+    console.error(`Error fetching ${endpoint}:`, error)
+    return []
   }
 }
 
@@ -83,67 +81,77 @@ const transforms = {
     startTime: schedule.startTime,
     endTime: schedule.endTime
   })
-};
+}
 
 export function useAcademicLoadFormData(): FormData {
   // Fetch all required data in parallel
   const { data: courses = [], isLoading: isLoadingCourses } = useQuery({
     queryKey: ['courses'],
     queryFn: () => fetchAndTransformData('course', transforms.course)
-  });
+  })
 
   const { data: professors = [], isLoading: isLoadingProfessors } = useQuery({
     queryKey: ['professors'],
     queryFn: () => fetchAndTransformData('professor', transforms.professor)
-  });
+  })
 
   const { data: academicCycles = [], isLoading: isLoadingAcademicCycles } = useQuery({
     queryKey: ['academicCycles'],
     queryFn: () => fetchAndTransformData('academicCycle', transforms.academicCycle)
-  });
+  })
 
   const { data: campuses = [], isLoading: isLoadingCampuses } = useQuery({
     queryKey: ['campuses'],
     queryFn: () => fetchAndTransformData('campus', transforms.campus)
-  });
+  })
 
   const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
     queryKey: ['groups'],
     queryFn: () => fetchAndTransformData('group', transforms.group)
-  });
+  })
 
   const { data: classrooms = [], isLoading: isLoadingClassrooms } = useQuery({
     queryKey: ['classrooms'],
     queryFn: () => fetchAndTransformData('classroom', transforms.classroom)
-  });
+  })
 
   const { data: schedules = [], isLoading: isLoadingSchedules } = useQuery({
     queryKey: ['schedules'],
     queryFn: () => fetchAndTransformData('schedule', transforms.schedule)
-  });
+  })
 
-  return useMemo(() => ({
-    courses,
-    isLoadingCourses,
-    professors,
-    isLoadingProfessors,
-    academicCycles,
-    isLoadingAcademicCycles,
-    campuses,
-    isLoadingCampuses,
-    groups,
-    isLoadingGroups,
-    classrooms,
-    isLoadingClassrooms,
-    schedules,
-    isLoadingSchedules,
-  }), [
-    courses, isLoadingCourses,
-    professors, isLoadingProfessors,
-    academicCycles, isLoadingAcademicCycles,
-    campuses, isLoadingCampuses,
-    groups, isLoadingGroups,
-    classrooms, isLoadingClassrooms,
-    schedules, isLoadingSchedules,
-  ]);
+  return useMemo(
+    () => ({
+      courses,
+      isLoadingCourses,
+      professors,
+      isLoadingProfessors,
+      academicCycles,
+      isLoadingAcademicCycles,
+      campuses,
+      isLoadingCampuses,
+      groups,
+      isLoadingGroups,
+      classrooms,
+      isLoadingClassrooms,
+      schedules,
+      isLoadingSchedules
+    }),
+    [
+      courses,
+      isLoadingCourses,
+      professors,
+      isLoadingProfessors,
+      academicCycles,
+      isLoadingAcademicCycles,
+      campuses,
+      isLoadingCampuses,
+      groups,
+      isLoadingGroups,
+      classrooms,
+      isLoadingClassrooms,
+      schedules,
+      isLoadingSchedules
+    ]
+  )
 }
