@@ -1,15 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-  CrudModuleBase, 
-  ColumnUtilities 
-} from '@/app/(components)/crud/crud-module-base'
+import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
+import { CrudFormAdapter, FormSection } from '@/app/(components)/crud/crud-form-adapter'
 import {
-  CrudFormAdapter,
-  FormSection
-} from '@/app/(components)/crud/crud-form-adapter'
-import { 
   useAcademicLoadList,
   useCreateAcademicLoad,
   useUpdateAcademicLoad,
@@ -17,28 +11,24 @@ import {
   useAcademicLoadOne
 } from '../hooks/useAcademicLoadCrud'
 import { useAcademicLoadFormData } from '../hooks/useAcademicLoad'
-import type {
-  AcademicLoadWithRelations,
-  CreateAcademicLoadInput,
-  UpdateAcademicLoadInput,
-} from '../types/academic-load'
+import type { AcademicLoadWithRelations, CreateAcademicLoadInput, UpdateAcademicLoadInput } from '../types/academic-load'
 import { Status } from '@una-gc/database/prisma/generated/client'
 import { ColumnDef } from '@tanstack/react-table'
-import { 
-  BookOpen, 
-  Users, 
-  Building, 
-  CalendarDays, 
-  UsersRound, 
-  Hash, 
-  Clock, 
-  DoorOpen, 
+import {
+  BookOpen,
+  Users,
+  Building,
+  CalendarDays,
+  UsersRound,
+  Hash,
+  Clock,
+  DoorOpen,
   Pencil,
   Trash2,
   MoreHorizontal,
   Loader2
 } from 'lucide-react'
-import { 
+import {
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -60,7 +50,7 @@ export const AcademicLoadPage = () => {
     {
       accessorKey: 'nrc',
       header: 'NRC',
-      size: 100,
+      size: 100
     },
     {
       accessorKey: 'course.name',
@@ -113,8 +103,15 @@ export const AcademicLoadPage = () => {
       cell: ({ row }) => {
         const status = row.original.status
         return (
-          <Badge variant={status === Status.ACTIVE ? "outline" : "secondary"} className={status === Status.ACTIVE ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800" : ""}>
-            {status === Status.ACTIVE ? "Activo" : "Inactivo"}
+          <Badge
+            variant={status === Status.ACTIVE ? 'outline' : 'secondary'}
+            className={
+              status === Status.ACTIVE
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                : ''
+            }
+          >
+            {status === Status.ACTIVE ? 'Activo' : 'Inactivo'}
           </Badge>
         )
       }
@@ -160,14 +157,20 @@ export const AcademicLoadPage = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      )    }
-  ];
-  
+      )
+    }
+  ]
+
   const renderForm = (props: any) => {
-    const formData = formDataProps;
-    
+    const formData = formDataProps
+
     // Define las secciones del formulario
-    const getSections = ({ control, errors, editingItem, isUpdate }: any): FormSection<CreateAcademicLoadInput | UpdateAcademicLoadInput>[] => [
+    const getSections = ({
+      control,
+      errors,
+      editingItem,
+      isUpdate
+    }: any): FormSection<CreateAcademicLoadInput | UpdateAcademicLoadInput>[] => [
       {
         title: 'Información Básica',
         fields: [
@@ -184,7 +187,7 @@ export const AcademicLoadPage = () => {
             label: 'Capacidad Máxima',
             required: true,
             min: 0,
-            className: 'col-span-1',
+            className: 'col-span-1'
           },
           {
             type: 'number',
@@ -192,14 +195,14 @@ export const AcademicLoadPage = () => {
             label: 'Matriculados',
             required: true,
             min: 0,
-            className: 'col-span-1',
+            className: 'col-span-1'
           },
           {
             type: 'number',
             name: 'availableSeats',
             label: 'Cupos Disponibles',
             disabled: true,
-            className: 'col-span-1',
+            className: 'col-span-1'
           }
         ]
       },
@@ -211,18 +214,18 @@ export const AcademicLoadPage = () => {
             name: 'courseId',
             label: 'Curso',
             required: true,
-            options: formData.courses.map(c => ({ id: c.id, name: c.name })),
+            options: formData.courses.map((c) => ({ id: c.id, name: c.name })),
             isLoading: formData.isLoadingCourses,
-            placeholder: formData.isLoadingCourses ? "Cargando cursos..." : "Seleccionar curso"
+            placeholder: formData.isLoadingCourses ? 'Cargando cursos...' : 'Seleccionar curso'
           },
           {
             type: 'select',
             name: 'professorId',
             label: 'Profesor',
             required: true,
-            options: formData.professors.map(p => ({ id: p.id, name: p.name })),
+            options: formData.professors.map((p) => ({ id: p.id, name: p.name })),
             isLoading: formData.isLoadingProfessors,
-            placeholder: formData.isLoadingProfessors ? "Cargando profesores..." : "Seleccionar profesor"
+            placeholder: formData.isLoadingProfessors ? 'Cargando profesores...' : 'Seleccionar profesor'
           }
         ]
       },
@@ -234,18 +237,18 @@ export const AcademicLoadPage = () => {
             name: 'academicCycleId',
             label: 'Ciclo Académico',
             required: true,
-            options: formData.academicCycles.map(ac => ({ id: ac.id, name: ac.name })),
+            options: formData.academicCycles.map((ac) => ({ id: ac.id, name: ac.name })),
             isLoading: formData.isLoadingAcademicCycles,
-            placeholder: formData.isLoadingAcademicCycles ? "Cargando ciclos..." : "Seleccionar ciclo académico"
+            placeholder: formData.isLoadingAcademicCycles ? 'Cargando ciclos...' : 'Seleccionar ciclo académico'
           },
           {
             type: 'select',
             name: 'campusId',
             label: 'Campus',
             required: true,
-            options: formData.campuses.map(c => ({ id: c.id, name: c.name })),
+            options: formData.campuses.map((c) => ({ id: c.id, name: c.name })),
             isLoading: formData.isLoadingCampuses,
-            placeholder: formData.isLoadingCampuses ? "Cargando campus..." : "Seleccionar campus"
+            placeholder: formData.isLoadingCampuses ? 'Cargando campus...' : 'Seleccionar campus'
           }
         ]
       },
@@ -257,17 +260,17 @@ export const AcademicLoadPage = () => {
             name: 'groupId',
             label: 'Grupo',
             required: true,
-            options: formData.groups.map(g => ({ id: g.id, name: g.name })),
+            options: formData.groups.map((g) => ({ id: g.id, name: g.name })),
             isLoading: formData.isLoadingGroups,
-            placeholder: formData.isLoadingGroups ? "Cargando grupos..." : "Seleccionar grupo"
+            placeholder: formData.isLoadingGroups ? 'Cargando grupos...' : 'Seleccionar grupo'
           },
           {
             type: 'select',
             name: 'classroomId',
             label: 'Aula (Opcional)',
-            options: formData.classrooms.map(cl => ({ id: cl.id, name: cl.name })),
+            options: formData.classrooms.map((cl) => ({ id: cl.id, name: cl.name })),
             isLoading: formData.isLoadingClassrooms,
-            placeholder: formData.isLoadingClassrooms ? "Cargando aulas..." : "Seleccionar aula"
+            placeholder: formData.isLoadingClassrooms ? 'Cargando aulas...' : 'Seleccionar aula'
           }
         ]
       },
@@ -278,16 +281,16 @@ export const AcademicLoadPage = () => {
             type: 'select',
             name: 'scheduleId',
             label: 'Horario (Opcional)',
-            options: formData.schedules.map(s => ({ id: s.id, name: s.name })),
+            options: formData.schedules.map((s) => ({ id: s.id, name: s.name })),
             isLoading: formData.isLoadingSchedules,
-            placeholder: formData.isLoadingSchedules ? "Cargando horarios..." : "Seleccionar horario"
+            placeholder: formData.isLoadingSchedules ? 'Cargando horarios...' : 'Seleccionar horario'
           },
           {
             type: 'select',
             name: 'status',
             label: 'Estado',
             required: true,
-            options: Object.values(Status).map(s => ({ id: s, name: s === Status.ACTIVE ? "Activo" : "Inactivo" }))
+            options: Object.values(Status).map((s) => ({ id: s, name: s === Status.ACTIVE ? 'Activo' : 'Inactivo' }))
           }
         ]
       },
@@ -313,17 +316,21 @@ export const AcademicLoadPage = () => {
           }
         ]
       }
-    ];
+    ]
 
     // Usar el adaptador de formularios
     return (
       <CrudFormAdapter
         {...props}
         title={props.isUpdate ? 'Editar Carga Académica' : 'Crear Nueva Carga Académica'}
-        description={props.isUpdate ? 'Actualice los datos de la carga académica' : 'Complete los datos para registrar una nueva carga académica'}
+        description={
+          props.isUpdate
+            ? 'Actualice los datos de la carga académica'
+            : 'Complete los datos para registrar una nueva carga académica'
+        }
         sections={getSections}
       />
-    );
+    )
   }
 
   const crudConfig = {
@@ -347,7 +354,7 @@ export const AcademicLoadPage = () => {
       classroomId: null,
       groupId: '',
       scheduleId: null,
-      professorId: '',
+      professorId: ''
     } as CreateAcademicLoadInput,
     renderForm,
     renderColumns,
@@ -361,10 +368,10 @@ export const AcademicLoadPage = () => {
         classroomId: item.classroomId,
         groupId: item.groupId,
         scheduleId: item.scheduleId,
-        professorId: item.professorId,
-      } as UpdateAcademicLoadInput;
-    },
-  };
+        professorId: item.professorId
+      } as UpdateAcademicLoadInput
+    }
+  }
 
-  return <CrudModuleBase {...crudConfig} />;
-};
+  return <CrudModuleBase {...crudConfig} />
+}

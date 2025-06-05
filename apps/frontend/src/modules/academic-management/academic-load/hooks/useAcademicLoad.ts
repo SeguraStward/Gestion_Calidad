@@ -1,10 +1,4 @@
-import {
-  SimpleCourse,
-  SimpleProfessor,
-  AcademicCycle,
-  AcademicLoadGroup,
-  Schedule,
-} from '../types/academic-load' // Adjusted path
+import { SimpleCourse, SimpleProfessor, AcademicCycle, AcademicLoadGroup, Schedule } from '../types/academic-load' // Adjusted path
 import * as academicLoadService from '../services/academic-load.service'
 import { useEffect, useState } from 'react'
 import type { CampusWithRelations } from '@/modules/academic-management/academic-maintenance/types/institutional/campus'
@@ -39,7 +33,7 @@ export const useAcademicLoadFormData = () => {
     campuses: [],
     classrooms: [],
     groups: [],
-    schedules: [],
+    schedules: []
   })
 
   const [loadingStates, setLoadingStates] = useState<AcademicLoadFormDataLoadingStates>({
@@ -50,7 +44,7 @@ export const useAcademicLoadFormData = () => {
     isLoadingClassrooms: true,
     isLoadingGroups: true,
     isLoadingSchedules: true,
-    isLoadingAll: true,
+    isLoadingAll: true
   })
 
   useEffect(() => {
@@ -58,37 +52,30 @@ export const useAcademicLoadFormData = () => {
       try {
         setLoadingStates((prev) => ({ ...prev, isLoadingAll: true }))
 
-        const [
-          coursesData,
-          professorsData,
-          academicCyclesData,
-          campusesData,
-          classroomsData,
-          groupsData,
-          schedulesData,
-        ] = await Promise.all([
-          academicLoadService
-            .fetchSimplifiedCourses()
-            .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingCourses: false }))),
-          academicLoadService
-            .fetchSimplifiedProfessors()
-            .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingProfessors: false }))),
-          academicLoadService
-            .fetchAcademicCycles()
-            .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingAcademicCycles: false }))),
-          academicLoadService
-            .fetchCampuses()
-            .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingCampuses: false }))),
-          academicLoadService
-            .fetchClassrooms()
-            .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingClassrooms: false }))),
-          academicLoadService
-            .fetchAcademicLoadGroups()
-            .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingGroups: false }))),
-          academicLoadService
-            .fetchSchedules()
-            .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingSchedules: false }))),
-        ])
+        const [coursesData, professorsData, academicCyclesData, campusesData, classroomsData, groupsData, schedulesData] =
+          await Promise.all([
+            academicLoadService
+              .fetchSimplifiedCourses()
+              .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingCourses: false }))),
+            academicLoadService
+              .fetchSimplifiedProfessors()
+              .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingProfessors: false }))),
+            academicLoadService
+              .fetchAcademicCycles()
+              .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingAcademicCycles: false }))),
+            academicLoadService
+              .fetchCampuses()
+              .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingCampuses: false }))),
+            academicLoadService
+              .fetchClassrooms()
+              .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingClassrooms: false }))),
+            academicLoadService
+              .fetchAcademicLoadGroups()
+              .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingGroups: false }))),
+            academicLoadService
+              .fetchSchedules()
+              .finally(() => setLoadingStates((prev) => ({ ...prev, isLoadingSchedules: false })))
+          ])
 
         setFormData({
           courses: coursesData || [],
@@ -97,7 +84,7 @@ export const useAcademicLoadFormData = () => {
           campuses: campusesData || [],
           classrooms: classroomsData || [],
           groups: groupsData || [],
-          schedules: schedulesData || [],
+          schedules: schedulesData || []
         })
       } catch (error) {
         console.error('Failed to fetch academic load form data:', error)

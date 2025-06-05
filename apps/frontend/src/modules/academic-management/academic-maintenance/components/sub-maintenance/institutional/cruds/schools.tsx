@@ -24,9 +24,12 @@ import {
 } from '@/modules/academic-management/academic-maintenance/hooks/institutional/useSchool'
 import { useListFaculties } from '@/modules/academic-management/academic-maintenance/hooks/institutional/useFaculty'
 // Mocks for related entities - replace with actual hooks when available
-// import { useListCourses } from '@/modules/academic-management/curriculum/hooks/useCourse' 
+// import { useListCourses } from '@/modules/academic-management/curriculum/hooks/useCourse'
 // import { useListCareers } from '@/modules/academic-management/curriculum/hooks/useCareer'
-import { CreateSchoolInput, SchoolWithRelations } from '@/modules/academic-management/academic-maintenance/types/institutional/school'
+import {
+  CreateSchoolInput,
+  SchoolWithRelations
+} from '@/modules/academic-management/academic-maintenance/types/institutional/school'
 import { Status } from '@una-gc/database/prisma/generated/client'
 
 // Mock data and hooks if related entity hooks don't exist yet
@@ -40,139 +43,156 @@ const defaultValues: CreateSchoolInput = {
   status: Status.ACTIVE,
   faculty: { connect: { id: '' } },
   courses: { connect: [] },
-  career: { connect: [] }, // Assuming career is an array of connections based on CreateSchoolInput
-};
+  career: { connect: [] } // Assuming career is an array of connections based on CreateSchoolInput
+}
 
 export default function SchoolCrud() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [idAEliminar, setIdAEliminar] = useState<string | null>(null)
-  const prevIdRef = useRef<string | null>(null); 
+  const prevIdRef = useRef<string | null>(null)
 
   const { data: schools, refetch, isLoading: isLoadingList } = useListSchools()
 
-  const processedSchools = useMemo(() =>
-    schools
-      ? schools.map(school => ({
-          ...school,
-          id: school.id || (school as any)._id, // Handle both id formats
-          faculty: school.faculty || null,
-          courses: school.courses || [],
-          career: school.career || [] // Ensure career is an array
-        }))
-      : [], [schools])
+  const processedSchools = useMemo(
+    () =>
+      schools
+        ? schools.map((school) => ({
+            ...school,
+            id: school.id || (school as any)._id, // Handle both id formats
+            faculty: school.faculty || null,
+            courses: school.courses || [],
+            career: school.career || [] // Ensure career is an array
+          }))
+        : [],
+    [schools]
+  )
 
   useEffect(() => {
-    console.log('Schools data:', schools);
-    console.log('Processed Schools data:', processedSchools);
-  }, [schools, processedSchools]);
+    console.log('Schools data:', schools)
+    console.log('Processed Schools data:', processedSchools)
+  }, [schools, processedSchools])
 
-  const { mutate: createSchool, isLoading: isCreating, error: createError } = useCreateSchool({
+  const {
+    mutate: createSchool,
+    isLoading: isCreating,
+    error: createError
+  } = useCreateSchool({
     onSuccess: async () => {
-      toast.success('Escuela creada exitosamente');
-      await refetch();
-      reset(defaultValues);
+      toast.success('Escuela creada exitosamente')
+      await refetch()
+      reset(defaultValues)
     },
     onError: (error: any) => {
-      console.error('Error al crear escuela:', error);
-      toast.error(`Error al crear: ${error.message || 'Error desconocido'}`);
+      console.error('Error al crear escuela:', error)
+      toast.error(`Error al crear: ${error.message || 'Error desconocido'}`)
     }
-  });
+  })
 
-  const { mutate: updateSchool, isLoading: isUpdating, error: updateError } = useUpdateSchool({
+  const {
+    mutate: updateSchool,
+    isLoading: isUpdating,
+    error: updateError
+  } = useUpdateSchool({
     onSuccess: async () => {
-      toast.success('Escuela actualizada exitosamente');
-      setEditingId(null);
-      await refetch();
-      reset(defaultValues);
+      toast.success('Escuela actualizada exitosamente')
+      setEditingId(null)
+      await refetch()
+      reset(defaultValues)
     },
     onError: (error: any) => {
-      console.error('Error al actualizar escuela:', error);
-      toast.error(`Error al actualizar: ${error.message || 'Error desconocido'}`);
+      console.error('Error al actualizar escuela:', error)
+      toast.error(`Error al actualizar: ${error.message || 'Error desconocido'}`)
     }
-  });
+  })
 
   const { mutate: removeSchool, isLoading: isRemoving } = useRemoveSchool({
     onSuccess: async () => {
-      toast.success('Escuela eliminada exitosamente');
-      await refetch();
+      toast.success('Escuela eliminada exitosamente')
+      await refetch()
     },
     onError: (error: any) => {
-      console.error('Error al eliminar escuela:', error);
-      toast.error(`Error al eliminar: ${error.message || 'Error desconocido'}`);
+      console.error('Error al eliminar escuela:', error)
+      toast.error(`Error al eliminar: ${error.message || 'Error desconocido'}`)
     }
-  });
+  })
 
   const { data: editingItem } = useOneSchool(editingId || '', undefined, {
     enabled: !!editingId
-  });
+  })
 
-  const { data: facultiesResponse, isLoading: loadingFaculties } = useListFaculties();
-  const facultiesData = useMemo(() => facultiesResponse || [], [facultiesResponse]);
+  const { data: facultiesResponse, isLoading: loadingFaculties } = useListFaculties()
+  const facultiesData = useMemo(() => facultiesResponse || [], [facultiesResponse])
 
   // Mocks - replace with actual hooks
-  const { data: coursesResponse, isLoading: loadingCourses } = useListCourses();
-  const coursesData = useMemo(() => coursesResponse?.data || [], [coursesResponse]);
+  const { data: coursesResponse, isLoading: loadingCourses } = useListCourses()
+  const coursesData = useMemo(() => coursesResponse?.data || [], [coursesResponse])
 
-  const { data: careersResponse, isLoading: loadingCareers } = useListCareers();
-  const careersData = useMemo(() => careersResponse?.data || [], [careersResponse]);
+  const { data: careersResponse, isLoading: loadingCareers } = useListCareers()
+  const careersData = useMemo(() => careersResponse?.data || [], [careersResponse])
 
-  const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<CreateSchoolInput>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors }
+  } = useForm<CreateSchoolInput>({
     defaultValues
-  });
+  })
 
   useEffect(() => {
     if (editingId !== prevIdRef.current) {
-        prevIdRef.current = editingId;
-        if (editingId && editingItem) {
-            reset({
-                code: editingItem.code,
-                name: editingItem.name || '',
-                description: editingItem.description || '',
-                status: editingItem.status || Status.ACTIVE,
-                faculty: { 
-                connect: { id: editingItem.faculty?.id || '' } 
-                },
-                courses: {
-                connect: editingItem.courses?.map((c) => ({ id: c.id })) || []
-                },
-                career: {
-                connect: editingItem.career?.map((cr) => ({ id: cr.id })) || []
-                }
-            });
-        } else if (!editingId) {
-            reset(defaultValues);
-        }
+      prevIdRef.current = editingId
+      if (editingId && editingItem) {
+        reset({
+          code: editingItem.code,
+          name: editingItem.name || '',
+          description: editingItem.description || '',
+          status: editingItem.status || Status.ACTIVE,
+          faculty: {
+            connect: { id: editingItem.faculty?.id || '' }
+          },
+          courses: {
+            connect: editingItem.courses?.map((c) => ({ id: c.id })) || []
+          },
+          career: {
+            connect: editingItem.career?.map((cr) => ({ id: cr.id })) || []
+          }
+        })
+      } else if (!editingId) {
+        reset(defaultValues)
+      }
     }
-  }, [editingId, editingItem, reset]);
+  }, [editingId, editingItem, reset])
 
   const onSubmit = (data: CreateSchoolInput) => {
     try {
       const payload: CreateSchoolInput = {
         ...data,
-        faculty: data.faculty?.connect?.id ? { connect: { id: data.faculty.connect.id } } : { connect: {id: ''} },
+        faculty: data.faculty?.connect?.id ? { connect: { id: data.faculty.connect.id } } : { connect: { id: '' } },
         courses: {
-          connect: (data.courses?.connect || []).filter(c => c && c.id)
+          connect: (data.courses?.connect || []).filter((c) => c && c.id)
         },
         career: {
-          connect: (data.career?.connect || []).filter(cr => cr && cr.id)
+          connect: (data.career?.connect || []).filter((cr) => cr && cr.id)
         }
-      };
-      
+      }
+
       if (editingId) {
-        updateSchool({ id: editingId, data: payload });
+        updateSchool({ id: editingId, data: payload })
       } else {
-        createSchool(payload);
+        createSchool(payload)
       }
     } catch (error) {
-      console.error('Error en formulario:', error);
-      toast.error('Error al procesar el formulario');
+      console.error('Error en formulario:', error)
+      toast.error('Error al procesar el formulario')
     }
-  };
-  
+  }
+
   useEffect(() => {
-    if (createError) console.error('Create error details:', createError);
-    if (updateError) console.error('Update error details:', updateError);
-  }, [createError, updateError]);
+    if (createError) console.error('Create error details:', createError)
+    if (updateError) console.error('Update error details:', updateError)
+  }, [createError, updateError])
 
   return (
     <CrudLayout
@@ -184,10 +204,10 @@ export default function SchoolCrud() {
       setEditandoId={setEditingId}
       setIdAEliminar={setIdAEliminar}
       onDelete={(id) => {
-        const validId = id?.toString();
-        if (validId) removeSchool(validId);
-        else toast.error('ID inválido para eliminación');
-        setIdAEliminar(null);
+        const validId = id?.toString()
+        if (validId) removeSchool(validId)
+        else toast.error('ID inválido para eliminación')
+        setIdAEliminar(null)
       }}
       getItemName={(school) => school.name || 'Escuela sin nombre'}
       renderForm={() => (
@@ -262,7 +282,7 @@ export default function SchoolCrud() {
                   <FormSelectMultiple
                     label="Carreras asignadas"
                     value={field.value || []}
-                    options={careersData.map((cr: any) => ({ id: cr.id, name: cr.name }))} 
+                    options={careersData.map((cr: any) => ({ id: cr.id, name: cr.name }))}
                     onChange={(newValue) => field.onChange(newValue || [])}
                     placeholder={loadingCareers ? 'Cargando carreras...' : 'Seleccione una o más'}
                     disabled={loadingCareers}
@@ -279,20 +299,26 @@ export default function SchoolCrud() {
                     label="Estado"
                     value={field.value}
                     onChange={field.onChange}
-                    options={Object.values(Status).map(s => ({ value: s, label: s }))
-                    }
+                    options={Object.values(Status).map((s) => ({ value: s, label: s }))}
                     placeholder="Seleccione un estado"
                   />
                 )}
               />
               <div className="flex justify-end gap-2 pt-6">
                 {editingId && (
-                  <Button type="button" variant="outline" onClick={() => { setEditingId(null); reset(defaultValues); }}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setEditingId(null)
+                      reset(defaultValues)
+                    }}
+                  >
                     Cancelar
                   </Button>
                 )}
                 <Button type="submit" disabled={isCreating || isUpdating}>
-                  {isCreating || isUpdating ? 'Procesando...' : (editingId ? 'Actualizar' : 'Registrar')}
+                  {isCreating || isUpdating ? 'Procesando...' : editingId ? 'Actualizar' : 'Registrar'}
                 </Button>
               </div>
             </FormLayout>
@@ -306,44 +332,56 @@ export default function SchoolCrud() {
               <div>
                 <h3 className="text-lg font-semibold">{school.name || 'Escuela sin nombre'}</h3>
                 <p className="text-sm text-muted-foreground font-mono">Código: {school.code}</p>
-                {school.faculty && (
-                  <p className="text-xs text-muted-foreground">Facultad: {school.faculty.name}</p>
-                )}
+                {school.faculty && <p className="text-xs text-muted-foreground">Facultad: {school.faculty.name}</p>}
               </div>
-              {isEditing && (
-                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full shrink-0">Editando</span>
-              )}
+              {isEditing && <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full shrink-0">Editando</span>}
             </div>
             {school.description && <p className="text-sm text-muted-foreground">{school.description}</p>}
             <div className="space-y-1">
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <BookUser className="h-4 w-4 text-primary" />
-                <span>Cursos:</span> 
+                <span>Cursos:</span>
                 {school.courses && school.courses.length > 0 ? (
-                  school.courses.map(c => <Badge key={c.id} variant="secondary">{c.name}</Badge>)
-                ) : <Badge variant="outline">Ninguno</Badge>}
+                  school.courses.map((c) => (
+                    <Badge key={c.id} variant="secondary">
+                      {c.name}
+                    </Badge>
+                  ))
+                ) : (
+                  <Badge variant="outline">Ninguno</Badge>
+                )}
               </div>
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Award className="h-4 w-4 text-primary" />
                 <span>Carreras:</span>
                 {school.career && school.career.length > 0 ? (
-                  school.career.map(cr => <Badge key={cr.id} variant="secondary">{cr.name}</Badge>)
-                ) : <Badge variant="outline">Ninguna</Badge>}
+                  school.career.map((cr) => (
+                    <Badge key={cr.id} variant="secondary">
+                      {cr.name}
+                    </Badge>
+                  ))
+                ) : (
+                  <Badge variant="outline">Ninguna</Badge>
+                )}
               </div>
             </div>
             <div className="flex items-center justify-between pt-2 border-t mt-3">
-                <Badge variant={school.status === Status.ACTIVE ? 'default' : 'destructive'}>{school.status}</Badge>
-                <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => onEdit(school.id)}>Editar</Button>
-                    <Button 
-                        size="sm" 
-                        variant="destructive" 
-                        onClick={() => onDelete(school.id)} 
-                        disabled={isEditing || (school.courses && school.courses.length > 0) || (school.career && school.career.length > 0)}
-                    >
-                        Eliminar
-                    </Button>
-                </div>
+              <Badge variant={school.status === Status.ACTIVE ? 'default' : 'destructive'}>{school.status}</Badge>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => onEdit(school.id)}>
+                  Editar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => onDelete(school.id)}
+                  disabled={
+                    isEditing || (school.courses && school.courses.length > 0) || (school.career && school.career.length > 0)
+                  }
+                >
+                  Eliminar
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

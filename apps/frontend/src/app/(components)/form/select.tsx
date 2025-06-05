@@ -39,7 +39,13 @@ export const FormSelect = ({ label, value, options, onChange, placeholder, id, r
       </Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button id={id} variant="outline" role="combobox" aria-expanded={open} className={cn('w-full justify-between', error ? 'border-red-500' : '')}>
+          <Button
+            id={id}
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn('w-full justify-between', error ? 'border-red-500' : '')}
+          >
             {selected?.name || placeholder || 'Seleccionar...'}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>

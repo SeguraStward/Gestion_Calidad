@@ -19,18 +19,17 @@ const {
   useCreate: useCreateFaculty,
   useUpdate: useUpdateFaculty,
   useRemove: useRemoveFaculty
-} = createGenericHooks<
-  FacultyWithRelations,
-  CreateFacultyInput,
-  Partial<CreateFacultyInput>,
-  FacultyFilters
->('faculties', facultyService as GenericService<FacultyWithRelations, CreateFacultyInput, Partial<CreateFacultyInput>, FacultyFilters>, {
-  messages: {
-    created: () => 'Facultad creada exitosamente',
-    updated: () => 'Facultad actualizada exitosamente',
-    deleted: () => 'Facultad eliminada exitosamente'
+} = createGenericHooks<FacultyWithRelations, CreateFacultyInput, Partial<CreateFacultyInput>, FacultyFilters>(
+  'faculties',
+  facultyService as GenericService<FacultyWithRelations, CreateFacultyInput, Partial<CreateFacultyInput>, FacultyFilters>,
+  {
+    messages: {
+      created: () => 'Facultad creada exitosamente',
+      updated: () => 'Facultad actualizada exitosamente',
+      deleted: () => 'Facultad eliminada exitosamente'
+    }
   }
-})
+)
 
 // Hook personalizado que siempre devuelve un array plano de facultades
 export function useListFaculties(
@@ -63,7 +62,7 @@ export function useListFaculties(
         console.warn('useListFaculties: data no es un array', data)
         return []
       }
-      return data.map(f => ({ ...f, id: f.id || (f as any)._id, schools: f.schools || [] })) // Handle _id and ensure schools array
+      return data.map((f) => ({ ...f, id: f.id || (f as any)._id, schools: f.schools || [] })) // Handle _id and ensure schools array
     },
     staleTime: 60_000, // Example: 1 minute
     ...options

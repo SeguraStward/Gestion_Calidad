@@ -16,15 +16,14 @@ export const {
   useCreate: useCreateClassroom,
   useUpdate: useUpdateClassroom,
   useRemove: useRemoveClassroom
-} = createGenericHooks<
-  ClassroomWithRelations,
-  CreateClassroomInput,
-  Partial<CreateClassroomInput>,
-  ClassroomFilters
->('classrooms', classroomService, {
-  messages: {
-    created: () => 'Aula creada exitosamente',
-    updated: () => 'Aula actualizada exitosamente',
-    deleted: () => 'Aula eliminada exitosamente'
+} = createGenericHooks<ClassroomWithRelations, CreateClassroomInput, Partial<CreateClassroomInput>, ClassroomFilters>(
+  'classrooms',
+  classroomService,
+  {
+    messages: {
+      created: () => 'Aula creada exitosamente',
+      updated: () => 'Aula actualizada exitosamente',
+      deleted: () => 'Aula eliminada exitosamente'
+    }
   }
-})
+)

@@ -22,21 +22,32 @@ import {
   useRemoveFaculty
 } from '@/modules/academic-management/academic-maintenance/hooks/institutional/useFaculty'
 // Assuming a hook for listing schools exists, similar to useListCampuses
-// import { useListSchools } from '@/modules/academic-management/academic-maintenance/hooks/institutional/useSchool' 
-import { CreateFacultyInput, FacultyWithRelations } from '@/modules/academic-management/academic-maintenance/types/institutional/faculty'
+// import { useListSchools } from '@/modules/academic-management/academic-maintenance/hooks/institutional/useSchool'
+import {
+  CreateFacultyInput,
+  FacultyWithRelations
+} from '@/modules/academic-management/academic-maintenance/types/institutional/faculty'
 
 // Mock school data and hook if useListSchools doesn't exist yet
-const useListSchools = () => ({ data: { data: [{ id: 'school1', name: 'Escuela de Informática' }, { id: 'school2', name: 'Escuela de Matemática' }] }, isLoading: false })
+const useListSchools = () => ({
+  data: {
+    data: [
+      { id: 'school1', name: 'Escuela de Informática' },
+      { id: 'school2', name: 'Escuela de Matemática' }
+    ]
+  },
+  isLoading: false
+})
 
 export default function FacultyCrud() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [idAEliminar, setIdAEliminar] = useState<string | null>(null)
-  
+
   const { data: faculties, refetch, isLoading: isLoadingList } = useListFaculties()
 
   const processedFaculties = useMemo(() => {
     return faculties
-      ? faculties.map(faculty => ({
+      ? faculties.map((faculty) => ({
           ...faculty,
           id: faculty.id || (faculty as any)._id, // Handle both id formats
           schools: faculty.schools || []
@@ -45,72 +56,87 @@ export default function FacultyCrud() {
   }, [faculties])
 
   useEffect(() => {
-    console.log('Faculties data:', faculties);
-    console.log('Processed faculties data:', processedFaculties);
-  }, [faculties, processedFaculties]);
+    console.log('Faculties data:', faculties)
+    console.log('Processed faculties data:', processedFaculties)
+  }, [faculties, processedFaculties])
 
-  const { mutate: createFaculty, isLoading: isCreating, error: createError } = useCreateFaculty({
+  const {
+    mutate: createFaculty,
+    isLoading: isCreating,
+    error: createError
+  } = useCreateFaculty({
     onSuccess: async () => {
-      toast.success('Facultad creada exitosamente');
-      await refetch();
+      toast.success('Facultad creada exitosamente')
+      await refetch()
       reset({
         code: '',
         name: '',
         description: '',
         schools: { connect: [] }
-      });
+      })
     },
     onError: (error: any) => {
-      console.error('Error al crear facultad:', error);
-      toast.error(`Error al crear: ${error.message || 'Error desconocido'}`);
+      console.error('Error al crear facultad:', error)
+      toast.error(`Error al crear: ${error.message || 'Error desconocido'}`)
     }
-  });
+  })
 
-  const { mutate: updateFaculty, isLoading: isUpdating, error: updateError } = useUpdateFaculty({
+  const {
+    mutate: updateFaculty,
+    isLoading: isUpdating,
+    error: updateError
+  } = useUpdateFaculty({
     onSuccess: async () => {
-      toast.success('Facultad actualizada exitosamente');
-      setEditingId(null);
-      await refetch();
+      toast.success('Facultad actualizada exitosamente')
+      setEditingId(null)
+      await refetch()
       reset({
         code: '',
         name: '',
         description: '',
         schools: { connect: [] }
-      });
+      })
     },
     onError: (error: any) => {
-      console.error('Error al actualizar facultad:', error);
-      toast.error(`Error al actualizar: ${error.message || 'Error desconocido'}`);
+      console.error('Error al actualizar facultad:', error)
+      toast.error(`Error al actualizar: ${error.message || 'Error desconocido'}`)
     }
-  });
+  })
 
   const { mutate: removeFaculty, isLoading: isRemoving } = useRemoveFaculty({
     onSuccess: async () => {
-      toast.success('Facultad eliminada exitosamente');
-      await refetch();
+      toast.success('Facultad eliminada exitosamente')
+      await refetch()
     },
     onError: (error: any) => {
-      console.error('Error al eliminar facultad:', error);
-      toast.error(`Error al eliminar: ${error.message || 'Error desconocido'}`);
+      console.error('Error al eliminar facultad:', error)
+      toast.error(`Error al eliminar: ${error.message || 'Error desconocido'}`)
     }
-  });
+  })
 
   const { data: editingItem } = useOneFaculty(editingId || '', undefined, {
     enabled: !!editingId
-  });
+  })
 
   // Replace with actual useListSchools when available
-  const { data: schoolsResponse, isLoading: loadingSchools } = useListSchools() 
+  const { data: schoolsResponse, isLoading: loadingSchools } = useListSchools()
   const schoolsData = schoolsResponse?.data || []
 
-  const { control, handleSubmit, reset, setValue, register, formState: { errors } } = useForm<CreateFacultyInput>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    register,
+    formState: { errors }
+  } = useForm<CreateFacultyInput>({
     defaultValues: {
       code: '',
       name: '',
       description: '',
       schools: { connect: [] }
     }
-  });
+  })
 
   useEffect(() => {
     if (editingId && editingItem) {
@@ -119,53 +145,51 @@ export default function FacultyCrud() {
         name: editingItem.name || '', // Ensure name is not undefined
         description: editingItem.description || '', // Ensure description is not undefined
         schools: {
-          connect: editingItem.schools && editingItem.schools.length > 0
-            ? editingItem.schools.map((s) => ({ id: s.id }))
-            : []
+          connect: editingItem.schools && editingItem.schools.length > 0 ? editingItem.schools.map((s) => ({ id: s.id })) : []
         }
-      });
+      })
     } else if (!editingId) {
       reset({
         code: '',
         name: '',
         description: '',
         schools: { connect: [] }
-      });
+      })
     }
-  }, [editingId, editingItem, reset]);
+  }, [editingId, editingItem, reset])
 
   const onSubmit = (data: CreateFacultyInput) => {
     try {
-      const connectSchools = data.schools?.connect || [];
+      const connectSchools = data.schools?.connect || []
       const payload = {
         ...data,
         schools: {
-          connect: connectSchools.filter(s => s && s.id)
+          connect: connectSchools.filter((s) => s && s.id)
         }
-      };
+      }
 
       if (editingId) {
         updateFaculty({
           id: editingId,
           data: payload
-        });
+        })
       } else {
-        createFaculty(payload);
+        createFaculty(payload)
       }
     } catch (error) {
       console.error('Error en formulario:', error)
       toast.error('Error al procesar el formulario')
     }
   }
-  
+
   useEffect(() => {
     if (createError) {
-      console.error('Create error details:', createError);
+      console.error('Create error details:', createError)
     }
     if (updateError) {
-      console.error('Update error details:', updateError);
+      console.error('Update error details:', updateError)
     }
-  }, [createError, updateError]);
+  }, [createError, updateError])
 
   return (
     <CrudLayout
@@ -177,13 +201,13 @@ export default function FacultyCrud() {
       setEditandoId={setEditingId}
       setIdAEliminar={setIdAEliminar}
       onDelete={(id) => {
-        const validId = id?.toString();
+        const validId = id?.toString()
         if (validId) {
-          removeFaculty(validId);
+          removeFaculty(validId)
         } else {
-          toast.error('ID inválido para eliminación');
+          toast.error('ID inválido para eliminación')
         }
-        setIdAEliminar(null);
+        setIdAEliminar(null)
       }}
       getItemName={(f) => f.name || 'Facultad sin nombre'}
       renderForm={() => (
@@ -197,7 +221,7 @@ export default function FacultyCrud() {
                 label="Código"
                 placeholder="Ej: FAC001"
                 required
-                rules={{ 
+                rules={{
                   required: 'El código es obligatorio',
                   pattern: {
                     value: /^[A-Za-z0-9-]+$/,
@@ -217,7 +241,7 @@ export default function FacultyCrud() {
                 rules={{ required: 'El nombre es obligatorio' }}
                 error={errors.name}
               />
-              
+
               <FormTextarea
                 id="description"
                 label="Descripción"
@@ -227,7 +251,7 @@ export default function FacultyCrud() {
                 error={errors.description}
                 placeholder="Detalles de la facultad..."
               />
-              
+
               <Controller
                 control={control}
                 name="schools.connect"
@@ -240,7 +264,7 @@ export default function FacultyCrud() {
                     value={field.value || []}
                     options={schoolsData.map((s: any) => ({ id: s.id, name: s.name }))}
                     onChange={(newValue) => {
-                      field.onChange(newValue || []);
+                      field.onChange(newValue || [])
                     }}
                     placeholder={loadingSchools ? 'Cargando escuelas...' : 'Seleccione una o más'}
                     disabled={loadingSchools}
@@ -251,18 +275,19 @@ export default function FacultyCrud() {
 
               <div className="flex justify-end gap-2 pt-6">
                 {editingId && (
-                  <Button type="button" variant="outline" onClick={() => {
-                    setEditingId(null)
-                    reset()
-                  }}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setEditingId(null)
+                      reset()
+                    }}
+                  >
                     Cancelar
                   </Button>
                 )}
-                <Button 
-                  type="submit" 
-                  disabled={isCreating || isUpdating}
-                >
-                  {isCreating || isUpdating ? 'Procesando...' : (editingId ? 'Actualizar' : 'Registrar')}
+                <Button type="submit" disabled={isCreating || isUpdating}>
+                  {isCreating || isUpdating ? 'Procesando...' : editingId ? 'Actualizar' : 'Registrar'}
                 </Button>
               </div>
             </FormLayout>
@@ -277,14 +302,10 @@ export default function FacultyCrud() {
                 <h3 className="text-lg font-semibold">{faculty.name || 'Facultad sin nombre'}</h3>
                 <p className="text-sm text-muted-foreground font-mono">Código: {faculty.code}</p>
               </div>
-              {isEditing && (
-                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full shrink-0">Editando</span>
-              )}
+              {isEditing && <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full shrink-0">Editando</span>}
             </div>
-            
-            {faculty.description && (
-              <p className="text-sm text-muted-foreground">{faculty.description}</p>
-            )}
+
+            {faculty.description && <p className="text-sm text-muted-foreground">{faculty.description}</p>}
 
             <div className="flex flex-wrap gap-2 items-center">
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -298,15 +319,19 @@ export default function FacultyCrud() {
                   </Badge>
                 ))
               ) : (
-                <Badge variant="outline" className="font-normal">Ninguna</Badge>
+                <Badge variant="outline" className="font-normal">
+                  Ninguna
+                </Badge>
               )}
             </div>
             <div className="flex gap-2 border-t pt-3 mt-3">
-              <Button size="sm" variant="outline" onClick={() => onEdit(faculty.id)}>Editar</Button>
-              <Button 
-                size="sm" 
-                variant="destructive" 
-                onClick={() => onDelete(faculty.id)} 
+              <Button size="sm" variant="outline" onClick={() => onEdit(faculty.id)}>
+                Editar
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => onDelete(faculty.id)}
                 disabled={isEditing || (faculty.schools && faculty.schools.length > 0)}
               >
                 Eliminar

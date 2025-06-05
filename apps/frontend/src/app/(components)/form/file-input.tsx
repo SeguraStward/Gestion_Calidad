@@ -20,7 +20,9 @@ export const FormFileInput = forwardRef<HTMLInputElement, FormFileInputProps>(
     }
 
     return (
-      <div className="grid w-full max-w-sm items-center gap-1.5"> {/* ShadCN recommended styling for file input */} 
+      <div className="grid w-full max-w-sm items-center gap-1.5">
+        {' '}
+        {/* ShadCN recommended styling for file input */}
         <Label htmlFor={id}>
           {label} {required && <span className="text-red-500">*</span>}
         </Label>
@@ -30,7 +32,7 @@ export const FormFileInput = forwardRef<HTMLInputElement, FormFileInputProps>(
           accept={accept}
           required={required}
           onChange={handleChange}
-          ref={ref} 
+          ref={ref}
         />
       </div>
     )

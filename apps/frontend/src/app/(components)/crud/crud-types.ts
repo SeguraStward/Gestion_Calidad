@@ -35,16 +35,9 @@ export type CrudConfig<
     meta: CrudPaginationMeta
   }>
   useCreateMutation: () => UseMutationResult<TItem, unknown, TCreateInput>
-  useUpdateMutation: () => UseMutationResult<
-    TItem,
-    unknown,
-    { id: string; data: TUpdateInput }
-  >
+  useUpdateMutation: () => UseMutationResult<TItem, unknown, { id: string; data: TUpdateInput }>
   useDeleteMutation: () => UseMutationResult<void, unknown, string>
-  useOneQuery?: (
-    id: string,
-    options?: { enabled?: boolean; [key: string]: any }
-  ) => UseQueryResult<TItem>
+  useOneQuery?: (id: string, options?: { enabled?: boolean; [key: string]: any }) => UseQueryResult<TItem>
   searchPlaceholder?: string
   defaultFormValues: DefaultValues<TCreateInput>
   renderForm: (props: {

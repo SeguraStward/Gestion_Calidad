@@ -1,6 +1,9 @@
 import { createGenericHooks } from '../../../../../services/base/generic.hooks'
 import { regionalCenterService } from '@/modules/academic-management/academic-maintenance/services/institutional/regional-center.service'
-import { RegionalCenterWithRelations, CreateRegionalCenterInput } from '@/modules/academic-management/academic-maintenance/types/institutional/regional-center'
+import {
+  RegionalCenterWithRelations,
+  CreateRegionalCenterInput
+} from '@/modules/academic-management/academic-maintenance/types/institutional/regional-center'
 import { GenericService } from '../../../../../services/base/generic.service'
 import { useQuery, UseQueryOptions } from '@tanstack/react-query'
 
@@ -23,13 +26,22 @@ const {
   CreateRegionalCenterInput,
   Partial<CreateRegionalCenterInput>,
   RegionalCenterFilters
->('regional-centers', regionalCenterService as GenericService<RegionalCenterWithRelations, CreateRegionalCenterInput, Partial<CreateRegionalCenterInput>, RegionalCenterFilters>, {
-  messages: {
-    created: () => 'Sede Regional creada exitosamente',
-    updated: () => 'Sede Regional actualizada exitosamente',
-    deleted: () => 'Sede Regional eliminada exitosamente'
+>(
+  'regional-centers',
+  regionalCenterService as GenericService<
+    RegionalCenterWithRelations,
+    CreateRegionalCenterInput,
+    Partial<CreateRegionalCenterInput>,
+    RegionalCenterFilters
+  >,
+  {
+    messages: {
+      created: () => 'Sede Regional creada exitosamente',
+      updated: () => 'Sede Regional actualizada exitosamente',
+      deleted: () => 'Sede Regional eliminada exitosamente'
+    }
   }
-})
+)
 
 // Hook personalizado que siempre devuelve un array plano de sedes regionales
 export function useListRegionalCenters(
@@ -39,33 +51,33 @@ export function useListRegionalCenters(
   return useQuery({
     queryKey: ['regional-centers', filters],
     queryFn: async () => {
-      const response = await regionalCenterService.list(filters);
-      console.log('📦 Respuesta cruda:', response);
+      const response = await regionalCenterService.list(filters)
+      console.log('📦 Respuesta cruda:', response)
 
       if (!response || !response.data) {
-        console.warn('❌ Respuesta o datos de respuesta no válidos:', response);
-        return [];
+        console.warn('❌ Respuesta o datos de respuesta no válidos:', response)
+        return []
       }
 
-      const responseData = response.data as any; // Usar 'any' con precaución y conocimiento de la estructura
+      const responseData = response.data as any // Usar 'any' con precaución y conocimiento de la estructura
 
       // Caso 1: La respuesta paginada tiene 'data.items'
       if (responseData && responseData.items && Array.isArray(responseData.items)) {
-        return responseData.items as RegionalCenterWithRelations[];
+        return responseData.items as RegionalCenterWithRelations[]
       }
 
       // Caso 2: La respuesta es directamente un array (para APIs no paginadas o diferentes estructuras)
       if (Array.isArray(responseData)) {
-        return responseData as RegionalCenterWithRelations[];
-      }
-      
-      // Caso 3: La respuesta paginada tiene 'data.data' (otra estructura común)
-      if (responseData && responseData.data && Array.isArray(responseData.data)) {
-        return responseData.data as RegionalCenterWithRelations[];
+        return responseData as RegionalCenterWithRelations[]
       }
 
-      console.warn('❌ No se pudo extraer la lista de sedes regionales de la estructura de datos:', responseData);
-      return [];
+      // Caso 3: La respuesta paginada tiene 'data.data' (otra estructura común)
+      if (responseData && responseData.data && Array.isArray(responseData.data)) {
+        return responseData.data as RegionalCenterWithRelations[]
+      }
+
+      console.warn('❌ No se pudo extraer la lista de sedes regionales de la estructura de datos:', responseData)
+      return []
     },
     select: (data) => {
       // Si por alguna razón data no fuera un array, devolvemos un array vacío
