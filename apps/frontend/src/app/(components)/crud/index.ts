@@ -4,7 +4,6 @@
 export { CrudModuleBase } from './crud-module-base'
 export { CrudForm } from './crud-form'
 export { CrudFormAdapter } from './crud-form-adapter'
-export { CrudDeleteDialog } from './crud-delete-dialog'
 
 // Types
 export type { CrudConfig, CrudItemBase, CrudPaginationMeta, ColumnUtilities } from './crud-types'

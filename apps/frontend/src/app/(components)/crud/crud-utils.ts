@@ -1,12 +1,3 @@
-// /*
- * =============================================================================
- * CRUD UTILITIES - Utilidades reutilizables para componentes CRUD
- * =============================================================================
- * 
- * Este archivo contiene funciones y constantes reutilizables que pueden
- * ser utilizadas en diferentes componentes CRUD para mantener consistencia.
- */
-
 import { Status } from '@una-gc/database/prisma/generated/client'
 
 // =============================================================================

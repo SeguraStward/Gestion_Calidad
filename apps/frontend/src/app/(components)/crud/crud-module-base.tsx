@@ -40,15 +40,12 @@ export const CrudModuleBase = <
   const [idToDelete, setIdToDelete] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [previousTotalItems, setPreviousTotalItems] = useState<number | undefined>(undefined)
-  // Obtener el elemento que se está editando cuando editingId no es nulo y no es 'new'
-  const { data: editingItemData, isLoading: isLoadingEditingItem } = useOneQuery
-    ? useOneQuery(
-        editingId !== 'new' && editingId ? editingId : '', 
-        { 
-          enabled: !!useOneQuery && !!editingId && editingId !== 'new',
-        }
-      )
-    : { data: undefined, isLoading: false }
+  const useSafeOneQuery = useOneQuery ?? (() => ({ data: undefined, isLoading: false }));
+  // Always call useOneQuery unconditionally to comply with React rules of hooks
+  const { data: editingItemData, isLoading: isLoadingEditingItem } = useSafeOneQuery(
+    editingId !== 'new' && editingId ? editingId : '',
+    { enabled: !!useOneQuery && !!editingId && editingId !== 'new' }
+  )
   
   // Procesar el elemento para edición si existe processItemForEditing
   const editingItem = useMemo(() => {
@@ -187,17 +184,17 @@ export const CrudModuleBase = <
   }
 
   // Preparar utilidades para las columnas
-  const columnUtils = {
+  const columnUtils = useMemo(() => ({
     onEdit: (id: string) => setEditingId(id),
     onDelete: (id: string) => setIdToDelete(id),
     isProcessing,
     deleteOperation: deleteMutation
-  }
+  }), [isProcessing, deleteMutation])
 
   // Obtener columnas de renderColumns
   const columns: ColumnDef<TItem>[] = useMemo(() => {
     return renderColumns(columnUtils)
-  }, [renderColumns, deleteMutation.isPending, isProcessing])
+  }, [renderColumns, columnUtils])
 
   // Crear botón de nuevo
   const newButton = (

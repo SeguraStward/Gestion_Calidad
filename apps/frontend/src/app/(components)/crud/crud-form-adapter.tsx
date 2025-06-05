@@ -37,6 +37,8 @@ export interface CrudFormAdapterProps<
   }) => FormSection<TCreateInput | TUpdateInput>[]
 }
 
+export type { FormSection }
+
 /**
  * Adaptador que conecta el CrudModuleBase con el CrudForm
  * 
