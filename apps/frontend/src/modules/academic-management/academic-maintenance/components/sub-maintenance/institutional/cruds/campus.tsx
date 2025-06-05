@@ -1,353 +1,309 @@
-'use client'
+// // Campus CRUD datatable and form using form-adapter
+// 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
-import { useForm, Controller } from 'react-hook-form'
-import { toast } from 'sonner'
-import { MapPin, BookOpen, Users } from 'lucide-react' // Assuming icons
+// import { useMemo, useState } from 'react'
+// import { ColumnDef } from '@tanstack/react-table'
+// import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
+// import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
+// import {
+//   useCreateCampus,
+//   useUpdateCampus,
+//   useRemoveCampus,
+//   useOneCampus,
+//   useListCampusesPaginated
+// } from '@/modules/academic-management/academic-maintenance/hooks/institutional/useCampus'
+// import { useListRegionalCenters } from '@/modules/academic-management/academic-maintenance/hooks/institutional/useRegionalCenter'
+// import { CampusWithRelations, CreateCampusInput } from '@/modules/academic-management/academic-maintenance/types/institutional/campus'
+// import { Status } from '@una-gc/database/prisma/generated/client'
+// import { UseFormReturn } from 'react-hook-form'
+// import {
+//   Badge,
+//   Button
+// } from '@una-gc/ui/components'
+// import {
+//   Loader2,
+//   Hash,
+//   Building2,
+//   Globe,
+//   MoreHorizontal,
+//   Pencil,
+//   Trash2,
+//   CheckCircle2,
+//   XCircle
+// } from 'lucide-react'
+// import { AlertMessage } from '@/app/(components)/ui/alert-message'
 
-import { Button } from '@una-gc/ui/components/button'
-import { Card, CardContent } from '@una-gc/ui/components/card'
-import { Badge } from '@una-gc/ui/components/badge'
-import { CrudLayout } from '@/app/(components)/crud/crud-layout'
-import { FormLayout } from '@/app/(components)/form/form-layout'
-import { FormField } from '@/app/(components)/form/field'
-import { FormTextarea } from '@/app/(components)/form/textarea'
-import { FormSelect } from '@/app/(components)/form/select' // For single select (RegionalCenter)
-import { FormSelectMultiple } from '@/app/(components)/form/select-multiple' // For Classrooms and AcademicLoads
+// // Status options for select
+// const STATUS_OPTIONS = [
+//   {
+//     id: Status.ACTIVE,
+//     name: 'Activo',
+//     icon: <CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" />,
+//     description: 'El campus está operativo y visible en el sistema'
+//   },
+//   {
+//     id: Status.INACTIVE,
+//     name: 'Inactivo',
+//     icon: <XCircle className="h-4 w-4 text-red-500 mr-2" />,
+//     description: 'El campus no está operativo y permanecerá oculto'
+//   }
+// ]
 
-import {
-  useListCampuses, // The new flat list hook
-  useOneCampus,
-  useCreateCampus,
-  useUpdateCampus,
-  useRemoveCampus
-} from '@/modules/academic-management/academic-maintenance/hooks/institutional/useCampus'
-import { useListRegionalCenters } from '@/modules/academic-management/academic-maintenance/hooks/institutional/useRegionalCenter'
-// Mocks for related entities - replace with actual hooks when available
-// import { useListClassrooms } from '@/modules/academic-management/academic-maintenance/hooks/infrastructure/useClassroom'
-// import { useListAcademicLoads } from '@/modules/academic-management/academic-load/hooks/useAcademicLoad'
-import { CreateCampusInput, CampusWithRelations } from '@/modules/academic-management/academic-maintenance/types/institutional/campus'
-import { Status } from '@una-gc/database/prisma/generated/client' // Assuming Status enum is available
+// interface CampusItem extends CampusWithRelations {}
+// type UpdateCampusInput = Partial<CreateCampusInput>
 
-// Mock data and hooks if related entity hooks don't exist yet
-const useListClassrooms = () => ({ data: { data: [{ id: 'classroom1', name: 'Aula 101' }] }, isLoading: false })
-const useListAcademicLoads = () => ({ data: { data: [{ id: 'load1', name: 'Carga Académica 2025-1' }] }, isLoading: false })
+// export default function CampusCrud() {
+//   const [deleteId, setDeleteId] = useState<string | null>(null)
+//   const deleteMutation = useRemoveCampus()
 
-const defaultValues: CreateCampusInput = {
-  code: '',
-  name: '',
-  description: '',
-  status: Status.ACTIVE,
-  regionalCenter: { connect: { id: '' } },
-  classrooms: { connect: [] },
-  academicLoads: { connect: [] },
-  // createdBy and updatedBy are typically handled by the backend or a global context
-};
+//   // Regional centers for select
+//   const { data: regionalCenters, isLoading: isLoadingRegionalCenters } = useListRegionalCenters()
 
-export default function CampusCrud() {
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [idAEliminar, setIdAEliminar] = useState<string | null>(null)
+//   // Table columns
+//   const renderColumns = useMemo(() => (
+//     (utils: ColumnUtilities<CampusItem>): ColumnDef<CampusItem>[] => [
+//       {
+//         accessorKey: 'code',
+//         header: 'Código',
+//         size: 100,
+//         cell: ({ row }) => (
+//           <div className="flex items-center">
+//             <Hash className="h-4 w-4 text-primary mr-2" />
+//             <span>{row.original.code}</span>
+//           </div>
+//         )
+//       },
+//       {
+//         accessorKey: 'name',
+//         header: 'Nombre',
+//         size: 200,
+//         cell: ({ row }) => (
+//           <div className="flex items-center">
+//             <Building2 className="h-4 w-4 text-primary mr-2" />
+//             <span className="font-medium">{row.original.name}</span>
+//           </div>
+//         )
+//       },
+//       {
+//         accessorKey: 'description',
+//         header: 'Descripción',
+//         size: 250,
+//         cell: ({ row }) => (
+//           <div className="truncate max-w-xs">{row.original.description}</div>
+//         )
+//       },
+//       {
+//         accessorKey: 'regionalCenter.name',
+//         header: 'Sede Regional',
+//         size: 180,
+//         cell: ({ row }) => (
+//           <div className="flex items-center">
+//             <Globe className="h-4 w-4 text-primary mr-2" />
+//             <span>{row.original.regionalCenter?.name || '-'}</span>
+//           </div>
+//         )
+//       },
+//       {
+//         accessorKey: 'status',
+//         header: 'Estado',
+//         size: 100,
+//         cell: ({ row }) => {
+//           const status = row.original.status
+//           let badgeClasses = ''
+//           let statusText = ''
+//           if (status === Status.ACTIVE) {
+//             badgeClasses = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+//             statusText = 'Activo'
+//           } else {
+//             badgeClasses = 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800'
+//             statusText = 'Inactivo'
+//           }
+//           return (
+//             <Badge variant="outline" className={badgeClasses}>{statusText}</Badge>
+//           )
+//         }
+//       },
+//       {
+//         id: 'actions',
+//         header: () => <div className="text-right">Acciones</div>,
+//         size: 80,
+//         cell: ({ row }) => (
+//           <div className="text-right flex gap-1 justify-end">
+//             <Button
+//               variant="ghost"
+//               className="h-8 w-8 p-0"
+//               onClick={() => utils.onEdit(row.original.id)}
+//               title="Editar"
+//             >
+//               <Pencil className="h-4 w-4" />
+//             </Button>
+//             <AlertMessage
+//               title="¿Desea eliminar el campus?"
+//               description={`Esta acción no se puede deshacer. ¿Eliminar "${row.original.name}"?`}
+//               variant="danger"
+//               confirmText="Eliminar"
+//               cancelText="Cancelar"
+//               onConfirm={() => {
+//                 setDeleteId(row.original.id)
+//                 deleteMutation.mutate(row.original.id, {
+//                   onSuccess: () => setDeleteId(null),
+//                   onError: () => setDeleteId(null)
+//                 })
+//               }}
+//               trigger={
+//                 <Button
+//                   variant="ghost"
+//                   className="h-8 w-8 p-0 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50"
+//                   title="Eliminar"
+//                   disabled={deleteMutation.isPending && deleteId === row.original.id}
+//                 >
+//                   {deleteMutation.isPending && deleteId === row.original.id ? (
+//                     <Loader2 className="h-4 w-4 animate-spin" />
+//                   ) : (
+//                     <Trash2 className="h-4 w-4" />
+//                   )}
+//                 </Button>
+//               }
+//             />
+//           </div>
+//         )
+//       }
+//     ]
+//   ), [deleteId, deleteMutation])
 
-  const { data: campuses, refetch, isLoading: isLoadingList } = useListCampuses()
+//   // Form sections for create/edit
+//   const renderForm = useMemo(() => {
+//     return ({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) => {
+//       return (
+//         <CrudFormAdapter
+//           control={control}
+//           errors={errors}
+//           editingItem={editingItem}
+//           isUpdate={isUpdate}
+//           isProcessing={isProcessing}
+//           handleSubmitForm={handleSubmitForm}
+//           handleCancel={handleCancel}
+//           title={isUpdate ? 'Editar Campus' : 'Crear Nuevo Campus'}
+//           description={isUpdate ? 'Actualice los datos del campus' : 'Complete los datos para registrar un nuevo campus'}
+//           sections={() => [{
+//             title: 'Datos del Campus',
+//             description: 'Información principal del campus',
+//             fields: [
+//               {
+//                 type: 'text',
+//                 name: 'code',
+//                 label: 'Código',
+//                 required: true,
+//                 placeholder: 'Ej: CAMP-001',
+//                 helperText: 'Código único del campus',
+//                 disabled: isUpdate
+//               },
+//               {
+//                 type: 'text',
+//                 name: 'name',
+//                 label: 'Nombre',
+//                 required: true,
+//                 placeholder: 'Ej: Campus Central',
+//                 helperText: 'Nombre completo del campus'
+//               },
+//               {
+//                 type: 'text',
+//                 name: 'description',
+//                 label: 'Descripción',
+//                 required: true,
+//                 placeholder: 'Descripción del campus',
+//                 helperText: 'Breve descripción del campus'
+//               },
+//               {
+//                 type: 'select',
+//                 name: 'regionalCenter',
+//                 label: 'Sede Regional',
+//                 required: true,
+//                 options: (regionalCenters || []).map(rc => ({ id: rc.id, name: rc.name })),
+//                 isLoading: isLoadingRegionalCenters,
+//                 placeholder: isLoadingRegionalCenters ? 'Cargando sedes...' : 'Seleccionar sede regional',
+//                 helperText: 'Seleccione la sede regional a la que pertenece este campus',
+//                 // Adapter expects value to be { connect: { id } }
+//                 renderOption: (option: any) => <span>{option.name}</span>
+//               },
+//               {
+//                 type: 'select',
+//                 name: 'status',
+//                 label: 'Estado',
+//                 required: true,
+//                 options: STATUS_OPTIONS,
+//                 helperText: 'Estado actual del campus',
+//                 renderOption: (option: any) => (
+//                   <div className="flex items-center">{option.icon}<span>{option.name}</span></div>
+//                 )
+//               }
+//             ]
+//           }]}
+//         />
+//       )
+//     }
+//   }, [regionalCenters, isLoadingRegionalCenters])
 
-  const processedCampuses = useMemo(() => 
-    campuses
-      ? campuses.map(campus => ({
-          ...campus,
-          id: campus.id || (campus as any)._id, // Handle both id formats
-          regionalCenter: campus.regionalCenter || null,
-          classrooms: campus.classrooms || [],
-          academicLoads: campus.academicLoads || []
-        }))
-      : [], [campuses])
+//   const crudConfig = useMemo(() => ({
+//     entityName: 'Campus',
+//     entityNamePlural: 'Campus',
+//     searchPlaceholder: 'Buscar por código, nombre o sede...',
+//     usePaginatedQuery: useListCampusesPaginated,
+//     useCreateMutation: useCreateCampus,
+//     useUpdateMutation: useUpdateCampus,
+//     useDeleteMutation: useRemoveCampus,
+//     useOneQuery: (id: string, options?: any) => useOneCampus(id, undefined, options),
+//     defaultFormValues: {
+//       code: '',
+//       name: '',
+//       description: '',
+//       regionalCenter: { connect: { id: '' } },
+//       status: Status.ACTIVE
+//     } as unknown as CreateCampusInput,
+//     renderForm,
+//     renderColumns,
+//     processItemForEditing: (item: CampusItem) => ({
+//       code: item.code || '',
+//       name: item.name || '',
+//       description: item.description || '',
+//       regionalCenter: item.regionalCenter ? { connect: { id: item.regionalCenter.id } } : undefined,
+//       status: item.status || Status.ACTIVE
+//     }),
+//     preDeleteCheck: (item: CampusItem) => {
+//       // Si tiene aulas asociadas, advertir
+//       if (item.classrooms && item.classrooms.length > 0) {
+//         return 'No se puede eliminar un campus con aulas asociadas.'
+//       }
+//       return null
+//     }
+//   }), [renderForm, renderColumns])
 
-  useEffect(() => {
-    console.log('Campuses data:', campuses);
-    console.log('Processed Campuses data:', processedCampuses);
-  }, [campuses, processedCampuses]);
+//   // Obtener la fila seleccionada para eliminar
+//   // (opcional, para mostrar nombre en el modal)
+//   // const selectedRow = (campuses || []).find((item: CampusItem) => item.id === deleteId)
 
-  const { mutate: createCampus, isLoading: isCreating, error: createError } = useCreateCampus({
-    onSuccess: async () => {
-      toast.success('Campus creado exitosamente');
-      await refetch();
-      reset(defaultValues);
-    },
-    onError: (error: any) => {
-      console.error('Error al crear campus:', error);
-      toast.error(`Error al crear: ${error.message || 'Error desconocido'}`);
-    }
-  });
+//   return (
+//     <>
+//       <CrudModuleBase {...crudConfig} />
+//       <AlertMessage
+//         open={!!deleteId}
+//         onOpenChange={(open: boolean) => !open && setDeleteId(null)}
+//         title="¿Desea eliminar el campus?"
+//         description={deleteId ? 'Esta acción no se puede deshacer.' : ''}
+//         variant="danger"
+//         confirmText="Eliminar"
+//         cancelText="Cancelar"
+//         onConfirm={() => {
+//           if (deleteId) {
+//             deleteMutation.mutate(deleteId, {
+//               onSuccess: () => setDeleteId(null),
+//               onError: () => setDeleteId(null)
+//             })
+//           }
+//         }}
+//       />
+//     </>
+//   )
+// }
 
-  const { mutate: updateCampus, isLoading: isUpdating, error: updateError } = useUpdateCampus({
-    onSuccess: async () => {
-      toast.success('Campus actualizado exitosamente');
-      setEditingId(null);
-      await refetch();
-      reset(defaultValues);
-    },
-    onError: (error: any) => {
-      console.error('Error al actualizar campus:', error);
-      toast.error(`Error al actualizar: ${error.message || 'Error desconocido'}`);
-    }
-  });
-
-  const { mutate: removeCampus, isLoading: isRemoving } = useRemoveCampus({
-    onSuccess: async () => {
-      toast.success('Campus eliminado exitosamente');
-      await refetch();
-    },
-    onError: (error: any) => {
-      console.error('Error al eliminar campus:', error);
-      toast.error(`Error al eliminar: ${error.message || 'Error desconocido'}`);
-    }
-  });
-
-  const { data: editingItem } = useOneCampus(editingId || '', undefined, {
-    enabled: !!editingId
-  });
-
-  const { data: regionalCentersResponse, isLoading: loadingRegionalCenters } = useListRegionalCenters();
-  const regionalCentersData = useMemo(() => regionalCentersResponse || [], [regionalCentersResponse]);
-  
-  // Mocks - replace with actual hooks
-  const { data: classroomsResponse, isLoading: loadingClassrooms } = useListClassrooms();
-  const classroomsData = useMemo(() => classroomsResponse?.data || [], [classroomsResponse]);
-
-  const { data: academicLoadsResponse, isLoading: loadingAcademicLoads } = useListAcademicLoads();
-  const academicLoadsData = useMemo(() => academicLoadsResponse?.data || [], [academicLoadsResponse]);
-
-  const { control, handleSubmit, reset, setValue, formState: { errors } } = useForm<CreateCampusInput>({
-    defaultValues
-  });
-
-  useEffect(() => {
-    if (editingId && editingItem) {
-      reset({
-        code: editingItem.code,
-        name: editingItem.name || '',
-        description: editingItem.description || '',
-        status: editingItem.status || Status.ACTIVE,
-        regionalCenter: { 
-          connect: { id: editingItem.regionalCenter?.id || '' } 
-        },
-        classrooms: {
-          connect: editingItem.classrooms?.map((c) => ({ id: c.id })) || []
-        },
-        academicLoads: {
-          connect: editingItem.academicLoads?.map((al) => ({ id: al.id })) || []
-        }
-      });
-    } else if (!editingId) {
-      reset(defaultValues);
-    }
-  }, [editingId, editingItem, reset]);
-
-  const onSubmit = (data: CreateCampusInput) => {
-    try {
-      const payload: CreateCampusInput = {
-        ...data,
-        regionalCenter: data.regionalCenter?.connect?.id ? { connect: { id: data.regionalCenter.connect.id } } : { connect: { id: ''} }, // Ensure correct format
-        classrooms: {
-          connect: (data.classrooms?.connect || []).filter(c => c && c.id)
-        },
-        academicLoads: {
-          connect: (data.academicLoads?.connect || []).filter(al => al && al.id)
-        }
-      };
-      // Remove status if not explicitly set or if it's meant to be default on backend
-      if (payload.status === defaultValues.status && !editingId) {
-        // delete payload.status; // Or handle as per backend logic
-      }
-
-      if (editingId) {
-        updateCampus({ id: editingId, data: payload });
-      } else {
-        createCampus(payload);
-      }
-    } catch (error) {
-      console.error('Error en formulario:', error);
-      toast.error('Error al procesar el formulario');
-    }
-  };
-  
-  useEffect(() => {
-    if (createError) console.error('Create error details:', createError);
-    if (updateError) console.error('Update error details:', updateError);
-  }, [createError, updateError]);
-
-  return (
-    <CrudLayout
-      nombreEntidad="Campus"
-      items={processedCampuses}
-      editandoId={editingId}
-      idAEliminar={idAEliminar}
-      isLoading={isLoadingList}
-      setEditandoId={setEditingId}
-      setIdAEliminar={setIdAEliminar}
-      onDelete={(id) => {
-        const validId = id?.toString();
-        if (validId) removeCampus(validId);
-        else toast.error('ID inválido para eliminación');
-        setIdAEliminar(null);
-      }}
-      getItemName={(campus) => campus.name || 'Campus sin nombre'}
-      renderForm={() => (
-        <Card>
-          <CardContent className="p-6">
-            <FormLayout title={editingId ? 'Editar Campus' : 'Registrar Campus'} onSubmit={handleSubmit(onSubmit)}>
-              <FormField
-                id="code"
-                name="code"
-                control={control}
-                label="Código"
-                placeholder="Ej: CAM001"
-                required
-                rules={{ required: 'El código es obligatorio' }}
-                error={errors.code}
-              />
-              <FormField
-                id="name"
-                name="name"
-                control={control}
-                label="Nombre"
-                placeholder="Ej: Campus Omar Dengo"
-                required
-                rules={{ required: 'El nombre es obligatorio' }}
-                error={errors.name}
-              />
-              <FormTextarea
-                id="description"
-                name="description"
-                control={control}
-                label="Descripción"
-                placeholder="Detalles del campus..."
-                error={errors.description}
-              />
-              <Controller
-                control={control}
-                name="regionalCenter.connect.id" // Path to the ID for connect
-                rules={{ required: 'La sede regional es obligatoria' }}
-                render={({ field }) => (
-                  <FormSelect
-                    label="Sede Regional"
-                    value={field.value || ''}
-                    options={regionalCentersData.map((rc) => ({ value: rc.id, label: rc.name }))}
-                    onChange={(value) => field.onChange(value)}
-                    placeholder={loadingRegionalCenters ? 'Cargando sedes...' : 'Seleccione una sede'}
-                    disabled={loadingRegionalCenters}
-                    error={errors.regionalCenter?.connect?.id as any}
-                  />
-                )}
-              />
-              <Controller
-                control={control}
-                name="classrooms.connect"
-                defaultValue={[]}
-                render={({ field }) => (
-                  <FormSelectMultiple
-                    label="Aulas asignadas"
-                    value={field.value || []}
-                    options={classroomsData.map((c: any) => ({ id: c.id, name: c.name }))}
-                    onChange={(newValue) => field.onChange(newValue || [])}
-                    placeholder={loadingClassrooms ? 'Cargando aulas...' : 'Seleccione una o más'}
-                    disabled={loadingClassrooms}
-                    error={errors.classrooms?.connect as any}
-                  />
-                )}
-              />
-              <Controller
-                control={control}
-                name="academicLoads.connect"
-                defaultValue={[]}
-                render={({ field }) => (
-                  <FormSelectMultiple
-                    label="Cargas Académicas asignadas"
-                    value={field.value || []}
-                    options={academicLoadsData.map((al: any) => ({ id: al.id, name: al.name }))} // Assuming name property
-                    onChange={(newValue) => field.onChange(newValue || [])}
-                    placeholder={loadingAcademicLoads ? 'Cargando cargas...' : 'Seleccione una o más'}
-                    disabled={loadingAcademicLoads}
-                    error={errors.academicLoads?.connect as any}
-                  />
-                )}
-              />
-               <Controller
-                name="status"
-                control={control}
-                defaultValue={Status.ACTIVE}
-                render={({ field }) => (
-                  <FormSelect
-                    label="Estado"
-                    value={field.value}
-                    onChange={field.onChange}
-                    options={Object.values(Status).map(s => ({ value: s, label: s }))}
-                    placeholder="Seleccione un estado"
-                  />
-                )}
-              />
-              <div className="flex justify-end gap-2 pt-6">
-                {editingId && (
-                  <Button type="button" variant="outline" onClick={() => { setEditingId(null); reset(defaultValues); }}>
-                    Cancelar
-                  </Button>
-                )}
-                <Button type="submit" disabled={isCreating || isUpdating}>
-                  {isCreating || isUpdating ? 'Procesando...' : (editingId ? 'Actualizar' : 'Registrar')}
-                </Button>
-              </div>
-            </FormLayout>
-          </CardContent>
-        </Card>
-      )}
-      renderItem={(campus, isEditing, onEdit, onDelete) => (
-        <Card key={campus.id} className={`${isEditing ? 'ring-2 ring-blue-500' : ''} overflow-hidden`}>
-          <CardContent className="p-4 space-y-3">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-semibold">{campus.name || 'Campus sin nombre'}</h3>
-                <p className="text-sm text-muted-foreground font-mono">Código: {campus.code}</p>
-                {campus.regionalCenter && (
-                  <p className="text-xs text-muted-foreground">Sede: {campus.regionalCenter.name}</p>
-                )}
-              </div>
-              {isEditing && (
-                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full shrink-0">Editando</span>
-              )}
-            </div>
-            {campus.description && <p className="text-sm text-muted-foreground">{campus.description}</p>}
-            <div className="space-y-1">
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Users className="h-4 w-4 text-primary" />
-                <span>Aulas:</span> 
-                {campus.classrooms && campus.classrooms.length > 0 ? (
-                  campus.classrooms.map(c => <Badge key={c.id} variant="secondary">{c.name}</Badge>)
-                ) : <Badge variant="outline">Ninguna</Badge>}
-              </div>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <BookOpen className="h-4 w-4 text-primary" />
-                <span>Cargas Académicas:</span>
-                {campus.academicLoads && campus.academicLoads.length > 0 ? (
-                  campus.academicLoads.map(al => <Badge key={al.id} variant="secondary">{al.name}</Badge>) // Assuming name property
-                ) : <Badge variant="outline">Ninguna</Badge>}
-              </div>
-            </div>
-            <div className="flex items-center justify-between pt-2 border-t mt-3">
-                <Badge variant={campus.status === Status.ACTIVE ? 'default' : 'destructive'}>{campus.status}</Badge>
-                <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => onEdit(campus.id)}>Editar</Button>
-                    <Button 
-                        size="sm" 
-                        variant="destructive" 
-                        onClick={() => onDelete(campus.id)} 
-                        disabled={isEditing || (campus.classrooms && campus.classrooms.length > 0) || (campus.academicLoads && campus.academicLoads.length > 0)}
-                    >
-                        Eliminar
-                    </Button>
-                </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    />
-  )
-}
+// CampusCrud.displayName = 'CampusCrud'
