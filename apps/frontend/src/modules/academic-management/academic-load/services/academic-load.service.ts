@@ -1,19 +1,20 @@
-import { HttpClient } from '@/lib/http-client' // Import HttpClient
+// src/modules/academic-management/academic-load/services/academic-load.service.ts
+import { HttpClient } from '@/lib/http-client'
 import { GenericService } from '@/services/base/generic.service'
-import type {
-  AcademicLoadWithRelations,
-  CreateAcademicLoadInput,
-  UpdateAcademicLoadInput,
-  SimpleCourse,
-  SimpleProfessor,
-  AcademicCycleWithRelations,
-  AcademicLoadGroupWithRelations,
-  ScheduleWithRelations
-} from '../types/academic-load'
-import type { CampusWithRelations } from '@/modules/academic-management/academic-maintenance/types/institutional/campus'
-import type { ClassroomWithRelations } from '@/modules/academic-management/academic-maintenance/types/institutional/classroom'
+import type { AcademicLoadWithRelations, CreateAcademicLoadInput, UpdateAcademicLoadInput } from '../types/academic-load'
 
-// This service will interact with the backend API for AcademicLoad entities
+// Define the include parameter for relations
+const FULL_INCLUDE = {
+  academicCycle: true,
+  campus: true,
+  course: true,
+  classroom: true,
+  group: true,
+  schedule: true,
+  professor: true,
+  finalReport: true
+}
+
 export class AcademicLoadService extends GenericService<
   AcademicLoadWithRelations,
   CreateAcademicLoadInput,
@@ -23,81 +24,64 @@ export class AcademicLoadService extends GenericService<
     super('academic-loads')
   }
 
-  private async fetchData<T>(endpoint: string, params?: any): Promise<T[]> {
-    try {
-      const response = await HttpClient.get(endpoint, { params })
-      // Assuming backend returns { data: [...] } or just [...]
-      return response.data?.data || response.data || []
-    } catch (error) {
-      console.error(`Failed to fetch data from ${endpoint}:`, error)
-      // this.handleError(error); // If handleError is accessible and desired
-      throw error // Re-throw or handle as appropriate
+  // Override create to handle relations
+  async create(payload: CreateAcademicLoadInput): Promise<AcademicLoadWithRelations> {
+    // Calculate available seats
+    const availableSeats = payload.maximumCapacity - payload.enrolledCapacity
+
+    const data = {
+      ...payload,
+      availableSeats
     }
+
+    const response = await HttpClient.post(`/${this.resource}`, data)
+    return response.data?.data || response.data
   }
 
-  fetchSimplifiedCourses = async (): Promise<SimpleCourse[]> => {
-    // Assuming endpoint returns SimpleCourse[] or { data: SimpleCourse[] }
-    // Adjust endpoint and params as per your backend API for courses
-    return this.fetchData<SimpleCourse>('/courses', { simplified: true })
+  // Override update to handle relations
+  async update(id: string, payload: UpdateAcademicLoadInput): Promise<AcademicLoadWithRelations> {
+    // If capacity fields are being updated, calculate available seats
+    let data = { ...payload }
+    if (payload.maximumCapacity !== undefined || payload.enrolledCapacity !== undefined) {
+      const current = await this.get(id)
+      const maxCapacity = payload.maximumCapacity ?? current.maximumCapacity
+      const enrolled = payload.enrolledCapacity ?? current.enrolledCapacity
+      data.availableSeats = maxCapacity - enrolled
+    }
+
+    const response = await HttpClient.put(`/${this.resource}/${id}`, data)
+    return response.data?.data || response.data
   }
 
-  fetchSimplifiedProfessors = async (): Promise<SimpleProfessor[]> => {
-    // Assuming endpoint returns SimpleProfessor[] or { data: SimpleProfessor[] }
-    // Adjust endpoint and params as per your backend API for users
-    // Corrected filter to query by role name within the 'roles' relation
-    return this.fetchData<SimpleProfessor>('/users', {
-      where: {
-        roles: {
-          some: {
-            // Assuming your UserRole model has a 'name' field for the role title
-            // If your UserRole model uses a different field for the role title (e.g., 'title', 'roleName'),
-            // adjust 'name' to that field.
-            name: 'PROFESSOR'
-          }
-        }
-      },
-      simplified: true
+  // Override get to include all relations
+  async get(id: string): Promise<AcademicLoadWithRelations> {
+    const response = await HttpClient.get(`/${this.resource}/${id}`, {
+      params: { include: JSON.stringify(FULL_INCLUDE) }
     })
+    return response.data?.data || response.data
   }
 
-  fetchAcademicCycles = async (): Promise<AcademicCycleWithRelations[]> => {
-    // Or AcademicCycle[] if that's what backend provides
-    return this.fetchData<AcademicCycleWithRelations>('/academic-cycles')
+  // Override list to include all relations
+  async list(filters?: any): Promise<{ data: AcademicLoadWithRelations[]; meta: any }> {
+    const response = await HttpClient.get(`/${this.resource}`, {
+      params: {
+        ...filters,
+        include: JSON.stringify(FULL_INCLUDE)
+      }
+    })
+    return response.data
   }
 
-  fetchCampuses = async (): Promise<CampusWithRelations[]> => {
-    return this.fetchData<CampusWithRelations>('/campuses')
+  // Custom method for finding by professor
+  async listByProfessorId(professorId: string, filters?: any) {
+    const response = await HttpClient.get(`/${this.resource}/professor/${professorId}`, {
+      params: {
+        ...filters,
+        include: JSON.stringify(FULL_INCLUDE)
+      }
+    })
+    return response.data
   }
-
-  fetchClassrooms = async (): Promise<ClassroomWithRelations[]> => {
-    return this.fetchData<ClassroomWithRelations>('/classrooms')
-  }
-
-  fetchAcademicLoadGroups = async (): Promise<AcademicLoadGroupWithRelations[]> => {
-    // Or AcademicLoadGroup[]
-    return this.fetchData<AcademicLoadGroupWithRelations>('/academic-load-groups')
-  }
-
-  fetchSchedules = async (): Promise<ScheduleWithRelations[]> => {
-    // Or Schedule[]
-    return this.fetchData<ScheduleWithRelations>('/schedules')
-  }
-
-  // fetchAssignments, addAssignment, updateAssignment, deleteAssignment
-  // are now handled by the GenericService base class methods:
-  // list(), create(), update(), remove() respectively.
 }
 
-const academicLoadServiceInstance = new AcademicLoadService()
-
-// Export specific fetch methods for form data population
-export const fetchSimplifiedCourses = academicLoadServiceInstance.fetchSimplifiedCourses
-export const fetchSimplifiedProfessors = academicLoadServiceInstance.fetchSimplifiedProfessors
-export const fetchAcademicCycles = academicLoadServiceInstance.fetchAcademicCycles
-export const fetchCampuses = academicLoadServiceInstance.fetchCampuses
-export const fetchClassrooms = academicLoadServiceInstance.fetchClassrooms
-export const fetchAcademicLoadGroups = academicLoadServiceInstance.fetchAcademicLoadGroups
-export const fetchSchedules = academicLoadServiceInstance.fetchSchedules
-
-// Export the instance for direct use by CRUD hooks (useList, useCreate, etc.)
-export { academicLoadServiceInstance as academicLoadService }
+export const academicLoadService = new AcademicLoadService()

@@ -2,10 +2,8 @@
 
 import { Tabs, TabsList, TabsTrigger } from '@una-gc/ui/components/tabs'
 import { CrudTabPanel } from '@/app/(components)/crud/crud-tab-panel'
-import CareerCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/curricular/cruds/careers'
-import AcademicProgramCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/curricular/cruds/academic-programs'
-import CourseCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/curricular/cruds/courses'
-import AssignmentCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/curricular/cruds/assignment'
+//import CareerCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/curricular/cruds/careers'
+//import CourseCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/curricular/cruds/courses'
 
 interface Props {
   loading: boolean
@@ -22,6 +20,7 @@ export function CurricularMaintenanceTabs({ loading, SkeletonCrud }: Props) {
         <TabsTrigger value="asignaciones">Asignaciones</TabsTrigger>
       </TabsList>
 
+      {/* 
       <CrudTabPanel value="carreras" loading={loading} SkeletonCrud={SkeletonCrud}>
         <CareerCrud />
       </CrudTabPanel>
@@ -36,7 +35,9 @@ export function CurricularMaintenanceTabs({ loading, SkeletonCrud }: Props) {
 
       <CrudTabPanel value="asignaciones" loading={loading} SkeletonCrud={SkeletonCrud}>
         <AssignmentCrud />
-      </CrudTabPanel>
+      </CrudTabPanel> 
+      */}
+      
     </Tabs>
   )
 }

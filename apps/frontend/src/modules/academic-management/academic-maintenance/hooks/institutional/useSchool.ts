@@ -19,14 +19,7 @@ const baseHooks = createGenericHooks<SchoolWithRelations, CreateSchoolInput, Par
       created: () => 'Escuela creada exitosamente',
       updated: () => 'Escuela actualizada exitosamente',
       deleted: () => 'Escuela eliminada exitosamente'
-    },
-    processData: (data) => ({
-      ...data,
-      id: data.id || (data as any)._id,
-      faculty: data.faculty || null,
-      courses: data.courses || [],
-      career: data.career || []
-    })
+    }
   }
 )
 

@@ -7,9 +7,8 @@ interface BackendResponse<T> {
   message?: string
   status?: string
 }
-
 export class GenericService<T, CreateDTO, UpdateDTO = Partial<T>, Filters = unknown> {
-  constructor(private readonly resource: string) {}
+  constructor(protected readonly resource: string) {}
 
   async list(filters?: Filters): Promise<PaginatedResponse<T>> {
     try {

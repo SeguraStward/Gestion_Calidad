@@ -1,213 +1,295 @@
-// regional-center-page.tsx
+/* eslint-disable react/display-name */
 'use client'
 
-// Importar tipos y hooks específicos
+import { useMemo } from 'react'
+import { ColumnDef } from '@tanstack/react-table'
+import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
+import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
 import {
   useCreateRegionalCenter,
-  useListRegionalCentersPaginated,
-  useOneRegionalCenter,
+  useUpdateRegionalCenter,
   useRemoveRegionalCenter,
-  useUpdateRegionalCenter
+  useOneRegionalCenter,
+  useListRegionalCenters,
+  useListRegionalCentersPaginated
 } from '@/modules/academic-management/academic-maintenance/hooks/institutional/useRegionalCenter'
-import { CrudItemBase, CrudModuleBase, CrudConfig } from '@/app/(components)/crud/crud-module-base'
-import { FormLayout } from '@/app/(components)/form/form-layout'
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Label } from '@una-gc/ui/components' // Removed FormField as Controller is used directly
-import { Control, Controller, FieldErrors, FieldValues } from 'react-hook-form'
-import { Building2, Edit3, Save, Trash2, XCircle } from 'lucide-react' // Added icons
+import { useRegionalCenterFormData } from '../../../../hooks/institutional/useRegionalCenterFormData'
 import {
   RegionalCenterWithRelations,
-  CreateRegionalCenterInput
+  CreateRegionalCenterInput,
+  CampusSelectOption
 } from '@/modules/academic-management/academic-maintenance/types/institutional/regional-center'
-import { CampusWithRelations } from '@/modules/academic-management/academic-maintenance/types/institutional/campus' // Use local type
-import { Campus as PrismaCampus, Status } from '@una-gc/database/prisma/generated/client' // Corrected import path
+import { Status } from '@una-gc/database/prisma/generated/client'
+import {
+  Badge,
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from '@una-gc/ui/components'
+import {
+  Building2,
+  MapPin,
+  Calendar,
+  Hash,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Loader2,
+  Globe,
+  Mail,
+  Phone,
+  Map,
+  Users,
+  Info,
+  AlertCircle,
+  CheckCircle2,
+  XCircle
+} from 'lucide-react'
+import { AlertMessage } from '@/app/(components)/ui/alert-message'
 
-// Define a type for the processed campus data
-interface ProcessedCampus {
-  id: string
-  name: string | null
-  code: string
-  status: Status // Use imported Status enum
-  description: string
-  version: number
-  createdAt: Date
-  updatedAt: Date
-  createdBy: string | null
-  updatedBy: string | null
-  regionalCenterId: string
-}
+// Define the item type for CrudModuleBase
+interface RegionalCenterItem extends RegionalCenterWithRelations {}
 
-// Define a more specific type for the item, extending CrudItemBase
-interface RegionalCenterItem extends CrudItemBase, Omit<RegionalCenterWithRelations, 'campuses'> {
-  campuses: ProcessedCampus[]
-}
+// Define the update input type
+type UpdateRegionalCenterInput = Partial<CreateRegionalCenterInput>
 
-// Define Update type
-type UpdateRegionalCenterInputType = Partial<CreateRegionalCenterInput>
-
-// Configuración específica para RegionalCenter
-const regionalCenterConfig: CrudConfig<RegionalCenterItem, CreateRegionalCenterInput, UpdateRegionalCenterInputType> = {
-  entityName: 'Sede Regional',
-  entityNamePlural: 'Sedes Regionales',
-
-  usePaginatedQuery: useListRegionalCentersPaginated,
-  useCreateMutation: useCreateRegionalCenter,
-  useUpdateMutation: useUpdateRegionalCenter,
-  useDeleteMutation: useRemoveRegionalCenter,
-  useOneQuery: (id: string) => useOneRegionalCenter(id),
-
-  validationRules: {
-    code: {
-      required: 'Código es requerido',
-      minLength: { value: 3, message: 'Mínimo 3 caracteres' },
-      maxLength: { value: 15, message: 'Máximo 15 caracteres' }
-    },
-    name: {
-      required: 'Nombre es requerido',
-      minLength: { value: 5, message: 'Mínimo 5 caracteres' },
-      maxLength: { value: 100, message: 'Máximo 100 caracteres' }
-    }
+// RegionalCenter status options with enhanced icons and descriptions
+const STATUS_OPTIONS = [
+  {
+    id: Status.ACTIVE,
+    name: 'Activo',
+    icon: <CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" />,
+    description: 'El centro regional está operativo y visible en el sistema'
   },
+  {
+    id: Status.INACTIVE,
+    name: 'Inactivo',
+    icon: <XCircle className="h-4 w-4 text-red-500 mr-2" />,
+    description: 'El centro regional no está operativo y permanecerá oculto'
+  }
+]
 
-  defaultFormValues: {
-    code: '',
-    name: ''
-  },
+export default function RegionalCentersCrud() {
+  // Cargar datos para el formulario
+  const { campuses, isLoadingCampuses } = useRegionalCenterFormData()
 
-  processItem: (item: RegionalCenterWithRelations): RegionalCenterItem => ({
-    ...item,
-    id: item.id,
-    campuses: (item.campuses || []).map(
-      (campus: PrismaCampus): ProcessedCampus => ({
-        // Use PrismaCampus here
-        id: campus.id,
-        name: campus.name || 'N/A',
-        code: campus.code || 'N/A',
-        status: campus.status || Status.ACTIVE, // Use Status enum, provide a default if necessary
-        description: campus.description || '',
-        version: campus.version || 0,
-        createdAt: campus.createdAt ? new Date(campus.createdAt) : new Date(),
-        updatedAt: campus.updatedAt ? new Date(campus.updatedAt) : new Date(),
-        createdBy: campus.createdBy || null,
-        updatedBy: campus.updatedBy || null,
-        regionalCenterId: campus.regionalCenterId || item.id
-      })
-    )
-  }),
-
-  preDeleteCheck: (item: RegionalCenterItem) => {
-    if (item.campuses?.length > 0) {
-      return 'No se puede eliminar porque tiene campus asociados'
-    }
-    return null
-  },
-
-  renderForm: ({
-    control,
-    errors,
-    isProcessing,
-    isUpdate,
-    handleCancel,
-    handleSubmitForm
-  }: {
-    control: Control<CreateRegionalCenterInput | UpdateRegionalCenterInputType>
-    errors: FieldErrors<CreateRegionalCenterInput | UpdateRegionalCenterInputType>
-    isProcessing: boolean
-    isUpdate: boolean
-    handleCancel: () => void
-    handleSubmitForm: () => void
-  }) => (
-    <FormLayout
-      title={
-        <div className="flex items-center gap-2">
-          <Building2 className="h-5 w-5 text-primary" />
-          {isUpdate ? 'Editar Sede Regional' : 'Crear Nueva Sede Regional'}
-        </div>
-      }
-      onSubmit={handleSubmitForm}
-      className="space-y-4 p-4 border rounded-md"
-    >
-      <div className="space-y-1">
-        <Label htmlFor="code">Código de Sede</Label>
-        <Controller
-          control={control}
-          name="code"
-          render={({ field }) => <Input id="code" placeholder="Ej: SR-PACIFICO" {...field} />}
-        />
-        {errors.code && <p className="text-sm text-red-500">{errors.code.message}</p>}
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="name">Nombre de la Sede</Label>
-        <Controller
-          control={control}
-          name="name"
-          render={({ field }) => <Input id="name" placeholder="Ej: Sede Regional Pacífico Central" {...field} />}
-        />
-        {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
-      </div>
-      <div className="flex justify-end gap-2 pt-6">
-        <Button type="button" variant="outline" onClick={handleCancel} disabled={isProcessing}>
-          <XCircle className="mr-2 h-4 w-4" /> Cancelar
-        </Button>
-        <Button type="submit" disabled={isProcessing}>
-          {isUpdate ? 'Guardar Cambios' : 'Crear Sede'}
-        </Button>
-      </div>
-    </FormLayout>
-  ),
-
-  renderItem: (
-    item: RegionalCenterItem,
-    {
-      onEdit,
-      onDelete,
-      isProcessing,
-      isEditing
-    }: {
-      onEdit: () => void
-      onDelete: () => void
-      isProcessing: boolean
-      isEditing: boolean
-    }
-  ) => (
-    <div className="p-4 border rounded-md shadow-sm">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">{item.name}</CardTitle>
-            <CardDescription>Código: {item.code}</CardDescription>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="icon" onClick={onEdit} disabled={isProcessing}>
-              <Edit3 className="h-4 w-4" />
-            </Button>
-            <Button variant="destructive" size="icon" onClick={onDelete} disabled={isProcessing}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-4 space-y-2">
-        <div>
-          <h4 className="text-sm font-semibold mb-1">Campus Asociados:</h4>
-          {item.campuses?.length > 0 ? (
-            <ul className="list-disc pl-5 text-sm">
-              {item.campuses.map((campus: ProcessedCampus) => (
-                <li key={campus.id}>
-                  {campus.name} ({campus.code})
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-gray-500">No hay campus asociados.</p>
-          )}
-        </div>
-      </CardContent>
-    </div>
+  // Definición de columnas para la tabla de centros regionales
+  const renderColumns = useMemo(
+    () =>
+      (utils: ColumnUtilities<RegionalCenterItem>): ColumnDef<RegionalCenterItem>[] => [
+        {
+          accessorKey: 'code',
+          header: 'Código',
+          size: 100,
+          cell: ({ row }) => (
+            <div className="flex items-center">
+              <Hash className="h-4 w-4 text-primary mr-2" />
+              <span>{row.original.code}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'name',
+          header: 'Nombre',
+          size: 200,
+          cell: ({ row }) => (
+            <div className="flex items-center">
+              <Building2 className="h-4 w-4 text-primary mr-2" />
+              <span className="font-medium">{row.original.name}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'campuses.0.name',
+          header: 'Campus',
+          size: 150,
+          cell: ({ row }) => (
+            <div className="flex items-center">
+              <MapPin className="h-4 w-4 text-primary mr-2" />
+              <span>{row.original.campuses?.[0]?.name || 'Sin campus'}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'status',
+          header: 'Estado',
+          size: 100,
+          cell: ({ row }) => {
+            const status = row.original.status
+            let badgeClasses = ''
+            let statusText = ''
+            if (status === Status.ACTIVE) {
+              badgeClasses =
+                'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+              statusText = 'Activo'
+            } else {
+              badgeClasses = 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800'
+              statusText = 'Inactivo'
+            }
+            return (
+              <Badge variant="outline" className={badgeClasses}>
+                {statusText}
+              </Badge>
+            )
+          }
+        },
+        {
+          id: 'actions',
+          header: () => <div className="text-right">Acciones</div>,
+          size: 80,
+          cell: ({ row }) => (
+            <div className="text-right flex gap-1 justify-end">
+              <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => utils.onEdit(row.original.id)} title="Editar">
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <AlertMessage
+                title="¿Desea eliminar el centro regional?"
+                description={`Esta acción no se puede deshacer. ¿Eliminar "${row.original.name}"?`}
+                variant="danger"
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+                onConfirm={() => {
+                  utils.onDelete(row.original.id)
+                }}
+                trigger={
+                  <Button
+                    variant="ghost"
+                    className="h-8 w-8 p-0 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50"
+                    title="Eliminar"
+                    disabled={utils.isProcessing}
+                  >
+                    {utils.isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  </Button>
+                }
+              />
+            </div>
+          )
+        }
+      ],
+    []
   )
+
+  // Formulario con campos básicos y relación con campus
+  const renderForm = useMemo(() => {
+    return ({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) => {
+      return (
+        <CrudFormAdapter
+          control={control}
+          errors={errors}
+          editingItem={editingItem}
+          isUpdate={isUpdate}
+          isProcessing={isProcessing}
+          handleSubmitForm={handleSubmitForm}
+          handleCancel={handleCancel}
+          title={isUpdate ? 'Editar Centro Regional' : 'Crear Nuevo Centro Regional'}
+          description={
+            isUpdate ? 'Actualice los datos del centro regional' : 'Complete los datos para registrar un nuevo centro regional'
+          }
+          sections={() => [
+            {
+              title: 'Datos básicos',
+              description: 'Información principal del centro regional',
+              icon: <Building2 className="h-5 w-5 text-primary mr-2" />,
+              fields: [
+                {
+                  type: 'text',
+                  name: 'code',
+                  label: 'Código',
+                  required: true,
+                  placeholder: 'Ej: CR-BRUNCA',
+                  helperText: 'Código único del centro regional',
+                  rules: {
+                    minLength: { value: 2, message: 'El código debe tener al menos 2 caracteres' },
+                    maxLength: { value: 20, message: 'El código no puede exceder 20 caracteres' },
+                    pattern: { value: /^[A-Za-z0-9\-_]+$/, message: 'Solo letras, números, guiones y guiones bajos' }
+                  },
+                  disabled: isUpdate
+                },
+                {
+                  type: 'text',
+                  name: 'name',
+                  label: 'Nombre',
+                  required: true,
+                  placeholder: 'Ej: Centro Regional Brunca',
+                  helperText: 'Nombre completo del centro regional',
+                  rules: {
+                    minLength: { value: 3, message: 'El nombre debe tener al menos 3 caracteres' },
+                    maxLength: { value: 100, message: 'El nombre no puede exceder 100 caracteres' }
+                  }
+                },
+                {
+                  type: 'select',
+                  name: 'campusId',
+                  label: 'Campus',
+                  required: true,
+                  options: campuses.map((campus: CampusSelectOption) => ({
+                    id: campus.id,
+                    name: campus.name
+                  })),
+                  isLoading: isLoadingCampuses,
+                  placeholder: 'Seleccionar campus',
+                  helperText: 'Campus al que pertenece el centro regional'
+                },
+                {
+                  type: 'select',
+                  name: 'status',
+                  label: 'Estado',
+                  required: true,
+                  options: STATUS_OPTIONS.map((option) => ({
+                    id: option.id,
+                    name: option.name
+                  })),
+                  helperText: 'Estado actual del centro regional',
+                  renderOption: (option: any) => (
+                    <div className="flex items-center">
+                      {STATUS_OPTIONS.find((opt) => opt.id === option.id)?.icon}
+                      <span>{option.name}</span>
+                    </div>
+                  )
+                }
+              ]
+            }
+          ]}
+        />
+      )
+    }
+  }, [campuses, isLoadingCampuses])
+
+  const crudConfig = useMemo(
+    () => ({
+      entityName: 'Centro Regional',
+      entityNamePlural: 'Centros Regionales',
+      searchPlaceholder: 'Buscar por código o nombre...',
+      usePaginatedQuery: useListRegionalCentersPaginated,
+      useCreateMutation: useCreateRegionalCenter,
+      useUpdateMutation: useUpdateRegionalCenter,
+      useDeleteMutation: useRemoveRegionalCenter,
+      useOneQuery: useOneRegionalCenter,
+      defaultFormValues: {
+        code: '',
+        name: '',
+        campusId: '',
+        status: Status.ACTIVE
+      } as CreateRegionalCenterInput,
+      renderForm,
+      renderColumns,
+      processItemForEditing: (item: RegionalCenterItem) => ({
+        code: item.code || '',
+        name: item.name || '',
+        campusId: item.campuses?.[0]?.id || '',
+        status: item.status || Status.ACTIVE
+      }),
+      preDeleteCheck: () => null
+    }),
+    [renderForm, renderColumns]
+  )
+
+  return <CrudModuleBase {...crudConfig} />
 }
 
-export default function RegionalCenterPage() {
-  return (
-    <CrudModuleBase<RegionalCenterItem, CreateRegionalCenterInput, UpdateRegionalCenterInputType> {...regionalCenterConfig} />
-  )
-}
+RegionalCentersCrud.displayName = 'RegionalCentersCrud'

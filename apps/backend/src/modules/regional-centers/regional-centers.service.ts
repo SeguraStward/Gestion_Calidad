@@ -1,17 +1,23 @@
 import { GenericService } from '@core/common/interfaces/generic.service';
 import { DtoValidator } from '@core/common/dto-validator';
-import { Injectable, Logger, ConflictException } from '@nestjs/common'; // Added ConflictException
-import { Prisma } from '@una-gc/database/prisma/generated/client'; // Added Prisma
+import { Injectable, Logger, ConflictException, NotFoundException } from '@nestjs/common';
+import { Prisma, Status } from '@una-gc/database/prisma/generated/client';
 
 import { RegionalCenterDto } from './dtos/regional-center.dto';
 import { RegionalCenter } from '@una-gc/database/prisma/generated/client';
 import { RegionalCentersRepository } from './regional-centers.repository';
+import { PaginatedResponse } from '@core/http/interfaces/paginated-response.interface';
+
+// Define full include object for relations
+const FULL_INCLUDE: Prisma.RegionalCenterInclude = {
+  campuses: true,
+};
 
 @Injectable()
 export class RegionalCentersService extends GenericService<
   RegionalCenter,
   RegionalCenterDto,
-  RegionalCenterDto // Assuming CreateDTO and UpdateDTO are both RegionalCenterDto
+  RegionalCenterDto
 > {
   protected readonly logger = new Logger(RegionalCentersService.name);
 
@@ -19,46 +25,56 @@ export class RegionalCentersService extends GenericService<
     protected readonly regionalCentersRepository: RegionalCentersRepository,
     protected readonly dtoValidator: DtoValidator,
   ) {
-    super(regionalCentersRepository, RegionalCenterDto);
+    super(regionalCentersRepository, RegionalCenterDto, dtoValidator);
   }
 
-  // Override save to handle unique constraint violations
+  // Override save to handle relations properly
   async save(payload: RegionalCenterDto): Promise<RegionalCenterDto> {
-    try {
-      this.logger.log(`Creating entity with data: ${JSON.stringify(payload)}`);
-      const result = await this.repository.save(payload as any); // Cast to any if types mismatch with generic repo
-      // Assuming transformDto and dtoValidator are handled in the base or not strictly needed here for error handling focus
-      this.logger.log(`Created entity: ${JSON.stringify(result)}`);
-      return result as unknown as RegionalCenterDto; // Adjust DTO transformation as per your GenericService
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        const target = (error.meta?.target as string[]) || ['unknown field'];
-        const message = `A regional center with this ${target.join(', ')} already exists.`;
-        this.logger.warn(message);
-        throw new ConflictException(message);
-      }
-      this.logger.error(`Error saving entity: ${JSON.stringify(payload)}`, error);
-      throw error;
-    }
+    this.logger.debug(`Saving regional center with payload: ${JSON.stringify(payload)}`);
+    const data: Prisma.RegionalCenterCreateInput = {
+      ...payload,
+      campuses: { connect: { id: payload.campusId } },
+    };
+    return super.save(data as any);
   }
 
-  // Override update to handle unique constraint violations
-  async update(id: string, payload: RegionalCenterDto): Promise<RegionalCenterDto> {
-    try {
-      this.logger.log(`Updating entity ${id} with data: ${JSON.stringify(payload)}`);
-      const result = await this.repository.update(id, payload as any); // Cast to any if types mismatch
-      // Assuming transformDto is handled in the base or not strictly needed here for error handling focus
-      this.logger.log(`Updated entity ${id}: ${JSON.stringify(result)}`);
-      return result as unknown as RegionalCenterDto; // Adjust DTO transformation as per your GenericService
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        const target = (error.meta?.target as string[]) || ['unknown field'];
-        const message = `A regional center with this ${target.join(', ')} already exists.`;
-        this.logger.warn(message);
-        throw new ConflictException(message);
-      }
-      this.logger.error(`Error updating entity ${id}: ${JSON.stringify(payload)}`, error);
-      throw error;
-    }
+  // Override update to handle relations properly
+  async update(id: string, payload: Partial<RegionalCenterDto>): Promise<RegionalCenterDto> {
+    this.logger.debug(`Updating regional center ${id} with payload: ${JSON.stringify(payload)}`);
+    const data: Prisma.RegionalCenterUpdateInput = {
+      ...payload,
+      ...(payload.campusId && { campuses: { connect: { id: payload.campusId } } }),
+    };
+    return super.update(id, data as any);
+  }
+
+  // Override findById to include all relations
+  async findById(id: string): Promise<RegionalCenterDto | null> {
+    return this.regionalCentersRepository.findById(id, FULL_INCLUDE) as any;
+  }
+
+  // Override findAll to include all relations
+  async findAll(
+    page = 1,
+    limit = 10,
+    where?: Prisma.RegionalCenterWhereInput,
+    orderBy?: Prisma.RegionalCenterOrderByWithRelationInput,
+  ): Promise<PaginatedResponse<RegionalCenterDto>> {
+    return super.findAll(page, limit, where, orderBy, FULL_INCLUDE);
+  }
+
+  // Custom method for finding by campus
+  async findAllByCampusId(
+    campusId: string,
+    page = 1,
+    limit = 10,
+    status?: Status,
+    orderBy?: Prisma.RegionalCenterOrderByWithRelationInput,
+  ): Promise<PaginatedResponse<RegionalCenterDto>> {
+    const where: Prisma.RegionalCenterWhereInput = { 
+      campuses: { some: { id: campusId } },
+      ...(status && { status })
+    };
+    return super.findAll(page, limit, where, orderBy, FULL_INCLUDE);
   }
 }

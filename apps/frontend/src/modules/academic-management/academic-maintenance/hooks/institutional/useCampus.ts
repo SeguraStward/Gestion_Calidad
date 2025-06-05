@@ -37,12 +37,7 @@ export function useListCampuses(
   filters?: Omit<CampusFilters, 'page' | 'limit'>, // Allow all filters except pagination for a flat list
   options?: Omit<UseQueryOptions<CampusWithRelations[], Error>, 'queryKey' | 'queryFn'>
 ) {
-  return useQuery<
-    CampusWithRelations[],
-    Error,
-    CampusWithRelations[],
-    (string | Omit<CampusFilters, 'page' | 'limit'> | undefined)[]
-  >({
+  return useQuery<CampusWithRelations[], Error, CampusWithRelations[]>({
     queryKey: ['campuses-flat', filters], // Unique query key for the flat list
     queryFn: async () => {
       // Fetch all items, so no pagination params or a very high limit

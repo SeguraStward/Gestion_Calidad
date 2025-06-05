@@ -48,8 +48,8 @@ export class AcademicLoadsController extends GenericController<AcademicLoadDto, 
       page,
       limit,
       status, // Pass status to service
-      parsedOrderBy,
-      prismaInclude,
+      parsedOrderBy
+      // Removed prismaInclude to match service signature
     );
   }
 }

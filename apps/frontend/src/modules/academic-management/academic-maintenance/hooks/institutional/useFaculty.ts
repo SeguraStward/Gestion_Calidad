@@ -36,7 +36,7 @@ export function useListFaculties(
   filters?: FacultyFilters,
   options?: Omit<UseQueryOptions<FacultyWithRelations[], Error>, 'queryKey' | 'queryFn'>
 ) {
-  return useQuery<FacultyWithRelations[], Error, FacultyWithRelations[], (string | FacultyFilters | undefined)[]>({
+  return useQuery<FacultyWithRelations[], Error, FacultyWithRelations[]>({
     queryKey: ['faculties', filters],
     queryFn: async () => {
       const response = await facultyService.list(filters)

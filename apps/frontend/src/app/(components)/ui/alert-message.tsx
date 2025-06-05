@@ -41,10 +41,19 @@ export function AlertMessage({
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : internalOpen
   const setOpen = isControlled ? onOpenChange! : setInternalOpen
-
   const handleConfirm = () => {
-    onConfirm?.()
-    setOpen(false)
+    if (onConfirm) {
+      try {
+        onConfirm();
+      } catch (error) {
+        console.error('Error en onConfirm:', error);
+      }
+    }
+    
+    // Solo cerramos el diálogo si no es controlado externamente
+    if (!isControlled) {
+      setOpen(false);
+    }
   }
 
   const variantStyles = {
