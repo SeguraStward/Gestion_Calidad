@@ -38,7 +38,7 @@ export interface SwitchRoleResponse {
 }
 
 export class AuthService {
-  private static readonly API_URL = process.env.NEXT_PUBLIC_API_URL
+  private static readonly API_URL = process.env.PUBLIC_API_URL
   private static readonly LOG_PREFIX = '[AuthService]'
 
   /**
@@ -67,16 +67,16 @@ export class AuthService {
           description: role.description,
           permissions: Array.isArray(role.permissions)
             ? role.permissions.map((perm: any) => ({
-                id: perm.id,
-                name: perm.name,
-                code: perm.code,
-                description: perm.description || '',
-                // Mantener campos adicionales que puedan ser útiles
-                status: perm.status,
-                type: perm.type,
-                scope: perm.scope,
-                actions: perm.actions
-              }))
+              id: perm.id,
+              name: perm.name,
+              code: perm.code,
+              description: perm.description || '',
+              // Mantener campos adicionales que puedan ser útiles
+              status: perm.status,
+              type: perm.type,
+              scope: perm.scope,
+              actions: perm.actions
+            }))
             : []
         }))
       } else if (response.data && typeof response.data === 'object') {
