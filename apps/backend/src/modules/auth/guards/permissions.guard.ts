@@ -19,16 +19,16 @@ export class PermissionsGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private prisma: PrismaService,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
       this.logger.debug('Iniciando verificación de permisos');
 
       // validar si en el env está habilitado el guard
-      const disable = process.env.DISABLED_PERMISSIONS_GUARD == 'true';
+      const disable = process.env.DISABLED_ROLES == 'true';
       if (disable) {
-        this.logger.warn('El guard de permisos está deshabilitado por configuración');
+        this.logger.warn('This guard is disabled, all requests will be allowed (DISABLED_ROLES=true)');
         return true;
       }
 
