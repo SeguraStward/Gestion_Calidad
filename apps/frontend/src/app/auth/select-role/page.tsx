@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle, Loader2, RefreshCcw } from 'lucide-react'
+import { CheckCircle, Loader2, RefreshCcw, ArrowLeft, AlertTriangle } from 'lucide-react'
+import Cookies from 'js-cookie'
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@una-gc/ui/components/card'
 import { Button } from '@una-gc/ui/components/button'
 import { Skeleton } from '@una-gc/ui/components/skeleton'
 import { Alert, AlertDescription } from '@una-gc/ui/components/alert'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@una-gc/ui/components/collapsible'
 import { RadioGroup, RadioGroupItem } from '@una-gc/ui/components/radio-group'
 import { Label } from '@una-gc/ui/components/label'
 
@@ -22,73 +22,109 @@ export default function SelectRolePage() {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [debugInfo, setDebugInfo] = useState<string>('')
+  const [error, setError] = useState<string | null>(null)
+  const [canCancel, setCanCancel] = useState(false)
   const router = useRouter()
 
-  function handleApiError(error: any) {
-    if (typeof error === 'object' && error !== null && 'response' in error && error.response) {
-      setDebugInfo(
-        JSON.stringify(
-          {
-            status: error.response.status,
-            statusText: error.response.statusText,
-            data: error.response.data
-          },
-          null,
-          2
-        )
-      )
-    } else {
-      setDebugInfo(JSON.stringify(error, null, 2))
+  // Verificar si hay un rol activo al cargar el componente
+  useEffect(() => {
+    const activeRoleId = Cookies.get('active_role_id')
+    setCanCancel(!activeRoleId)
+  }, [])
+
+  const getErrorMessage = (error: unknown): string => {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError
+
+      switch (axiosError.response?.status) {
+        case 401:
+          return 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.'
+        case 403:
+          return 'No tienes permisos para acceder a esta funcionalidad.'
+        case 404:
+          return 'No se encontraron roles disponibles para tu usuario.'
+        case 500:
+          return 'Error interno del servidor. Intenta más tarde.'
+        case 503:
+          return 'El servicio no está disponible temporalmente.'
+        default:
+          return (
+            (axiosError.response?.data && typeof axiosError.response.data === 'object' && 'message' in axiosError.response.data
+              ? (axiosError.response.data as { message?: string }).message
+              : undefined) || 'Error de conexión. Verifica tu internet.'
+          )
+      }
     }
+
+    if (error instanceof Error) {
+      return error.message
+    }
+
+    return 'Ha ocurrido un error inesperado.'
   }
 
   const fetchRoles = useCallback(async () => {
     console.log('🏁 Starting to fetch user roles...')
     try {
       setLoading(true)
+      setError(null)
+
       const userRoles = await AuthService.getUserActiveRoles()
       console.log('📊 User roles received:', userRoles)
 
-      if (Array.isArray(userRoles)) {
-        setRoles(userRoles)
+      if (!Array.isArray(userRoles)) {
+        throw new Error('Formato de respuesta inválido del servidor.')
+      }
 
-        // Auto-select if only one role is available
-        if (userRoles.length === 1 && userRoles[0]) {
-          setSelectedRole(userRoles[0])
-        }
-      } else {
-        console.error('❌ Invalid response format for roles:', userRoles)
+      if (userRoles.length === 0) {
+        setError('No tienes roles asignados. Contacta al administrador.')
         setRoles([])
-        toast.error('Formato de respuesta inválido. Contacta al soporte.')
+        return
+      }
+
+      setRoles(userRoles)
+
+      // Auto-seleccionar si solo hay un rol disponible
+      if (userRoles.length === 1 && userRoles[0]) {
+        setSelectedRole(userRoles[0])
       }
     } catch (error) {
       console.error('❌ Error fetching roles:', error)
-      handleApiError(error)
-      toast.error('No se pudieron cargar tus roles. Intenta de nuevo.')
+      const errorMessage = getErrorMessage(error)
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
-  }, []) // Sin dependencias ya que no usa variables externas
+  }, [])
 
   useEffect(() => {
     fetchRoles()
   }, [fetchRoles])
 
+  const handleCancel = () => {
+    router.back()
+  }
+
   const handleSubmit = async () => {
-    if (!selectedRole) return
+    if (!selectedRole) {
+      toast.error('Por favor selecciona un rol.')
+      return
+    }
 
     try {
       setSubmitting(true)
+      setError(null)
+
       console.log('🔄 Starting role switch for role:', selectedRole)
       const response = await AuthService.changeRole(selectedRole.id)
       console.log('✅ Role switch successful, response:', response)
 
       if (!response) {
-        throw new Error('Role switch was unsuccessful')
+        throw new Error('No se pudo cambiar el rol. Intenta nuevamente.')
       }
 
-      // Solo guardamos la información del rol para uso local
+      // Guardar información del rol para uso local
       const roleData = {
         id: selectedRole.id,
         name: selectedRole.name,
@@ -97,25 +133,19 @@ export default function SelectRolePage() {
 
       localStorage.setItem('selected_role', JSON.stringify(roleData))
 
-      toast.success(`Rol cambiado a: ${selectedRole.name}`)
+      toast.success(`Rol cambiado exitosamente a: ${selectedRole.name}`)
       router.push('/profile')
     } catch (error) {
       console.error('❌ Error in handleSubmit:', error)
+      const errorMessage = getErrorMessage(error)
+      setError(errorMessage)
+      toast.error(errorMessage)
 
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError
-        handleApiError(axiosError)
-
-        if (axiosError.response?.status === 401) {
-          toast.error('Sesión expirada. Por favor inicia sesión nuevamente.')
-        } else if (axiosError.response?.status === 403) {
-          toast.error('No tienes permiso para usar este rol.')
-        } else {
-          toast.error('Error al seleccionar rol. Intenta de nuevo.')
-        }
-      } else {
-        handleApiError(error)
-        toast.error('Error inesperado. Intenta de nuevo.')
+      // Si es error 401, redirigir al login
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        setTimeout(() => {
+          router.push('/auth/login')
+        }, 2000)
       }
     } finally {
       setSubmitting(false)
@@ -123,104 +153,98 @@ export default function SelectRolePage() {
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-center">Selecciona tu rol</CardTitle>
-      </CardHeader>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-center">Selecciona tu rol</CardTitle>
+        </CardHeader>
 
-      <CardContent className="space-y-4">
-        {loading ? (
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3">
-              <Skeleton className="h-4 w-4 rounded-full" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-            <div className="flex items-center space-x-3">
-              <Skeleton className="h-4 w-4 rounded-full" />
-              <Skeleton className="h-4 w-40" />
-            </div>
-            <div className="flex items-center space-x-3">
-              <Skeleton className="h-4 w-4 rounded-full" />
-              <Skeleton className="h-4 w-36" />
-            </div>
-          </div>
-        ) : roles.length === 0 ? (
-          <div className="space-y-4">
+        <CardContent className="space-y-4">
+          {error && (
             <Alert variant="destructive">
-              <AlertDescription>No tienes roles asignados o hubo un problema al cargar tus roles.</AlertDescription>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
+          )}
 
-            <Button onClick={fetchRoles} variant="outline" className="w-full">
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              Intentar de nuevo
-            </Button>
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center space-x-3 p-3 border rounded-md">
+                  <Skeleton className="h-4 w-4 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : roles.length === 0 ? (
+            <div className="space-y-4 text-center">
+              <div className="py-8">
+                <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No se encontraron roles disponibles.</p>
+              </div>
 
-            {debugInfo && (
-              <Collapsible className="border rounded-md">
-                <CollapsibleTrigger className="w-full p-3 text-sm font-medium text-left text-yellow-800 bg-yellow-50 hover:bg-yellow-100 rounded-md">
-                  Información de depuración
-                </CollapsibleTrigger>
-                <CollapsibleContent className="p-3 bg-yellow-50 rounded-md">
-                  <pre className="text-xs overflow-auto bg-white p-2 rounded border border-yellow-200 max-h-60">
-                    {debugInfo || 'Sin información adicional'}
-                  </pre>
-                </CollapsibleContent>
-              </Collapsible>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
+              <Button onClick={fetchRoles} variant="outline" className="w-full">
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Intentar nuevamente
+              </Button>
+            </div>
+          ) : (
             <RadioGroup
               value={selectedRole?.id.toString()}
               onValueChange={(value) => {
                 const role = roles.find((r) => r.id.toString() === value)
                 if (role) setSelectedRole(role)
               }}
+              className="space-y-3"
             >
               {roles.map((role) => (
                 <div
                   key={role.id}
                   className={cn(
-                    'flex items-center space-x-2 rounded-md border p-3',
+                    'flex items-center space-x-3 rounded-md border p-4 transition-colors cursor-pointer hover:bg-accent/50',
                     selectedRole?.id === role.id ? 'border-primary bg-accent' : 'border-input'
                   )}
+                  onClick={() => setSelectedRole(role)}
                 >
                   <RadioGroupItem value={role.id.toString()} id={`role-${role.id}`} />
                   <Label htmlFor={`role-${role.id}`} className="flex-1 cursor-pointer">
                     <div className="font-medium">{role.name}</div>
-                    {role.description && <div className="text-xs text-muted-foreground mt-1">{role.description}</div>}
+                    {role.description && <div className="text-sm text-muted-foreground mt-1">{role.description}</div>}
                   </Label>
-                  {selectedRole?.id === role.id && <CheckCircle className="h-4 w-4 text-primary" />}
+                  {selectedRole?.id === role.id && <CheckCircle className="h-5 w-5 text-primary" />}
                 </div>
               ))}
             </RadioGroup>
-
-            <Collapsible className="border rounded-md">
-              <CollapsibleTrigger className="w-full p-2 text-sm font-medium text-left text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-md">
-                Mostrar información de depuración
-              </CollapsibleTrigger>
-              <CollapsibleContent className="p-2 bg-gray-50 rounded-md">
-                <pre className="text-xs overflow-auto bg-white p-2 rounded border border-gray-200 max-h-60">
-                  {JSON.stringify({ roles, selectedRole }, null, 2)}
-                </pre>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )}
-      </CardContent>
-
-      <CardFooter>
-        <Button onClick={handleSubmit} disabled={!selectedRole || submitting || loading} className="w-full">
-          {submitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Procesando...
-            </>
-          ) : (
-            'Continuar'
           )}
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardContent>
+
+        <CardFooter className="flex gap-3">
+          {canCancel && (
+            <Button onClick={handleCancel} variant="outline" disabled={submitting} className="flex-1">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Cancelar
+            </Button>
+          )}
+
+          <Button
+            onClick={handleSubmit}
+            disabled={!selectedRole || submitting || loading || !!error}
+            className={cn('transition-all', canCancel ? 'flex-1' : 'w-full')}
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Procesando...
+              </>
+            ) : (
+              'Continuar'
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   )
 }

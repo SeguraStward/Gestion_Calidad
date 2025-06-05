@@ -7,9 +7,9 @@ import { LogIn } from 'lucide-react'
 // usa google para el login institucional
 export default function LoginPage() {
   const handleGoogleLogin = () => {
-    const url = process.env.PUBLIC_GOOGLE_LOGIN_URL
+    const url = process.env.NEXT_PUBLIC_GOOGLE_LOGIN_URL
     if (!url) {
-      throw new Error('PUBLIC_GOOGLE_LOGIN_URL is not defined')
+      throw new Error('NEXT_PUBLIC_GOOGLE_LOGIN_URL is not defined')
     }
     window.location.href = url
   }
