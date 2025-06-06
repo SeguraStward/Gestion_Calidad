@@ -8,7 +8,8 @@ import { Button } from '@una-gc/ui/components/button'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@una-gc/ui/components/card'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { RadioGroup, RadioGroupItem } from '@una-gc/ui/components/radio-group'
-import { preguntasPaso7PageMock, PreguntaPaso7, TipoInforme } from '@/modules/final-reports/mocks/questions'
+// Import the translated mock name and its types (Step7Question, ReportType)
+import { step7QuestionsPageMock, Step7Question, ReportType } from '@/modules/final-reports/mocks/questions' // Was preguntasPaso7PageMock, PreguntaPaso7, TipoInforme
 import { Separator } from '@una-gc/ui/components/separator'
 // useRouter, CheckCircle, ArrowLeft are not directly used in this component's JSX anymore
 import { Activity } from 'lucide-react' // For consistency with form-step7
@@ -33,21 +34,24 @@ interface Step7EditFormProps {
   totalSteps: number // Retained for consistency if step number is shown in card title
   initialData?: Step7FormData | null
   isEditing?: boolean // Should be true for this form
-  tipoInforme: TipoInforme
+  reportType: ReportType // Changed from tipoInforme to reportType
 }
 
-// Helper to group questions (ensure this logic is robust and matches form-step7.tsx if it has similar needs)
-const groupQuestions = (questions: PreguntaPaso7[], tipoInforme: TipoInforme) => {
-  const grupos: Record<string, PreguntaPaso7[]> = {}
+// Helper to group questions
+// Use translated Step7Question and ReportType
+const groupQuestions = (questions: Step7Question[], currentReportType: ReportType) => {
+  const grupos: Record<string, Step7Question[]> = {}
+  // Use translated 'appliesTo' property
   const filteredQuestions = questions.filter((q) => {
-    if (Array.isArray(q.aplicaPara)) {
-      return q.aplicaPara.includes(tipoInforme) || q.aplicaPara.includes('TODOS')
+    if (Array.isArray(q.appliesTo)) {
+      return q.appliesTo.includes(currentReportType) || q.appliesTo.includes('TODOS')
     }
     return false
   })
 
   filteredQuestions.forEach((p) => {
-    const groupName = p.grupo || 'General'
+    // Use translated 'group' property
+    const groupName = p.group || 'General'
     if (!grupos[groupName]) {
       grupos[groupName] = []
     }
@@ -83,27 +87,29 @@ export function Step7EditForm({
   totalSteps,
   initialData,
   isEditing = true,
-  tipoInforme
+  reportType // Changed from tipoInforme to reportType
 }: Step7EditFormProps) {
   const { control, handleSubmit, reset, watch, register } = formMethods
 
   const { gruposDePreguntas, todasLasPreguntasFiltradas } = useMemo(
-    () => groupQuestions(preguntasPaso7PageMock, tipoInforme),
-    [tipoInforme]
+    // Use translated mock name
+    () => groupQuestions(step7QuestionsPageMock, reportType), // Use reportType
+    [reportType] // Use reportType
   )
 
   useEffect(() => {
     // Consolidate initialization logic
     const currentAnswers = initialData?.respuestasRadio || []
     const initialFormValues = todasLasPreguntasFiltradas.map((p) => {
-      const existing = currentAnswers.find((r) => r.idPregunta === p.idPregunta)
+      // Use translated 'questionId' property
+      const existing = currentAnswers.find((r) => r.idPregunta === p.questionId)
       return {
-        idPregunta: p.idPregunta,
+        idPregunta: p.questionId, // Use translated 'questionId'
         respuesta: existing?.respuesta || ''
       }
     })
     reset({ respuestasRadio: initialFormValues })
-  }, [initialData, reset, todasLasPreguntasFiltradas, tipoInforme])
+  }, [initialData, reset, todasLasPreguntasFiltradas, reportType]) // Use reportType
 
   return (
     <FormProvider {...formMethods}>
@@ -151,14 +157,16 @@ export function Step7EditForm({
                         {' '}
                         {/* Adjusted space-y */}
                         {preguntasDelGrupo.map((pregunta) => {
-                          const overallIndex = todasLasPreguntasFiltradas.findIndex((p) => p.idPregunta === pregunta.idPregunta)
+                          // Use translated 'questionId' property
+                          const overallIndex = todasLasPreguntasFiltradas.findIndex((p) => p.questionId === pregunta.questionId)
                           if (overallIndex === -1) return null
 
                           const currentValue = watch(`respuestasRadio.${overallIndex}.respuesta`)
 
                           return (
                             <FormField
-                              key={pregunta.idPregunta}
+                              // Use translated 'questionId' property
+                              key={pregunta.questionId}
                               control={control}
                               name={`respuestasRadio.${overallIndex}.respuesta`}
                               render={({ field }) => (
@@ -168,7 +176,8 @@ export function Step7EditForm({
                                   <FormLabel className="text-sm font-medium text-foreground/85 leading-normal block">
                                     {' '}
                                     {/* Consistent: text-sm font-medium */}
-                                    {pregunta.pregunta}
+                                    {/* Use translated 'question' property */}
+                                    {pregunta.question}
                                   </FormLabel>
                                   <div className="ml-2">
                                     <FormControl>
@@ -177,7 +186,8 @@ export function Step7EditForm({
                                         value={field.value || ''}
                                         className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5" /* Slightly increased gap */
                                       >
-                                        {pregunta.opciones?.map((opcion) => {
+                                        {/* Use translated 'options' property */}
+                                        {pregunta.options?.map((opcion) => {
                                           const isSelected = currentValue === opcion.value
                                           const colorClasses = getOptionColors(opcion.value, isSelected)
                                           return (
@@ -208,7 +218,8 @@ export function Step7EditForm({
                                     <input
                                       type="hidden"
                                       {...register(`respuestasRadio.${overallIndex}.idPregunta`)}
-                                      value={pregunta.idPregunta}
+                                      // Use translated 'questionId' property
+                                      value={pregunta.questionId}
                                     />
                                   </div>
                                 </FormItem>

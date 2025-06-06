@@ -5,14 +5,20 @@ import { UseFormReturn, FormProvider } from 'react-hook-form'
 import * as z from 'zod'
 import { Button } from '@una-gc/ui/components/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
-import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card' // CardFooter removed
+import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card'
 import { Textarea } from '@una-gc/ui/components/textarea'
-import { preguntasPaso6FormMock, PreguntaStep6, Option } from './form-step6'
-import { MoveRight, MoveLeft, Settings2, AlertTriangle } from 'lucide-react' // Added Settings2, AlertTriangle
+// Import centralized mock data and types
+import {
+  step6QuestionsPageMock, // Was preguntasPaso6FormMock
+  Step6Question, // Was PreguntaStep6
+  OptionFE // Was Option
+} from '../mocks/questions' // Corrected path
+import { MoveRight, MoveLeft, Settings2, AlertTriangle } from 'lucide-react'
 import { cn } from '@una-gc/ui/lib/utils'
 
 // Schema for a single multiple response item (matches create form)
-const respuestaMultipleSchema = z.object({
+const multipleResponseSchema = z.object({
+  // Renamed from respuestaMultipleSchema
   idPregunta: z.string(),
   respuestasSeleccionadas: z.array(z.string())
 })
@@ -21,7 +27,7 @@ const respuestaMultipleSchema = z.object({
 export const step6Schema = z
   .object({
     respuestasMultiples: z
-      .array(respuestaMultipleSchema)
+      .array(multipleResponseSchema)
       .min(1, 'Debe seleccionar al menos una herramienta o indicar que no usó otras.')
       .refine((data) => data.length === 1, { message: 'Debe haber exactamente un conjunto de respuestas múltiples.' }),
     otrasHerramientas: z.string().optional()
@@ -58,47 +64,60 @@ export function Step6EditForm({
 }: Step6EditFormProps) {
   const { control, handleSubmit, reset, watch, setValue, getValues, formState } = formMethods
 
-  const preguntaHerramientas = useMemo(() => {
-    return preguntasPaso6FormMock.find((p) => p.idPregunta === 'herramientas_tec')
+  // Use the centralized mock and its English property names
+  const toolsQuestion = useMemo(() => {
+    // Renamed from preguntaHerramientas
+    return (
+      step6QuestionsPageMock.find((p) => p.options && p.options.length > 0 && p.questionId === 'herramientas_utilizadas') ||
+      step6QuestionsPageMock.find((p) => p.options && p.options.length > 0)
+    )
   }, [])
 
-  const opcionesHerramientas = useMemo(() => {
-    return preguntaHerramientas?.opciones || []
-  }, [preguntaHerramientas])
+  const toolOptions = useMemo(() => {
+    // Renamed from opcionesHerramientas
+    return toolsQuestion?.options || [] // Use English property 'options'
+  }, [toolsQuestion])
 
-  const usadas = watch('respuestasMultiples.0.respuestasSeleccionadas') || []
+  const selectedResponsesRaw = watch('respuestasMultiples.0.respuestasSeleccionadas') // Renamed
 
   useEffect(() => {
     if (isEditing && initialData) {
-      const transformedInitialData = {
-        ...initialData,
-        respuestasMultiples: initialData.respuestasMultiples.map((rm) => ({
-          ...rm,
-          idPregunta: preguntaHerramientas?.idPregunta || 'herramientas_tec'
-        }))
-      }
-      reset(transformedInitialData)
-    } else {
-      // Handles both !isEditing (though unlikely for edit form) and isEditing without initialData
+      const currentSelected = initialData.respuestasMultiples?.[0]?.respuestasSeleccionadas || []
+      const otras = initialData.otrasHerramientas || ''
       reset({
         respuestasMultiples: [
           {
-            idPregunta: preguntaHerramientas?.idPregunta || 'herramientas_tec',
+            idPregunta: toolsQuestion?.questionId || 'herramientas_utilizadas', // Use English 'questionId'
+            respuestasSeleccionadas: currentSelected
+          }
+        ],
+        otrasHerramientas: otras
+      })
+    } else {
+      // Should not happen for edit form, but good for completeness
+      reset({
+        respuestasMultiples: [
+          {
+            idPregunta: toolsQuestion?.questionId || 'herramientas_utilizadas', // Use English 'questionId'
             respuestasSeleccionadas: []
           }
         ],
         otrasHerramientas: ''
       })
     }
-  }, [isEditing, initialData, reset, preguntaHerramientas])
+  }, [isEditing, initialData, reset, toolsQuestion])
 
-  const disponibles = useMemo(() => {
-    return opcionesHerramientas.filter((opt) => !usadas.includes(opt.value))
-  }, [opcionesHerramientas, usadas])
+  const availableOptions = useMemo(() => {
+    // Renamed
+    const currentSelected = selectedResponsesRaw || []
+    return toolOptions.filter((opt) => !currentSelected.includes(opt.value))
+  }, [toolOptions, selectedResponsesRaw])
 
-  const usadasOptions = useMemo(() => {
-    return opcionesHerramientas.filter((opt) => usadas.includes(opt.value))
-  }, [opcionesHerramientas, usadas])
+  const usedOptionsMapped = useMemo(() => {
+    // Renamed
+    const currentSelected = selectedResponsesRaw || []
+    return toolOptions.filter((opt) => currentSelected.includes(opt.value))
+  }, [toolOptions, selectedResponsesRaw])
 
   const handleMoveToUsed = (optionValue: string) => {
     const currentSelected = getValues('respuestasMultiples.0.respuestasSeleccionadas') || []
@@ -155,11 +174,13 @@ export function Step6EditForm({
                 {' '}
                 {/* Ensure card takes full height */}
                 <CardHeader className="py-4 px-6">
-                  {preguntaHerramientas && (
+                  {toolsQuestion && ( // Use translated variable
                     <div>
-                      <FormLabel className="text-base font-semibold">{preguntaHerramientas.pregunta}</FormLabel>
+                      {/* Use English property 'question' */}
+                      <FormLabel className="text-base font-semibold">{toolsQuestion.question}</FormLabel>
                       <p className="text-sm text-muted-foreground mt-0.5">
-                        {preguntaHerramientas.descripcion || 'Haga clic en una herramienta para moverla entre las listas.'}
+                        {/* Use English property 'description' */}
+                        {toolsQuestion.description || 'Haga clic en una herramienta para moverla entre las listas.'}
                       </p>
                     </div>
                   )}
@@ -169,20 +190,25 @@ export function Step6EditForm({
                   {/* Allow content to grow */}
                   <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1 space-y-1.5">
-                      <FormLabel className="block font-medium text-sm">No usadas ({disponibles.length})</FormLabel>
+                      {/* Use translated variable */}
+                      <FormLabel className="block font-medium text-sm">No usadas ({availableOptions.length})</FormLabel>
                       <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
-                        {disponibles.map((opt) => (
-                          <div
-                            key={`disponible-${opt.value}`}
-                            className="p-1.5 rounded hover:bg-primary/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
-                            onClick={() => handleMoveToUsed(opt.value)}
-                            title={`Mover "${opt.label}" a usadas`}
-                          >
-                            <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
-                            <MoveRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                          </div>
-                        ))}
-                        {disponibles.length === 0 && (
+                        {availableOptions.map(
+                          (
+                            opt // Use translated variable
+                          ) => (
+                            <div
+                              key={`disponible-${opt.value}`}
+                              className="p-1.5 rounded hover:bg-primary/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
+                              onClick={() => handleMoveToUsed(opt.value)}
+                              title={`Mover "${opt.label}" a usadas`}
+                            >
+                              <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
+                              <MoveRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                            </div>
+                          )
+                        )}
+                        {availableOptions.length === 0 && ( // Use translated variable
                           <div className="p-1.5 text-muted-foreground text-xs min-h-[2.25rem] flex items-center justify-center">
                             Todas las herramientas seleccionadas
                           </div>
@@ -190,20 +216,26 @@ export function Step6EditForm({
                       </div>
                     </div>
                     <div className="flex-1 space-y-1.5">
-                      <FormLabel className="block font-medium text-sm">Usadas ({usadasOptions.length})</FormLabel>
+                      <FormLabel className="block font-medium text-sm">
+                        Usadas ({(selectedResponsesRaw || []).length}) {/* Use translated variable */}
+                      </FormLabel>
                       <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
-                        {usadasOptions.map((opt) => (
-                          <div
-                            key={`usada-${opt.value}`}
-                            className="p-1.5 rounded hover:bg-destructive/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
-                            onClick={() => handleMoveToAvailable(opt.value)}
-                            title={`Mover "${opt.label}" a no usadas`}
-                          >
-                            <MoveLeft className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                            <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
-                          </div>
-                        ))}
-                        {usadasOptions.length === 0 && (
+                        {usedOptionsMapped.map(
+                          (
+                            opt // Use translated variable
+                          ) => (
+                            <div
+                              key={`usada-${opt.value}`}
+                              className="p-1.5 rounded hover:bg-destructive/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
+                              onClick={() => handleMoveToAvailable(opt.value)}
+                              title={`Mover "${opt.label}" a no usadas`}
+                            >
+                              <MoveLeft className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                              <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
+                            </div>
+                          )
+                        )}
+                        {usedOptionsMapped.length === 0 && ( // Use translated variable
                           <div className="p-1.5 text-muted-foreground text-xs min-h-[2.25rem] flex items-center justify-center">
                             Ninguna herramienta seleccionada
                           </div>

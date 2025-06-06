@@ -84,15 +84,16 @@ export interface FinalReportEvaluationOptionFE {
   value: string
 }
 
+export type ReportType = 'INFORME_FINAL_V1' | 'INFORME_FINAL_V2' | 'TODOS' // Was TipoInforme
+
 export interface FinalReportEvaluationFE {
-  questionGroup: string
   questionId: string
-  options: FinalReportEvaluationOptionFE[]
-  otherResponse?: string
-  question: string
   response?: string
   multipleResponse?: string[]
-  responseType: string
+  responseType: 'TEXT' | 'SELECCION_UNICA' | 'SELECCION_MULTIPLE'
+  questionGroup?: string
+  options?: { value: string; label: string; category?: string }[]
+  question: string
 }
 
 export interface FinalReportStudentAdjustmentFE {
@@ -144,12 +145,12 @@ export interface FullFinalReport {
  * Adjust fields based on what the backend `create` endpoint expects.
  */
 export interface CreateFinalReportDto {
-  academicLoadId: string
   professorId: string
+  academicLoadId: string
+  version: number
   statistics: FinalReportStatisticsFE
-  evaluation: FinalReportEvaluationFE[]
   studentInformation: FinalReportStudentInformationFE
-  status?: FinalReportStatusFE
+  evaluation: FinalReportEvaluationFE[]
 }
 
 /**

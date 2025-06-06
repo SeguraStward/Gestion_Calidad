@@ -10,6 +10,7 @@ import { Textarea } from '@una-gc/ui/components/textarea'
 import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card'
 import { Separator } from '@una-gc/ui/components/separator'
 import { PlusCircle, Trash2, Users, Edit3, Check, X } from 'lucide-react'
+import type { ReportType } from '../types/final-reports.types' // Import ReportType
 
 // Esquema para un solo estudiante de salvaguarda
 const salvaguardaEstudianteSchema = z.object({
@@ -39,9 +40,9 @@ interface Step3FormProps {
   onSaveAndNext: (data: Step3FormData) => void
   onPrevious: () => void
   totalSteps: number
-  tipoInforme?: string
-  initialData?: Step3FormData | null // Added initialData
-  isEditing?: boolean // Added isEditing
+  reportType?: ReportType // Changed from tipoInforme to reportType
+  initialData?: Step3FormData | null
+  isEditing?: boolean
 }
 
 export function Step3Form({
@@ -49,11 +50,11 @@ export function Step3Form({
   onSaveAndNext,
   onPrevious,
   totalSteps,
-  tipoInforme,
+  reportType, // Changed from tipoInforme to reportType
   initialData,
   isEditing = false
 }: Step3FormProps) {
-  const { control, reset, handleSubmit } = formMethods // Added handleSubmit
+  const { control, reset, handleSubmit } = formMethods
   const [editingObservacion, setEditingObservacion] = useState<number | null>(null)
 
   const { fields, append, remove } = useFieldArray({
@@ -83,7 +84,7 @@ export function Step3Form({
   const handleCancelObservacion = () => setEditingObservacion(null)
 
   const tituloPaso =
-    tipoInforme === 'INFORME_FINAL_V1' ? 'Registro de Estudiantes (Plan Indígena)' : 'Registro de Estudiantes (Salvaguarda)'
+    reportType === 'INFORME_FINAL_V1' ? 'Registro de Estudiantes (Plan Indígena)' : 'Registro de Estudiantes (Salvaguarda)'
 
   return (
     <div className="p-4 md:p-6 h-full flex flex-col">
@@ -99,7 +100,7 @@ export function Step3Form({
         </h2>
         <p className="text-muted-foreground text-sm">
           Registre la información de los estudiantes{' '}
-          {tipoInforme === 'INFORME_FINAL_V1' ? 'del plan indígena' : 'del programa de salvaguarda'}.
+          {reportType === 'INFORME_FINAL_V1' ? 'del plan indígena' : 'del programa de salvaguarda'}.
         </p>
       </div>
       <FormProvider {...formMethods}>

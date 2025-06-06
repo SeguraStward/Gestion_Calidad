@@ -6,7 +6,7 @@ import * as z from 'zod'
 import { Button } from '@una-gc/ui/components/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Textarea } from '@una-gc/ui/components/textarea'
-import { preguntasPaso5Mock } from '@/modules/final-reports/mocks/questions' // Consolidated mock
+import { step5QuestionsMock } from '@/modules/final-reports/mocks/questions' // Consolidated mock
 import { Separator } from '@una-gc/ui/components/separator'
 import { MessageSquareText, AlertTriangle } from 'lucide-react'
 import { cn } from '@una-gc/ui/lib/utils' // For conditional class names
@@ -19,7 +19,8 @@ const respuestaStep5Schema = z.object({
 
 // Schema for the entire step 5 form data
 export const step5Schema = z.object({
-  respuestas: z.array(respuestaStep5Schema).min(preguntasPaso5Mock.length, 'Debe responder todas las preguntas.')
+  // Use the imported English mock name here
+  respuestas: z.array(respuestaStep5Schema).min(step5QuestionsMock.length, 'Debe responder todas las preguntas.')
 })
 
 export type Step5FormData = z.infer<typeof step5Schema>
@@ -45,10 +46,11 @@ export function Step5EditForm({
 
   useEffect(() => {
     const currentAnswers = initialData?.respuestas || []
-    const initialFormValues = preguntasPaso5Mock.map((p) => {
-      const existing = currentAnswers.find((r) => r.idPregunta === p.idPregunta)
+    // Use the imported English mock name here and its 'questionId' property
+    const initialFormValues = step5QuestionsMock.map((p) => {
+      const existing = currentAnswers.find((r) => r.idPregunta === p.questionId) // Compare with translated 'questionId'
       return {
-        idPregunta: p.idPregunta,
+        idPregunta: p.questionId, // Use translated 'questionId'
         respuesta: existing?.respuesta || ''
       }
     })
@@ -91,8 +93,10 @@ export function Step5EditForm({
             <div className="flex-1 space-y-0 overflow-y-auto pr-2 pb-4">
               {' '}
               {/* Added pb-4 for spacing before buttons if content is short */}
-              {preguntasPaso5Mock.map((pregunta, index) => (
-                <div key={pregunta.idPregunta}>
+              {/* Use the imported English mock name here */}
+              {step5QuestionsMock.map((pregunta, index) => (
+                // Use translated property name 'questionId' for key and hidden input
+                <div key={pregunta.questionId}>
                   <div className="py-4 px-1">
                     <FormField
                       control={control}
@@ -104,7 +108,8 @@ export function Step5EditForm({
                               <span className="text-muted-foreground font-normal text-xs bg-muted/50 px-2 py-0.5 rounded-full min-w-[24px] text-center">
                                 {index + 1}
                               </span>
-                              <span className="flex-1">{pregunta.pregunta}</span>
+                              {/* Use translated property name 'question' */}
+                              <span className="flex-1">{pregunta.question}</span>
                               <span className="text-destructive ml-1">*</span> {/* Required indicator */}
                             </span>
                           </FormLabel>
@@ -123,12 +128,14 @@ export function Step5EditForm({
                             {/* Individual FormMessage removed to avoid layout shift and "advertencias" */}
                             {/* fieldState.error?.message && <FormMessage className="text-xs mt-1 text-destructive">{fieldState.error.message}</FormMessage> */}
                           </div>
-                          <input type="hidden" {...register(`respuestas.${index}.idPregunta`)} value={pregunta.idPregunta} />
+                          {/* Use translated property name 'questionId' */}
+                          <input type="hidden" {...register(`respuestas.${index}.idPregunta`)} value={pregunta.questionId} />
                         </FormItem>
                       )}
                     />
                   </div>
-                  {index < preguntasPaso5Mock.length - 1 && <Separator className="opacity-20 my-1" />}
+                  {/* Use the imported English mock name here */}
+                  {index < step5QuestionsMock.length - 1 && <Separator className="opacity-20 my-1" />}
                 </div>
               ))}
             </div>

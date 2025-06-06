@@ -6,77 +6,41 @@ import * as z from 'zod'
 import { Button } from '@una-gc/ui/components/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Textarea } from '@una-gc/ui/components/textarea'
-import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card' // CardFooter removed from here if only used for nav
-import { MoveRight, MoveLeft, Settings2, AlertTriangle } from 'lucide-react' // Added Settings2, AlertTriangle
+import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card'
+import { MoveRight, MoveLeft, Settings2, AlertTriangle } from 'lucide-react'
 import { cn } from '@una-gc/ui/lib/utils'
 
-interface Option {
-  value: string
-  label: string
-  category: string
-}
+// Import centralized mock data and types
+import {
+  step6QuestionsPageMock, // Was preguntasPaso6FormMock
+  Step6Question, // Was PreguntaStep6
+  OptionFE // Was Option
+} from '../mocks/questions' // Corrected path
 
-interface PreguntaStep6 {
-  idPregunta: string
-  pregunta: string
-  grupo_pregunta: string
-  opciones: Option[]
-  descripcion?: string
-}
-
-export const preguntasPaso6FormMock: PreguntaStep6[] = [
-  {
-    idPregunta: 'herramientas_tec',
-    pregunta: '¿Qué herramientas tecnológicas utilizó principalmente durante el curso?',
-    grupo_pregunta: 'Recursos Tecnológicos',
-    descripcion: 'Haga clic en una herramienta para moverla entre las listas.',
-    opciones: [
-      { value: 'moodle', label: 'Campus Virtual (Moodle)', category: 'Plataformas LMS' },
-      { value: 'blackboard', label: 'Blackboard', category: 'Plataformas LMS' },
-      { value: 'canvas', label: 'Canvas', category: 'Plataformas LMS' },
-      { value: 'teams', label: 'Microsoft Teams', category: 'Comunicación' },
-      { value: 'zoom', label: 'Zoom', category: 'Comunicación' },
-      { value: 'meet', label: 'Google Meet', category: 'Comunicación' },
-      { value: 'discord', label: 'Discord', category: 'Comunicación' },
-      { value: 'whatsapp', label: 'WhatsApp', category: 'Comunicación' },
-      { value: 'kahoot', label: 'Kahoot!', category: 'Gamificación' },
-      { value: 'quizizz', label: 'Quizizz', category: 'Gamificación' },
-      { value: 'mentimeter', label: 'Mentimeter', category: 'Interacción' },
-      { value: 'padlet', label: 'Padlet', category: 'Interacción' },
-      { value: 'jamboard', label: 'Google Jamboard', category: 'Interacción' },
-      { value: 'videos_propios', label: 'Videos Propios', category: 'Material Multimedia' },
-      { value: 'youtube', label: 'YouTube', category: 'Material Multimedia' },
-      { value: 'vimeo', label: 'Vimeo', category: 'Material Multimedia' },
-      { value: 'simuladores', label: 'Simuladores Específicos', category: 'Software Especializado' },
-      { value: 'laboratorios_virtuales', label: 'Laboratorios Virtuales', category: 'Software Especializado' },
-      { value: 'matlab', label: 'MATLAB', category: 'Software Especializado' },
-      { value: 'autocad', label: 'AutoCAD', category: 'Software Especializado' }
-    ]
-  }
-]
-
-const respuestaMultipleSchema = z.object({
-  idPregunta: z.string(),
+// Schema for a single multiple response item
+const multipleResponseSchema = z.object({
+  // Renamed from respuestaMultipleSchema
+  idPregunta: z.string(), // This will be the questionId from the mock
   respuestasSeleccionadas: z.array(z.string())
 })
 
+// Zod validation schema for Step 6
 export const step6Schema = z
   .object({
     respuestasMultiples: z
-      .array(respuestaMultipleSchema)
+      .array(multipleResponseSchema)
       .min(1, 'Debe seleccionar al menos una herramienta o indicar que no usó otras.')
       .refine((data) => data.length === 1, { message: 'Debe haber exactamente un conjunto de respuestas múltiples.' }),
     otrasHerramientas: z.string().optional()
   })
   .refine(
     (data) => {
-      // Validation: at least one tool selected OR "otrasHerramientas" has content
       const herramientasSeleccionadas = data.respuestasMultiples[0]?.respuestasSeleccionadas || []
       return herramientasSeleccionadas.length > 0 || (data.otrasHerramientas && data.otrasHerramientas.trim() !== '')
     },
     {
       message: 'Debe seleccionar al menos una herramienta tecnológica o especificar otras.',
-      path: ['respuestasMultiples'] // Path to the field that should display the error
+      path: ['respuestasMultiples']
     }
   )
 
@@ -92,35 +56,48 @@ interface Step6FormProps {
 export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }: Step6FormProps) {
   const { control, handleSubmit, reset, watch, setValue, getValues, formState } = formMethods
 
-  const preguntaHerramientas = useMemo(() => {
-    return preguntasPaso6FormMock.find((p) => p.idPregunta === 'herramientas_tec')
+  // Use the centralized mock and its English property names
+  const toolsQuestion = useMemo(() => {
+    // Renamed from preguntaHerramientas
+    // Assuming the main tools question in step6QuestionsPageMock has a specific ID,
+    // e.g., 'herramientas_utilizadas' or the first item if only one tools question.
+    // For this example, let's find the one with options.
+    return (
+      step6QuestionsPageMock.find((p) => p.options && p.options.length > 0 && p.questionId === 'herramientas_utilizadas') ||
+      step6QuestionsPageMock.find((p) => p.options && p.options.length > 0)
+    )
   }, [])
 
-  const opcionesHerramientas = useMemo(() => {
-    return preguntaHerramientas?.opciones || []
-  }, [preguntaHerramientas])
+  const toolOptions = useMemo(() => {
+    // Renamed from opcionesHerramientas
+    return toolsQuestion?.options || [] // Use English property 'options'
+  }, [toolsQuestion])
 
-  const usadas = watch('respuestasMultiples.0.respuestasSeleccionadas') || []
+  const selectedResponsesRaw = watch('respuestasMultiples.0.respuestasSeleccionadas') // Renamed from respuestasSeleccionadasRaw
 
   useEffect(() => {
     reset({
       respuestasMultiples: [
         {
-          idPregunta: preguntaHerramientas?.idPregunta || 'herramientas_tec',
+          idPregunta: toolsQuestion?.questionId || 'herramientas_utilizadas', // Use English 'questionId'
           respuestasSeleccionadas: []
         }
       ],
       otrasHerramientas: ''
     })
-  }, [reset, preguntaHerramientas])
+  }, [reset, toolsQuestion])
 
-  const disponibles = useMemo(() => {
-    return opcionesHerramientas.filter((opt) => !usadas.includes(opt.value))
-  }, [opcionesHerramientas, usadas])
+  const availableOptions = useMemo(() => {
+    // Renamed from disponibles
+    const currentSelected = selectedResponsesRaw || []
+    return toolOptions.filter((opt) => !currentSelected.includes(opt.value))
+  }, [toolOptions, selectedResponsesRaw])
 
-  const usadasOptions = useMemo(() => {
-    return opcionesHerramientas.filter((opt) => usadas.includes(opt.value))
-  }, [opcionesHerramientas, usadas])
+  const usedOptionsMapped = useMemo(() => {
+    // Renamed from usadasOptions
+    const currentSelected = selectedResponsesRaw || []
+    return toolOptions.filter((opt) => currentSelected.includes(opt.value))
+  }, [toolOptions, selectedResponsesRaw])
 
   const handleMoveToUsed = (optionValue: string) => {
     const currentSelected = getValues('respuestasMultiples.0.respuestasSeleccionadas') || []
@@ -179,14 +156,14 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
             {/* Scrollable Card Area */}
             <div className="flex-1 overflow-y-auto pr-1 pb-4">
               <Card className="h-full flex flex-col">
-                {' '}
-                {/* Ensure card takes full height of its container */}
                 <CardHeader className="py-4 px-6">
-                  {preguntaHerramientas && (
+                  {toolsQuestion && ( // Use translated variable
                     <div>
-                      <FormLabel className="text-base font-semibold">{preguntaHerramientas.pregunta}</FormLabel>
+                      {/* Use English property 'question' */}
+                      <FormLabel className="text-base font-semibold">{toolsQuestion.question}</FormLabel>
                       <p className="text-sm text-muted-foreground mt-0.5">
-                        {preguntaHerramientas.descripcion || 'Haga clic en una herramienta para moverla entre las listas.'}
+                        {/* Use English property 'description' */}
+                        {toolsQuestion.description || 'Haga clic en una herramienta para moverla entre las listas.'}
                       </p>
                     </div>
                   )}
@@ -196,20 +173,25 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                   {/* Allow content to grow */}
                   <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1 space-y-1.5">
-                      <FormLabel className="block font-medium text-sm">No usadas ({disponibles.length})</FormLabel>
+                      {/* Use translated variable */}
+                      <FormLabel className="block font-medium text-sm">No usadas ({availableOptions.length})</FormLabel>
                       <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
-                        {disponibles.map((opt) => (
-                          <div
-                            key={`disponible-${opt.value}`}
-                            className="p-1.5 rounded hover:bg-primary/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
-                            onClick={() => handleMoveToUsed(opt.value)}
-                            title={`Mover "${opt.label}" a usadas`}
-                          >
-                            <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
-                            <MoveRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                          </div>
-                        ))}
-                        {disponibles.length === 0 && (
+                        {availableOptions.map(
+                          (
+                            opt // Use translated variable
+                          ) => (
+                            <div
+                              key={`disponible-${opt.value}`}
+                              className="p-1.5 rounded hover:bg-primary/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
+                              onClick={() => handleMoveToUsed(opt.value)}
+                              title={`Mover "${opt.label}" a usadas`}
+                            >
+                              <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
+                              <MoveRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                            </div>
+                          )
+                        )}
+                        {availableOptions.length === 0 && ( // Use translated variable
                           <div className="p-1.5 text-muted-foreground text-xs min-h-[2.25rem] flex items-center justify-center">
                             Todas las herramientas seleccionadas
                           </div>
@@ -217,20 +199,26 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
                       </div>
                     </div>
                     <div className="flex-1 space-y-1.5">
-                      <FormLabel className="block font-medium text-sm">Usadas ({usadasOptions.length})</FormLabel>
+                      <FormLabel className="block font-medium text-sm">
+                        Usadas ({(selectedResponsesRaw || []).length}) {/* Use translated variable */}
+                      </FormLabel>
                       <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
-                        {usadasOptions.map((opt) => (
-                          <div
-                            key={`usada-${opt.value}`}
-                            className="p-1.5 rounded hover:bg-destructive/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
-                            onClick={() => handleMoveToAvailable(opt.value)}
-                            title={`Mover "${opt.label}" a no usadas`}
-                          >
-                            <MoveLeft className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                            <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
-                          </div>
-                        ))}
-                        {usadasOptions.length === 0 && (
+                        {usedOptionsMapped.map(
+                          (
+                            opt // Use translated variable
+                          ) => (
+                            <div
+                              key={`usada-${opt.value}`}
+                              className="p-1.5 rounded hover:bg-destructive/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
+                              onClick={() => handleMoveToAvailable(opt.value)}
+                              title={`Mover "${opt.label}" a no usadas`}
+                            >
+                              <MoveLeft className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                              <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
+                            </div>
+                          )
+                        )}
+                        {usedOptionsMapped.length === 0 && ( // Use translated variable
                           <div className="p-1.5 text-muted-foreground text-xs min-h-[2.25rem] flex items-center justify-center">
                             Ninguna herramienta seleccionada
                           </div>

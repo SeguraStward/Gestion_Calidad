@@ -1,46 +1,53 @@
 'use client'
 
-import React, { useState, useEffect, useMemo, useRef } from 'react'
-import { useForm, FormProvider } from 'react-hook-form'
+import React, { useState, useEffect, useMemo } from 'react'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-// Button, CheckCircle, ArrowLeft are now part of ReportPageHeader or not directly used here
 import { Card, CardContent } from '@una-gc/ui/components/card'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
-// Importar los componentes de los pasos y sus esquemas/tipos
+// Import step components and their schemas/types
 import { Step1Form, step1Schema, Step1FormData } from '@/modules/final-reports/components/form-step1'
 import { Step2Form, step2Schema, Step2FormData } from '@/modules/final-reports/components/form-step2'
 import { Step3Form, step3Schema, Step3FormData } from '@/modules/final-reports/components/form-step3'
 import { Step4Form, step4Schema, Step4FormData } from '@/modules/final-reports/components/form-step4'
-import { Step5Form, step5Schema, Step5FormData } from '@/modules/final-reports/components/form-step5' // Add Step5Form to this import
-// Ensure you import the correct mock data for Step 5
-import { preguntasPaso5Mock } from '@/modules/final-reports/mocks/questions'
-import { Step6Form, step6Schema, Step6FormData } from '@/modules/final-reports/components/form-step6' // Add Step6Form to this import
-import { Step7Form, step7Schema, Step7FormData, preguntasPaso7FormMock } from '@/modules/final-reports/components/form-step7'
-import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header' // Import the new header
+import { Step5Form, step5Schema, Step5FormData } from '@/modules/final-reports/components/form-step5'
+import { Step6Form, step6Schema, Step6FormData } from '@/modules/final-reports/components/form-step6'
+// Assuming step7QuestionsFormMock (from form-step7.tsx) is now also translated
+// and its items use 'questionId', 'question', 'questionGroup', 'responseTypeFE', 'options'
+import { Step7Form, step7Schema, Step7FormData } from '@/modules/final-reports/components/form-step7'
+import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header'
 
-// Importar el hook de creación y el tipo DTO
+// Import service hook and DTO type
 import { useCreateFinalReport } from '@/modules/final-reports/service/final-reports.service'
-import type { CreateFinalReportDto, TipoInforme } from '@/modules/final-reports/types/final-reports.types' // Added TipoInforme
+import type { CreateFinalReportDto, ReportType, FinalReportEvaluationFE } from '@/modules/final-reports/types/final-reports.types' // Renamed TipoInforme, Added FinalReportEvaluationFE
 import useDevStore from '@/store/devStore'
 
+// Import translated mock data
+import {
+  step5QuestionsMock,
+  step6QuestionsPageMock,
+  step7QuestionsPageMock,
+  Step7Question
+} from '@/modules/final-reports/mocks/questions' // Renamed mocks, Import step7QuestionsPageMock and Step7Question
+
 const TOTAL_STEPS = 7
-const STEP_LABELS = ['Información', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
-// const TIPO_INFORME_ACTUAL = 'INFORME_FINAL_V1' // This will be managed by tipoInforme state
+// User-facing labels remain in Spanish
+const STEP_LABELS_SPANISH = ['Información', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
 
 export default function NewFinalReportPage() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
 
-  // Estados para almacenar los datos de cada paso
+  // State for each step's data
   const [step1Data, setStep1Data] = useState<Step1FormData | null>(null)
   const [step2Data, setStep2Data] = useState<Step2FormData | null>(null)
   const [step3Data, setStep3Data] = useState<Step3FormData | null>(null)
   const [step4Data, setStep4Data] = useState<Step4FormData | null>(null)
   const [step5Data, setStep5Data] = useState<Step5FormData | null>(null)
   const [step6Data, setStep6Data] = useState<Step6FormData | null>(null)
-  const [tipoInforme, setTipoInforme] = useState<TipoInforme>('INFORME_FINAL_V1')
+  const [reportType, setReportType] = useState<ReportType>('INFORME_FINAL_V1') // Was tipoInforme
 
   const createFinalReportMutation = useCreateFinalReport()
   const currentProfessorId = useDevStore((state) => state.mockProfessorId)
@@ -63,46 +70,56 @@ export default function NewFinalReportPage() {
   })
   const formStep5Methods = useForm<Step5FormData>({
     resolver: zodResolver(step5Schema),
-    defaultValues: { respuestas: preguntasPaso5Mock.map((p) => ({ idPregunta: p.idPregunta, respuesta: '' })) }
+    defaultValues: { respuestas: step5QuestionsMock.map((p) => ({ idPregunta: p.questionId, respuesta: '' })) }
   })
   const formStep6Methods = useForm<Step6FormData>({
     resolver: zodResolver(step6Schema),
     defaultValues: {
-      respuestasMultiples: [{ idPregunta: 'herramientas_tec', respuestasSeleccionadas: [] }],
+      respuestasMultiples: [{ idPregunta: 'herramientas_tec', respuestasSeleccionadas: [] }], // Assuming 'herramientas_tec' is the ID for the main tool question
       otrasHerramientas: ''
     }
   })
   const formStep7Methods = useForm<Step7FormData>({
     resolver: zodResolver(step7Schema),
     defaultValues: {
-      respuestasRadio: preguntasPaso7FormMock
-        .filter((p) => {
-          if (
-            p.grupo_pregunta === '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?'
-          ) {
-            return tipoInforme === 'INFORME_FINAL_V1' // Use state here
+      respuestasRadio: step7QuestionsPageMock // Use centralized mock
+        .filter((p: Step7Question) => {
+          // Filter using the 'group' and 'appliesTo' from Step7Question
+          if (p.appliesTo && !(p.appliesTo.includes(reportType) || p.appliesTo.includes('TODOS'))) {
+            return false
           }
+          // Example of filtering by a specific group name (user-facing, so keep Spanish if it's a direct match)
+          // This specific group filter might be too restrictive if 'appliesTo' is sufficient
+          // Consider if this specific group check is still needed or if appliesTo covers it.
+          // if (
+          //   p.group === '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?'
+          // ) {
+          //   return reportType === 'INFORME_FINAL_V1';
+          // }
           return true
         })
-        .map((p) => ({ idPregunta: p.idPregunta, respuesta: '' }))
+        .map((p: Step7Question) => ({ idPregunta: p.questionId, respuesta: '' })) // Use p.questionId
     }
   })
 
-  // Update default values for step 7 when tipoInforme changes
   useEffect(() => {
     formStep7Methods.reset({
-      respuestasRadio: preguntasPaso7FormMock
-        .filter((p) => {
-          if (
-            p.grupo_pregunta === '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?'
-          ) {
-            return tipoInforme === 'INFORME_FINAL_V1'
+      respuestasRadio: step7QuestionsPageMock // Use centralized mock
+        .filter((p: Step7Question) => {
+          if (p.appliesTo && !(p.appliesTo.includes(reportType) || p.appliesTo.includes('TODOS'))) {
+            return false
           }
+          // Similar to defaultValues, consider if this specific group check is still needed.
+          // if (
+          //   p.group === '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?'
+          // ) {
+          //   return reportType === 'INFORME_FINAL_V1';
+          // }
           return true
         })
-        .map((p) => ({ idPregunta: p.idPregunta, respuesta: '' }))
+        .map((p: Step7Question) => ({ idPregunta: p.questionId, respuesta: '' })) // Use p.questionId
     })
-  }, [tipoInforme, formStep7Methods])
+  }, [reportType, formStep7Methods])
 
   const step2InitialData = useMemo(() => {
     return {
@@ -134,11 +151,11 @@ export default function NewFinalReportPage() {
     setCurrentStep(6)
   }
   const handleSaveStep6Data = (data: Step6FormData) => {
-    setStep6Data(data)
+    setStep6Data(data) // Save step 6 data
     setCurrentStep(7)
   }
 
-  const handleSaveStep7Data = async (step7CurrentData: Step7FormData) => {
+  const handleSaveStep7Data = async (currentStep7Data: Step7FormData) => {
     if (!step1Data || !step2Data || !step3Data || !step4Data || !step5Data || !step6Data) {
       toast.error('Faltan datos de pasos anteriores. Por favor, revise el formulario.')
       return
@@ -156,7 +173,7 @@ export default function NewFinalReportPage() {
     const finalReportPayload: CreateFinalReportDto = {
       professorId: professorIdToUse,
       academicLoadId: step1Data.academicLoadId,
-      version: tipoInforme === 'INFORME_FINAL_V1' ? 1 : 2, // Assuming version mapping
+      version: reportType === 'INFORME_FINAL_V1' ? 1 : 2,
       statistics: {
         totalStudents: step2Data.totalEnrolled ?? 0,
         passed: step2Data.totalPassed ?? 0,
@@ -180,65 +197,68 @@ export default function NewFinalReportPage() {
       },
       evaluation: [
         ...step5Data.respuestas.map((r) => {
-          const pO = preguntasPaso5FormMock.find((p) => p.idPregunta === r.idPregunta)
+          const questionDetails = step5QuestionsMock.find((p) => p.questionId === r.idPregunta)
           return {
             questionId: r.idPregunta,
-            question: pO?.pregunta || '',
-            questionGroup: pO?.grupo_pregunta || '',
-            responseType: pO?.tipo_respuesta || 'TEXTO_LARGO',
-            response: r.respuesta || undefined,
-            multipleResponse: [],
-            options: []
+            question: questionDetails?.question || r.idPregunta,
+            questionGroup: 'evaluacion_general_curso', // Default group for step 5
+            responseType: 'TEXT' as const,
+            response: r.respuesta || undefined
           }
         }),
         ...step6Data.respuestasMultiples.map((r) => {
-          const pO = preguntasPaso6FormMock.find((p) => p.idPregunta === r.idPregunta)
+          // Assuming r.idPregunta is 'herramientas_tec' or similar for the main tool selection
+          const questionDetails = step6QuestionsPageMock.find(
+            (p) => p.questionId === r.idPregunta || p.questionId === 'herramientas_utilizadas'
+          )
           return {
             questionId: r.idPregunta,
-            question: pO?.pregunta || '',
-            questionGroup: pO?.grupo_pregunta || '',
-            responseType: 'SELECCION_MULTIPLE',
+            question: questionDetails?.question || r.idPregunta,
+            questionGroup: questionDetails?.questionGroup || 'herramientas',
+            responseType: 'SELECCION_MULTIPLE' as const,
             multipleResponse: r.respuestasSeleccionadas,
-            options: pO?.opciones.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
-            response: undefined,
-            otherResponse:
-              step6Data.otrasHerramientas && r.idPregunta === 'herramientas_tec' ? step6Data.otrasHerramientas : undefined
+            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || []
           }
         }),
         ...(step6Data.otrasHerramientas
           ? [
               {
-                // Ensure this is only added if not already part of the above
-                questionId: 'otras_herramientas_utilizadas',
-                question: 'Otras herramientas o metodologías utilizadas',
-                questionGroup: 'Recursos Adicionales',
-                responseType: 'TEXTO_ADICIONAL',
-                response: step6Data.otrasHerramientas,
-                multipleResponse: [],
-                options: []
+                questionId: 'otras_herramientas_utilizadas', // Specific ID for this text field
+                question:
+                  step6QuestionsPageMock.find((q) => q.questionId === 'otras_herramientas')?.question ||
+                  'Otras herramientas utilizadas (opcional)',
+                questionGroup: 'herramientas',
+                responseType: 'TEXT' as const,
+                response: step6Data.otrasHerramientas
               }
             ]
           : []),
-        ...step7CurrentData.respuestasRadio.map((r) => {
-          const pO = preguntasPaso7FormMock.find((p) => p.idPregunta === r.idPregunta)
+        ...currentStep7Data.respuestasRadio.map((r) => {
+          // Now step7QuestionsPageMock items are Step7Question
+          const questionDetails = step7QuestionsPageMock.find((p) => p.questionId === r.idPregunta)
+
+          // Use questionDetails.responseType which is already one of the FE literal types
+          const resolvedResponseType = questionDetails?.responseType || 'SELECCION_UNICA'
+
           return {
             questionId: r.idPregunta,
-            question: pO?.pregunta || '',
-            questionGroup: pO?.grupo_pregunta || '',
-            responseType: pO?.tipo_respuesta || 'SELECCION_UNICA',
+            question: questionDetails?.question || r.idPregunta,
+            questionGroup: questionDetails?.group || 'percepcion_calidad', // Use questionDetails.group
+            responseType: resolvedResponseType, // Already a literal type
             response: r.respuesta || undefined,
-            multipleResponse: [],
-            options: pO?.opciones.map((op) => ({ value: op.value, label: op.label, category: 'General' })) || []
-          }
+            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || []
+          } as FinalReportEvaluationFE // Add type assertion
         })
       ]
     }
-    console.log('Payload del Informe Final a Enviar:', JSON.stringify(finalReportPayload, null, 2))
+    console.log('Final Report Payload to Send:', JSON.stringify(finalReportPayload, null, 2))
     try {
       await createFinalReportMutation.mutateAsync(finalReportPayload)
-      router.push('/final-reports')
+      router.push('/final-reports') // Navigate on success
     } catch (error) {
-      console.error('Error explícito al intentar crear el informe en page.tsx:', error)
+      // User-facing error message
+      console.error('Explicit error trying to create report in page.tsx:', error)
+      toast.error('Error al crear el informe. Intente nuevamente.')
     }
   }
 
@@ -248,21 +268,15 @@ export default function NewFinalReportPage() {
 
   return (
     <div className="container mx-auto flex flex-col h-screen max-h-screen overflow-hidden">
-      {' '}
-      {/* Full screen, no body scroll */}
       <ReportPageHeader
-        pageTitle="Nuevo Informe Final"
-        pageDescription="Complete todos los pasos para crear el informe final del curso"
-        stepLabels={STEP_LABELS}
+        pageTitle="Nuevo Informe Final" // User-facing
+        pageDescription="Complete todos los pasos para crear el informe final del curso" // User-facing
+        stepLabels={STEP_LABELS_SPANISH} // User-facing
         currentStep={currentStep}
       />
-      {/* py-4 or similar can be added to main if more space is desired below header and above card */}
       <main className="flex-grow flex flex-col items-center overflow-hidden pt-2 pb-6 md:pt-4">
         <Card className="shadow-lg border-border/50 w-full max-w-5xl flex flex-col flex-grow overflow-hidden rounded-lg">
           <CardContent className="flex-grow overflow-y-auto p-0">
-            {' '}
-            {/* Scrollable area, no padding here */}
-            {/* Step forms will render here and should have their own internal padding */}
             {currentStep === 1 && (
               <Step1Form
                 formMethods={formStep1Methods}
@@ -278,7 +292,7 @@ export default function NewFinalReportPage() {
                 onPrevious={handlePreviousStep}
                 totalSteps={TOTAL_STEPS}
                 initialData={step2InitialData}
-                isEditing={false}
+                isEditing={false} // For new reports, it's not editing existing data
               />
             )}
             {currentStep === 3 && (
@@ -287,7 +301,7 @@ export default function NewFinalReportPage() {
                 onSaveAndNext={handleSaveStep3Data}
                 onPrevious={handlePreviousStep}
                 totalSteps={TOTAL_STEPS}
-                tipoInforme={tipoInforme}
+                reportType={reportType} // Pass translated reportType
               />
             )}
             {currentStep === 4 && (
@@ -320,7 +334,7 @@ export default function NewFinalReportPage() {
                 onSaveAndNext={handleSaveStep7Data}
                 onPrevious={handlePreviousStep}
                 totalSteps={TOTAL_STEPS}
-                tipoInforme={tipoInforme}
+                reportType={reportType} // Pass translated reportType
                 isSubmitting={createFinalReportMutation.isPending}
               />
             )}
