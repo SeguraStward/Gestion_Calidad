@@ -1,4 +1,4 @@
-import { createGenericHooks } from '../../../../../services/base/generic.hooks'
+import { createGenericHooks } from '@/services/base/generic.hooks'
 import { classroomService } from '../../services/institutional/classroom.service'
 import { ClassroomWithRelations, CreateClassroomInput } from '../../types/institutional/classroom'
 

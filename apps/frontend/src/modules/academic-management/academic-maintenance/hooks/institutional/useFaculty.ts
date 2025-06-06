@@ -1,9 +1,9 @@
-import { createGenericHooks } from '../../../../../services/base/generic.hooks'
+import { createGenericHooks } from '@/services/base/generic.hooks'
 import { facultyService } from '../../services/institutional/faculty.service'
 import { FacultyWithRelations, CreateFacultyInput } from '../../types/institutional/faculty'
-import { GenericService } from '../../../../../services/base/generic.service' // Added for type safety
+import { GenericService } from '@/services/base/generic.service' // Added for type safety
 import { useQuery, UseQueryOptions } from '@tanstack/react-query' // Added for custom hook
-import { PaginatedResponse } from '../../../../../services/interfaces' // Added for type safety
+import { PaginatedResponse } from '@/services/interfaces' // Added for type safety
 
 export interface FacultyFilters {
   page?: number

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { createGenericHooks } from '../../../../../services/base/generic.hooks'
+import { createGenericHooks } from '@/services/base/generic.hooks'
 import { schoolService } from '../../services/institutional/school.service'
 import { SchoolWithRelations, CreateSchoolInput } from '../../types/institutional/school'
 

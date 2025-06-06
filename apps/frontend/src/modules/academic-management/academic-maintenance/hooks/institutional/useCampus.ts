@@ -1,9 +1,9 @@
-import { createGenericHooks } from '../../../../../services/base/generic.hooks'
+import { createGenericHooks } from '@/services/base/generic.hooks'
 import { campusService } from '../../services/institutional/campus.service'
 import { CampusWithRelations, CreateCampusInput } from '../../types/institutional/campus'
-import { GenericService } from '../../../../../services/base/generic.service' // Added for type safety
-import { useQuery, UseQueryOptions } from '@tanstack/react-query' // Added for custom hook
-import { PaginatedResponse } from '../../../../../services/interfaces' // Added for type safety
+import { GenericService } from '@/services/base/generic.service'
+import { useQuery, UseQueryOptions } from '@tanstack/react-query'
+import { PaginatedResponse } from '@/services/interfaces'
 
 export interface CampusFilters {
   page?: number

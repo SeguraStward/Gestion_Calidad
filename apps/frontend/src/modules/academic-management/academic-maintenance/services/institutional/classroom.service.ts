@@ -1,4 +1,4 @@
-import { GenericService } from '../../../../../services/base/generic.service'
+import { GenericService } from '@/services/base/generic.service'
 import { ClassroomWithRelations, CreateClassroomInput } from '../../types/institutional/classroom'
 
 export class ClassroomService extends GenericService<
