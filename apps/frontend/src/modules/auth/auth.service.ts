@@ -116,8 +116,7 @@ export class AuthService {
         withCredentials: true
       })
 
-      this.log('debug', 'Raw response data:',
-        JSON.stringify(response.data).substring(0, 200) + '...')
+      this.log('debug', 'Raw response data:', JSON.stringify(response.data).substring(0, 200) + '...')
 
       // Verificar formato de respuesta y normalizar
       let normalizedRoles: Role[] = []
@@ -129,16 +128,15 @@ export class AuthService {
           description: role.description,
           permissions: Array.isArray(role.permissions)
             ? role.permissions.map((perm: any) => ({
-              id: perm.id,
-              name: perm.name,
-              code: perm.code,
-              description: perm.description || '',
-              // Mantener campos adicionales que puedan ser útiles
-              status: perm.status,
-              type: perm.type,
-              scope: perm.scope,
-              actions: perm.actions
-            }))
+                id: perm.id,
+                name: perm.name,
+                code: perm.code,
+                description: perm.description || '',
+                status: perm.status,
+                type: perm.type,
+                scope: perm.scope,
+                actions: perm.actions
+              }))
             : []
         }))
       } else if (response.data && typeof response.data === 'object') {
@@ -170,25 +168,22 @@ export class AuthService {
       })
 
       if (axiosError.code === 'ECONNREFUSED' || axiosError.code === 'ENOTFOUND') {
-        throw new AuthNetworkError('Cannot connect to authentication server. Check your network connection.',
-          statusCode, responseData)
+        throw new AuthNetworkError(
+          'Cannot connect to authentication server. Check your network connection.',
+          statusCode,
+          responseData
+        )
       }
 
       if (statusCode === 401) {
-        throw new AuthNetworkError('Your session has expired. Please log in again.',
-          statusCode, responseData)
+        throw new AuthNetworkError('Your session has expired. Please log in again.', statusCode, responseData)
       }
 
       if (statusCode === 403) {
-        throw new AuthNetworkError('You don\'t have permission to access role information.',
-          statusCode, responseData)
+        throw new AuthNetworkError("You don't have permission to access role information.", statusCode, responseData)
       }
 
-      throw new AuthNetworkError(
-        `Failed to fetch roles: ${axiosError.message}`,
-        statusCode,
-        responseData
-      )
+      throw new AuthNetworkError(`Failed to fetch roles: ${axiosError.message}`, statusCode, responseData)
     }
   }
 
@@ -272,36 +267,20 @@ export class AuthService {
       }
 
       if (statusCode === 401) {
-        throw new AuthNetworkError(
-          'Authentication required. Please login again.',
-          statusCode,
-          responseData
-        )
+        throw new AuthNetworkError('Authentication required. Please login again.', statusCode, responseData)
       }
 
       if (statusCode === 403) {
-        throw new AuthNetworkError(
-          'You do not have permission to switch to this role.',
-          statusCode,
-          responseData
-        )
+        throw new AuthNetworkError('You do not have permission to switch to this role.', statusCode, responseData)
       }
 
       if (statusCode === 404) {
-        throw new AuthNetworkError(
-          `Role with ID ${roleId} was not found.`,
-          statusCode,
-          responseData
-        )
+        throw new AuthNetworkError(`Role with ID ${roleId} was not found.`, statusCode, responseData)
       }
 
       // Use server error message if available
       const errorMessage = responseData?.message || axiosError.message || 'Unknown error occurred'
-      throw new AuthNetworkError(
-        `Failed to switch role: ${errorMessage}`,
-        statusCode,
-        responseData
-      )
+      throw new AuthNetworkError(`Failed to switch role: ${errorMessage}`, statusCode, responseData)
     }
   }
 }
