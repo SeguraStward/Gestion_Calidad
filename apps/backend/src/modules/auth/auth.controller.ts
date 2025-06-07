@@ -8,7 +8,6 @@ import {
   Logger,
   UnauthorizedException,
   ForbiddenException,
-  Body,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
@@ -16,7 +15,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 // Definir una interfaz para GoogleUser
 interface GoogleUser {
@@ -242,54 +241,6 @@ export class AuthController {
         throw error;
       }
       throw new UnauthorizedException('Failed to refresh token due to an internal error.');
-    }
-  }
-
-  @ApiOperation({ summary: 'Change user role' })
-  @ApiResponse({ status: 200, description: 'Role changed successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        roleId: { type: 'string', description: 'ID of the role to assign to the user' },
-      },
-      required: ['roleId'],
-    },
-  })
-  @Post('change-role')
-  @UseGuards(JwtAuthGuard) // Ensure user is authenticated
-  @Post('change-role')
-  @UseGuards(JwtAuthGuard) // Ensure user is authenticated
-  async changeRole(
-    @Req() req: Request,
-    @Body() body: { roleId: string },
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const user = req.user as { id: string; email: string };
-
-    try {
-      const result = await this.authService.changeRole(user.id, body.roleId);
-
-      // Guardar el ID del rol en una cookie separada
-      res.cookie('active_role_id', body.roleId, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_EXPIRATION'), // Misma duración que el access token
-        sameSite: 'lax',
-        path: '/',
-      });
-
-      this.logger.log(`Role changed successfully for user ${user.id} to ${body.roleId}`);
-
-      // Return the user information with the updated role
-      return result.user;
-    } catch (error) {
-      this.logger.error(
-        `Error changing role for user ${user.id}: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      throw error;
     }
   }
 }

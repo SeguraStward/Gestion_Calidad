@@ -121,57 +121,6 @@ export class AuthService {
     return token;
   }
 
-  // Add the new changeRole method
-  async changeRole(userId: string, roleId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        fullLastName: true,
-        photoUrl: true,
-        roles: {
-          where: { status: 'ACTIVE', id: roleId },
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            permissions: true,
-          },
-        },
-      },
-    });
-
-    if (!user) {
-      this.logger.warn(`User not found during role switch: ${userId}`);
-      throw new UnauthorizedException('Usuario no encontrado');
-    }
-
-    const selectedRole = user.roles[0]; // Ya filtrado por Prisma
-
-    if (!selectedRole) {
-      this.logger.warn(
-        `User ${userId} tried to switch to role ${roleId} which doesn't exist or isn't active`,
-      );
-      throw new UnauthorizedException('No tienes acceso a este rol, el rol no existe o no está activo');
-    }
-
-    this.logger.log(`Role validated for user ${userId} to role ${selectedRole.name}`);
-
-    // Solo retornar la información del usuario y rol, no generar nuevo token
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        fullLastName: user.fullLastName,
-        profilePicture: user.photoUrl,
-        role: selectedRole,
-      },
-    };
-  }
-
   async generateAndStoreRefreshToken(userId: string): Promise<{ rawRefreshToken: string; expiresAt: Date }> {
     const refreshTokenExpirationString = this.configService.get<string>('JWT_REFRESH_EXPIRATION');
     const expiresInMilliseconds = this.parseExpiryToMilliseconds(refreshTokenExpirationString);

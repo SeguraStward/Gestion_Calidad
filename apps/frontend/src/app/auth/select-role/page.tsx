@@ -1,196 +1,80 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { CheckCircle, Loader2, RefreshCcw, ArrowLeft, AlertTriangle } from 'lucide-react'
-import Cookies from 'js-cookie'
+import { Loader2, ArrowLeft, AlertTriangle, UserCheck, Shield, Users } from 'lucide-react'
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@una-gc/ui/components/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@una-gc/ui/components/card'
 import { Button } from '@una-gc/ui/components/button'
-import { Skeleton } from '@una-gc/ui/components/skeleton'
 import { Alert, AlertDescription } from '@una-gc/ui/components/alert'
-import { RadioGroup, RadioGroupItem } from '@una-gc/ui/components/radio-group'
-import { Label } from '@una-gc/ui/components/label'
+import { RadioGroup } from '@una-gc/ui/components/radio-group'
+import { Badge } from '@una-gc/ui/components/badge'
+import { Separator } from '@una-gc/ui/components/separator'
 
 import { cn } from '@una-gc/ui/lib/utils'
-import { Role, AuthService } from '@/modules/auth/auth.service'
-import { toast } from 'sonner'
-import axios, { AxiosError } from 'axios'
+import { useRoleSelection } from '@/modules/auth/hooks'
+import { AuthLayout, RoleCard, RoleLoadingSkeleton, EmptyRoleState } from '@/modules/auth/components'
 
 export default function SelectRolePage() {
-  const [roles, setRoles] = useState<Role[]>([])
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [canCancel, setCanCancel] = useState(false)
-  const router = useRouter()
-
-  // Verificar si hay un rol activo al cargar el componente
-  useEffect(() => {
-    const activeRoleId = Cookies.get('active_role_id')
-    setCanCancel(!activeRoleId)
-  }, [])
-
-  const getErrorMessage = (error: unknown): string => {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError
-
-      switch (axiosError.response?.status) {
-        case 401:
-          return 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.'
-        case 403:
-          return 'No tienes permisos para acceder a esta funcionalidad.'
-        case 404:
-          return 'No se encontraron roles disponibles para tu usuario.'
-        case 500:
-          return 'Error interno del servidor. Intenta más tarde.'
-        case 503:
-          return 'El servicio no está disponible temporalmente.'
-        default:
-          return (
-            (axiosError.response?.data && typeof axiosError.response.data === 'object' && 'message' in axiosError.response.data
-              ? (axiosError.response.data as { message?: string }).message
-              : undefined) || 'Error de conexión. Verifica tu internet.'
-          )
-      }
-    }
-
-    if (error instanceof Error) {
-      return error.message
-    }
-
-    return 'Ha ocurrido un error inesperado.'
-  }
-
-  const fetchRoles = useCallback(async () => {
-    console.log('🏁 Starting to fetch user roles...')
-    try {
-      setLoading(true)
-      setError(null)
-
-      const userRoles = await AuthService.getUserActiveRoles()
-      console.log('📊 User roles received:', userRoles)
-
-      if (!Array.isArray(userRoles)) {
-        throw new Error('Formato de respuesta inválido del servidor.')
-      }
-
-      if (userRoles.length === 0) {
-        setError('No tienes roles asignados. Contacta al administrador.')
-        setRoles([])
-        return
-      }
-
-      setRoles(userRoles)
-
-      // Auto-seleccionar si solo hay un rol disponible
-      if (userRoles.length === 1 && userRoles[0]) {
-        setSelectedRole(userRoles[0])
-      }
-    } catch (error) {
-      console.error('❌ Error fetching roles:', error)
-      const errorMessage = getErrorMessage(error)
-      setError(errorMessage)
-      toast.error(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchRoles()
-  }, [fetchRoles])
-
-  const handleCancel = () => {
-    router.back()
-  }
-
-  const handleSubmit = async () => {
-    if (!selectedRole) {
-      toast.error('Por favor selecciona un rol.')
-      return
-    }
-
-    try {
-      setSubmitting(true)
-      setError(null)
-
-      console.log('🔄 Starting role switch for role:', selectedRole)
-      const response = await AuthService.changeRole(selectedRole.id)
-      console.log('✅ Role switch successful, response:', response)
-
-      if (!response) {
-        throw new Error('No se pudo cambiar el rol. Intenta nuevamente.')
-      }
-
-      // Guardar información del rol para uso local
-      const roleData = {
-        id: selectedRole.id,
-        name: selectedRole.name,
-        permissions: selectedRole.permissions || []
-      }
-
-      localStorage.setItem('selected_role', JSON.stringify(roleData))
-
-      toast.success(`Rol cambiado exitosamente a: ${selectedRole.name}`)
-      router.push('/profile')
-    } catch (error) {
-      console.error('❌ Error in handleSubmit:', error)
-      const errorMessage = getErrorMessage(error)
-      setError(errorMessage)
-      toast.error(errorMessage)
-
-      // Si es error 401, redirigir al login
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        setTimeout(() => {
-          router.push('/auth/login')
-        }, 2000)
-      }
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  const {
+    roles,
+    selectedRole,
+    loading,
+    submitting,
+    error,
+    canSkip,
+    hasActiveRole,
+    setSelectedRole,
+    handleSubmit,
+    handleSkip,
+    fetchRoles
+  } = useRoleSelection()
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-center">Selecciona tu rol</CardTitle>
+    <AuthLayout
+      title="Selecciona tu rol"
+      subtitle="Elige el rol con el que deseas trabajar"
+      icon={<Users className="w-6 h-6 text-primary" />}
+      maxWidth="lg"
+    >
+      {/* Status Badge */}
+      {hasActiveRole && (
+        <div className="flex justify-center">
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <UserCheck className="w-3 h-3 mr-1" />
+            Ya tienes un rol activo
+          </Badge>
+        </div>
+      )}
+
+      {/* Card principal */}
+      <Card className="shadow-lg border-0 bg-card/50 backdrop-blur-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <Shield className="w-5 h-5 text-primary" />
+            Roles Disponibles
+          </CardTitle>
+          <CardDescription>
+            {hasActiveRole
+              ? 'Ya tienes un rol activo. Puedes seleccionar un nuevo rol o continuar con el actual.'
+              : roles.length > 1
+                ? `Tienes ${roles.length} roles disponibles. Selecciona uno para continuar.`
+                : roles.length === 1
+                  ? 'Tienes 1 rol disponible.'
+                  : 'Cargando roles disponibles...'}
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="border-red-200 bg-red-50">
               <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="text-red-800">{error}</AlertDescription>
             </Alert>
           )}
 
           {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center space-x-3 p-3 border rounded-md">
-                  <Skeleton className="h-4 w-4 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-32" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <RoleLoadingSkeleton />
           ) : roles.length === 0 ? (
-            <div className="space-y-4 text-center">
-              <div className="py-8">
-                <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No se encontraron roles disponibles.</p>
-              </div>
-
-              <Button onClick={fetchRoles} variant="outline" className="w-full">
-                <RefreshCcw className="mr-2 h-4 w-4" />
-                Intentar nuevamente
-              </Button>
-            </div>
+            <EmptyRoleState onRetry={fetchRoles} />
           ) : (
             <RadioGroup
               value={selectedRole?.id.toString()}
@@ -200,39 +84,28 @@ export default function SelectRolePage() {
               }}
               className="space-y-3"
             >
-              {roles.map((role) => (
-                <div
-                  key={role.id}
-                  className={cn(
-                    'flex items-center space-x-3 rounded-md border p-4 transition-colors cursor-pointer hover:bg-accent/50',
-                    selectedRole?.id === role.id ? 'border-primary bg-accent' : 'border-input'
-                  )}
-                  onClick={() => setSelectedRole(role)}
-                >
-                  <RadioGroupItem value={role.id.toString()} id={`role-${role.id}`} />
-                  <Label htmlFor={`role-${role.id}`} className="flex-1 cursor-pointer">
-                    <div className="font-medium">{role.name}</div>
-                    {role.description && <div className="text-sm text-muted-foreground mt-1">{role.description}</div>}
-                  </Label>
-                  {selectedRole?.id === role.id && <CheckCircle className="h-5 w-5 text-primary" />}
+              {roles.map((role, index) => (
+                <div key={role.id}>
+                  <RoleCard role={role} isSelected={selectedRole?.id === role.id} index={index} totalRoles={roles.length} />
+                  {index < roles.length - 1 && <Separator className="my-3" />}
                 </div>
               ))}
             </RadioGroup>
           )}
         </CardContent>
 
-        <CardFooter className="flex gap-3">
-          {canCancel && (
-            <Button onClick={handleCancel} variant="outline" disabled={submitting} className="flex-1">
+        <CardFooter className="flex gap-3 pt-6">
+          {canSkip && (
+            <Button onClick={handleSkip} variant="outline" disabled={submitting} className="flex-1 hover:bg-secondary">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Cancelar
+              {hasActiveRole ? 'Ir al inicio' : 'Omitir'}
             </Button>
           )}
 
           <Button
             onClick={handleSubmit}
             disabled={!selectedRole || submitting || loading || !!error}
-            className={cn('transition-all', canCancel ? 'flex-1' : 'w-full')}
+            className={cn('transition-all shadow-md hover:shadow-lg', canSkip ? 'flex-1' : 'w-full')}
           >
             {submitting ? (
               <>
@@ -240,11 +113,19 @@ export default function SelectRolePage() {
                 Procesando...
               </>
             ) : (
-              'Continuar'
+              <>
+                <Shield className="mr-2 h-4 w-4" />
+                Continuar
+              </>
             )}
           </Button>
         </CardFooter>
       </Card>
-    </div>
+
+      {/* Footer info */}
+      <div className="text-center">
+        <p className="text-xs text-muted-foreground">Los roles determinan tus permisos y acceso al sistema</p>
+      </div>
+    </AuthLayout>
   )
 }

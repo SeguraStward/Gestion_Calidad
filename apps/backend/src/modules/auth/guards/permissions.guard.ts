@@ -54,7 +54,7 @@ export class PermissionsGuard implements CanActivate {
       }
 
       // Obtener el ID del rol activo desde la cookie
-      const activeRoleId = request.cookies?.active_role_id;
+      const activeRoleId = request.cookies?.user_active_role_id;
 
       if (!activeRoleId) {
         this.logger.warn(`User ${user.id} without active role trying to access protected resource`);
