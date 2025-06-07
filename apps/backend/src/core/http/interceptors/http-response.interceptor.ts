@@ -26,6 +26,15 @@ export class HttpResponseInterceptor<T> implements NestInterceptor<T, any> {
                 limit: pagination.limit || 10,
                 page: pagination.page || 1,
                 total: pagination.total || 0,
+                totalPages:
+                  pagination.limit && pagination.total
+                    ? Math.max(1, Math.ceil(pagination.total / pagination.limit))
+                    : 1,
+                hasNext:
+                  pagination.limit && pagination.total
+                    ? (pagination.page || 1) < Math.ceil(pagination.total / pagination.limit)
+                    : false,
+                hasPrev: pagination.limit && pagination.total ? (pagination.page || 1) > 1 : false,
               }
             : undefined,
         };

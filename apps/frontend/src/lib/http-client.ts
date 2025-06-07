@@ -30,68 +30,6 @@ const triggerLogoutProcedures = () => {
   // La redirección se hará después de intentar el logout en el servidor.
 }
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-
-export const HttpClient = axios.create({
-  baseURL,
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-})
-
-// Add request interceptor to include auth token
-HttpClient.interceptors.request.use(
-  (config) => {
-    const user = useUserContextStore.getState().currentUser
-    if (user) {
-      config.headers.Authorization = `Bearer ${user.id}`
-    }
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
-  }
-)
-
-// Add response interceptor to handle token refresh
-HttpClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config
-
-    // If error is 401 and we haven't tried to refresh token yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
-
-      try {
-        // Attempt to refresh token
-        const response = await axios.post(
-          `${baseURL}/auth/refresh`,
-          {},
-          {
-            withCredentials: true
-          }
-        )
-
-        // Update token in store
-        if (response.data?.token) {
-          useUserContextStore.getState().setToken(response.data.token)
-        }
-
-        // Retry original request
-        return HttpClient(originalRequest)
-      } catch (refreshError) {
-        // If refresh fails, redirect to login
-        window.location.href = '/auth/login'
-        return Promise.reject(refreshError)
-      }
-    }
-
-    return Promise.reject(error)
-  }
-)
-
 class HttpClientClass {
   private instance: AxiosInstance
   private readonly BASE_API_URL = process.env.NEXT_PUBLIC_API_URL
@@ -232,4 +170,5 @@ class HttpClientClass {
   }
 }
 
+export const HttpClient = new HttpClientClass()
 export default HttpClient
