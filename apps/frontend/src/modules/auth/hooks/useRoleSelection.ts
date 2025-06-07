@@ -116,7 +116,7 @@ export function useRoleSelection(): UseRoleSelectionReturn {
       localStorage.setItem('selected_role', JSON.stringify(roleData))
 
       toast.success(`Rol seleccionado exitosamente: ${selectedRole.name}`)
-      router.push('/profile')
+      router.push('/')
     })
   }, [selectedRole, executeSubmit, router])
 
