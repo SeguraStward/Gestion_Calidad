@@ -1,6 +1,6 @@
 import { createGenericHooks } from '@/services/base/generic.hooks'
 import { campusService } from '../../services/institutional/campus.service'
-import { CampusWithRelations, CreateCampusInput } from '../../types/institutional/campus'
+import { CampusWithRelations, CreateCampusInput } from '../../../../../shared/types/campus'
 import { GenericService } from '@/services/base/generic.service'
 import { useQuery, UseQueryOptions } from '@tanstack/react-query'
 import { PaginatedResponse } from '@/services/interfaces'

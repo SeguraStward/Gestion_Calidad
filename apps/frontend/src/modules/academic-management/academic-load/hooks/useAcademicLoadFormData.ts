@@ -1,5 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import { useCampus } from '../../../../shared/hooks/useCampus'
+import { useAcademicGroup } from '../../../../shared/hooks/useAcademicGroup'
+import { useClassroom } from '../../../../shared/hooks/useClassroom'
+import { useSchedule } from '../../../../shared/hooks/useSchedule'
+import { useUser } from '../../../../shared/hooks/useUser'
+import { useCourses } from '../../../../shared/hooks/useCourses'
+import { useQuery } from '@tanstack/react-query'
 import { academicLoadService } from '../services/academic-load.service'
 
 // Define types for form data
@@ -42,89 +48,38 @@ async function fetchAndTransformData(endpoint: string, transform: (item: any) =>
 
 // Transform functions for each entity
 const transforms = {
-  course: (course: any) => ({
-    id: course.id,
-    name: course.name,
-    code: course.code,
-    credits: course.credits
-  }),
-  professor: (professor: any) => ({
-    id: professor.id,
-    name: `${professor.fullName} ${professor.fullLastName || ''}`.trim(),
-    email: professor.email
-  }),
   academicCycle: (cycle: any) => ({
     id: cycle.id,
     name: cycle.name,
     year: cycle.year,
     cycleNumber: cycle.cycleNumber
-  }),
-  campus: (campus: any) => ({
-    id: campus.id,
-    name: campus.name,
-    code: campus.code
-  }),
-  group: (group: any) => ({
-    id: group.id,
-    name: group.name || group.number,
-    number: group.number
-  }),
-  classroom: (classroom: any) => ({
-    id: classroom.id,
-    name: classroom.roomNumber,
-    capacity: classroom.capacity
-  }),
-  schedule: (schedule: any) => ({
-    id: schedule.id,
-    name: `${schedule.day || schedule.dayOfWeek || ''} ${schedule.startTime}-${schedule.endTime}`.trim(),
-    day: schedule.day || schedule.dayOfWeek,
-    startTime: schedule.startTime,
-    endTime: schedule.endTime
   })
 }
 
 export function useAcademicLoadFormData(): FormData {
-  // Fetch all required data in parallel
-  const { data: courses = [], isLoading: isLoadingCourses } = useQuery({
-    queryKey: ['courses'],
-    queryFn: () => fetchAndTransformData('course', transforms.course)
-  })
+  // Use the new hooks for each entity
+  const { data: campuses = [], isLoading: isLoadingCampuses } = useCampus()
+  const { data: groups = [], isLoading: isLoadingGroups } = useAcademicGroup()
+  const { data: classrooms = [], isLoading: isLoadingClassrooms } = useClassroom()
+  const { data: schedules = [], isLoading: isLoadingSchedules } = useSchedule()
+  const { data: professors = [], isLoading: isLoadingProfessors } = useUser()
+  const { data: courses = [], isLoading: isLoadingCourses } = useCourses()
 
-  const { data: professors = [], isLoading: isLoadingProfessors } = useQuery({
-    queryKey: ['professors'],
-    queryFn: () => fetchAndTransformData('professor', transforms.professor)
-  })
-
+  // Fetch academic cycles using the existing pattern
   const { data: academicCycles = [], isLoading: isLoadingAcademicCycles } = useQuery({
     queryKey: ['academicCycles'],
     queryFn: () => fetchAndTransformData('academicCycle', transforms.academicCycle)
-  })
-
-  const { data: campuses = [], isLoading: isLoadingCampuses } = useQuery({
-    queryKey: ['campuses'],
-    queryFn: () => fetchAndTransformData('campus', transforms.campus)
-  })
-
-  const { data: groups = [], isLoading: isLoadingGroups } = useQuery({
-    queryKey: ['groups'],
-    queryFn: () => fetchAndTransformData('group', transforms.group)
-  })
-
-  const { data: classrooms = [], isLoading: isLoadingClassrooms } = useQuery({
-    queryKey: ['classrooms'],
-    queryFn: () => fetchAndTransformData('classroom', transforms.classroom)
-  })
-
-  const { data: schedules = [], isLoading: isLoadingSchedules } = useQuery({
-    queryKey: ['schedules'],
-    queryFn: () => fetchAndTransformData('schedule', transforms.schedule)
   })
 
   return useMemo(
     () => ({
       courses,
       isLoadingCourses,
-      professors,
+      professors: professors.map((p: any) => ({
+        id: p.id,
+        name: `${p.name} (${p.email})`,
+        email: p.email
+      })),
       isLoadingProfessors,
       academicCycles,
       isLoadingAcademicCycles,
@@ -154,4 +109,4 @@ export function useAcademicLoadFormData(): FormData {
       isLoadingSchedules
     ]
   )
-}
+} 
