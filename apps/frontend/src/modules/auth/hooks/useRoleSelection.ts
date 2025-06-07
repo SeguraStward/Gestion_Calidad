@@ -3,9 +3,10 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import axios, { AxiosError } from 'axios'
 
-import { Role, AuthService } from '@/modules/auth/auth.service'
+import { AuthService } from '@/modules/auth/auth.service'
 import { CookieManager } from '@/utils/cookie-manager'
 import { useAsyncOperation } from '@/hooks/useAsyncOperation'
+import { Role } from '../interfaces'
 
 export interface UseRoleSelectionReturn {
   // State

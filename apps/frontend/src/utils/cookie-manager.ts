@@ -1,5 +1,5 @@
+import { Role } from '@/modules/auth/interfaces'
 import Cookies from 'js-cookie'
-import { Role } from '@/modules/auth/auth.service'
 
 export interface UserActiveRole extends Role {
   isActive: boolean
