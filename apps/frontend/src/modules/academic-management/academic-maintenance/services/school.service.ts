@@ -1,5 +1,5 @@
 import { GenericService } from '@/services/base/generic.service'
-import { SchoolWithRelations, CreateSchoolInput } from '../../types/institutional/school'
+import { SchoolWithRelations, CreateSchoolInput } from '../types/school'
 
 export class SchoolService extends GenericService<SchoolWithRelations, CreateSchoolInput, Partial<CreateSchoolInput>> {
   constructor() {

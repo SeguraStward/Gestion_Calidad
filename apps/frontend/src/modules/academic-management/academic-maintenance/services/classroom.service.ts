@@ -1,6 +1,5 @@
 import { GenericService } from '@/services/base/generic.service'
-import { ClassroomWithRelations, CreateClassroomInput } from '../../types/institutional/classroom'
-
+import { ClassroomWithRelations, CreateClassroomInput } from '@/shared/types/classroom'
 export class ClassroomService extends GenericService<
   ClassroomWithRelations,
   CreateClassroomInput,
