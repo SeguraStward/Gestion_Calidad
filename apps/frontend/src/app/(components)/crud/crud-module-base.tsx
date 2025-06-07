@@ -49,9 +49,10 @@ export const CrudModuleBase = <
 
   // Procesar el elemento para edición si existe processItemForEditing
   const editingItem = useMemo(() => {
+    if (!editingId || editingId === 'new') return null
     if (!editingItemData) return null
     return processItemForEditing ? processItemForEditing(editingItemData) : editingItemData
-  }, [editingItemData, processItemForEditing])
+  }, [editingId, editingItemData, processItemForEditing])
 
   // Paginación
   const { currentPage, setCurrentPage, itemsPerPage, queryParams } = usePagination()
@@ -105,7 +106,8 @@ export const CrudModuleBase = <
     formState: { errors }
   } = useForm<TCreateInput | TUpdateInput>({
     defaultValues: defaultFormValues as any,
-    mode: 'onChange'
+    mode: 'onChange',
+    values: (editingItem || defaultFormValues) as TCreateInput | TUpdateInput | undefined // <-- Esto asegura que los valores del item se muestren en el form
   })
 
   // Mutaciones
@@ -132,12 +134,14 @@ export const CrudModuleBase = <
       })
       if (editingId && editingId !== 'new') {
         // Conversión segura utilizando unknown como intermediario
-        const updateData = sanitizedData as unknown as TUpdateInput
+        // Si no se ha editado nada, usar los valores actuales del item
+        const updateData = {
+          ...editingItem,
+          ...formData
+        } as unknown as TUpdateInput
         await updateMutation.mutateAsync({ id: editingId, data: updateData })
-        toast.success(`${entityName} actualizado exitosamente`)
       } else {
-        await createMutation.mutateAsync(sanitizedData as TCreateInput)
-        toast.success(`${entityName} creado exitosamente`)
+        await createMutation.mutateAsync(formData as TCreateInput)
       }
 
       // Refrescar datos
@@ -175,7 +179,7 @@ export const CrudModuleBase = <
 
       // Proceder con la eliminación
       await deleteMutation.mutateAsync(idToDelete)
-      toast.success(`${entityName} eliminado exitosamente`)
+      // toast.success(`${entityName} eliminado exitosamente`) // Eliminado para centralizar en generic hook
 
       // Refrescar datos
       await refetch()
@@ -253,9 +257,15 @@ export const CrudModuleBase = <
         data={processedItems}
         searchPlaceholder={searchPlaceholder}
         newButton={!editingId ? newButton : undefined}
-        initialPageSize={10}
         isLoading={isLoadingList}
-      />{' '}
+        currentPage={paginatedData?.meta?.page || 1}
+        totalPages={paginatedData?.meta?.totalPages || 1}
+        onPageChange={(page) => {
+          if (page >= 1 && page <= (paginatedData?.meta?.totalPages || 1)) {
+            setCurrentPage(page)
+          }
+        }}
+      />
       <AlertMessage
         open={!!idToDelete}
         onOpenChange={(open) => {

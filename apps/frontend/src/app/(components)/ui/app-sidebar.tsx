@@ -44,7 +44,7 @@ const data = {
       items: [
         { title: 'Importación de datos', url: '/academic-management/bulk-import' },
         { title: 'Asignación de profesores', url: '/academic-management/academic-load' },
-        { title: 'Mantenimientos académicos', url: '/academic-management/academic-maintenance' }
+        { title: 'Mantenimiento General', url: '/academic-management/academic-maintenance' }
       ]
     },
     {
