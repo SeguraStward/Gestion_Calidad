@@ -131,7 +131,7 @@ export function useRoleSelection(): UseRoleSelectionReturn {
   useEffect(() => {
     const hasRole = CookieManager.hasActiveRole()
     setHasActiveRole(hasRole)
-    setCanSkip(hasRole) // Solo puede omitir si ya tiene un rol seleccionado
+    setCanSkip(hasRole)
   }, [])
 
   // Cargar roles al montar el componente

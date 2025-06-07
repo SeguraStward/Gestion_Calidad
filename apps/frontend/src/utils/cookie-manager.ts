@@ -26,7 +26,7 @@ export class CookieManager {
     }
 
     Cookies.set(this.USER_ACTIVE_ROLE_KEY, JSON.stringify(activeRole), this.COOKIE_OPTIONS)
-    Cookies.set(this.USER_ACTIVE_ROLE_ID_KEY, JSON.stringify(activeRole.id), this.COOKIE_OPTIONS)
+    Cookies.set(this.USER_ACTIVE_ROLE_ID_KEY, activeRole.id, this.COOKIE_OPTIONS)
   }
 
   /**
@@ -67,7 +67,7 @@ export class CookieManager {
   static hasActiveRole(): boolean {
     const roleData = Cookies.get(this.USER_ACTIVE_ROLE_KEY)
     const roleId = Cookies.get(this.USER_ACTIVE_ROLE_ID_KEY)
-    return !!(roleData || roleId)
+    return !!(roleData && roleId)
   }
 
   /**

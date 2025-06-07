@@ -98,7 +98,7 @@ export default function SelectRolePage() {
           {canSkip && (
             <Button onClick={handleSkip} variant="outline" disabled={submitting} className="flex-1 hover:bg-secondary">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              {hasActiveRole ? 'Ir al inicio' : 'Omitir'}
+              {hasActiveRole ? 'Regresar al Inicio' : 'Cancelar selección'}
             </Button>
           )}
 

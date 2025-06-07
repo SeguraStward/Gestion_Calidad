@@ -31,8 +31,9 @@ function getAccessToken(request: NextRequest): string | undefined {
 
 function getSelectedRoleId(request: NextRequest): string | undefined {
   try {
+    const role = request.cookies.get('user_active_role')?.value
     const roleId = request.cookies.get('user_active_role_id')?.value
-    logDebug('Role ID retrieved', { hasRoleId: !!roleId })
+    logDebug('Role ID retrieved', { hasRoleId: !!(roleId && role) })
     return roleId
   } catch (error) {
     console.error('[Middleware Error] Failed to get role ID:', error)
