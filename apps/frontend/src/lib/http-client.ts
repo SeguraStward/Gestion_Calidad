@@ -66,9 +66,13 @@ HttpClient.interceptors.response.use(
 
       try {
         // Attempt to refresh token
-        const response = await axios.post(`${baseURL}/auth/refresh`, {}, {
-          withCredentials: true
-        })
+        const response = await axios.post(
+          `${baseURL}/auth/refresh`,
+          {},
+          {
+            withCredentials: true
+          }
+        )
 
         // Update token in store
         if (response.data?.token) {

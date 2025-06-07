@@ -7,7 +7,7 @@ const courseService = new GenericService<CourseWithRelations, any, any>('courses
 export function useCourses() {
   return useQuery({
     queryKey: ['courses', { status: 'ACTIVE' }],
-    queryFn: () => courseService.list({ status: 'ACTIVE' }).then(res => res.data),
+    queryFn: () => courseService.list({ status: 'ACTIVE' }).then((res) => res.data),
     staleTime: 60_000,
     select: (data: CourseWithRelations[]) =>
       data.map((course) => ({
@@ -15,8 +15,8 @@ export function useCourses() {
         name: course.name,
         code: course.code,
         credits: course.credits,
-        status: course.status,
+        status: course.status
         // Puedes agregar más campos si los necesitas
       }))
   })
-} 
+}

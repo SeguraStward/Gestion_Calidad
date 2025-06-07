@@ -10,4 +10,4 @@ export type CreateGroupInput = Omit<Prisma.AcademicLoadGroupCreateInput, 'id' | 
   AcademicLoad?: { connect: { id: string }[] }
   createdBy?: string | null
   updatedBy?: string | null
-} 
+}

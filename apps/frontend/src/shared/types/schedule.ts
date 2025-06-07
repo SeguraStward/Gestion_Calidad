@@ -10,4 +10,4 @@ export type CreateScheduleInput = Omit<Prisma.ScheduleCreateInput, 'id' | 'versi
   academicLoads?: { connect: { id: string }[] }
   createdBy?: string | null
   updatedBy?: string | null
-} 
+}

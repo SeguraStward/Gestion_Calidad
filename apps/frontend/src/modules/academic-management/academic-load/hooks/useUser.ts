@@ -13,10 +13,10 @@ export function useUser() {
     },
     staleTime: 60_000,
     select: (data) =>
-      data?.map(user => ({
+      data?.map((user) => ({
         id: user.id,
         name: `${user.fullName} ${user.fullLastName || ''}`.trim(),
         email: user.email
       })) ?? []
   })
-} 
+}

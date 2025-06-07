@@ -12,4 +12,4 @@ export type CreateClassroomInput = Omit<Prisma.ClassroomCreateInput, 'id' | 'ver
   academicLoads?: { connect: { id: string }[] }
   createdBy?: string | null
   updatedBy?: string | null
-} 
+}

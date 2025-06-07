@@ -12,4 +12,4 @@ export type CreateUserInput = Omit<Prisma.UserCreateInput, 'id' | 'version' | 'c
   academicLoads?: { connect: { id: string }[] }
   createdBy?: string | null
   updatedBy?: string | null
-} 
+}

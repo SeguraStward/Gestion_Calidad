@@ -10,4 +10,4 @@ export type CreateAcademicCycleInput = Omit<Prisma.AcademicCycleCreateInput, 'id
   academicLoads?: { connect: { id: string }[] }
   createdBy?: string | null
   updatedBy?: string | null
-} 
+}

@@ -28,14 +28,14 @@ interface ComboboxProps {
   maxHeight?: number // altura máxima del scroll
 }
 
-export const FormSelect = ({ 
-  label, 
-  value, 
-  options, 
-  onChange, 
-  placeholder, 
-  id, 
-  required, 
+export const FormSelect = ({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder,
+  id,
+  required,
   error,
   maxHeight = 250 // altura máxima por defecto
 }: ComboboxProps) => {
@@ -47,9 +47,7 @@ export const FormSelect = ({
   // Filter options based on search
   const filteredOptions = useMemo(() => {
     if (!search) return options
-    return options.filter(option => 
-      option.name.toLowerCase().includes(search.toLowerCase())
-    )
+    return options.filter((option) => option.name.toLowerCase().includes(search.toLowerCase()))
   }, [options, search])
 
   // Reset search when popover closes
@@ -80,11 +78,7 @@ export const FormSelect = ({
         </PopoverTrigger>
         <PopoverContent className="w-full p-0" align="start">
           <Command shouldFilter={false}>
-            <CommandInput 
-              placeholder={`Buscar ${label.toLowerCase()}...`} 
-              value={search}
-              onValueChange={setSearch}
-            />
+            <CommandInput placeholder={`Buscar ${label.toLowerCase()}...`} value={search} onValueChange={setSearch} />
             <CommandEmpty>No se encontró nada.</CommandEmpty>
             <CommandGroup>
               <div style={{ maxHeight, overflowY: 'auto' }}>

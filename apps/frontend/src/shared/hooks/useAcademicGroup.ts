@@ -14,7 +14,7 @@ export function useAcademicGroup() {
     staleTime: 60_000,
     select: (data: GroupWithRelations[]) => {
       if (!Array.isArray(data)) return []
-      return data.map(group => ({
+      return data.map((group) => ({
         id: String(group.id),
         name: group.number,
         number: group.number

@@ -13,15 +13,15 @@ const classroomService = new GenericService<ClassroomWithRelations, any, any, an
 export function useClassroom() {
   return useQuery({
     queryKey: ['classrooms', { status: 'ACTIVE', limit: 1000 }],
-    queryFn: () => classroomService.list({ status: 'ACTIVE', limit: 1000 }).then(res => res.data),
+    queryFn: () => classroomService.list({ status: 'ACTIVE', limit: 1000 }).then((res) => res.data),
     staleTime: 60_000,
     select: (data) => {
       console.log('AULAS DESDE API:', data)
       return data
-        .filter(classroom => classroom && classroom.id && classroom.roomNumber)
-        .map(classroom => ({
+        .filter((classroom) => classroom && classroom.id && classroom.roomNumber)
+        .map((classroom) => ({
           id: String(classroom.id),
-          name: classroom.roomNumber,
+          name: classroom.roomNumber
         }))
     }
   })

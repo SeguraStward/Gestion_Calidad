@@ -14,12 +14,13 @@ const userService = new GenericService<UserWithRelations, any, any, any>('users'
 export function useUser() {
   return useQuery({
     queryKey: ['users', { status: 'ACTIVE', limit: 1000 }],
-    queryFn: () => userService.list({ status: 'ACTIVE', limit: 1000 }).then(res => res.data),
+    queryFn: () => userService.list({ status: 'ACTIVE', limit: 1000 }).then((res) => res.data),
     staleTime: 60_000,
-    select: (data) => data.map(user => ({
-      id: user.id,
-      name: `${user.fullName} ${user.fullLastName || ''}`.trim(),
-      email: user.email
-    }))
+    select: (data) =>
+      data.map((user) => ({
+        id: user.id,
+        name: `${user.fullName} ${user.fullLastName || ''}`.trim(),
+        email: user.email
+      }))
   })
 }

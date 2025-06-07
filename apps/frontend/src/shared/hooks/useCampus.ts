@@ -13,12 +13,13 @@ const campusService = new GenericService<CampusWithRelations, any, any, any>('ca
 export function useCampus() {
   return useQuery({
     queryKey: ['campuses', { status: 'ACTIVE', limit: 1000 }],
-    queryFn: () => campusService.list({ status: 'ACTIVE', limit: 1000 }).then(res => res.data),
+    queryFn: () => campusService.list({ status: 'ACTIVE', limit: 1000 }).then((res) => res.data),
     staleTime: 60_000,
-    select: (data) => data.map(campus => ({
-      id: campus.id,
-      name: campus.name,
-      code: campus.code
-    }))
+    select: (data) =>
+      data.map((campus) => ({
+        id: campus.id,
+        name: campus.name,
+        code: campus.code
+      }))
   })
 }

@@ -33,7 +33,7 @@ export class AcademicLoadService extends GenericService<
     }
     return {
       headers: {
-        'Authorization': `Bearer ${user.id}` // Ajusta esto según tu implementación de tokens
+        Authorization: `Bearer ${user.id}` // Ajusta esto según tu implementación de tokens
       }
     }
   }
