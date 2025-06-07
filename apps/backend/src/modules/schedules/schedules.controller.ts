@@ -6,7 +6,7 @@ import { SchedulesService } from './schedules.service';
 
 import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
 
-@ResourceName('SCHEDULE')
+@ResourceName('ACADEMIC_LOAD')
 @Controller('schedules')
 export class SchedulesController extends GenericController<ScheduleDto, ScheduleDto> {
   protected readonly logger = new Logger(SchedulesController.name);

@@ -6,7 +6,7 @@ import { CampusesService } from './campuses.service';
 
 import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
 
-@ResourceName('CAMPUS')
+@ResourceName('FINAL_REPORT')
 @Controller('campuses')
 export class CampusesController extends GenericController<CampusDto, CampusDto> {
   protected readonly logger = new Logger(CampusesController.name);
