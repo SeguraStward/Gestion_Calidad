@@ -27,7 +27,7 @@ const data = {
   user: {
     name: 'Daniel Araya',
     email: 'darayaroma@gmail.com',
-    avatar: '/assets/default-profile-image.png'
+    avatar: '/assets/images/default-profile-image.png'
   },
   teams: [
     {
