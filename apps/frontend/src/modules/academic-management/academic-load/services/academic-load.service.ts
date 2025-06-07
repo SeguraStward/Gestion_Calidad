@@ -1,5 +1,5 @@
 // src/modules/academic-management/academic-load/services/academic-load.service.ts
-import { HttpClient } from '@/lib/http-client'
+import HttpClient from '@/lib/http-client'
 import { GenericService } from '@/services/base/generic.service'
 import type { AcademicLoadWithRelations, CreateAcademicLoadInput, UpdateAcademicLoadInput } from '../types/academic-load'
 import { useUserContextStore } from '@/store/authStore'

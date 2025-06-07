@@ -28,22 +28,26 @@ export class RegionalCentersService extends GenericService<
     super(regionalCentersRepository, RegionalCenterDto, dtoValidator);
   }
 
-  // Override save to handle relations properly
+  // Override save to handle only regional center fields
   async save(payload: RegionalCenterDto): Promise<RegionalCenterDto> {
     this.logger.debug(`Saving regional center with payload: ${JSON.stringify(payload)}`);
     const data: Prisma.RegionalCenterCreateInput = {
-      ...payload,
-      campuses: { connect: { id: payload.campusId } },
+      code: payload.code,
+      name: payload.name,
+      status: payload.status,
+      // No se conecta campus aquí
     };
     return super.save(data as any);
   }
 
-  // Override update to handle relations properly
+  // Override update to handle only regional center fields
   async update(id: string, payload: Partial<RegionalCenterDto>): Promise<RegionalCenterDto> {
     this.logger.debug(`Updating regional center ${id} with payload: ${JSON.stringify(payload)}`);
     const data: Prisma.RegionalCenterUpdateInput = {
-      ...payload,
-      ...(payload.campusId && { campuses: { connect: { id: payload.campusId } } }),
+      code: payload.code,
+      name: payload.name,
+      status: payload.status,
+      // No se conecta campus aquí
     };
     return super.update(id, data as any);
   }
