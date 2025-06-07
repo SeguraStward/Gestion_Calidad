@@ -25,9 +25,17 @@ export function AcademicMaintenancePage() {
   )
 
   return (
-    <Card className="w-full shadow-sm border p-4 space-y-6">
-      <PageHeader title="Mantenimiento de Estructura Institucional" icon={Layers3} />
-      <InstitutionalMaintenanceTabs loading={loading} SkeletonCrud={SkeletonCrud} />
-    </Card>
+    <div className="w-full flex justify-center px-4 md:px-6 lg:px-10 py-8">
+      <div className="w-full max-w-6xl space-y-8">
+        <Card className="w-full shadow-md border p-6 space-y-6 rounded-2xl">
+          <PageHeader
+            title="Mantenimiento Universitario"
+            icon={Layers3}
+            subtitle="Administra la estructura académica de la institución"
+          />
+          <InstitutionalMaintenanceTabs loading={loading} SkeletonCrud={SkeletonCrud} />
+        </Card>
+      </div>
+    </div>
   )
 }

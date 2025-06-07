@@ -46,13 +46,13 @@ export default function SelectRolePage() {
       )}
 
       {/* Card principal */}
-      <Card className="shadow-lg border-0 bg-card/50 backdrop-blur-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Shield className="w-5 h-5 text-primary" />
+      <Card className="shadow-xl border border-border bg-white/90 dark:bg-zinc-900/90 rounded-xl overflow-hidden">
+        <CardHeader className="pb-4 bg-primary/5">
+          <CardTitle className="text-2xl font-bold flex items-center gap-2 text-primary">
+            <Shield className="w-6 h-6 text-primary" />
             Roles Disponibles
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-base text-muted-foreground">
             {hasActiveRole
               ? 'Ya tienes un rol activo. Puedes seleccionar un nuevo rol o continuar con el actual.'
               : roles.length > 1
@@ -63,7 +63,7 @@ export default function SelectRolePage() {
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6 py-8 px-6">
           {error && (
             <Alert variant="destructive" className="border-red-200 bg-red-50">
               <AlertTriangle className="h-4 w-4" />
@@ -94,7 +94,7 @@ export default function SelectRolePage() {
           )}
         </CardContent>
 
-        <CardFooter className="flex gap-3 pt-6">
+        <CardFooter className="flex gap-3 pt-6 bg-muted/40 px-6 pb-6 rounded-b-xl">
           {canSkip && (
             <Button onClick={handleSkip} variant="outline" disabled={submitting} className="flex-1 hover:bg-secondary">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -105,7 +105,7 @@ export default function SelectRolePage() {
           <Button
             onClick={handleSubmit}
             disabled={!selectedRole || submitting || loading || !!error}
-            className={cn('transition-all shadow-md hover:shadow-lg', canSkip ? 'flex-1' : 'w-full')}
+            className={cn('transition-all shadow-md hover:shadow-lg font-semibold h-12 text-base', canSkip ? 'flex-1' : 'w-full')}
           >
             {submitting ? (
               <>

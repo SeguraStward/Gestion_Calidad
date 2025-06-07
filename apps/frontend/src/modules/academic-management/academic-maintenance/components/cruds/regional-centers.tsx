@@ -10,53 +10,19 @@ import {
   useUpdateRegionalCenter,
   useRemoveRegionalCenter,
   useOneRegionalCenter,
-  useListRegionalCenters,
   useListRegionalCentersPaginated
-} from '@/modules/academic-management/academic-maintenance/hooks/institutional/useRegionalCenter'
-import { useRegionalCenterFormData } from '../../hooks/institutional/useRegionalCenterFormData'
+} from '@/modules/academic-management/academic-maintenance/hooks/useRegionalCenter'
+import { useRegionalCenterFormData } from '../../hooks/useRegionalCenterFormData'
 import {
   RegionalCenterWithRelations,
-  CreateRegionalCenterInput,
-  CampusSelectOption
-} from '@/modules/academic-management/academic-maintenance/types/institutional/regional-center'
+  CreateRegionalCenterInput
+} from '@/modules/academic-management/academic-maintenance/types/regional-center'
 import { Status } from '@una-gc/database/prisma/generated/client'
-import {
-  Badge,
-  Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger
-} from '@una-gc/ui/components'
-import {
-  Building2,
-  MapPin,
-  Calendar,
-  Hash,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-  Loader2,
-  Globe,
-  Mail,
-  Phone,
-  Map,
-  Users,
-  Info,
-  AlertCircle,
-  CheckCircle2,
-  XCircle
-} from 'lucide-react'
-import { AlertMessage } from '@/app/(components)/ui/alert-message'
+import { Badge, Button } from '@una-gc/ui/components'
+import { Building2, Hash, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
 // Define the item type for CrudModuleBase
 interface RegionalCenterItem extends RegionalCenterWithRelations {}
-
-// Define the update input type
-type UpdateRegionalCenterInput = Partial<CreateRegionalCenterInput>
 
 // RegionalCenter status options with enhanced icons and descriptions
 const STATUS_OPTIONS = [
@@ -85,9 +51,9 @@ export default function RegionalCentersCrud() {
         {
           accessorKey: 'code',
           header: 'Código',
-          size: 100,
+          size: 120,
           cell: ({ row }) => (
-            <div className="flex items-center">
+            <div className="flex items-center min-w-[90px] max-w-[160px] truncate">
               <Hash className="h-4 w-4 text-primary mr-2" />
               <span>{row.original.code}</span>
             </div>
@@ -96,29 +62,28 @@ export default function RegionalCentersCrud() {
         {
           accessorKey: 'name',
           header: 'Nombre',
-          size: 200,
+          size: 220,
           cell: ({ row }) => (
-            <div className="flex items-center">
+            <div className="flex items-center min-w-[140px] max-w-[260px] truncate">
               <Building2 className="h-4 w-4 text-primary mr-2" />
               <span className="font-medium">{row.original.name}</span>
             </div>
           )
         },
         {
-          accessorKey: 'campuses.0.name',
-          header: 'Campus',
-          size: 150,
+          accessorKey: 'campusCount',
+          header: 'Número de Campus',
+          size: 110,
           cell: ({ row }) => (
-            <div className="flex items-center">
-              <MapPin className="h-4 w-4 text-primary mr-2" />
-              <span>{row.original.campuses?.[0]?.name || 'Sin campus'}</span>
+            <div className="flex items-center justify-center min-w-[60px] max-w-[90px]">
+              <span className="font-semibold text-center w-full">{row.original.campuses ? row.original.campuses.length : 0}</span>
             </div>
           )
         },
         {
           accessorKey: 'status',
           header: 'Estado',
-          size: 100,
+          size: 110,
           cell: ({ row }) => {
             const status = row.original.status
             let badgeClasses = ''
@@ -132,7 +97,7 @@ export default function RegionalCentersCrud() {
               statusText = 'Inactivo'
             }
             return (
-              <Badge variant="outline" className={badgeClasses}>
+              <Badge variant="outline" className={badgeClasses + ' min-w-[70px] justify-center'}>
                 {statusText}
               </Badge>
             )
@@ -141,32 +106,21 @@ export default function RegionalCentersCrud() {
         {
           id: 'actions',
           header: () => <div className="text-right">Acciones</div>,
-          size: 80,
+          size: 90,
           cell: ({ row }) => (
-            <div className="text-right flex gap-1 justify-end">
+            <div className="text-right flex gap-1 justify-end min-w-[80px]">
               <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => utils.onEdit(row.original.id)} title="Editar">
                 <Pencil className="h-4 w-4" />
               </Button>
-              <AlertMessage
-                title="¿Desea eliminar el centro regional?"
-                description={`Esta acción no se puede deshacer. ¿Eliminar "${row.original.name}"?`}
-                variant="danger"
-                confirmText="Eliminar"
-                cancelText="Cancelar"
-                onConfirm={() => {
-                  utils.onDelete(row.original.id)
-                }}
-                trigger={
-                  <Button
-                    variant="ghost"
-                    className="h-8 w-8 p-0 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50"
-                    title="Eliminar"
-                    disabled={utils.isProcessing}
-                  >
-                    {utils.isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                  </Button>
-                }
-              />
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50"
+                title="Eliminar"
+                disabled={utils.isProcessing}
+                onClick={() => utils.onDelete(row.original.id)}
+              >
+                {utils.isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              </Button>
             </div>
           )
         }
@@ -224,19 +178,6 @@ export default function RegionalCentersCrud() {
                 },
                 {
                   type: 'select',
-                  name: 'campusId',
-                  label: 'Campus',
-                  required: true,
-                  options: campuses.map((campus: CampusSelectOption) => ({
-                    id: campus.id,
-                    name: campus.name
-                  })),
-                  isLoading: isLoadingCampuses,
-                  placeholder: 'Seleccionar campus',
-                  helperText: 'Campus al que pertenece el centro regional'
-                },
-                {
-                  type: 'select',
                   name: 'status',
                   label: 'Estado',
                   required: true,
@@ -273,7 +214,6 @@ export default function RegionalCentersCrud() {
       defaultFormValues: {
         code: '',
         name: '',
-        campusId: '',
         status: Status.ACTIVE
       } as CreateRegionalCenterInput,
       renderForm,
@@ -281,7 +221,6 @@ export default function RegionalCentersCrud() {
       processItemForEditing: (item: RegionalCenterItem) => ({
         code: item.code || '',
         name: item.name || '',
-        campusId: item.campuses?.[0]?.id || '',
         status: item.status || Status.ACTIVE
       }),
       preDeleteCheck: () => null

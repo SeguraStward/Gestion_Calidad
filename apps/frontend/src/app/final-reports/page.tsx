@@ -219,7 +219,6 @@ export default function FinalReportsPage() {
         isLoading={isLoading}
         searchPlaceholder="Buscar por NRC, curso..."
         newButton={newReportButton}
-        initialPageSize={10}
       />
     </div>
   )

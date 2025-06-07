@@ -20,36 +20,25 @@ export default function LoginPage() {
     <AuthLayout
       title="Sistema de Gestión de Calidad"
       subtitle="Universidad Nacional de Costa Rica"
-      icon={<BookOpen className="w-6 h-6 text-primary" />}
+      icon={<BookOpen className="w-8 h-8 text-primary" />}
       maxWidth="md"
     >
-      {/* Card principal */}
-      <Card className="shadow-lg border-0 bg-card/50 backdrop-blur-sm">
-        <CardHeader className="text-center space-y-3">
-          <CardTitle className="text-2xl font-semibold flex items-center justify-center gap-2">
-            <Shield className="w-6 h-6 text-primary" />
+      <div className="w-full max-w-lg mx-auto bg-white/90 dark:bg-zinc-900/90 rounded-xl shadow-xl border border-border p-0 overflow-hidden">
+        <CardHeader className="text-center space-y-3 bg-primary/5 py-8 px-6">
+          <CardTitle className="text-3xl font-bold flex items-center justify-center gap-2 text-primary">
+            <Shield className="w-7 h-7 text-primary" />
             Iniciar Sesión
           </CardTitle>
-          <CardDescription className="text-base">Accede con tu cuenta institucional de Google</CardDescription>
+          <CardDescription className="text-base text-muted-foreground">
+            Accede con tu cuenta institucional de Google
+          </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          {/* Características del sistema */}
-          {/* <div className="grid grid-cols-2 gap-3">
-            <div className="text-center p-3 bg-primary/5 rounded-lg">
-              <Users className="w-6 h-6 text-primary mx-auto mb-1" />
-              <p className="text-xs text-muted-foreground">Gestión de Roles</p>
-            </div>
-            <div className="text-center p-3 bg-primary/5 rounded-lg">
-              <Shield className="w-6 h-6 text-primary mx-auto mb-1" />
-              <p className="text-xs text-muted-foreground">Acceso Seguro</p>
-            </div>
-          </div> */}
-
+        <CardContent className="space-y-8 py-8 px-6">
           {/* Botón de login */}
           <Button
             onClick={handleGoogleLogin}
-            className="w-full h-12 text-base font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200"
+            className="w-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all duration-200 bg-primary"
           >
             <LogIn className="mr-2 h-5 w-5" />
             Iniciar sesión con Google
@@ -63,7 +52,7 @@ export default function LoginPage() {
             <p className="text-xs text-muted-foreground">Sistema de gestión de calidad académica</p>
           </div>
         </CardContent>
-      </Card>
+      </div>
     </AuthLayout>
   )
 }

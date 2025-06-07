@@ -22,10 +22,6 @@ export class RegionalCenterDto extends BaseDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'Campus ID' })
-  @IsString()
-  campusId: string;
-
   @ApiProperty({ description: 'Status', enum: Status })
   @Expose()
   @IsEnum(Status)
