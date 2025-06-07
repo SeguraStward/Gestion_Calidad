@@ -36,6 +36,9 @@ const TOTAL_STEPS = 7
 // User-facing labels remain in Spanish
 const STEP_LABELS_EDIT = ['Información', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
 
+const MAIN_TOOLS_QUESTION_ID = 'herramientas_utilizadas' // ID Canónico para la pregunta de herramientas
+const OTHER_TOOLS_QUESTION_ID = 'otras_herramientas_utilizadas' // ID para el campo de texto de otras herramientas
+
 // Data transformation functions
 function transformReportToStep1Data(report: FullFinalReport): Step1FormData | null {
   if (!report?.academicLoad) return null
@@ -104,21 +107,19 @@ function transformReportToStep5Data(report: FullFinalReport): Step5FormData | nu
 
 function transformReportToStep6Data(report: FullFinalReport): Step6FormData | null {
   const defaultData = {
-    // Form data keys remain as expected by Step6EditForm
-    respuestasMultiples: [{ idPregunta: 'herramientas_tec', respuestasSeleccionadas: [] }],
+    respuestasMultiples: [{ idPregunta: MAIN_TOOLS_QUESTION_ID, respuestasSeleccionadas: [] }],
     otrasHerramientas: ''
   }
   if (!report?.evaluation) return defaultData
 
-  // Assuming 'herramientas_tec' is the questionId for the main tool selection in your evaluation data
-  const toolsQuestion = report.evaluation.find((e) => e.questionId === 'herramientas_tec')
-  const otherToolsResponse = report.evaluation.find((e) => e.questionId === 'otras_herramientas_utilizadas')?.response || ''
+  const toolsQuestionEvaluation = report.evaluation.find((e) => e.questionId === MAIN_TOOLS_QUESTION_ID) // Usar constante
+  const otherToolsResponse = report.evaluation.find((e) => e.questionId === OTHER_TOOLS_QUESTION_ID)?.response || '' // Usar constante
 
   return {
     respuestasMultiples: [
       {
-        idPregunta: 'herramientas_tec',
-        respuestasSeleccionadas: toolsQuestion?.multipleResponse || []
+        idPregunta: MAIN_TOOLS_QUESTION_ID, // Usar constante
+        respuestasSeleccionadas: toolsQuestionEvaluation?.multipleResponse || []
       }
     ],
     otrasHerramientas: otherToolsResponse
@@ -281,37 +282,39 @@ export default function EditFinalReportPage() {
           return {
             questionId: resp.idPregunta,
             response: resp.respuesta,
-            responseType: 'TEXT' as const,
-            questionGroup: 'evaluacion_general_curso', // Default group for step 5
-            options: [],
-            question: questionDetails?.question || resp.idPregunta // Use translated 'question'
+            responseType: 'TEXT' as const, // Assuming step 5 are text responses
+            // Corrected line: Step5Question type does not have a 'group' property. Use the fallback.
+            questionGroup: 'evaluacion_general_curso',
+            options: [], // No options for text
+            question: questionDetails?.question || resp.idPregunta,
+            multipleResponse: [] // Ensure multipleResponse is present
           }
         }),
         {
-          questionId: 'herramientas_tec', // Assuming this ID is consistent
+          questionId: MAIN_TOOLS_QUESTION_ID, // Usar constante
           multipleResponse: step6Data?.respuestasMultiples?.[0]?.respuestasSeleccionadas || [],
           responseType: 'SELECCION_MULTIPLE' as const,
           questionGroup: 'herramientas',
-          // Use translated mock name and property 'questionId', 'options', 'question'
           options:
             step6QuestionsPageMock
-              .find((p) => p.questionId === 'herramientas_tec' || p.questionId === 'herramientas_utilizadas') // Match against possible IDs
+              .find((p) => p.questionId === MAIN_TOOLS_QUESTION_ID) // Buscar por el ID canónico
               ?.options?.map((opt) => ({ value: opt.value, label: opt.label, category: opt.category })) || [],
           question:
-            step6QuestionsPageMock.find((p) => p.questionId === 'herramientas_tec' || p.questionId === 'herramientas_utilizadas')
-              ?.question || 'Herramientas tecnológicas'
+            step6QuestionsPageMock.find((p) => p.questionId === MAIN_TOOLS_QUESTION_ID)?.question || 'Herramientas tecnológicas', // Buscar por el ID canónico
+          response: undefined // Ensure response is present (undefined for multiple choice)
         },
         ...(step6Data?.otrasHerramientas
           ? ([
               {
-                questionId: 'otras_herramientas_utilizadas',
+                questionId: OTHER_TOOLS_QUESTION_ID, // Usar constante
                 response: step6Data.otrasHerramientas,
                 responseType: 'TEXT' as const,
                 questionGroup: 'herramientas',
                 options: [],
                 question:
-                  step6QuestionsPageMock.find((q) => q.questionId === 'otras_herramientas')?.question ||
-                  'Otras herramientas utilizadas'
+                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question || // Match ID
+                  'Otras herramientas utilizadas',
+                multipleResponse: [] // Ensure multipleResponse is present
               }
             ] as FinalReportEvaluationFE[])
           : []),
@@ -327,12 +330,20 @@ export default function EditFinalReportPage() {
               questionDetails?.options?.map((opt) => ({
                 value: opt.value,
                 label: opt.label,
-                category: questionDetails?.group || 'percepcion'
+                category: questionDetails?.group || 'percepcion' // Ensure category is consistent
               })) || [],
-            question: questionDetails?.question || resp.idPregunta // Use translated 'question'
+            question: questionDetails?.question || resp.idPregunta, // Use translated 'question'
+            multipleResponse: [] // Add missing multipleResponse property
           }
         })
-      ]
+      ].map((item) => ({
+        // Ensure all items have all required fields for FinalReportEvaluationFE
+        ...item,
+        response: item.response === undefined ? undefined : item.response,
+        multipleResponse: item.multipleResponse || [],
+        options: item.options || [],
+        questionGroup: item.questionGroup || 'general'
+      })) as FinalReportEvaluationFE[]
 
       const updatePayload: UpdateFinalReportDto = {
         statistics: {

@@ -36,6 +36,9 @@ const TOTAL_STEPS = 7
 // User-facing labels remain in Spanish
 const STEP_LABELS_SPANISH = ['Información', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
 
+const MAIN_TOOLS_QUESTION_ID = 'herramientas_utilizadas' // ID Canónico para la pregunta de herramientas
+const OTHER_TOOLS_QUESTION_ID = 'otras_herramientas_utilizadas' // ID para el campo de texto de otras herramientas
+
 export default function NewFinalReportPage() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
@@ -47,60 +50,94 @@ export default function NewFinalReportPage() {
   const [step4Data, setStep4Data] = useState<Step4FormData | null>(null)
   const [step5Data, setStep5Data] = useState<Step5FormData | null>(null)
   const [step6Data, setStep6Data] = useState<Step6FormData | null>(null)
-  const [reportType, setReportType] = useState<ReportType>('INFORME_FINAL_V1') // Was tipoInforme
+  const [step7Data, setStep7Data] = useState<Step7FormData | null>(null)
+  const [reportType, setReportType] = useState<ReportType>('INFORME_FINAL_V1')
 
   const createFinalReportMutation = useCreateFinalReport()
   const currentProfessorId = useDevStore((state) => state.mockProfessorId)
 
   const formStep1Methods = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
-    defaultValues: { enrolledCapacity: undefined }
+    defaultValues: { enrolledCapacity: undefined } // Static initial default
   })
   const formStep2Methods = useForm<Step2FormData>({
     resolver: zodResolver(step2Schema),
-    defaultValues: { totalEnrolled: undefined, totalWithdrawn: 0, totalPassed: 0, totalFailed: 0 }
+    defaultValues: { totalEnrolled: undefined, totalWithdrawn: 0, totalPassed: 0, totalFailed: 0 } // Static initial default
   })
   const formStep3Methods = useForm<Step3FormData>({
     resolver: zodResolver(step3Schema),
-    defaultValues: { salvaguardaEstudiantes: [] }
+    defaultValues: { salvaguardaEstudiantes: [] } // Use static default values
   })
   const formStep4Methods = useForm<Step4FormData>({
     resolver: zodResolver(step4Schema),
-    defaultValues: { ajustesEstudiantes: [] }
+    defaultValues: { ajustesEstudiantes: [] } // Use static default values
   })
   const formStep5Methods = useForm<Step5FormData>({
     resolver: zodResolver(step5Schema),
-    defaultValues: { respuestas: step5QuestionsMock.map((p) => ({ idPregunta: p.questionId, respuesta: '' })) }
+    // Static default, Step5Form's useEffect will handle initialData or its own defaults
+    defaultValues: { respuestas: [] }
   })
   const formStep6Methods = useForm<Step6FormData>({
     resolver: zodResolver(step6Schema),
+    // Static default, Step6Form's useEffect will handle initialData or its own defaults
     defaultValues: {
-      respuestasMultiples: [{ idPregunta: 'herramientas_tec', respuestasSeleccionadas: [] }], // Assuming 'herramientas_tec' is the ID for the main tool question
+      respuestasMultiples: [{ idPregunta: MAIN_TOOLS_QUESTION_ID, respuestasSeleccionadas: [] }],
       otrasHerramientas: ''
     }
   })
   const formStep7Methods = useForm<Step7FormData>({
-    resolver: zodResolver(step7Schema),
-    defaultValues: {
-      respuestasRadio: step7QuestionsPageMock // Use centralized mock
-        .filter((p: Step7Question) => {
-          // Filter using the 'group' and 'appliesTo' from Step7Question
-          if (p.appliesTo && !(p.appliesTo.includes(reportType) || p.appliesTo.includes('TODOS'))) {
-            return false
-          }
-          // Example of filtering by a specific group name (user-facing, so keep Spanish if it's a direct match)
-          // This specific group filter might be too restrictive if 'appliesTo' is sufficient
-          // Consider if this specific group check is still needed or if appliesTo covers it.
-          // if (
-          //   p.group === '¿Cómo percibe los siguientes aspectos en el proceso de transición a la presencialidad remota?'
-          // ) {
-          //   return reportType === 'INFORME_FINAL_V1';
-          // }
-          return true
-        })
-        .map((p: Step7Question) => ({ idPregunta: p.questionId, respuesta: '' })) // Use p.questionId
-    }
+    resolver: zodResolver(step7Schema)
+    // Step7Form's useEffect will handle initialData or its own defaults based on reportType
   })
+
+  // Effect to update Step 2 form if step1Data (enrolledCapacity) changes and step2Data isn't set yet,
+  // or to load step2Data if it exists.
+  useEffect(() => {
+    if (step2Data) {
+      formStep2Methods.reset(step2Data)
+    } else if (step1Data?.enrolledCapacity !== undefined) {
+      formStep2Methods.reset({
+        totalEnrolled: step1Data.enrolledCapacity,
+        totalWithdrawn: 0,
+        totalPassed: 0,
+        totalFailed: 0
+      })
+    }
+    // If neither step2Data nor step1Data.enrolledCapacity is available,
+    // formStep2Methods will use its initial defaultValues.
+  }, [step1Data?.enrolledCapacity, step2Data, formStep2Methods])
+
+  // Effect to update Step 3 form if step3Data changes
+  useEffect(() => {
+    if (step3Data) {
+      formStep3Methods.reset(step3Data)
+    } else {
+      formStep3Methods.reset({ salvaguardaEstudiantes: [] }) // Default to empty array
+    }
+  }, [step3Data, formStep3Methods])
+
+  // Effect to update Step 4 form if step4Data changes
+  useEffect(() => {
+    if (step4Data) {
+      formStep4Methods.reset(step4Data)
+    } else {
+      formStep4Methods.reset({ ajustesEstudiantes: [] }) // Default to empty array
+    }
+  }, [step4Data, formStep4Methods])
+
+  // Ensure Step5Form and Step6Form also have their defaultValues in useForm set statically
+  // and their internal useEffect handles initialData or their specific dynamic defaults.
+  // For example, for Step5Form:
+  useEffect(() => {
+    if (step5Data) {
+      formStep5Methods.reset(step5Data)
+    } else {
+      // Initial default for Step 5 if no step5Data yet
+      formStep5Methods.reset({
+        respuestas: step5QuestionsMock.map((p) => ({ idPregunta: p.questionId, respuesta: '' }))
+      })
+    }
+  }, [step5Data, formStep5Methods])
 
   useEffect(() => {
     formStep7Methods.reset({
@@ -201,55 +238,71 @@ export default function NewFinalReportPage() {
           return {
             questionId: r.idPregunta,
             question: questionDetails?.question || r.idPregunta,
-            questionGroup: 'evaluacion_general_curso', // Default group for step 5
-            responseType: 'TEXT' as const,
-            response: r.respuesta || undefined
+            questionGroup: questionDetails?.group || 'evaluacion_general_curso',
+            responseType: questionDetails?.responseType || ('TEXT' as const),
+            response: r.respuesta || undefined,
+            multipleResponse: [],
+            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
+            otherResponse: undefined // <--- ADD THIS
           }
         }),
         ...step6Data.respuestasMultiples.map((r) => {
-          // Assuming r.idPregunta is 'herramientas_tec' or similar for the main tool selection
-          const questionDetails = step6QuestionsPageMock.find(
-            (p) => p.questionId === r.idPregunta || p.questionId === 'herramientas_utilizadas'
-          )
+          const questionDetails = step6QuestionsPageMock.find((p) => p.questionId === r.idPregunta)
           return {
             questionId: r.idPregunta,
             question: questionDetails?.question || r.idPregunta,
-            questionGroup: questionDetails?.questionGroup || 'herramientas',
+            questionGroup: questionDetails?.group || 'herramientas',
             responseType: 'SELECCION_MULTIPLE' as const,
-            multipleResponse: r.respuestasSeleccionadas,
-            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || []
+            response: undefined,
+            multipleResponse: r.respuestasSeleccionadas || [],
+            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
+            otherResponse: undefined // <--- ADD THIS
           }
         }),
-        ...(step6Data.otrasHerramientas
+        ...(step6Data.otrasHerramientas && step6Data.otrasHerramientas.trim() !== ''
           ? [
               {
-                questionId: 'otras_herramientas_utilizadas', // Specific ID for this text field
+                questionId: OTHER_TOOLS_QUESTION_ID,
                 question:
-                  step6QuestionsPageMock.find((q) => q.questionId === 'otras_herramientas')?.question ||
+                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
                   'Otras herramientas utilizadas (opcional)',
-                questionGroup: 'herramientas',
+                questionGroup:
+                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.group || 'herramientas',
                 responseType: 'TEXT' as const,
-                response: step6Data.otrasHerramientas
+                response: step6Data.otrasHerramientas, // This is the main response for this item
+                multipleResponse: [],
+                options: [],
+                otherResponse: undefined // <--- ADD THIS (or consider if 'response' covers it and this isn't needed)
               }
             ]
           : []),
         ...currentStep7Data.respuestasRadio.map((r) => {
-          // Now step7QuestionsPageMock items are Step7Question
           const questionDetails = step7QuestionsPageMock.find((p) => p.questionId === r.idPregunta)
+          const resolvedResponseType = questionDetails?.responseType || ('SELECCION_UNICA' as const)
 
-          // Use questionDetails.responseType which is already one of the FE literal types
-          const resolvedResponseType = questionDetails?.responseType || 'SELECCION_UNICA'
+          const selectedOption = questionDetails?.options.find((opt) => opt.value === r.respuesta)
+          const responseValueToSend = selectedOption?.label || r.respuesta
 
           return {
             questionId: r.idPregunta,
             question: questionDetails?.question || r.idPregunta,
-            questionGroup: questionDetails?.group || 'percepcion_calidad', // Use questionDetails.group
-            responseType: resolvedResponseType, // Already a literal type
-            response: r.respuesta || undefined,
-            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || []
-          } as FinalReportEvaluationFE // Add type assertion
+            questionGroup: questionDetails?.group || 'percepcion_calidad',
+            responseType: resolvedResponseType,
+            response: resolvedResponseType === 'SELECCION_MULTIPLE' ? undefined : responseValueToSend,
+            multipleResponse: resolvedResponseType === 'SELECCION_MULTIPLE' ? (r.respuesta ? [responseValueToSend] : []) : [],
+            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
+            otherResponse: undefined // <--- ADD THIS
+          }
         })
-      ]
+      ].map((item) => ({
+        ...item,
+        response: item.response === undefined ? undefined : item.response,
+        multipleResponse: item.multipleResponse || [],
+        options: item.options || [],
+        questionGroup: item.questionGroup || 'general',
+        // Now item.otherResponse will exist, even if undefined
+        otherResponse: item.otherResponse === undefined ? undefined : item.otherResponse
+      })) as FinalReportEvaluationFE[]
     }
     console.log('Final Report Payload to Send:', JSON.stringify(finalReportPayload, null, 2))
     try {
@@ -301,7 +354,9 @@ export default function NewFinalReportPage() {
                 onSaveAndNext={handleSaveStep3Data}
                 onPrevious={handlePreviousStep}
                 totalSteps={TOTAL_STEPS}
-                reportType={reportType} // Pass translated reportType
+                reportType={reportType}
+                initialData={step3Data} // This passes the persisted state
+                isEditing={false}
               />
             )}
             {currentStep === 4 && (
@@ -310,6 +365,8 @@ export default function NewFinalReportPage() {
                 onSaveAndNext={handleSaveStep4Data}
                 onPrevious={handlePreviousStep}
                 totalSteps={TOTAL_STEPS}
+                initialData={step4Data} // This passes the persisted state
+                isEditing={false}
               />
             )}
             {currentStep === 5 && (

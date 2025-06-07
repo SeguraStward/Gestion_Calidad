@@ -1,29 +1,27 @@
 'use client'
 
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react' // Removed useCallback if not using the direct function call pattern
 import { UseFormReturn, FormProvider } from 'react-hook-form'
 import * as z from 'zod'
 import { Button } from '@una-gc/ui/components/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card'
 import { Textarea } from '@una-gc/ui/components/textarea'
-// Import centralized mock data and types
 import {
-  step6QuestionsPageMock, // Was preguntasPaso6FormMock
-  Step6Question, // Was PreguntaStep6
-  OptionFE // Was Option
-} from '../mocks/questions' // Corrected path
+  step6QuestionsPageMock,
+  // Step6Question, // Not directly used if toolsQuestion is derived correctly
+  OptionFE
+} from '../mocks/questions'
 import { MoveRight, MoveLeft, Settings2, AlertTriangle } from 'lucide-react'
 import { cn } from '@una-gc/ui/lib/utils'
 
-// Schema for a single multiple response item (matches create form)
+// Schema for a single multiple response item
 const multipleResponseSchema = z.object({
-  // Renamed from respuestaMultipleSchema
   idPregunta: z.string(),
   respuestasSeleccionadas: z.array(z.string())
 })
 
-// Schema for the entire step 6 form data (matches create form)
+// Schema for the entire step 6 form data
 export const step6Schema = z
   .object({
     respuestasMultiples: z
@@ -51,8 +49,10 @@ interface Step6EditFormProps {
   onPrevious?: () => void
   totalSteps: number
   initialData?: Step6FormData | null
-  isEditing?: boolean
+  isEditing?: boolean // isEditing is used in useEffect
 }
+
+const MAIN_TOOLS_QUESTION_ID = 'herramientas_utilizadas'
 
 export function Step6EditForm({
   formMethods,
@@ -60,64 +60,74 @@ export function Step6EditForm({
   onPrevious,
   totalSteps,
   initialData,
-  isEditing = true
+  isEditing = true // Default to true as it's an edit form
 }: Step6EditFormProps) {
   const { control, handleSubmit, reset, watch, setValue, getValues, formState } = formMethods
+  const [initialDataProcessedTick, setInitialDataProcessedTick] = useState(0)
+  const [initialSelectionsFromData, setInitialSelectionsFromData] = useState<string[]>([])
 
-  // Use the centralized mock and its English property names
   const toolsQuestion = useMemo(() => {
-    // Renamed from preguntaHerramientas
     return (
-      step6QuestionsPageMock.find((p) => p.options && p.options.length > 0 && p.questionId === 'herramientas_utilizadas') ||
+      step6QuestionsPageMock.find((p) => p.questionId === MAIN_TOOLS_QUESTION_ID && p.options && p.options.length > 0) ||
+      step6QuestionsPageMock.find((p) => p.options && p.options.length > 0 && p.responseType === 'SELECCION_MULTIPLE') ||
       step6QuestionsPageMock.find((p) => p.options && p.options.length > 0)
     )
-  }, [])
+  }, []) // step6QuestionsPageMock is static
 
   const toolOptions = useMemo(() => {
-    // Renamed from opcionesHerramientas
-    return toolsQuestion?.options || [] // Use English property 'options'
+    return toolsQuestion?.options || []
   }, [toolsQuestion])
 
-  const selectedResponsesRaw = watch('respuestasMultiples.0.respuestasSeleccionadas') // Renamed
-
   useEffect(() => {
+    const currentToolsQuestionId = toolsQuestion?.questionId || MAIN_TOOLS_QUESTION_ID
+
     if (isEditing && initialData) {
-      const currentSelected = initialData.respuestasMultiples?.[0]?.respuestasSeleccionadas || []
+      const rawSelectedData = initialData.respuestasMultiples?.find(
+        (rm) => rm.idPregunta === currentToolsQuestionId
+      )?.respuestasSeleccionadas
+      let normalizedSelectedArray: string[]
+
+      if (rawSelectedData === undefined || rawSelectedData === null) {
+        normalizedSelectedArray = []
+      } else if (Array.isArray(rawSelectedData)) {
+        normalizedSelectedArray = rawSelectedData
+      } else {
+        normalizedSelectedArray = [String(rawSelectedData)]
+      }
       const otras = initialData.otrasHerramientas || ''
       reset({
-        respuestasMultiples: [
-          {
-            idPregunta: toolsQuestion?.questionId || 'herramientas_utilizadas', // Use English 'questionId'
-            respuestasSeleccionadas: currentSelected
-          }
-        ],
+        respuestasMultiples: [{ idPregunta: currentToolsQuestionId, respuestasSeleccionadas: normalizedSelectedArray }],
         otrasHerramientas: otras
       })
-    } else {
-      // Should not happen for edit form, but good for completeness
+      setInitialSelectionsFromData(normalizedSelectedArray)
+      setInitialDataProcessedTick((prev) => prev + 1)
+    } else if (!isEditing) {
+      // Should ideally not happen if this is Step6EditForm, but good for robustness
       reset({
-        respuestasMultiples: [
-          {
-            idPregunta: toolsQuestion?.questionId || 'herramientas_utilizadas', // Use English 'questionId'
-            respuestasSeleccionadas: []
-          }
-        ],
+        respuestasMultiples: [{ idPregunta: currentToolsQuestionId, respuestasSeleccionadas: [] }],
         otrasHerramientas: ''
       })
+      setInitialSelectionsFromData([])
+      setInitialDataProcessedTick((prev) => prev + 1)
     }
   }, [isEditing, initialData, reset, toolsQuestion])
 
+  const watchedSelectedResponses = watch('respuestasMultiples.0.respuestasSeleccionadas')
+
+  const currentSelectedResponses = useMemo(() => {
+    if (initialDataProcessedTick === 1 && initialData) {
+      return initialSelectionsFromData
+    }
+    return watchedSelectedResponses || []
+  }, [initialDataProcessedTick, initialData, initialSelectionsFromData, watchedSelectedResponses])
+
   const availableOptions = useMemo(() => {
-    // Renamed
-    const currentSelected = selectedResponsesRaw || []
-    return toolOptions.filter((opt) => !currentSelected.includes(opt.value))
-  }, [toolOptions, selectedResponsesRaw])
+    return toolOptions.filter((opt) => !currentSelectedResponses.includes(opt.value))
+  }, [toolOptions, currentSelectedResponses]) // This is the correct pattern
 
   const usedOptionsMapped = useMemo(() => {
-    // Renamed
-    const currentSelected = selectedResponsesRaw || []
-    return toolOptions.filter((opt) => currentSelected.includes(opt.value))
-  }, [toolOptions, selectedResponsesRaw])
+    return toolOptions.filter((opt) => currentSelectedResponses.includes(opt.value))
+  }, [toolOptions, currentSelectedResponses]) // This is the correct pattern
 
   const handleMoveToUsed = (optionValue: string) => {
     const currentSelected = getValues('respuestasMultiples.0.respuestasSeleccionadas') || []
@@ -139,103 +149,83 @@ export function Step6EditForm({
 
   return (
     <div className="p-4 md:p-6 h-full flex flex-col">
-      {/* Header Section (Stays Visible) */}
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold flex items-center gap-3">
-          <Settings2 className="w-5 h-5 text-foreground/70" />
-          Paso {totalSteps > 0 ? `6 de ${totalSteps}: ` : ''}
-          Herramientas Tecnológicas y Metodologías (Editando)
-        </h2>
-        <p className="text-muted-foreground text-sm mt-1">
-          Modifique las herramientas utilizadas y otras descripciones si es necesario.
-        </p>
+      {/* Header and Error Display */}
+      <div className="mb-3 md:mb-4">
+        <h2 className="text-xl md:text-2xl font-semibold text-foreground">Paso 6: Herramientas Tecnológicas</h2>
+        <p className="text-sm text-muted-foreground">Seleccione las herramientas que utilizó y describa otras si es necesario.</p>
       </div>
 
-      {/* General Form Error Message */}
       {formState.errors.respuestasMultiples?.message && (
-        <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
-          <AlertTriangle className="mr-2 h-5 w-5" />
-          <span>{formState.errors.respuestasMultiples.message}</span>
+        <div className="mb-3 p-2.5 text-xs text-destructive-foreground bg-destructive/90 border border-destructive rounded-md flex items-center">
+          <AlertTriangle className="h-4 w-4 mr-2" />
+          {formState.errors.respuestasMultiples.message}
         </div>
       )}
       {formState.errors.respuestasMultiples?.root?.message && (
-        <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
-          <AlertTriangle className="mr-2 h-5 w-5" />
-          <span>{formState.errors.respuestasMultiples.root.message}</span>
+        <div className="mb-3 p-2.5 text-xs text-destructive-foreground bg-destructive/90 border border-destructive rounded-md flex items-center">
+          <AlertTriangle className="h-4 w-4 mr-2" />
+          {formState.errors.respuestasMultiples.root.message}
         </div>
       )}
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
           <form onSubmit={handleSubmit(onSaveAndNext, handleFormSubmitError)} className="flex-1 flex flex-col min-h-0 space-y-0">
-            {/* Scrollable Card Area */}
+            {/* Scrollable Content Area */}
             <div className="flex-1 overflow-y-auto pr-1 pb-4">
+              {' '}
+              {/* Added pr-1 for scrollbar space */}
               <Card className="h-full flex flex-col">
                 {' '}
-                {/* Ensure card takes full height */}
-                <CardHeader className="py-4 px-6">
-                  {toolsQuestion && ( // Use translated variable
-                    <div>
-                      {/* Use English property 'question' */}
-                      <FormLabel className="text-base font-semibold">{toolsQuestion.question}</FormLabel>
-                      <p className="text-sm text-muted-foreground mt-0.5">
-                        {/* Use English property 'description' */}
-                        {toolsQuestion.description || 'Haga clic en una herramienta para moverla entre las listas.'}
-                      </p>
-                    </div>
-                  )}
-                </CardHeader>
+                {/* Ensure card can grow */}
                 <CardContent className="flex-1 space-y-4 p-4 md:px-6 md:pb-6">
                   {' '}
                   {/* Allow content to grow */}
+                  {/* Tool selection UI */}
                   <div className="flex flex-col md:flex-row gap-4">
+                    {/* Available Tools Column */}
                     <div className="flex-1 space-y-1.5">
-                      {/* Use translated variable */}
-                      <FormLabel className="block font-medium text-sm">No usadas ({availableOptions.length})</FormLabel>
+                      <div className="flex justify-between items-center mb-1">
+                        <FormLabel className="text-sm font-medium">Herramientas no usadas ({availableOptions.length})</FormLabel>
+                        <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
                       <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
-                        {availableOptions.map(
-                          (
-                            opt // Use translated variable
-                          ) => (
-                            <div
-                              key={`disponible-${opt.value}`}
-                              className="p-1.5 rounded hover:bg-primary/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
-                              onClick={() => handleMoveToUsed(opt.value)}
-                              title={`Mover "${opt.label}" a usadas`}
-                            >
-                              <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
-                              <MoveRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                            </div>
-                          )
-                        )}
-                        {availableOptions.length === 0 && ( // Use translated variable
+                        {availableOptions.map((opt: OptionFE) => (
+                          <div
+                            key={opt.value}
+                            onClick={() => handleMoveToUsed(opt.value)}
+                            className="group flex items-center justify-between p-1.5 rounded-sm text-xs cursor-pointer hover:bg-primary/10 transition-colors"
+                          >
+                            <span className="truncate mx-1 text-center flex-1">{opt.label}</span>
+                            <MoveRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        ))}
+                        {availableOptions.length === 0 && (
                           <div className="p-1.5 text-muted-foreground text-xs min-h-[2.25rem] flex items-center justify-center">
                             Todas las herramientas seleccionadas
                           </div>
                         )}
                       </div>
                     </div>
+
+                    {/* Used Tools Column */}
                     <div className="flex-1 space-y-1.5">
-                      <FormLabel className="block font-medium text-sm">
-                        Usadas ({(selectedResponsesRaw || []).length}) {/* Use translated variable */}
-                      </FormLabel>
+                      <div className="flex justify-between items-center mb-1">
+                        <FormLabel className="text-sm font-medium">Herramientas usadas ({usedOptionsMapped.length})</FormLabel>
+                        <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
                       <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
-                        {usedOptionsMapped.map(
-                          (
-                            opt // Use translated variable
-                          ) => (
-                            <div
-                              key={`usada-${opt.value}`}
-                              className="p-1.5 rounded hover:bg-destructive/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
-                              onClick={() => handleMoveToAvailable(opt.value)}
-                              title={`Mover "${opt.label}" a no usadas`}
-                            >
-                              <MoveLeft className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
-                              <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
-                            </div>
-                          )
-                        )}
-                        {usedOptionsMapped.length === 0 && ( // Use translated variable
+                        {usedOptionsMapped.map((opt: OptionFE) => (
+                          <div
+                            key={opt.value}
+                            onClick={() => handleMoveToAvailable(opt.value)}
+                            className="group flex items-center justify-between p-1.5 rounded-sm text-xs cursor-pointer hover:bg-destructive/10 transition-colors"
+                          >
+                            <MoveLeft className="h-3.5 w-3.5 text-muted-foreground group-hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <span className="truncate mx-1 text-center flex-1">{opt.label}</span>
+                          </div>
+                        ))}
+                        {usedOptionsMapped.length === 0 && (
                           <div className="p-1.5 text-muted-foreground text-xs min-h-[2.25rem] flex items-center justify-center">
                             Ninguna herramienta seleccionada
                           </div>
@@ -243,6 +233,7 @@ export function Step6EditForm({
                       </div>
                     </div>
                   </div>
+                  {/* Other Tools Textarea */}
                   <FormField
                     control={control}
                     name="otrasHerramientas"
@@ -255,7 +246,7 @@ export function Step6EditForm({
                           <Textarea
                             placeholder="Si utilizó otras no listadas, descríbalas aquí..."
                             {...field}
-                            className="min-h-[70px] text-sm bg-background/60"
+                            className="min-h-[70px] text-sm bg-background/60" // Adjusted styling
                           />
                         </FormControl>
                         <FormMessage className="text-xs" />
@@ -263,19 +254,17 @@ export function Step6EditForm({
                     )}
                   />
                 </CardContent>
-                {/* CardFooter is removed from here */}
+                {/* CardFooter is removed from here as navigation is outside */}
               </Card>
             </div>
 
             {/* Navigation Buttons (Stays Visible at the bottom) */}
             <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
-              {onPrevious && (
-                <Button type="button" variant="outline" onClick={onPrevious} className="px-8 shadow-sm">
-                  Anterior
-                </Button>
-              )}
+              <Button type="button" variant="outline" onClick={onPrevious} className="px-8 shadow-sm">
+                Anterior
+              </Button>
               <Button type="submit" className="px-8 shadow-sm">
-                {isEditing ? 'Guardar Cambios' : 'Siguiente'}
+                Siguiente
               </Button>
             </div>
           </form>

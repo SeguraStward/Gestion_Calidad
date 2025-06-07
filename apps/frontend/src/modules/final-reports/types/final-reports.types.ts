@@ -84,7 +84,7 @@ export interface FinalReportEvaluationOptionFE {
   value: string
 }
 
-export type ReportType = 'INFORME_FINAL_V1' | 'INFORME_FINAL_V2' | 'TODOS' // Was TipoInforme
+export type ReportType = 'INFORME_FINAL_V1' | 'INFORME_FINAL_V2' | 'TODOS'
 
 export interface FinalReportEvaluationFE {
   questionId: string
@@ -94,6 +94,7 @@ export interface FinalReportEvaluationFE {
   questionGroup?: string
   options?: { value: string; label: string; category?: string }[]
   question: string
+  otherResponse?: string
 }
 
 export interface FinalReportStudentAdjustmentFE {

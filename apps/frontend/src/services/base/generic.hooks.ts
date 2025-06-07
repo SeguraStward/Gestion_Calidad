@@ -3,6 +3,60 @@ import { toast } from 'sonner'
 import type { GenericService } from './generic.service'
 import type { PaginatedResponse } from '../interfaces'
 
+// Helper function to extract a meaningful error message
+const getApiErrorMessage = (error: any): string => {
+  if (error && error.response && error.response.data) {
+    const data = error.response.data
+    if (typeof data.message === 'string' && data.message.trim() !== '') {
+      return data.message
+    }
+    if (Array.isArray(data.message) && data.message.length > 0) {
+      const filteredMessages = data.message.filter((m: any) => typeof m === 'string' && m.trim() !== '')
+      if (filteredMessages.length > 0) return filteredMessages.join(', ')
+    }
+    if (typeof data.error === 'string' && data.error.trim() !== '') {
+      return data.error
+    }
+    // Handle Laravel-style validation errors or other object-based errors
+    if (data.errors && typeof data.errors === 'object') {
+      const messages: string[] = []
+      if (Array.isArray(data.errors)) {
+        // Array of error strings or objects
+        data.errors.forEach((err: any) => {
+          if (typeof err === 'string') messages.push(err)
+          else if (err && typeof err.message === 'string') messages.push(err.message)
+        })
+      } else {
+        // Object with field names as keys and error arrays/strings as values
+        Object.values(data.errors).forEach((fieldErrors: any) => {
+          if (Array.isArray(fieldErrors)) {
+            fieldErrors.forEach((msg) => {
+              if (typeof msg === 'string') messages.push(msg)
+            })
+          } else if (typeof fieldErrors === 'string') {
+            messages.push(fieldErrors)
+          }
+        })
+      }
+      if (messages.length > 0) return messages.filter((m) => m.trim() !== '').join(', ')
+    }
+    if (typeof data === 'string' && data.trim() !== '') {
+      // Sometimes the error is just a string in data
+      return data
+    }
+  }
+  if (error && typeof error.message === 'string' && error.message.trim() !== '') {
+    return error.message
+  }
+  // Check for GraphQL-like errors
+  if (error && Array.isArray(error.errors) && error.errors.length > 0) {
+    const gqlMessages = error.errors.map((e: any) => e.message).filter((m: any) => typeof m === 'string' && m.trim() !== '')
+    if (gqlMessages.length > 0) return gqlMessages.join(', ')
+  }
+
+  return 'Se produjo un error inesperado. Por favor, inténtelo de nuevo.' // User-facing: Spanish
+}
+
 export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters = unknown>(
   queryKeyPrefix: string,
   service: GenericService<T, CreateDTO, UpdateDTO, Filters>,
@@ -25,7 +79,6 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
   }
 
   /* ─────────────── Single item ─────────────── */
-  // 1. Cambiar el tipo de 'options' para permitir 'enabled'
   function useOne(id: string, filters?: Filters, options?: Omit<UseQueryOptions<T, Error>, 'queryKey' | 'queryFn'>) {
     return useQuery({
       queryKey: [queryKeyPrefix, id, filters],
@@ -76,11 +129,12 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
           }
         })
 
-        toast.success(opts?.messages?.created?.(data) ?? 'Creado exitosamente')
+        toast.success(opts?.messages?.created?.(data) ?? 'Creado exitosamente') // User-facing: Spanish
       },
       onError: (error: any) => {
-        console.error('❌ Error en mutation:', error)
-        toast.error(`Error al crear: ${error.message || 'Error desconocido'}`)
+        const errorMessage = getApiErrorMessage(error)
+        console.error('❌ Error en create mutation:', error.response?.data || error.message || error)
+        toast.error(`Error al crear: ${errorMessage}`) // User-facing: Spanish
       }
     })
   }
@@ -112,11 +166,12 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
           })
         }
 
-        toast.success(opts?.messages?.updated?.(data) ?? 'Actualizado correctamente')
+        toast.success(opts?.messages?.updated?.(data) ?? 'Actualizado correctamente') // User-facing: Spanish
       },
       onError: (error: any) => {
-        console.error('❌ Error en update mutation:', error)
-        toast.error(`Error al actualizar: ${error.message || 'Error desconocido'}`)
+        const errorMessage = getApiErrorMessage(error)
+        console.error('❌ Error en update mutation:', error.response?.data || error.message || error)
+        toast.error(`Error al actualizar: ${errorMessage}`) // User-facing: Spanish
       }
     })
   }
@@ -134,11 +189,12 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
           exact: false
         })
 
-        toast.success(opts?.messages?.deleted?.() ?? 'Eliminado correctamente')
+        toast.success(opts?.messages?.deleted?.() ?? 'Eliminado correctamente') // User-facing: Spanish
       },
       onError: (error: any) => {
-        console.error('❌ Error en delete mutation:', error)
-        toast.error(`Error al eliminar: ${error.message || 'Error desconocido'}`)
+        const errorMessage = getApiErrorMessage(error)
+        console.error('❌ Error en delete mutation:', error.response?.data || error.message || error)
+        toast.error(`Error al eliminar: ${errorMessage}`) // User-facing: Spanish
       }
     })
   }

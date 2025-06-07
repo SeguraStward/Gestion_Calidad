@@ -11,52 +11,46 @@ export interface OptionFE {
 
 // --- Step 5: Achievements, Difficulties, and Recommendations (Text-based) ---
 export interface Step5Question {
-  questionId: string // Was idPregunta
-  question: string // Was pregunta (user-facing)
-  // responseType would implicitly be 'TEXT'
+  questionId: string
+  question: string
+  group: string // <--- AÑADIR ESTO
+  responseType: 'TEXT' // <--- AÑADIR ESTO (o un tipo más general si varía)
+  options: OptionFE[] // <--- AÑADIR ESTO (será [] para preguntas de texto)
 }
 
 export const step5QuestionsMock: Step5Question[] = [
   {
     questionId: 'logros_alcanzados',
-    question:
-      '¿Cuáles han sido los principales logros alcanzados durante el ciclo académico en relación con los objetivos del curso?'
+    question: 'Principales logros alcanzados en el desarrollo de la asignatura.',
+    group: 'evaluacion_general_curso', // <--- AÑADIR VALOR
+    responseType: 'TEXT', // <--- AÑADIR VALOR
+    options: [] // <--- AÑADIR VALOR
   },
   {
     questionId: 'dificultades_presentadas',
-    question: '¿Cuáles han sido las principales dificultades presentadas por los estudiantes y cómo se abordaron?'
+    question: 'Principales dificultades que se presentaron en el desarrollo de la asignatura.',
+    group: 'evaluacion_general_curso', // <--- AÑADIR VALOR
+    responseType: 'TEXT', // <--- AÑADIR VALOR
+    options: [] // <--- AÑADIR VALOR
   },
   {
-    questionId: 'aspectos_positivos_curso',
-    question: '¿Qué aspectos positivos destacaría del curso (metodología, recursos, evaluación, etc.)?'
-  },
-  {
-    questionId: 'aspectos_a_mejorar_curso',
-    question: '¿Qué aspectos considera que podrían mejorarse en futuras ediciones del curso?'
-  },
-  {
-    questionId: 'estrategias_exitosas_ensenanza',
-    question:
-      '¿Qué estrategias de enseñanza o actividades resultaron particularmente exitosas para el aprendizaje de los estudiantes?'
-  },
-  {
-    questionId: 'adecuacion_contenidos_tiempo',
-    question: '¿Considera que la cantidad de contenidos fue adecuada para el tiempo disponible en el ciclo?'
-  },
-  {
-    questionId: 'recomendaciones_mejora_generales',
-    question:
-      '¿Qué recomendaciones generales podría ofrecer para la mejora continua del proceso de enseñanza-aprendizaje en este curso o programa?'
+    questionId: 'recomendaciones_mejora',
+    question: 'Recomendaciones para la mejora de la asignatura.',
+    group: 'evaluacion_general_curso', // <--- AÑADIR VALOR
+    responseType: 'TEXT', // <--- AÑADIR VALOR
+    options: [] // <--- AÑADIR VALOR
   }
+  // ... agregar las propiedades a cualquier otra pregunta del Step 5 si existen
 ]
 
-// --- Step 6: Technological Tools (Multiple Selection & Other) ---
+// --- Step 6: Technological Tools (Multiple Choice & Text) ---
 export interface Step6Question {
   questionId: string // Was idPregunta
   question: string // Was pregunta (user-facing)
   description?: string // Was descripcion (user-facing)
-  options?: OptionFE[] // Was opciones
-  questionGroup?: string // Was grupo_pregunta
+  options?: OptionFE[]
+  responseType?: 'TEXT' | 'SELECCION_UNICA' | 'SELECCION_MULTIPLE'
+  group?: string // Was grupo_pregunta
   // responseType would implicitly be 'SELECCION_MULTIPLE' for the main question
 }
 
@@ -76,12 +70,12 @@ export const step6QuestionsPageMock: Step6Question[] = [
       { label: 'Canva', value: 'canva' },
       { label: 'Padlet', value: 'padlet' }
     ],
-    questionGroup: 'herramientas' // Added for consistency
+    group: 'herramientas' // Added for consistency
   },
   {
     questionId: 'otras_herramientas', // For the "other tools" text input
     question: 'Otras herramientas utilizadas (opcional)',
-    questionGroup: 'herramientas'
+    group: 'herramientas'
   }
 ]
 
@@ -100,19 +94,21 @@ export interface Step7Question {
   responseType?: 'TEXT' | 'SELECCION_UNICA' | 'SELECCION_MULTIPLE' // Added to be explicit
 }
 
+const standardStep7Options: OptionFE[] = [
+  { label: 'Muy malo', value: '1' },
+  { label: 'Malo', value: '2' },
+  { label: 'Regular', value: '3' },
+  { label: 'Bueno', value: '4' },
+  { label: 'Muy bueno', value: '5' }
+]
+
 export const step7QuestionsPageMock: Step7Question[] = [
   // Renamed from preguntasPaso7PageMock
   // Grupo: Percepción del Estudiante sobre el Curso
   {
     questionId: 'percepcion_contenido_relevante',
     question: 'El contenido del curso fue relevante para mi aprendizaje.',
-    options: [
-      { label: 'Totalmente de acuerdo', value: '5' },
-      { label: 'De acuerdo', value: '4' },
-      { label: 'Neutral', value: '3' },
-      { label: 'En desacuerdo', value: '2' },
-      { label: 'Totalmente en desacuerdo', value: '1' }
-    ],
+    options: standardStep7Options,
     group: 'Percepción del Estudiante sobre el Curso',
     appliesTo: ['TODOS'],
     responseType: 'SELECCION_UNICA'
@@ -120,13 +116,7 @@ export const step7QuestionsPageMock: Step7Question[] = [
   {
     questionId: 'percepcion_metodologia_adecuada',
     question: 'La metodología de enseñanza utilizada fue adecuada.',
-    options: [
-      { label: 'Totalmente de acuerdo', value: '5' },
-      { label: 'De acuerdo', value: '4' },
-      { label: 'Neutral', value: '3' },
-      { label: 'En desacuerdo', value: '2' },
-      { label: 'Totalmente en desacuerdo', value: '1' }
-    ],
+    options: standardStep7Options,
     group: 'Percepción del Estudiante sobre el Curso',
     appliesTo: ['INFORME_FINAL_V1', 'INFORME_FINAL_V2'],
     responseType: 'SELECCION_UNICA'
@@ -135,12 +125,7 @@ export const step7QuestionsPageMock: Step7Question[] = [
   {
     questionId: 'desempeno_dominio_tema',
     question: 'El docente demostró dominio de los temas tratados.',
-    options: [
-      { label: 'Excelente', value: 'excelente' },
-      { label: 'Bueno', value: 'bueno' },
-      { label: 'Regular', value: 'regular' },
-      { label: 'Deficiente', value: 'deficiente' }
-    ],
+    options: standardStep7Options,
     group: 'Desempeño del Docente',
     appliesTo: ['TODOS'],
     responseType: 'SELECCION_UNICA'
@@ -148,13 +133,7 @@ export const step7QuestionsPageMock: Step7Question[] = [
   {
     questionId: 'desempeno_claridad_explicaciones',
     question: 'Las explicaciones del docente fueron claras y comprensibles.',
-    options: [
-      { label: 'Siempre', value: 'siempre' },
-      { label: 'Casi siempre', value: 'casi_siempre' },
-      { label: 'A veces', value: 'a_veces' },
-      { label: 'Rara vez', value: 'rara_vez' },
-      { label: 'Nunca', value: 'nunca' }
-    ],
+    options: standardStep7Options,
     group: 'Desempeño del Docente',
     appliesTo: ['INFORME_FINAL_V1'],
     responseType: 'SELECCION_UNICA'
@@ -162,15 +141,42 @@ export const step7QuestionsPageMock: Step7Question[] = [
   {
     questionId: 'desempeno_fomento_participacion',
     question: 'El docente fomentó la participación activa de los estudiantes.',
-    options: [
-      { label: 'Totalmente de acuerdo', value: '5' },
-      { label: 'De acuerdo', value: '4' },
-      { label: 'Neutral', value: '3' },
-      { label: 'En desacuerdo', value: '2' },
-      { label: 'Totalmente en desacuerdo', value: '1' }
-    ],
+    options: standardStep7Options,
     group: 'Desempeño del Docente',
     appliesTo: ['INFORME_FINAL_V2', 'TODOS'],
+    responseType: 'SELECCION_UNICA'
+  },
+  // Adding a few more example questions to show the pattern
+  {
+    questionId: 'desempeno_retroalimentacion_util',
+    question: 'La retroalimentación proporcionada por el docente fue útil para mi aprendizaje.',
+    options: standardStep7Options,
+    group: 'Desempeño del Docente',
+    appliesTo: ['TODOS'],
+    responseType: 'SELECCION_UNICA'
+  },
+  {
+    questionId: 'ambiente_aprendizaje_positivo',
+    question: 'El docente promovió un ambiente de aprendizaje positivo y respetuoso.',
+    options: standardStep7Options,
+    group: 'Ambiente de Aprendizaje',
+    appliesTo: ['TODOS'],
+    responseType: 'SELECCION_UNICA'
+  },
+  {
+    questionId: 'carga_trabajo_adecuada',
+    question: 'La carga de trabajo del curso fue adecuada.',
+    options: standardStep7Options,
+    group: 'Carga de Trabajo y Recursos',
+    appliesTo: ['INFORME_FINAL_V1', 'INFORME_FINAL_V2'],
+    responseType: 'SELECCION_UNICA'
+  },
+  {
+    questionId: 'recursos_aprendizaje_suficientes',
+    question: 'Los recursos de aprendizaje (materiales, bibliografía, etc.) fueron suficientes y adecuados.',
+    options: standardStep7Options,
+    group: 'Carga de Trabajo y Recursos',
+    appliesTo: ['TODOS'],
     responseType: 'SELECCION_UNICA'
   }
 ]

@@ -50,7 +50,7 @@ export function Step3Form({
   onSaveAndNext,
   onPrevious,
   totalSteps,
-  reportType, // Changed from tipoInforme to reportType
+  reportType,
   initialData,
   isEditing = false
 }: Step3FormProps) {
@@ -63,12 +63,17 @@ export function Step3Form({
   })
 
   useEffect(() => {
-    if (isEditing && initialData) {
+    if (initialData) {
+      // If initialData is provided (from parent state, for new or edit), reset the form with it.
       reset(initialData)
     } else if (!isEditing) {
+      // Only reset to empty for "new" mode if there's NO initialData.
+      // This covers the very first time the step is visited.
       reset({ salvaguardaEstudiantes: [] })
     }
-  }, [isEditing, initialData, reset])
+    // If isEditing and no initialData, the form might be loading or use its own defaults.
+    // If !isEditing and no initialData, it's reset to empty.
+  }, [initialData, isEditing, reset]) // Dependencies are correct
 
   const addNewStudent = () => {
     append({

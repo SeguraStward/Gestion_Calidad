@@ -60,20 +60,17 @@ const groupQuestions = (questions: Step7Question[], currentReportType: ReportTyp
   return { gruposDePreguntas: grupos, todasLasPreguntasFiltradas: filteredQuestions }
 }
 
-// Re-introduce getOptionColors from form-step7.tsx
+// Ensure getOptionColors is identical to form-step7.tsx
 const getOptionColors = (value: string, isSelected: boolean) => {
   if (!isSelected) {
     return 'border-border/30 bg-transparent hover:border-border/50 hover:bg-muted/20 dark:hover:bg-muted/10'
   }
   const colorMap = {
-    muy_bueno: 'border-emerald-500/80 bg-emerald-500/25 dark:border-emerald-600/80 dark:bg-emerald-600/30',
-    bueno: 'border-green-500/80 bg-green-500/25 dark:border-green-600/80 dark:bg-green-600/30',
-    muy_alto: 'border-emerald-500/80 bg-emerald-500/25 dark:border-emerald-600/80 dark:bg-emerald-600/30',
-    alto: 'border-green-500/80 bg-green-500/25 dark:border-green-600/80 dark:bg-green-600/30',
-    regular: 'border-amber-500/80 bg-amber-500/25 dark:border-amber-600/80 dark:bg-amber-600/30',
-    medio: 'border-yellow-500/80 bg-yellow-500/25 dark:border-yellow-600/80 dark:bg-yellow-600/30',
-    deficiente: 'border-red-500/80 bg-red-500/25 dark:border-red-600/80 dark:bg-red-600/30',
-    bajo: 'border-orange-500/80 bg-orange-500/25 dark:border-orange-600/80 dark:bg-orange-600/30'
+    '5': 'border-emerald-500/80 bg-emerald-500/25 dark:border-emerald-600/80 dark:bg-emerald-600/30', // Muy bueno
+    '4': 'border-green-500/80 bg-green-500/25 dark:border-green-600/80 dark:bg-green-600/30', // Bueno
+    '3': 'border-amber-500/80 bg-yellow-500/25 dark:border-amber-600/80 dark:bg-yellow-600/30', // Regular
+    '2': 'border-orange-500/80 bg-orange-500/25 dark:border-orange-600/80 dark:bg-orange-600/30', // Malo
+    '1': 'border-red-500/80 bg-red-500/25 dark:border-red-600/80 dark:bg-red-600/30' // Muy malo
   }
   return (
     colorMap[value as keyof typeof colorMap] || 'border-blue-500/80 bg-blue-500/25 dark:border-blue-600/80 dark:bg-blue-600/30'
@@ -87,77 +84,66 @@ export function Step7EditForm({
   totalSteps,
   initialData,
   isEditing = true,
-  reportType // Changed from tipoInforme to reportType
+  reportType
 }: Step7EditFormProps) {
   const { control, handleSubmit, reset, watch, register } = formMethods
 
   const { gruposDePreguntas, todasLasPreguntasFiltradas } = useMemo(
-    // Use translated mock name
-    () => groupQuestions(step7QuestionsPageMock, reportType), // Use reportType
-    [reportType] // Use reportType
+    () => groupQuestions(step7QuestionsPageMock, reportType),
+    [reportType]
   )
 
   useEffect(() => {
-    // Consolidate initialization logic
     const currentAnswers = initialData?.respuestasRadio || []
     const initialFormValues = todasLasPreguntasFiltradas.map((p) => {
-      // Use translated 'questionId' property
       const existing = currentAnswers.find((r) => r.idPregunta === p.questionId)
+      // When initializing, if the stored answer is a label (e.g., "Muy bueno"),
+      // find the corresponding value (e.g., "5") to set in the form.
+      const questionWithOptions = step7QuestionsPageMock.find((q) => q.questionId === p.questionId)
+      const optionValue = questionWithOptions?.options.find((opt) => opt.label === existing?.respuesta)?.value
       return {
-        idPregunta: p.questionId, // Use translated 'questionId'
-        respuesta: existing?.respuesta || ''
+        idPregunta: p.questionId,
+        respuesta: optionValue || existing?.respuesta || '' // Prefer value, fallback to stored, then empty
       }
     })
     reset({ respuestasRadio: initialFormValues })
-  }, [initialData, reset, todasLasPreguntasFiltradas, reportType]) // Use reportType
+  }, [initialData, reset, todasLasPreguntasFiltradas, reportType])
 
   return (
     <FormProvider {...formMethods}>
       <Form {...formMethods}>
-        <form onSubmit={handleSubmit(onSaveAndNext)} className="space-y-6">
-          <Card>
-            <CardHeader className="py-4 px-6">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                {' '}
-                {/* Consistent: text-lg */}
-                <Activity className="w-5 h-5 text-foreground/70" />
+        <form onSubmit={handleSubmit(onSaveAndNext)} className="flex flex-col h-full">
+          <Card className="flex flex-col flex-1 min-h-0">
+            <CardHeader className="py-2.5 px-3 sm:px-4 md:py-3 md:px-5">
+              <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-base sm:text-md md:text-lg">
+                <Activity className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 text-foreground/70" />
                 Paso {totalSteps > 0 ? `7 de ${totalSteps}: ` : ''}
                 Percepción General y Desempeño (Editando)
               </CardTitle>
-              <CardDescription className="text-sm pt-0.5">
-                {' '}
-                {/* Consistent: text-sm */}
-                Modifique su percepción sobre los aspectos del curso y desempeño estudiantil. ({
-                  todasLasPreguntasFiltradas.length
-                }{' '}
+              <CardDescription className="text-xs sm:text-sm pt-0.5">
+                Modifique su percepción sobre los aspectos del curso y desempeño estudiantil. ({todasLasPreguntasFiltradas.length}{' '}
                 pregunta{todasLasPreguntasFiltradas.length !== 1 ? 's' : ''})
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-4 md:p-6 space-y-4">
-              {' '}
-              {/* Adjusted space-y */}
+
+            <CardContent className="flex-1 overflow-y-auto p-2 sm:p-2.5 md:p-3 space-y-2 sm:space-y-2.5 md:space-y-3">
               {todasLasPreguntasFiltradas.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  <Activity className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No hay preguntas disponibles para este tipo de informe.</p> {/* Consistent: text-sm */}
+                <div className="text-center py-4 sm:py-5 text-muted-foreground">
+                  <Activity className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 mx-auto mb-1 sm:mb-1.5 md:mb-2 opacity-50" />
+                  <p className="text-xs sm:text-sm">No hay preguntas disponibles para este tipo de informe.</p>
                 </div>
               ) : (
                 Object.entries(gruposDePreguntas).map(([nombreGrupo, preguntasDelGrupo], grupoIndex, arr) => (
                   <div key={nombreGrupo}>
-                    <div className="py-3 px-1">
-                      <div className="mb-3">
-                        <h3 className="text-sm font-medium text-foreground/90 leading-normal flex items-center gap-1.5">
-                          {' '}
-                          {/* Consistent: text-sm font-medium */}
+                    <div className="py-1.5 sm:py-2 px-1">
+                      <div className="mb-1.5 sm:mb-2">
+                        <h3 className="text-xs sm:text-sm font-medium text-foreground/90 leading-normal flex items-center gap-1 sm:gap-1.5">
                           <div className="w-1.5 h-1.5 bg-muted-foreground/70 rounded-full"></div>
                           {nombreGrupo}
                         </h3>
                       </div>
-                      <div className="ml-3 space-y-4">
-                        {' '}
-                        {/* Adjusted space-y */}
+                      <div className="ml-1 sm:ml-2 space-y-2.5 sm:space-y-3">
                         {preguntasDelGrupo.map((pregunta) => {
-                          // Use translated 'questionId' property
                           const overallIndex = todasLasPreguntasFiltradas.findIndex((p) => p.questionId === pregunta.questionId)
                           if (overallIndex === -1) return null
 
@@ -165,46 +151,39 @@ export function Step7EditForm({
 
                           return (
                             <FormField
-                              // Use translated 'questionId' property
                               key={pregunta.questionId}
                               control={control}
                               name={`respuestasRadio.${overallIndex}.respuesta`}
                               render={({ field }) => (
-                                <FormItem className="space-y-2">
-                                  {' '}
-                                  {/* Adjusted space-y */}
-                                  <FormLabel className="text-sm font-medium text-foreground/85 leading-normal block">
-                                    {' '}
-                                    {/* Consistent: text-sm font-medium */}
-                                    {/* Use translated 'question' property */}
+                                <FormItem className="space-y-1 sm:space-y-1.5">
+                                  <FormLabel className="text-xs sm:text-sm font-medium text-foreground/85 leading-normal block">
                                     {pregunta.question}
                                   </FormLabel>
-                                  <div className="ml-2">
+                                  <div className="ml-0.5 sm:ml-1">
                                     <FormControl>
                                       <RadioGroup
                                         onValueChange={field.onChange}
                                         value={field.value || ''}
-                                        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5" /* Slightly increased gap */
+                                        className="flex flex-wrap items-center gap-1.5 sm:gap-2"
                                       >
-                                        {/* Use translated 'options' property */}
                                         {pregunta.options?.map((opcion) => {
                                           const isSelected = currentValue === opcion.value
                                           const colorClasses = getOptionColors(opcion.value, isSelected)
                                           return (
                                             <FormItem key={opcion.value} className="space-y-0">
                                               <div
-                                                className={`flex items-center space-x-2 p-2.5 rounded-md border transition-all duration-200 cursor-pointer ${colorClasses}`} /* Adjusted padding and space */
+                                                className={`flex items-center space-x-1 sm:space-x-1.5 p-1.5 sm:p-2 rounded-md border transition-all duration-200 cursor-pointer ${colorClasses}`}
                                               >
                                                 <FormControl>
                                                   <RadioGroupItem
                                                     value={opcion.value}
                                                     id={`${field.name}-${overallIndex}-${opcion.value}`}
-                                                    className="mt-0 w-4 h-4" /* Slightly larger radio item */
+                                                    className="mt-0 w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4"
                                                   />
                                                 </FormControl>
                                                 <FormLabel
                                                   htmlFor={`${field.name}-${overallIndex}-${opcion.value}`}
-                                                  className="text-sm font-normal cursor-pointer flex-1 leading-snug text-foreground/90" /* Consistent: text-sm, adjusted leading and color */
+                                                  className="text-xs sm:text-sm font-normal cursor-pointer flex-1 leading-snug text-foreground/90"
                                                 >
                                                   {opcion.label}
                                                 </FormLabel>
@@ -214,11 +193,10 @@ export function Step7EditForm({
                                         })}
                                       </RadioGroup>
                                     </FormControl>
-                                    <FormMessage className="text-xs mt-1.5 text-destructive" /> {/* Consistent: text-xs */}
+                                    <FormMessage className="text-xs mt-0.5 sm:mt-1 text-destructive" />
                                     <input
                                       type="hidden"
                                       {...register(`respuestasRadio.${overallIndex}.idPregunta`)}
-                                      // Use translated 'questionId' property
                                       value={pregunta.questionId}
                                     />
                                   </div>
@@ -229,25 +207,21 @@ export function Step7EditForm({
                         })}
                       </div>
                     </div>
-                    {grupoIndex < arr.length - 1 && <Separator className="opacity-20 my-3" />} {/* Adjusted margin */}
+                    {grupoIndex < arr.length - 1 && <Separator className="opacity-20 my-3" />}
                   </div>
                 ))
               )}
             </CardContent>
-            <CardFooter className="flex justify-between py-4 px-6">
+
+            <CardFooter className="flex justify-between py-2.5 px-3 sm:px-4 md:py-3 md:px-5">
               {' '}
-              {/* Adjusted padding */}
+              {/* Reduced padding */}
               {onPrevious && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onPrevious}
-                  className="px-6 py-2 text-sm shadow-sm" /* Consistent: text-sm, adjusted padding */
-                >
+                <Button type="button" variant="outline" onClick={onPrevious} className="px-6 py-2 text-sm shadow-sm">
                   Anterior
                 </Button>
               )}
-              <Button type="submit" className="px-6 py-2 text-sm shadow-sm" /* Consistent: text-sm, adjusted padding */>
+              <Button type="submit" className="px-6 py-2 text-sm shadow-sm">
                 {isEditing ? 'Guardar Cambios' : 'Siguiente'}
               </Button>
             </CardFooter>

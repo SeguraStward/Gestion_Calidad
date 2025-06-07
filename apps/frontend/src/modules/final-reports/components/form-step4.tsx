@@ -48,7 +48,7 @@ export function Step4Form({
   initialData,
   isEditing = false
 }: Step4FormProps) {
-  const { control, reset, handleSubmit } = formMethods // Added handleSubmit
+  const { control, reset, handleSubmit } = formMethods
   const [editingObservacion, setEditingObservacion] = useState<number | null>(null)
 
   const { fields, append, remove } = useFieldArray({
@@ -56,16 +56,19 @@ export function Step4Form({
     name: 'ajustesEstudiantes'
   })
 
-  // Effect to populate form with initialData when editing
   useEffect(() => {
-    if (isEditing && initialData) {
+    if (initialData) {
+      // If initialData is provided (from parent state, for new or edit), reset the form with it.
       console.log('[Step4Form] Resetting with initialData:', initialData)
-      reset(initialData) // This will populate the form, including the field array
+      reset(initialData)
     } else if (!isEditing) {
-      // Optionally, ensure it's clean for new entries, though defaultValues in page.tsx might handle this
-      reset({ ajustesEstudiantes: [] }) // Reset to empty array for new form
+      // Only reset to empty for "new" mode if there's NO initialData.
+      // This covers the very first time the step is visited.
+      reset({ ajustesEstudiantes: [] })
     }
-  }, [isEditing, initialData, reset])
+    // If isEditing and no initialData, the form might be loading or use its own defaults.
+    // If !isEditing and no initialData, it's reset to empty.
+  }, [initialData, isEditing, reset]) // Dependencies are correct
 
   const addNewStudent = () => {
     append({
