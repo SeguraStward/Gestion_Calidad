@@ -38,9 +38,9 @@ export type Step3FormData = z.infer<typeof step3Schema>
 interface Step3FormProps {
   formMethods: UseFormReturn<Step3FormData>
   onSaveAndNext: (data: Step3FormData) => void
-  onPrevious: () => void
+  onPrevious: (data: Step3FormData) => void // MODIFIED: Make it accept data
   totalSteps: number
-  reportType?: ReportType // Changed from tipoInforme to reportType
+  reportType?: ReportType
   initialData?: Step3FormData | null
   isEditing?: boolean
 }
@@ -54,7 +54,7 @@ export function Step3Form({
   initialData,
   isEditing = false
 }: Step3FormProps) {
-  const { control, reset, handleSubmit } = formMethods
+  const { control, reset, handleSubmit, getValues } = formMethods // Added getValues
   const [editingObservacion, setEditingObservacion] = useState<number | null>(null)
 
   const { fields, append, remove } = useFieldArray({
@@ -64,16 +64,11 @@ export function Step3Form({
 
   useEffect(() => {
     if (initialData) {
-      // If initialData is provided (from parent state, for new or edit), reset the form with it.
       reset(initialData)
     } else if (!isEditing) {
-      // Only reset to empty for "new" mode if there's NO initialData.
-      // This covers the very first time the step is visited.
       reset({ salvaguardaEstudiantes: [] })
     }
-    // If isEditing and no initialData, the form might be loading or use its own defaults.
-    // If !isEditing and no initialData, it's reset to empty.
-  }, [initialData, isEditing, reset]) // Dependencies are correct
+  }, [initialData, isEditing, reset])
 
   const addNewStudent = () => {
     append({
@@ -87,6 +82,11 @@ export function Step3Form({
   const handleEditObservacion = (index: number) => setEditingObservacion(index)
   const handleSaveObservacion = () => setEditingObservacion(null)
   const handleCancelObservacion = () => setEditingObservacion(null)
+
+  const handlePreviousClick = () => {
+    const currentData = getValues()
+    onPrevious(currentData)
+  }
 
   const tituloPaso =
     reportType === 'INFORME_FINAL_V1' ? 'Registro de Estudiantes (Plan Indígena)' : 'Registro de Estudiantes (Salvaguarda)'
@@ -290,7 +290,7 @@ export function Step3Form({
             <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
               {' '}
               {/* Consistent padding and border */}
-              <Button type="button" variant="outline" onClick={onPrevious} className="px-8">
+              <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8">
                 Anterior
               </Button>
               <Button type="submit" className="px-8">

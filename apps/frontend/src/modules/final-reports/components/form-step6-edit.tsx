@@ -149,55 +149,76 @@ export function Step6EditForm({
 
   return (
     <div className="p-4 md:p-6 h-full flex flex-col">
-      {/* Header and Error Display */}
-      <div className="mb-3 md:mb-4">
-        <h2 className="text-xl md:text-2xl font-semibold text-foreground">Paso 6: Herramientas Tecnológicas</h2>
-        <p className="text-sm text-muted-foreground">Seleccione las herramientas que utilizó y describa otras si es necesario.</p>
+      {/* Header Section - MODIFIED to match form-step6.tsx */}
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold flex items-center gap-3">
+          <Settings2 className="w-5 h-5 text-foreground/70" />
+          {/* Assuming you want a dynamic title for edit mode, or a static one like Step 6 */}
+          Paso 6 (Editando): Herramientas Tecnológicas y Metodologías
+          {/* Or, if totalSteps is available and relevant:
+          Paso {totalSteps > 0 ? `6 de ${totalSteps}: ` : ''}
+          Herramientas Tecnológicas y Metodologías (Editando)
+          */}
+        </h2>
+        <p className="text-muted-foreground text-sm mt-1">
+          Seleccione las herramientas utilizadas y describa otras si es necesario.
+        </p>
       </div>
 
-      {formState.errors.respuestasMultiples?.message && (
-        <div className="mb-3 p-2.5 text-xs text-destructive-foreground bg-destructive/90 border border-destructive rounded-md flex items-center">
-          <AlertTriangle className="h-4 w-4 mr-2" />
-          {formState.errors.respuestasMultiples.message}
+      {/* Error Display - MODIFIED to match form-step6.tsx styling */}
+      {formState.errors.respuestasMultiples?.message && !formState.errors.respuestasMultiples?.root?.message && (
+        <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
+          <AlertTriangle className="mr-2 h-5 w-5" />
+          <span>{formState.errors.respuestasMultiples.message}</span>
         </div>
       )}
       {formState.errors.respuestasMultiples?.root?.message && (
-        <div className="mb-3 p-2.5 text-xs text-destructive-foreground bg-destructive/90 border border-destructive rounded-md flex items-center">
-          <AlertTriangle className="h-4 w-4 mr-2" />
-          {formState.errors.respuestasMultiples.root.message}
+        <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
+          <AlertTriangle className="mr-2 h-5 w-5" />
+          <span>{formState.errors.respuestasMultiples.root.message}</span>
+        </div>
+      )}
+      {formState.errors.root?.message && (
+        <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
+          <AlertTriangle className="mr-2 h-5 w-5" />
+          <span>{formState.errors.root.message}</span>
         </div>
       )}
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
           <form onSubmit={handleSubmit(onSaveAndNext, handleFormSubmitError)} className="flex-1 flex flex-col min-h-0 space-y-0">
-            {/* Scrollable Content Area */}
             <div className="flex-1 overflow-y-auto pr-1 pb-4">
-              {' '}
-              {/* Added pr-1 for scrollbar space */}
               <Card className="h-full flex flex-col">
-                {' '}
-                {/* Ensure card can grow */}
+                {/* CardHeader for toolsQuestion - ADDED to match form-step6.tsx */}
+                <CardHeader className="py-4 px-6">
+                  {toolsQuestion && (
+                    <div>
+                      <FormLabel className="text-base font-semibold">{toolsQuestion.question}</FormLabel>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {toolsQuestion.description || 'Haga clic en una herramienta para moverla entre las listas.'}
+                      </p>
+                    </div>
+                  )}
+                </CardHeader>
                 <CardContent className="flex-1 space-y-4 p-4 md:px-6 md:pb-6">
-                  {' '}
-                  {/* Allow content to grow */}
-                  {/* Tool selection UI */}
                   <div className="flex flex-col md:flex-row gap-4">
-                    {/* Available Tools Column */}
                     <div className="flex-1 space-y-1.5">
-                      <div className="flex justify-between items-center mb-1">
-                        <FormLabel className="text-sm font-medium">Herramientas no usadas ({availableOptions.length})</FormLabel>
-                        <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
+                      {/* FormLabel for "No usadas" - MODIFIED */}
+                      <FormLabel className="block font-medium text-sm">
+                        Herramientas no usadas ({availableOptions.length})
+                      </FormLabel>
                       <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
                         {availableOptions.map((opt: OptionFE) => (
                           <div
-                            key={opt.value}
+                            key={`disponible-${opt.value}`} // MODIFIED key prefix for claridad
                             onClick={() => handleMoveToUsed(opt.value)}
-                            className="group flex items-center justify-between p-1.5 rounded-sm text-xs cursor-pointer hover:bg-primary/10 transition-colors"
+                            // MODIFIED className to match form-step6.tsx
+                            className="p-1.5 rounded hover:bg-primary/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
+                            title={`Mover "${opt.label}" a usadas`}
                           >
-                            <span className="truncate mx-1 text-center flex-1">{opt.label}</span>
-                            <MoveRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
+                            <MoveRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                           </div>
                         ))}
                         {availableOptions.length === 0 && (
@@ -208,21 +229,22 @@ export function Step6EditForm({
                       </div>
                     </div>
 
-                    {/* Used Tools Column */}
                     <div className="flex-1 space-y-1.5">
-                      <div className="flex justify-between items-center mb-1">
-                        <FormLabel className="text-sm font-medium">Herramientas usadas ({usedOptionsMapped.length})</FormLabel>
-                        <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
-                      </div>
+                      {/* FormLabel for "Usadas" - MODIFIED */}
+                      <FormLabel className="block font-medium text-sm">
+                        Herramientas usadas ({usedOptionsMapped.length})
+                      </FormLabel>
                       <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
                         {usedOptionsMapped.map((opt: OptionFE) => (
                           <div
-                            key={opt.value}
+                            key={`usada-${opt.value}`} // MODIFIED key prefix for claridad
                             onClick={() => handleMoveToAvailable(opt.value)}
-                            className="group flex items-center justify-between p-1.5 rounded-sm text-xs cursor-pointer hover:bg-destructive/10 transition-colors"
+                            // MODIFIED className to match form-step6.tsx
+                            className="p-1.5 rounded hover:bg-destructive/10 bg-background cursor-pointer flex items-center justify-between group min-h-[2.25rem] text-sm"
+                            title={`Mover "${opt.label}" a no usadas`}
                           >
-                            <MoveLeft className="h-3.5 w-3.5 text-muted-foreground group-hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <span className="truncate mx-1 text-center flex-1">{opt.label}</span>
+                            <MoveLeft className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                            <span className="flex-grow truncate mx-1 text-center">{opt.label}</span>
                           </div>
                         ))}
                         {usedOptionsMapped.length === 0 && (
@@ -233,7 +255,6 @@ export function Step6EditForm({
                       </div>
                     </div>
                   </div>
-                  {/* Other Tools Textarea */}
                   <FormField
                     control={control}
                     name="otrasHerramientas"
@@ -246,7 +267,7 @@ export function Step6EditForm({
                           <Textarea
                             placeholder="Si utilizó otras no listadas, descríbalas aquí..."
                             {...field}
-                            className="min-h-[70px] text-sm bg-background/60" // Adjusted styling
+                            className="min-h-[70px] text-sm bg-background/60"
                           />
                         </FormControl>
                         <FormMessage className="text-xs" />
@@ -254,17 +275,22 @@ export function Step6EditForm({
                     )}
                   />
                 </CardContent>
-                {/* CardFooter is removed from here as navigation is outside */}
               </Card>
             </div>
 
-            {/* Navigation Buttons (Stays Visible at the bottom) */}
             <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
-              <Button type="button" variant="outline" onClick={onPrevious} className="px-8 shadow-sm">
+              {/* MODIFIED: Ensure onPrevious is called correctly if it exists */}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onPrevious ? onPrevious : () => console.warn('onPrevious not provided')}
+                className="px-8 shadow-sm"
+              >
                 Anterior
               </Button>
               <Button type="submit" className="px-8 shadow-sm">
-                Siguiente
+                {/* Assuming "Guardar Cambios" or similar for edit mode */}
+                Guardar Cambios
               </Button>
             </div>
           </form>

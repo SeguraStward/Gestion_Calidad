@@ -34,10 +34,10 @@ export type Step4FormData = z.infer<typeof step4Schema>
 interface Step4FormProps {
   formMethods: UseFormReturn<Step4FormData>
   onSaveAndNext: (data: Step4FormData) => void
-  onPrevious: () => void
+  onPrevious: (data: Step4FormData) => void // MODIFIED: Make it accept data
   totalSteps: number
-  initialData?: Step4FormData | null // Added initialData prop
-  isEditing?: boolean // Added isEditing prop
+  initialData?: Step4FormData | null
+  isEditing?: boolean
 }
 
 export function Step4Form({
@@ -48,7 +48,7 @@ export function Step4Form({
   initialData,
   isEditing = false
 }: Step4FormProps) {
-  const { control, reset, handleSubmit } = formMethods
+  const { control, reset, handleSubmit, getValues } = formMethods // Added getValues
   const [editingObservacion, setEditingObservacion] = useState<number | null>(null)
 
   const { fields, append, remove } = useFieldArray({
@@ -58,17 +58,11 @@ export function Step4Form({
 
   useEffect(() => {
     if (initialData) {
-      // If initialData is provided (from parent state, for new or edit), reset the form with it.
-      console.log('[Step4Form] Resetting with initialData:', initialData)
       reset(initialData)
     } else if (!isEditing) {
-      // Only reset to empty for "new" mode if there's NO initialData.
-      // This covers the very first time the step is visited.
       reset({ ajustesEstudiantes: [] })
     }
-    // If isEditing and no initialData, the form might be loading or use its own defaults.
-    // If !isEditing and no initialData, it's reset to empty.
-  }, [initialData, isEditing, reset]) // Dependencies are correct
+  }, [initialData, isEditing, reset])
 
   const addNewStudent = () => {
     append({
@@ -84,6 +78,11 @@ export function Step4Form({
   const handleEditObservacion = (index: number) => setEditingObservacion(index)
   const handleSaveObservacion = () => setEditingObservacion(null)
   const handleCancelObservacion = () => setEditingObservacion(null)
+
+  const handlePreviousClick = () => {
+    const currentData = getValues()
+    onPrevious(currentData)
+  }
 
   const tituloPaso = 'Ajustes Metodológicos y de Evaluación'
 
@@ -301,7 +300,7 @@ export function Step4Form({
             <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
               {' '}
               {/* Consistent padding and border */}
-              <Button type="button" variant="outline" onClick={onPrevious} className="px-8">
+              <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8">
                 Anterior
               </Button>
               <Button type="submit" className="px-8">

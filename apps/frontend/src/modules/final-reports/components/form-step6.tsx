@@ -21,7 +21,7 @@ import {
 const multipleResponseSchema = z.object({
   // Renamed from respuestaMultipleSchema
   idPregunta: z.string(), // This will be the questionId from the mock
-  respuestasSeleccionadas: z.array(z.string())
+  respuestasSeleccionadas: z.array(z.string()) // No .min(1) here, as the overall form logic handles "at least one"
 })
 
 // Zod validation schema for Step 6
@@ -29,17 +29,27 @@ export const step6Schema = z
   .object({
     respuestasMultiples: z
       .array(multipleResponseSchema)
-      .min(1, 'Debe seleccionar al menos una herramienta o indicar que no usó otras.')
-      .refine((data) => data.length === 1, { message: 'Debe haber exactamente un conjunto de respuestas múltiples.' }),
+      // El .min(1, '...') aquí es redundante si el refine de abajo asegura data.length === 1
+      // y la inicialización siempre provee un elemento.
+      .refine((data) => data.length === 1, {
+        // Esta refine asegura que la estructura interna que esperamos (un solo objeto de pregunta de herramientas) esté presente.
+        message: 'Error interno: La estructura de datos para herramientas no es la esperada.' // Mensaje para un caso que no debería ocurrir con la UI actual
+      }),
     otrasHerramientas: z.string().optional()
   })
   .refine(
     (data) => {
+      // Esta es la validación lógica principal para el usuario:
+      // O se seleccionó al menos una herramienta de la lista, O se escribió algo en "otrasHerramientas".
       const herramientasSeleccionadas = data.respuestasMultiples[0]?.respuestasSeleccionadas || []
       return herramientasSeleccionadas.length > 0 || (data.otrasHerramientas && data.otrasHerramientas.trim() !== '')
     },
     {
-      message: 'Debe seleccionar al menos una herramienta tecnológica o especificar otras.',
+      // Este mensaje es el que el usuario debería ver si no cumple la condición.
+      message: 'Debe seleccionar al menos una herramienta tecnológica de la lista o especificar otras herramientas utilizadas.',
+      // Adjuntar este error a 'respuestasMultiples' es razonable,
+      // ya que el componente de selección de herramientas es la parte principal.
+      // El FormMessage para respuestasMultiples.root.message debería mostrar esto.
       path: ['respuestasMultiples']
     }
   )
@@ -49,24 +59,69 @@ export type Step6FormData = z.infer<typeof step6Schema>
 interface Step6FormProps {
   formMethods: UseFormReturn<Step6FormData>
   onSaveAndNext: (data: Step6FormData) => void
-  onPrevious: () => void
+  onPrevious: (data: Step6FormData) => void // MODIFIED: Make it accept data
   totalSteps: number
+  initialData?: Step6FormData | null
+  isEditing?: boolean
 }
 
-export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }: Step6FormProps) {
-  const { control, handleSubmit, reset, watch, setValue, getValues, formState } = formMethods
+export function Step6Form({
+  formMethods,
+  onSaveAndNext,
+  onPrevious,
+  totalSteps,
+  initialData,
+  isEditing = false
+}: Step6FormProps) {
+  const { control, handleSubmit, reset, watch, setValue, getValues, formState } = formMethods // getValues is already here
 
-  // Use the centralized mock and its English property names
   const toolsQuestion = useMemo(() => {
-    // Renamed from preguntaHerramientas
-    // Assuming the main tools question in step6QuestionsPageMock has a specific ID,
-    // e.g., 'herramientas_utilizadas' or the first item if only one tools question.
-    // For this example, let's find the one with options.
     return (
       step6QuestionsPageMock.find((p) => p.options && p.options.length > 0 && p.questionId === 'herramientas_utilizadas') ||
       step6QuestionsPageMock.find((p) => p.options && p.options.length > 0)
     )
   }, [])
+
+  useEffect(() => {
+    console.log(
+      `[Step6Form] useEffect triggered. initialData:`,
+      initialData ? JSON.stringify(initialData) : null,
+      `isEditing: ${isEditing}`
+    )
+    if (initialData) {
+      console.log('[Step6Form] Using initialData to reset form.')
+      // Asegurarse de que la estructura de initialData sea la esperada por el reset
+      // Si initialData.respuestasMultiples no existe o está mal formado, podría causar problemas.
+      // El reset espera un objeto que coincida con la estructura de Step6FormData.
+      const currentRespuestasMultiples =
+        initialData.respuestasMultiples && initialData.respuestasMultiples.length > 0
+          ? initialData.respuestasMultiples
+          : [
+              {
+                idPregunta: toolsQuestion?.questionId || 'herramientas_utilizadas',
+                respuestasSeleccionadas: []
+              }
+            ]
+
+      reset({
+        respuestasMultiples: currentRespuestasMultiples,
+        otrasHerramientas: initialData.otrasHerramientas || '' // Asegurar que otrasHerramientas se cargue
+      })
+    } else if (!isEditing) {
+      console.log('[Step6Form] No initialData and !isEditing, resetting to defaults.')
+      reset({
+        respuestasMultiples: [
+          {
+            idPregunta: toolsQuestion?.questionId || 'herramientas_utilizadas',
+            respuestasSeleccionadas: []
+          }
+        ],
+        otrasHerramientas: ''
+      })
+    } else {
+      console.log('[Step6Form] useEffect: No action taken (isEditing true or no relevant condition).')
+    }
+  }, [initialData, isEditing, reset, toolsQuestion])
 
   const toolOptions = useMemo(() => {
     // Renamed from opcionesHerramientas
@@ -74,18 +129,6 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
   }, [toolsQuestion])
 
   const selectedResponsesRaw = watch('respuestasMultiples.0.respuestasSeleccionadas') // Renamed from respuestasSeleccionadasRaw
-
-  useEffect(() => {
-    reset({
-      respuestasMultiples: [
-        {
-          idPregunta: toolsQuestion?.questionId || 'herramientas_utilizadas', // Use English 'questionId'
-          respuestasSeleccionadas: []
-        }
-      ],
-      otrasHerramientas: ''
-    })
-  }, [reset, toolsQuestion])
 
   const availableOptions = useMemo(() => {
     // Renamed from disponibles
@@ -118,8 +161,21 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
     )
   }
 
-  const handleFormSubmitError = (errors: any) => {
-    console.error('Step 6 Form Validation Errors:', errors)
+  const handleFormSubmitError = (errorsFromSubmitHandler: any) => {
+    console.error(
+      '[Step6Form] Errors object from handleSubmit (puede estar vacío para errores de refine a nivel de objeto):',
+      errorsFromSubmitHandler
+    )
+    console.error('[Step6Form] formMethods.formState.errors (revisar para errores de refine):', formMethods.formState.errors)
+    // Considera mostrar un toast genérico si formState.errors tiene alguna entrada.
+    if (Object.keys(formMethods.formState.errors).length > 0) {
+      // toast.error('Por favor, corrija los errores indicados en el Paso 6.');
+    }
+  }
+
+  const handlePreviousClick = () => {
+    const currentData = getValues()
+    onPrevious(currentData)
   }
 
   return (
@@ -137,21 +193,31 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
       </div>
 
       {/* General Form Error Message for array-level validation */}
-      {formState.errors.respuestasMultiples?.message && (
+      {/* Este debería mostrar el mensaje del .refine principal si path es ['respuestasMultiples'] */}
+      {formState.errors.respuestasMultiples?.message && !formState.errors.respuestasMultiples?.root?.message && (
         <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
           <AlertTriangle className="mr-2 h-5 w-5" />
           <span>{formState.errors.respuestasMultiples.message}</span>
         </div>
       )}
+      {/* Este es más probable para errores de .refine en el array mismo */}
       {formState.errors.respuestasMultiples?.root?.message && (
         <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
           <AlertTriangle className="mr-2 h-5 w-5" />
           <span>{formState.errors.respuestasMultiples.root.message}</span>
         </div>
       )}
+      {/* Considerar un error a nivel de raíz si el path del refine fuera [] */}
+      {formState.errors.root?.message && (
+        <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
+          <AlertTriangle className="mr-2 h-5 w-5" />
+          <span>{formState.errors.root.message}</span>
+        </div>
+      )}
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
+          {/* handleSubmit ya usa onSaveAndNext y handleFormSubmitError */}
           <form onSubmit={handleSubmit(onSaveAndNext, handleFormSubmitError)} className="flex-1 flex flex-col min-h-0 space-y-0">
             {/* Scrollable Card Area */}
             <div className="flex-1 overflow-y-auto pr-1 pb-4">
@@ -252,7 +318,9 @@ export function Step6Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
 
             {/* Navigation Buttons (Stays Visible at the bottom) */}
             <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
-              <Button type="button" variant="outline" onClick={onPrevious} className="px-8 shadow-sm">
+              <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8 shadow-sm">
+                {' '}
+                {/* MODIFIED: onClick calls handlePreviousClick */}
                 Anterior
               </Button>
               <Button type="submit" className="px-8 shadow-sm">

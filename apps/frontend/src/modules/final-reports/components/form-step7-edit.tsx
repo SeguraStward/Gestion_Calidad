@@ -29,12 +29,13 @@ export type Step7FormData = z.infer<typeof step7Schema>
 
 interface Step7EditFormProps {
   formMethods: UseFormReturn<Step7FormData>
-  onSaveAndNext: (data: Step7FormData) => void
+  onSaveAndNext: (data: Step7FormData) => void // Para actualizar estado local si navega hacia atrás
   onPrevious?: () => void
-  totalSteps: number // Retained for consistency if step number is shown in card title
+  totalSteps: number
   initialData?: Step7FormData | null
-  isEditing?: boolean // Should be true for this form
-  reportType: ReportType // Changed from tipoInforme to reportType
+  isEditing?: boolean
+  reportType: ReportType
+  onFinalSubmit: () => Promise<void> // Prop para el guardado final
 }
 
 // Helper to group questions
@@ -79,14 +80,15 @@ const getOptionColors = (value: string, isSelected: boolean) => {
 
 export function Step7EditForm({
   formMethods,
-  onSaveAndNext,
+  onSaveAndNext, // Usada si el usuario navega hacia atrás y queremos guardar el estado actual del form
   onPrevious,
   totalSteps,
   initialData,
   isEditing = true,
-  reportType
+  reportType,
+  onFinalSubmit // Esta es handleSubmitAllSteps
 }: Step7EditFormProps) {
-  const { control, handleSubmit, reset, watch, register } = formMethods
+  const { control, handleSubmit, reset, watch, register, getValues } = formMethods
 
   const { gruposDePreguntas, todasLasPreguntasFiltradas } = useMemo(
     () => groupQuestions(step7QuestionsPageMock, reportType),
@@ -97,22 +99,46 @@ export function Step7EditForm({
     const currentAnswers = initialData?.respuestasRadio || []
     const initialFormValues = todasLasPreguntasFiltradas.map((p) => {
       const existing = currentAnswers.find((r) => r.idPregunta === p.questionId)
-      // When initializing, if the stored answer is a label (e.g., "Muy bueno"),
-      // find the corresponding value (e.g., "5") to set in the form.
       const questionWithOptions = step7QuestionsPageMock.find((q) => q.questionId === p.questionId)
       const optionValue = questionWithOptions?.options.find((opt) => opt.label === existing?.respuesta)?.value
       return {
         idPregunta: p.questionId,
-        respuesta: optionValue || existing?.respuesta || '' // Prefer value, fallback to stored, then empty
+        respuesta: optionValue || existing?.respuesta || ''
       }
     })
+    console.log('[Step7EditForm] Resetting form with initial values:', { respuestasRadio: initialFormValues })
     reset({ respuestasRadio: initialFormValues })
   }, [initialData, reset, todasLasPreguntasFiltradas, reportType])
+
+  // Función para manejar errores de validación
+  const handleValidationErrors = (errors: any) => {
+    console.error('[Step7EditForm] Errores de validación del formulario:', JSON.stringify(errors, null, 2))
+    toast.error('Por favor, corrija los errores en el formulario del Paso 7.')
+  }
+
+  // Esta función se llamará cuando el formulario del Paso 7 sea válido y se envíe.
+  const localSubmitAndFinalize = async (data: Step7FormData) => {
+    console.log('[Step7EditForm] localSubmitAndFinalize INVOCADA. Data del form:', JSON.stringify(data, null, 2))
+    // Opcional: actualizar el estado en la página padre con los datos de este form ANTES de la llamada final.
+    // Esto asegura que si onFinalSubmit (handleSubmitAllSteps) usa step7Data del estado, esté actualizado.
+    // Sin embargo, la versión actual de handleSubmitAllSteps usa getValues(), así que esto es redundante pero inofensivo.
+    onSaveAndNext(data)
+
+    await onFinalSubmit() // Llama a handleSubmitAllSteps de la página padre
+  }
+
+  const handlePreviousClickInternal = () => {
+    const currentData = getValues() // Obtener datos actuales del formulario
+    onSaveAndNext(currentData) // Actualizar estado en la página padre
+    if (onPrevious) {
+      onPrevious() // Navegar hacia atrás
+    }
+  }
 
   return (
     <FormProvider {...formMethods}>
       <Form {...formMethods}>
-        <form onSubmit={handleSubmit(onSaveAndNext)} className="flex flex-col h-full">
+        <form onSubmit={handleSubmit(localSubmitAndFinalize, handleValidationErrors)} className="flex flex-col h-full">
           <Card className="flex flex-col flex-1 min-h-0">
             <CardHeader className="py-2.5 px-3 sm:px-4 md:py-3 md:px-5">
               <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-base sm:text-md md:text-lg">
@@ -213,16 +239,19 @@ export function Step7EditForm({
               )}
             </CardContent>
 
-            <CardFooter className="flex justify-between py-2.5 px-3 sm:px-4 md:py-3 md:px-5">
-              {' '}
-              {/* Reduced padding */}
+            <CardFooter className="flex justify-between py-2.5 px-3 sm:px-4 md:py-3 md:px-5 mt-auto border-t">
               {onPrevious && (
-                <Button type="button" variant="outline" onClick={onPrevious} className="px-6 py-2 text-sm shadow-sm">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviousClickInternal}
+                  className="px-6 py-2 text-sm shadow-sm"
+                >
                   Anterior
                 </Button>
               )}
               <Button type="submit" className="px-6 py-2 text-sm shadow-sm">
-                {isEditing ? 'Guardar Cambios' : 'Siguiente'}
+                Guardar y Finalizar Informe
               </Button>
             </CardFooter>
           </Card>

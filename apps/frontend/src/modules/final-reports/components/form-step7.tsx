@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo } from 'react'
 import { UseFormReturn, FormProvider } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
-import { Activity } from 'lucide-react'
+import { Activity, AlertTriangle } from 'lucide-react' // MODIFIED: Added AlertTriangle
 import { RadioGroup, RadioGroupItem } from '@una-gc/ui/components/radio-group'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@una-gc/ui/components/card'
 import { Separator } from '@una-gc/ui/components/separator'
@@ -20,7 +20,15 @@ const radioResponseSchema = z.object({
 })
 
 export const step7Schema = z.object({
-  respuestasRadio: z.array(radioResponseSchema)
+  respuestasRadio: z
+    .array(radioResponseSchema)
+    // Este refine asegura que cada respuesta en el array (que corresponde a una pregunta mostrada)
+    // tenga un valor seleccionado.
+    .refine((respuestas) => respuestas.every((r) => r.respuesta.trim() !== ''), {
+      message: 'Debe seleccionar una opción para todas las preguntas mostradas.',
+      // Adjuntar a 'respuestasRadio' para que se muestre en un lugar general del paso.
+      path: ['respuestasRadio']
+    })
 })
 
 export type Step7FormData = z.infer<typeof step7Schema>
@@ -28,38 +36,62 @@ export type Step7FormData = z.infer<typeof step7Schema>
 interface Step7FormProps {
   formMethods: UseFormReturn<Step7FormData>
   onSaveAndNext: (data: Step7FormData) => void | Promise<void>
-  onPrevious: () => void
+  onPrevious: (data: Step7FormData) => void // MODIFICADO para aceptar datos
   totalSteps: number
   reportType?: ReportType
   isSubmitting?: boolean
+  initialData?: Step7FormData | null
+  isEditing?: boolean
 }
 
-// Updated getOptionColors function (ensure it's complete)
-const getOptionColors = (value: string, isSelected: boolean) => {
+// Define getOptionColors - MODIFIED to match form-step7-edit.tsx styling
+// This assumes option values '1' through '5' map semantically as:
+// '5': "Muy de acuerdo" (most positive)
+// '4': "De acuerdo"
+// '3': "Neutral"
+// '2': "En desacuerdo"
+// '1': "Muy en desacuerdo" (most negative)
+function getOptionColors(optionValue: string, isSelected: boolean): string {
   if (!isSelected) {
+    // Consistent unselected style (matches form-step7-edit.tsx's unselected style)
     return 'border-border/30 bg-transparent hover:border-border/50 hover:bg-muted/20 dark:hover:bg-muted/10'
   }
-  const colorMap = {
-    '5': 'border-emerald-500/80 bg-emerald-500/25 dark:border-emerald-600/80 dark:bg-emerald-600/30', // Muy bueno
-    '4': 'border-green-500/80 bg-green-500/25 dark:border-green-600/80 dark:bg-green-600/30', // Bueno
-    '3': 'border-amber-500/80 bg-yellow-500/25 dark:border-amber-600/80 dark:bg-yellow-600/30', // Regular
-    '2': 'border-orange-500/80 bg-orange-500/25 dark:border-orange-600/80 dark:bg-orange-600/30', // Malo
-    '1': 'border-red-500/80 bg-red-500/25 dark:border-red-600/80 dark:bg-red-600/30' // Muy malo
+  // Color mapping based on value, similar to form-step7-edit.tsx
+  // Using a similar palette but with the Tailwind CSS color names from the original form-step7.tsx for simplicity,
+  // adjust if you want the exact emerald/amber etc. colors from form-step7-edit.tsx
+  switch (optionValue) {
+    case '5': // "Muy de acuerdo"
+      return 'border-green-500/80 bg-green-500/25 text-green-700 hover:bg-green-500/30 dark:border-green-600/80 dark:bg-green-600/30 dark:text-green-300'
+    case '4': // "De acuerdo"
+      return 'border-lime-500/80 bg-lime-500/25 text-lime-700 hover:bg-lime-500/30 dark:border-lime-600/80 dark:bg-lime-600/30 dark:text-lime-300'
+    case '3': // "Neutral"
+      return 'border-yellow-500/80 bg-yellow-500/25 text-yellow-700 hover:bg-yellow-500/30 dark:border-yellow-600/80 dark:bg-yellow-600/30 dark:text-yellow-300'
+    case '2': // "En desacuerdo"
+      return 'border-orange-500/80 bg-orange-500/25 text-orange-700 hover:bg-orange-500/30 dark:border-orange-600/80 dark:bg-orange-600/30 dark:text-orange-300'
+    case '1': // "Muy en desacuerdo"
+      return 'border-red-500/80 bg-red-500/25 text-red-700 hover:bg-red-500/30 dark:border-red-600/80 dark:bg-red-600/30 dark:text-red-300'
+    default: // Fallback, though ideally all values are covered
+      return 'border-slate-500/80 bg-slate-500/25 text-slate-700 hover:bg-slate-500/30 dark:border-slate-600/80 dark:bg-slate-600/30 dark:text-slate-300'
   }
-  return (
-    colorMap[value as keyof typeof colorMap] || 'border-blue-500/80 bg-blue-500/25 dark:border-blue-600/80 dark:bg-blue-600/30'
-  )
 }
 
-export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, reportType, isSubmitting }: Step7FormProps) {
+export function Step7Form({
+  formMethods,
+  onSaveAndNext,
+  onPrevious, // MODIFICADO
+  totalSteps,
+  reportType,
+  isSubmitting,
+  initialData,
+  isEditing = false
+}: Step7FormProps) {
   const router = useRouter()
-  const { control, watch, setValue, getValues, handleSubmit, formState, register } = formMethods
+  const { control, watch, setValue, getValues, handleSubmit, formState, register, reset } = formMethods
 
   const { questionGroups, flatDisplayedQuestionList } = useMemo(() => {
     const grupos: Record<string, Step7Question[]> = {}
     const filtered = step7QuestionsPageMock.filter((q) => {
       if (Array.isArray(q.appliesTo)) {
-        // Check if reportType is defined before using it in includes
         const matchesReportType = reportType ? q.appliesTo.includes(reportType) : false
         return matchesReportType || q.appliesTo.includes('TODOS')
       }
@@ -76,22 +108,47 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
   }, [reportType])
 
   useEffect(() => {
-    // Initialize form with empty responses for all applicable questions
-    const initialFormValues = flatDisplayedQuestionList.map((q) => ({
-      idPregunta: q.questionId,
-      respuesta: ''
-    }))
-    formMethods.reset({ respuestasRadio: initialFormValues })
-  }, [flatDisplayedQuestionList, formMethods])
+    // Evitar JSON.stringify si initialData podría ser complejo o tener referencias circulares.
+    // Simplemente registra si existe o no, o propiedades específicas si es necesario.
+    console.log(`[Step7Form] useEffect triggered. Has initialData: ${!!initialData}, isEditing: ${isEditing}`)
+    // Si necesitas ver el contenido y sospechas de circularidad, puedes intentar serializar partes específicas
+    // o usar una librería para serialización segura si es absolutamente necesario para depurar.
+    // if (initialData) { console.log('[Step7Form] initialData.respuestasRadio:', initialData.respuestasRadio); }
+
+    const defaultFormValuesBasedOnCurrentQuestions = {
+      respuestasRadio: flatDisplayedQuestionList.map((q) => ({
+        idPregunta: q.questionId,
+        respuesta: ''
+      }))
+    }
+
+    if (initialData && initialData.respuestasRadio) {
+      const mergedRespuestasRadio = flatDisplayedQuestionList.map((q) => {
+        const existingResponse = initialData.respuestasRadio.find((r) => r.idPregunta === q.questionId)
+        return {
+          idPregunta: q.questionId,
+          respuesta: existingResponse ? existingResponse.respuesta : ''
+        }
+      })
+      reset({ respuestasRadio: mergedRespuestasRadio })
+    } else if (!isEditing) {
+      reset(defaultFormValuesBasedOnCurrentQuestions)
+    }
+  }, [initialData, isEditing, flatDisplayedQuestionList, reset, reportType])
 
   const handleFormSubmitSuccess = (data: Step7FormData) => {
     onSaveAndNext(data)
   }
 
-  const handleFormSubmitError = (errors: any) => {
-    console.error('Step 7 Form Validation Errors:', errors)
-    // Optionally, show a generic toast error
-    // toast.error('Por favor corrija los errores en el formulario.');
+  const handleFormSubmitError = (errorsFromSubmitHandler: any) => {
+    console.error('[Step7Form] Validation Errors on Submit:', errorsFromSubmitHandler)
+    console.error('[Step7Form] formState.errors on Submit:', formState.errors)
+  }
+
+  const handlePreviousClick = () => {
+    const currentData = getValues()
+    console.log('[Step7Form] Going back, saving data:', currentData)
+    onPrevious(currentData) // Pasa los datos al padre
   }
 
   return (
@@ -111,9 +168,26 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
               </CardDescription>
             </CardHeader>
 
+            {/* General Form Error Message for array-level validation */}
+            {formState.errors.respuestasRadio?.root?.message && (
+              <div className="mx-3 sm:mx-4 md:mx-5 mb-2 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
+                <AlertTriangle className="mr-2 h-5 w-5 flex-shrink-0" />
+                <span>{formState.errors.respuestasRadio.root.message}</span>
+              </div>
+            )}
+            {/* Error a nivel de raíz del formulario si el path del refine fuera [] */}
+            {formState.errors.root?.message && (
+              <div className="mx-3 sm:mx-4 md:mx-5 mb-2 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
+                <AlertTriangle className="mr-2 h-5 w-5 flex-shrink-0" />
+                <span>{formState.errors.root.message}</span>
+              </div>
+            )}
+
             <CardContent className="flex-1 overflow-y-auto p-2 sm:p-2.5 md:p-3 space-y-2 sm:space-y-2.5 md:space-y-3">
               {flatDisplayedQuestionList.length === 0 ? (
-                <div className="text-center py-4 sm:py-5 text-muted-foreground">
+                <div className="text-center py-4 sm:py-5 text-muted-foreground flex flex-col items-center justify-center h-full">
+                  {' '}
+                  {/* ADDED: flex flex-col items-center justify-center h-full for better centering */}
                   <Activity className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 mx-auto mb-1 sm:mb-1.5 md:mb-2 opacity-50" />
                   <p className="text-xs sm:text-sm">No hay preguntas disponibles</p>
                   <p className="text-xs sm:text-sm">para este tipo de informe o configuración.</p>
@@ -152,7 +226,7 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
                                       <RadioGroup
                                         onValueChange={field.onChange}
                                         value={field.value || ''}
-                                        className="flex flex-wrap items-center gap-1.5 sm:gap-2"
+                                        className="flex flex-wrap items-center gap-5 sm:gap-15" // This already provides good balance and wrapping. Add justify-center if you want options centered when they don't fill width.
                                       >
                                         {questionItem.options.map((optionItem: OptionFE) => {
                                           const isSelected = currentRadioValue === optionItem.value
@@ -161,7 +235,7 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
                                           return (
                                             <FormItem key={optionItem.value} className="space-y-0">
                                               <div
-                                                className={`flex items-center space-x-1 sm:space-x-1.5 p-1.5 sm:p-2 rounded-md border transition-all duration-200 cursor-pointer ${colorClasses}`}
+                                                className={`flex items-center space-x-1 sm:space-x-1.5 p-1.5 sm:p-2 rounded-md border transition-all duration-200 cursor-pointer ${colorClasses}`} // Ensure this line is identical in both files
                                               >
                                                 <FormControl>
                                                   <RadioGroupItem
@@ -208,7 +282,7 @@ export function Step7Form({ formMethods, onSaveAndNext, onPrevious, totalSteps, 
               <Button
                 type="button"
                 variant="outline"
-                onClick={onPrevious}
+                onClick={handlePreviousClick} // MODIFICADO
                 className="px-6 py-2 text-sm shadow-sm"
                 disabled={isSubmitting}
               >

@@ -71,7 +71,7 @@ export type Step2FormData = z.infer<typeof step2Schema>
 interface Step2FormProps {
   formMethods: UseFormReturn<Step2FormData>
   onSaveAndNext: (data: Step2FormData) => void
-  onPrevious?: () => void
+  onPrevious?: (data: Step2FormData) => void // MODIFIED: Make it accept data and optional if step 1 doesn't have it
   totalSteps: number
   initialData?: Step2FormData | null
   isEditing?: boolean
@@ -85,20 +85,25 @@ export function Step2Form({
   initialData,
   isEditing = false
 }: Step2FormProps) {
-  const { control, handleSubmit, reset, watch, formState } = formMethods
+  const { control, handleSubmit, reset, watch, formState, getValues } = formMethods // Added getValues
 
   useEffect(() => {
-    if (!isEditing && initialData) {
+    // Ensure initialData is correctly applied.
+    // The existing useEffect seems fine, but double-check its logic against your needs.
+    // For "new" mode, it should reset to defaults or initialData if provided.
+    if (initialData) {
+      // Prioritize initialData if available (e.g., when navigating back)
       reset(initialData)
-    } else if (!isEditing && !initialData) {
-      reset({
-        totalEnrolled: 0,
-        totalWithdrawn: 0,
-        totalPassed: 0,
-        totalFailed: 0
-      })
+    } else if (!isEditing) {
+      // For new reports, if no initialData, set defaults
+      // Defaults might be based on step1Data or static values
+      // This part seems to be handled in new/page.tsx's useEffect for step2Data
+      // So, if initialData is null here, it means new/page.tsx wants it default.
+      // Consider if a more explicit default reset is needed here if initialData can be null
+      // even after visiting the step.
+      // For now, relying on initialData from parent.
     }
-  }, [isEditing, initialData, reset])
+  }, [initialData, isEditing, reset])
 
   const watchedValues = watch()
 
@@ -120,7 +125,14 @@ export function Step2Form({
       totalPassed: data.totalPassed ?? undefined,
       totalFailed: data.totalFailed ?? undefined
     }
-    onSaveAndNext(processedData)
+    onSaveAndNext(data)
+  }
+
+  const handlePreviousClick = () => {
+    if (onPrevious) {
+      const currentData = getValues()
+      onPrevious(currentData)
+    }
   }
 
   const handleNumericInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
@@ -131,9 +143,6 @@ export function Step2Form({
   }
 
   return (
-    // This is the root div from the previous refactor (p-6 h-full flex flex-col)
-    // The Card component for "Resumen Estadístico" was removed
-    // and its content placed directly into the scrollable area.
     <div className="p-4 md:p-6 h-full flex flex-col">
       <div className="mb-4 md:mb-6">
         <h2 className="text-xl font-semibold">
@@ -146,11 +155,8 @@ export function Step2Form({
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          {/* Ensure form takes up remaining space and enables flex column layout for button positioning */}
           <form onSubmit={handleSubmit(onSubmitHandler)} className="flex-1 flex flex-col space-y-4">
-            {/* Scrollable content area */}
             <div className="flex-1 space-y-4 md:space-y-6 overflow-y-auto pr-2">
-              {/* Section Title and Description (previously CardHeader) */}
               <div>
                 <h3 className="text-lg font-medium">Resumen Estadístico</h3>
                 <p className="text-sm text-muted-foreground">
@@ -158,7 +164,6 @@ export function Step2Form({
                 </p>
               </div>
 
-              {/* Form Fields (previously CardContent) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                 <FormField
                   control={control}
@@ -227,7 +232,6 @@ export function Step2Form({
                 })}
               </div>
 
-              {/* Indicador de validación de suma */}
               {(typeof watchedValues.totalEnrolled === 'number' ||
                 currentSum > 0 ||
                 Object.values(formState.dirtyFields).some(Boolean)) && (
@@ -260,9 +264,8 @@ export function Step2Form({
               )}
             </div>
 
-            {/* Standardized Navigation Buttons Container */}
             <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
-              <Button type="button" variant="outline" onClick={onPrevious} disabled={!onPrevious} className="px-8">
+              <Button type="button" variant="outline" onClick={handlePreviousClick} disabled={!onPrevious} className="px-8">
                 Anterior
               </Button>
               <Button

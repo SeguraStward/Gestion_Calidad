@@ -20,8 +20,16 @@ const respuestaSchema = z.object({
 
 // Esquema de validación con Zod para el Paso 5
 export const step5Schema = z.object({
-  // Use the imported English mock name here
-  respuestas: z.array(respuestaSchema).min(step5QuestionsMock.length, 'Debe responder todas las preguntas.')
+  respuestas: z
+    .array(respuestaSchema)
+    .min(step5QuestionsMock.length, 'Debe responder todas las preguntas.')
+    // Opcional: Añadir un refine para verificar que cada respuesta individual no esté vacía,
+    // aunque el `respuestaSchema` ya lo hace. Esto es más para un error a nivel de array si alguna está vacía.
+    .refine((respuestas) => respuestas.every((r) => r.respuesta.trim() !== ''), {
+      message: 'Todas las preguntas deben tener una respuesta.',
+      // Este path ayuda a que el error se asocie con el array 'respuestas' en general
+      path: ['respuestas'] // O path: [] para un error a nivel de raíz del formulario
+    })
 })
 
 export type Step5FormData = z.infer<typeof step5Schema>
@@ -29,23 +37,46 @@ export type Step5FormData = z.infer<typeof step5Schema>
 interface Step5FormProps {
   formMethods: UseFormReturn<Step5FormData>
   onSaveAndNext: (data: Step5FormData) => void
-  onPrevious: () => void
+  onPrevious: (data: Step5FormData) => void // Asegúrate que acepte Step5FormData
   totalSteps: number
-  // Removed initialData and isEditing as they are not typically used in the non-edit version
+  initialData?: Step5FormData | null
+  isEditing?: boolean
 }
 
-export function Step5Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }: Step5FormProps) {
-  const { control, handleSubmit, reset, register, formState } = formMethods // Added handleSubmit, reset, formState
+export function Step5Form({
+  formMethods,
+  onSaveAndNext,
+  onPrevious,
+  totalSteps,
+  initialData,
+  isEditing = false
+}: Step5FormProps) {
+  const { control, handleSubmit, reset, register, formState, getValues } = formMethods
 
   useEffect(() => {
-    // Initialize form with question IDs and empty answers
-    // Use the imported English mock name here and its 'questionId' property
-    const initialFormValues = step5QuestionsMock.map((p) => ({
-      idPregunta: p.questionId, // Use translated property name
-      respuesta: ''
-    }))
-    reset({ respuestas: initialFormValues })
-  }, [reset]) // Dependency array only needs reset
+    // Para evitar el error de JSON.stringify con estructuras circulares en el log:
+    // console.log(`[Step5Form] useEffect triggered. isEditing: ${isEditing}`, 'Initial data (raw):', initialData);
+    if (initialData) {
+      reset(initialData)
+    } else if (!isEditing) {
+      const initialFormValues = step5QuestionsMock.map((p) => ({
+        idPregunta: p.questionId,
+        respuesta: ''
+      }))
+      reset({ respuestas: initialFormValues })
+    }
+  }, [initialData, isEditing, reset])
+
+  const handleStep5SubmitError = (errorsFromSubmitHandler: any) => {
+    console.error('[Step5Form] Validation Errors on Next:', errorsFromSubmitHandler)
+    console.error('[Step5Form] formState.errors on Next:', formState.errors)
+  }
+
+  const handlePreviousClick = () => {
+    const currentData = getValues() // Obtiene los datos actuales del formulario
+    console.log('[Step5Form] Going back, saving data:', currentData)
+    onPrevious(currentData) // Pasa los datos al padre
+  }
 
   return (
     <div className="p-4 md:p-6 h-full flex flex-col">
@@ -60,25 +91,32 @@ export function Step5Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
         </p>
       </div>
 
-      {/* General Form Error Message */}
-      {formState.errors.respuestas?.root && (
+      {/* General Form Error Message for array-level validation */}
+      {/* Prioritize root error on 'respuestas' if refine path is ['respuestas'] */}
+      {formState.errors.respuestas?.root?.message && (
         <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
           <AlertTriangle className="mr-2 h-5 w-5" />
           <span>{formState.errors.respuestas.root.message}</span>
         </div>
       )}
-      {formState.errors.respuestas &&
-        !formState.errors.respuestas.root &&
-        typeof formState.errors.respuestas.message === 'string' && (
-          <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
-            <AlertTriangle className="mr-2 h-5 w-5" />
-            <span>{formState.errors.respuestas.message}</span>
-          </div>
-        )}
+      {/* Fallback for message directly on 'respuestas' (e.g., from .min()) */}
+      {formState.errors.respuestas?.message && !formState.errors.respuestas.root?.message && (
+        <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
+          <AlertTriangle className="mr-2 h-5 w-5" />
+          <span>{formState.errors.respuestas.message}</span>
+        </div>
+      )}
+      {/* Error a nivel de raíz del formulario si el path del refine fuera [] */}
+      {formState.errors.root?.message && (
+        <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
+          <AlertTriangle className="mr-2 h-5 w-5" />
+          <span>{formState.errors.root.message}</span>
+        </div>
+      )}
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col min-h-0">
+          <form onSubmit={handleSubmit(onSaveAndNext, handleStep5SubmitError)} className="flex-1 flex flex-col min-h-0">
             {' '}
             {/* Ensure form can shrink and grow */}
             {/* Scrollable Questions Area */}
@@ -132,7 +170,7 @@ export function Step5Form({ formMethods, onSaveAndNext, onPrevious, totalSteps }
             </div>
             {/* Navigation Buttons (Stays Visible at the bottom) */}
             <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
-              <Button type="button" variant="outline" onClick={onPrevious} className="px-8 shadow-sm">
+              <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8 shadow-sm">
                 Anterior
               </Button>
               <Button type="submit" className="px-8 shadow-sm">
