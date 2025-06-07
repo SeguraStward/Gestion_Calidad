@@ -1,5 +1,6 @@
 import { Prisma } from '@una-gc/database/prisma/generated/client'
 
+// Type with all relations (campus, academicLoads)
 export type ClassroomWithRelations = Prisma.ClassroomGetPayload<{
   include: {
     campus: true
@@ -7,9 +8,14 @@ export type ClassroomWithRelations = Prisma.ClassroomGetPayload<{
   }
 }>
 
-export type CreateClassroomInput = Omit<Prisma.ClassroomCreateInput, 'id' | 'version' | 'createdAt' | 'updatedAt'> & {
+// Type for creating a Classroom (omit id, version, createdAt, updatedAt, and relations)
+export type CreateClassroomInput = Omit<
+  Prisma.ClassroomCreateInput,
+  'id' | 'version' | 'createdAt' | 'updatedAt' | 'campus' | 'academicLoads'
+> & {
   campus: { connect: { id: string } }
   academicLoads?: { connect: { id: string }[] }
-  createdBy?: string | null
-  updatedBy?: string | null
 }
+
+// Type for updating a Classroom (partial of create)
+export type UpdateClassroomInput = Partial<CreateClassroomInput>

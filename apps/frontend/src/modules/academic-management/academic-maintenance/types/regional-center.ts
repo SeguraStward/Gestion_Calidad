@@ -12,7 +12,6 @@ export type CreateRegionalCenterInput = Omit<
   Prisma.RegionalCenterCreateInput,
   'id' | 'version' | 'createdAt' | 'updatedAt' | 'campuses'
 > & {
-  campusId: string
   status: Status
 }
 
@@ -30,7 +29,6 @@ export interface CampusSelectOption {
 export interface RegionalCenterFilters {
   search?: string
   status?: Status
-  campusId?: string
 }
 
 // Type for regional center selection in forms
