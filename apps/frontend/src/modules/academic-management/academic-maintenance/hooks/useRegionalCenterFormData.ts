@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { HttpClient } from '@/lib/http-client'
-import { Status } from '@una-gc/database/prisma/generated/client'
-import { CampusSelectOption } from '@/modules/academic-management/academic-maintenance/types/institutional/regional-center'
+import { CampusSelectOption } from '@/modules/academic-management/academic-maintenance/types/regional-center'
 
 export function useRegionalCenterFormData() {
-  // Cargar campus para el selector
+  // Cargar campus para el selector (aunque ya no se usa en el CRUD de sedes, se deja para futuros usos)
   const { data: campuses, isLoading: isLoadingCampuses } = useQuery<CampusSelectOption[]>({
     queryKey: ['campuses'],
     queryFn: async () => {

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createGenericHooks } from '@/services/base/generic.hooks'
-import { schoolService } from '../../services/institutional/school.service'
-import { SchoolWithRelations, CreateSchoolInput } from '../../types/institutional/school'
+import { schoolService } from '../services/school.service'
+import { SchoolWithRelations, CreateSchoolInput } from '../types/school'
 
 export interface SchoolFilters {
   page?: number
@@ -82,7 +82,6 @@ export const useListSchools = (filters?: Omit<SchoolFilters, 'page' | 'limit'>) 
           ...school,
           id: school.id || (school as any)._id, // Handle _id
           faculty: school.faculty || null, // Ensure faculty object or null
-          courses: school.courses || [], // Ensure courses array
           career: school.career || [] // Ensure career array
         }
       })

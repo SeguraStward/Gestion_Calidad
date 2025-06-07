@@ -1,6 +1,6 @@
 import { createGenericHooks } from '@/services/base/generic.hooks'
-import { classroomService } from '../../services/institutional/classroom.service'
-import { ClassroomWithRelations, CreateClassroomInput } from '../../types/institutional/classroom'
+import { classroomService } from '../services/classroom.service'
+import { ClassroomWithRelations, CreateClassroomInput } from '@/shared/types/classroom'
 
 export interface ClassroomFilters {
   page?: number

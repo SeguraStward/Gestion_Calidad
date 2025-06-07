@@ -1,11 +1,11 @@
 import { createGenericHooks } from '@/services/base/generic.hooks'
-import { regionalCenterService } from '../../services/institutional/regional-center.service'
+import { regionalCenterService } from '../services/regional-center.service'
 import type {
   RegionalCenterWithRelations,
   CreateRegionalCenterInput,
   UpdateRegionalCenterInput,
   RegionalCenterFilters
-} from '../../types/institutional/regional-center'
+} from '../types/regional-center'
 import { useQuery, UseQueryOptions } from '@tanstack/react-query'
 import type { PaginatedResponse } from '@/services/interfaces'
 
@@ -18,14 +18,17 @@ export function useListRegionalCentersPaginated(
   filters?: any,
   options?: Omit<UseQueryOptions<PaginatedResponse<RegionalCenterWithRelations>, Error>, 'queryKey' | 'queryFn'>
 ) {
+  // Asegura que page y limit sean planos y no objetos anidados
+  const { page: _page, limit: _limit, ...rest } = filters || {}
   return useQuery<PaginatedResponse<RegionalCenterWithRelations>, Error>({
-    queryKey: [QUERY_KEY_PREFIX, 'paginated', page, limit, filters],
-    queryFn: () => regionalCenterService.list({ page, limit, ...filters }),
+    queryKey: [QUERY_KEY_PREFIX, 'paginated', page, limit, rest],
+    queryFn: () => regionalCenterService.list({ ...rest, page, limit }),
     ...options
   })
 }
 
 // Hook para listar centros regionales por campus
+// (No se usa en el CRUD actual, pero se deja por si se requiere en otros módulos)
 export function useListRegionalCentersByCampus(
   campusId: string | null | undefined,
   filters?: any,
@@ -70,12 +73,5 @@ export const {
   useRemove: useRemoveRegionalCenter
 } = createGenericHooks<RegionalCenterWithRelations, CreateRegionalCenterInput, UpdateRegionalCenterInput>(
   QUERY_KEY_PREFIX,
-  regionalCenterService,
-  {
-    messages: {
-      created: (data) => `Centro Regional "${data.name}" creado exitosamente`,
-      updated: (data) => `Centro Regional "${data.name}" actualizado exitosamente`,
-      deleted: () => 'Centro Regional eliminado exitosamente'
-    }
-  }
+  regionalCenterService
 )
