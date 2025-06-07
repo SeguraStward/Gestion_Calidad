@@ -13,7 +13,7 @@ import {
   useListRegionalCenters,
   useListRegionalCentersPaginated
 } from '@/modules/academic-management/academic-maintenance/hooks/institutional/useRegionalCenter'
-import { useRegionalCenterFormData } from '../../../../hooks/institutional/useRegionalCenterFormData'
+import { useRegionalCenterFormData } from '../../hooks/institutional/useRegionalCenterFormData'
 import {
   RegionalCenterWithRelations,
   CreateRegionalCenterInput,
