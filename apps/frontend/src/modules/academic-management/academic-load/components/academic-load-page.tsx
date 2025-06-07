@@ -329,7 +329,7 @@ const AcademicLoadPage = () => {
                   type: 'select',
                   name: 'classroomId',
                   label: 'Aula',
-                  options: formData.classrooms.map((cl: any) => ({ id: cl.id, name: cl.roomNumber })),
+                  options: formData.classrooms,
                   isLoading: formData.isLoadingClassrooms,
                   placeholder: formData.isLoadingClassrooms ? 'Cargando aulas...' : 'Seleccionar aula',
                   helperText: 'Aula física (opcional)'

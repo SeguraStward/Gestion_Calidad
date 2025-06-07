@@ -1,10 +1,10 @@
 // export * from './curricular/academic-load'
-export * from './curricular/course'
+export * from '../../../../shared/types/course'
 export * from './curricular/career'
 
 // export * from './institutional/institution'
 export * from './institutional/school'
 export * from './institutional/faculty'
 export * from './institutional/classroom'
-export * from './institutional/campus'
+export * from '../../../../shared/types/campus'
 export * from './institutional/regional-center'

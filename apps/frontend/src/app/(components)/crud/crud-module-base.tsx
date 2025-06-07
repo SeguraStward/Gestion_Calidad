@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useForm, FieldValues } from 'react-hook-form'
 import { toast } from 'sonner'
-import { usePagination } from '../../../hooks/usePagination'
+import { usePagination } from '../../../shared/hooks/usePagination'
 import { Button, Card, CardContent } from '@una-gc/ui/components'
 import { CrudConfig, CrudItemBase, ColumnUtilities } from './crud-types'
 import { AlertMessage } from '../ui/alert-message'
@@ -120,13 +120,23 @@ export const CrudModuleBase = <
   const handleSubmitForm = handleSubmit(async (formData) => {
     setIsProcessing(true)
     try {
+      // Sanitizar campos relacionales antes de enviar
+      const sanitizedData: Record<string, any> = { ...formData }
+      Object.keys(sanitizedData).forEach((key) => {
+        if (
+          key.endsWith('Id') &&
+          (sanitizedData[key] === '' || sanitizedData[key] === undefined || sanitizedData[key] === 'undefined')
+        ) {
+          sanitizedData[key] = null
+        }
+      })
       if (editingId && editingId !== 'new') {
         // Conversión segura utilizando unknown como intermediario
-        const updateData = formData as unknown as TUpdateInput
+        const updateData = sanitizedData as unknown as TUpdateInput
         await updateMutation.mutateAsync({ id: editingId, data: updateData })
         toast.success(`${entityName} actualizado exitosamente`)
       } else {
-        await createMutation.mutateAsync(formData as TCreateInput)
+        await createMutation.mutateAsync(sanitizedData as TCreateInput)
         toast.success(`${entityName} creado exitosamente`)
       }
 
