@@ -3,6 +3,17 @@ import { GenericRepository } from '../interfaces/generic-repository.interface';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { PaginatedResponse } from '@core/http/interfaces/paginated-response.interface';
 
+function filterValidFields(where: any, validFields: string[]): any {
+  if (!where) return undefined;
+  const filtered: any = {};
+  for (const key of Object.keys(where)) {
+    if (validFields.includes(key)) {
+      filtered[key] = where[key];
+    }
+  }
+  return Object.keys(filtered).length > 0 ? filtered : undefined;
+}
+
 @Injectable()
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 export abstract class GenericPrismaRepository<T, CreateInput, UpdateInput, WhereUniqueInput>
@@ -33,6 +44,10 @@ export abstract class GenericPrismaRepository<T, CreateInput, UpdateInput, Where
     const finalInclude = { ...this.defaultIncludes, ...include };
     const effectiveInclude = Object.keys(finalInclude).length > 0 ? finalInclude : undefined;
 
+    // Obtener los campos válidos del modelo Prisma
+    const validFields = Object.keys(model.fields || {});
+    const safeWhere = filterValidFields(where, validFields);
+
     // Add this log
     this.internalLogger.debug(
       `[${this.modelName}] Effective include for findAll: ${JSON.stringify(effectiveInclude)}`,
@@ -42,11 +57,11 @@ export abstract class GenericPrismaRepository<T, CreateInput, UpdateInput, Where
       model.findMany({
         skip,
         take: Number(limit),
-        where,
+        where: safeWhere,
         orderBy,
         include: effectiveInclude,
       }),
-      model.count({ where }),
+      model.count({ where: safeWhere }),
     ]);
 
     return {

@@ -1,0 +1,454 @@
+/* eslint-disable react/display-name */
+'use client'
+
+import { useState, useMemo } from 'react'
+import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud'
+import { CrudFormAdapter, FormSection } from '@/app/(components)/crud/crud-form-adapter'
+import {
+  useAcademicLoadList,
+  useCreateAcademicLoad,
+  useUpdateAcademicLoad,
+  useRemoveAcademicLoad,
+  useAcademicLoadOne
+} from '../hooks'
+import { useAcademicLoadFormData } from '../hooks/useAcademicLoadFormData'
+import type { AcademicLoadWithRelations, CreateAcademicLoadInput, UpdateAcademicLoadInput } from '../types/academic-load'
+import { Status } from '@una-gc/database/prisma/generated/client'
+import { ColumnDef } from '@tanstack/react-table'
+import {
+  BookOpen,
+  Users,
+  Building,
+  CalendarDays,
+  UsersRound,
+  Hash,
+  Clock,
+  DoorOpen,
+  Pencil,
+  Trash2,
+  MoreHorizontal,
+  Loader2
+} from 'lucide-react'
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Badge,
+  Calendar
+} from '@una-gc/ui/components'
+import { UseFormReturn } from 'react-hook-form'
+
+// Define the item base for CrudModuleBase
+interface AcademicLoadItem extends AcademicLoadWithRelations {}
+
+const AcademicLoadPage = () => {
+  // Usar el hook correcto para datos de formulario
+  const formDataProps = useAcademicLoadFormData()
+
+  // Definición de columnas para la tabla de cargas académicas
+  const renderColumns = useMemo(
+    () =>
+      (utils: ColumnUtilities<AcademicLoadItem>): ColumnDef<AcademicLoadItem>[] => [
+        {
+          accessorKey: 'nrc',
+          header: 'NRC',
+          size: 100,
+          cell: ({ row }) => (
+            <div className="flex items-center">
+              <Hash className="h-4 w-4 text-primary mr-2" />
+              <span>{row.original.nrc}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'course.name',
+          header: 'Curso',
+          size: 200,
+          cell: ({ row }) => (
+            <div className="flex items-center">
+              <BookOpen className="h-4 w-4 text-primary mr-2" />
+              <span className="truncate">{row.original.course?.name || 'Sin curso'}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'professor.fullName',
+          header: 'Profesor',
+          size: 180,
+          cell: ({ row }) => (
+            <div className="flex items-center">
+              <Users className="h-4 w-4 text-primary mr-2" />
+              <span className="truncate">{row.original.professor?.fullName || 'Sin profesor'}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'academicCycle.name',
+          header: 'Ciclo',
+          size: 120,
+          cell: ({ row }) => (
+            <div className="flex items-center">
+              <CalendarDays className="h-4 w-4 text-primary mr-2" />
+              <span>{row.original.academicCycle?.name || 'Sin ciclo'}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'campus.name',
+          header: 'Campus',
+          size: 120,
+          cell: ({ row }) => (
+            <div className="flex items-center">
+              <Building className="h-4 w-4 text-primary mr-2" />
+              <span>{row.original.campus?.name || 'Sin campus'}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'group.number',
+          header: 'Grupo',
+          size: 80,
+          cell: ({ row }) => (
+            <div className="flex items-center">
+              <UsersRound className="h-4 w-4 text-primary mr-2" />
+              <span>{row.original.group?.number || 'Sin grupo'}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'enrolledCapacity',
+          header: 'Cupos',
+          size: 100,
+          cell: ({ row }) => {
+            const max = row.original.maximumCapacity || 0
+            const enrolled = row.original.enrolledCapacity || 0
+            const available = max - enrolled
+            const fillPercentage = max > 0 ? (enrolled / max) * 100 : 0
+            let textColorClass = 'text-emerald-600 dark:text-emerald-400'
+            if (fillPercentage >= 90) {
+              textColorClass = 'text-red-600 dark:text-red-400'
+            } else if (fillPercentage >= 75) {
+              textColorClass = 'text-amber-600 dark:text-amber-400'
+            }
+            return (
+              <div className="flex flex-col">
+                <span className={textColorClass}>
+                  {enrolled}/{max} <span className="text-xs">({available} disp.)</span>
+                </span>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 mt-1 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${
+                      fillPercentage >= 90 ? 'bg-red-500' : fillPercentage >= 75 ? 'bg-amber-500' : 'bg-emerald-500'
+                    }`}
+                    style={{ width: `${Math.min(fillPercentage, 100)}%` }}
+                  />
+                </div>
+              </div>
+            )
+          }
+        },
+        {
+          accessorKey: 'classroom.roomNumber',
+          header: 'Aula',
+          size: 120,
+          cell: ({ row }) => (
+            <div className="flex items-center">
+              <DoorOpen className="h-4 w-4 text-primary mr-2" />
+              <span>{row.original.classroom?.roomNumber || 'Sin aula'}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'schedule.day',
+          header: 'Horario',
+          size: 120,
+          cell: ({ row }) => {
+            const schedule = row.original.schedule
+            return (
+              <div className="flex items-center">
+                <Clock className="h-4 w-4 text-primary mr-2" />
+                <span>{schedule ? `${schedule.day || ''} ${schedule.startTime}-${schedule.endTime}` : 'Sin horario'}</span>
+              </div>
+            )
+          }
+        },
+        {
+          accessorKey: 'status',
+          header: 'Estado',
+          size: 100,
+          cell: ({ row }) => {
+            const status = row.original.status
+            return (
+              <Badge
+                variant={status === Status.ACTIVE ? 'outline' : 'secondary'}
+                className={
+                  status === Status.ACTIVE
+                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                    : ''
+                }
+              >
+                {status === Status.ACTIVE ? 'Activo' : 'Inactivo'}
+              </Badge>
+            )
+          }
+        },
+        {
+          id: 'actions',
+          header: () => <div className="text-right">Acciones</div>,
+          size: 80,
+          cell: ({ row }) => (
+            <div className="text-right">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Abrir menú</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {' '}
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      utils.onEdit(row.original.id)
+                    }}
+                    disabled={utils.isProcessing}
+                  >
+                    {utils.isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pencil className="mr-2 h-4 w-4" />}
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      utils.onDelete(row.original.id)
+                    }}
+                    className="text-red-600 hover:!text-red-600 hover:!bg-red-100 dark:hover:!bg-red-900/50"
+                    disabled={
+                      utils.isProcessing ||
+                      (utils.deleteOperation.isPending && utils.deleteOperation.variables === row.original.id)
+                    }
+                  >
+                    {utils.isProcessing ||
+                    (utils.deleteOperation.isPending && utils.deleteOperation.variables === row.original.id) ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="mr-2 h-4 w-4" />
+                    )}
+                    Eliminar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )
+        }
+      ],
+    []
+  ) // Función para renderizar el formulario de creación/edición
+  const renderForm = useMemo(() => {
+    return ({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) => {
+      const formData = formDataProps
+      // Aquí defines las secciones y campos del formulario usando CrudFormAdapter
+      return (
+        <CrudFormAdapter
+          control={control}
+          errors={errors}
+          editingItem={editingItem}
+          isUpdate={isUpdate}
+          isProcessing={isProcessing}
+          handleSubmitForm={handleSubmitForm}
+          handleCancel={handleCancel}
+          title={isUpdate ? 'Editar Carga Académica' : 'Crear Nueva Carga Académica'}
+          description={
+            isUpdate ? 'Actualice los datos de la carga académica' : 'Complete los datos para registrar una nueva carga académica'
+          }
+          sections={() => [
+            {
+              title: 'Datos Generales',
+              fields: [
+                {
+                  type: 'text',
+                  name: 'nrc',
+                  label: 'NRC',
+                  required: true,
+                  placeholder: 'Ej: 12345',
+                  helperText: 'Número de referencia del curso'
+                },
+                {
+                  type: 'select',
+                  name: 'courseId',
+                  label: 'Curso',
+                  required: true,
+                  options: formData.courses.map((c: any) => ({ id: c.id, name: c.name })),
+                  isLoading: formData.isLoadingCourses,
+                  placeholder: formData.isLoadingCourses ? 'Cargando cursos...' : 'Seleccionar curso',
+                  helperText: 'Curso asociado a la carga académica'
+                },
+                {
+                  type: 'select',
+                  name: 'professorId',
+                  label: 'Profesor',
+                  required: true,
+                  options: formData.professors.map((p: any) => ({ id: p.id, name: p.name })),
+                  isLoading: formData.isLoadingProfessors,
+                  placeholder: formData.isLoadingProfessors ? 'Cargando profesores...' : 'Seleccionar profesor',
+                  helperText: 'Profesor asignado'
+                },
+                {
+                  type: 'select',
+                  name: 'academicCycleId',
+                  label: 'Ciclo Académico',
+                  required: true,
+                  options: formData.academicCycles.map((ac: any) => ({ id: ac.id, name: ac.name })),
+                  isLoading: formData.isLoadingAcademicCycles,
+                  placeholder: formData.isLoadingAcademicCycles ? 'Cargando ciclos...' : 'Seleccionar ciclo académico',
+                  helperText: 'Ciclo académico'
+                },
+                {
+                  type: 'select',
+                  name: 'campusId',
+                  label: 'Campus',
+                  required: true,
+                  options: formData.campuses.map((c: any) => ({ id: c.id, name: c.name })),
+                  isLoading: formData.isLoadingCampuses,
+                  placeholder: formData.isLoadingCampuses ? 'Cargando campus...' : 'Seleccionar campus',
+                  helperText: 'Campus donde se imparte'
+                },
+                {
+                  type: 'select',
+                  name: 'groupId',
+                  label: 'Grupo',
+                  required: true,
+                  options: formData.groups.map((g: any) => ({ id: g.id, name: g.name || g.number })),
+                  isLoading: formData.isLoadingGroups,
+                  placeholder: formData.isLoadingGroups ? 'Cargando grupos...' : 'Seleccionar grupo',
+                  helperText: 'Grupo asignado'
+                },
+                {
+                  type: 'select',
+                  name: 'classroomId',
+                  label: 'Aula',
+                  options: formData.classrooms,
+                  isLoading: formData.isLoadingClassrooms,
+                  placeholder: formData.isLoadingClassrooms ? 'Cargando aulas...' : 'Seleccionar aula',
+                  helperText: 'Aula física (opcional)'
+                },
+                {
+                  type: 'select',
+                  name: 'scheduleId',
+                  label: 'Horario',
+                  options: formData.schedules.map((s: any) => ({
+                    id: s.id,
+                    name: `${s.day || s.dayOfWeek || ''} ${s.startTime}-${s.endTime}`
+                  })),
+                  isLoading: formData.isLoadingSchedules,
+                  placeholder: formData.isLoadingSchedules ? 'Cargando horarios...' : 'Seleccionar horario',
+                  helperText: 'Horario asignado (opcional)'
+                },
+                {
+                  type: 'number',
+                  name: 'maximumCapacity',
+                  label: 'Cupo Máximo',
+                  required: true,
+                  min: 1,
+                  helperText: 'Cantidad máxima de estudiantes'
+                },
+                {
+                  type: 'number',
+                  name: 'enrolledCapacity',
+                  label: 'Cupo Inscrito',
+                  required: true,
+                  min: 0,
+                  helperText: 'Cantidad de estudiantes inscritos'
+                },
+                {
+                  type: 'select',
+                  name: 'status',
+                  label: 'Estado',
+                  required: true,
+                  options: [
+                    { id: Status.ACTIVE, name: 'Activo' },
+                    { id: Status.INACTIVE, name: 'Inactivo' }
+                  ],
+                  helperText: 'Estado de la carga académica'
+                },
+                {
+                  type: 'date',
+                  name: 'date',
+                  label: 'Fecha',
+                  required: true,
+                  helperText: 'Fecha de inicio'
+                }
+              ]
+            }
+          ]}
+        />
+      )
+    }
+  }, [formDataProps])
+  // Configuración del componente CrudModuleBase
+  const crudConfig = useMemo(
+    () => ({
+      entityName: 'Carga Académica',
+      entityNamePlural: 'Cargas Académicas',
+      searchPlaceholder: 'Buscar por curso, profesor, NRC...',
+      usePaginatedQuery: useAcademicLoadList,
+      useCreateMutation: useCreateAcademicLoad,
+      useUpdateMutation: useUpdateAcademicLoad,
+      useDeleteMutation: useRemoveAcademicLoad,
+      useOneQuery: useAcademicLoadOne,
+      defaultFormValues: {
+        nrc: '',
+        maximumCapacity: 30,
+        enrolledCapacity: 0,
+        date: new Date(),
+        status: Status.ACTIVE,
+        academicCycleId: '',
+        campusId: '',
+        courseId: '',
+        classroomId: null,
+        groupId: '',
+        scheduleId: null,
+        professorId: ''
+      } as unknown as CreateAcademicLoadInput,
+      renderForm,
+      renderColumns,
+      // Procesar los items para la edición, asegurando que las fechas y relaciones estén correctas
+      processItemForEditing: (item: AcademicLoadItem) => {
+        return {
+          ...item,
+          date: item.date ? new Date(item.date) : new Date(),
+          academicCycleId: item.academicCycleId || item.academicCycle?.id || '',
+          campusId: item.campusId || item.campus?.id || '',
+          courseId: item.courseId || item.course?.id || '',
+          classroomId: item.classroomId || item.classroom?.id || null,
+          groupId: item.groupId || item.group?.id || '',
+          scheduleId: item.scheduleId || item.schedule?.id || null,
+          professorId: item.professorId || item.professor?.id || ''
+        } as unknown as UpdateAcademicLoadInput
+      }, // Procesar el item para su visualización en la tabla
+      processItem: (item: AcademicLoadItem) => {
+        return {
+          ...item,
+          // Calcular campos adicionales o formatear datos si es necesario
+          availableSeats: item.maximumCapacity - item.enrolledCapacity
+        }
+      },
+      // Validación pre-eliminación
+      preDeleteCheck: (item: AcademicLoadItem) => {
+        // Si hay estudiantes matriculados, mostrar advertencia
+        if (item.enrolledCapacity > 0) {
+          return 'No se puede eliminar la carga académica porque tiene estudiantes matriculados.'
+        }
+        // Si no hay problemas, retornar null (sin error)
+        return null
+      }
+    }),
+    [renderForm, renderColumns]
+  )
+
+  return <CrudModuleBase {...crudConfig} />
+}
+
+export { AcademicLoadPage }

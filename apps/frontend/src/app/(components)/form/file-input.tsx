@@ -1,7 +1,7 @@
 'use client'
 
 import { Label } from '@una-gc/ui/components/label'
-import { Input } from '@una-gc/ui/components/input'
+import { Input as ShadInput } from '@una-gc/ui/components/input' // Import ShadCN Input
 import { forwardRef } from 'react'
 
 interface FormFileInputProps {
@@ -20,21 +20,23 @@ export const FormFileInput = forwardRef<HTMLInputElement, FormFileInputProps>(
     }
 
     return (
-      <div className="flex flex-col justify-center items-center h-full space-y-1">
+      <div className="grid w-full max-w-sm items-center gap-1.5">
+        {' '}
+        {/* ShadCN recommended styling for file input */}
         <Label htmlFor={id}>
           {label} {required && <span className="text-red-500">*</span>}
         </Label>
-        <Input
+        <ShadInput // Use ShadCN Input component
           id={id}
           type="file"
           accept={accept}
           required={required}
           onChange={handleChange}
-          ref={ref} // ✅ Aquí aplicás el ref al input real
+          ref={ref}
         />
       </div>
     )
   }
 )
 
-FormFileInput.displayName = 'FormFileInput' // Necesario para que React no tire warnings
+FormFileInput.displayName = 'FormFileInput'

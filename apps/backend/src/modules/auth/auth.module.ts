@@ -10,7 +10,6 @@ import { AuthService } from './auth.service';
 import { GoogleStrategy } from './strategies/google-strategy';
 import { JwtStrategy } from './strategies/jwt-strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
-import { RoleManagerService } from './role-manager.service';
 
 @Module({
   imports: [
@@ -31,13 +30,7 @@ import { RoleManagerService } from './role-manager.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    GoogleStrategy,
-    JwtStrategy,
-    JwtRefreshStrategy,
-    RoleManagerService, // Añadir RoleManagerService a los providers
-  ],
-  exports: [AuthService, RoleManagerService], // Exportar AuthService y RoleManagerService si son usados por otros módulos
+  providers: [AuthService, GoogleStrategy, JwtStrategy, JwtRefreshStrategy],
+  exports: [AuthService],
 })
 export class AuthModule {}

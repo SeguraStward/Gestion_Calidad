@@ -1,32 +1,44 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsNotEmpty } from 'class-validator';
-
-import { Status } from '@una-gc/database/prisma/generated/client'; // import for Prisma enum
+import { IsOptional, IsString, IsEnum } from 'class-validator';
+import { Expose, Type } from 'class-transformer';
+import { Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
+import { CampusDto } from '@src/modules/campuses/dtos/campus.dto';
 
 export class RegionalCenterDto extends BaseDto {
   @ApiPropertyOptional({ description: 'RegionalCenter ID' })
+  @Expose()
   @IsString()
   @IsOptional()
   id?: string;
 
-  @ApiProperty({ description: 'Regional Center code', example: 'RC-001' })
+  @ApiProperty({ description: 'Code' })
+  @Expose()
   @IsString()
-  @IsNotEmpty()
   code: string;
 
-  @ApiProperty({ description: 'Regional Center name', example: 'Pacific Regional Center' })
+  @ApiProperty({ description: 'Name' })
+  @Expose()
   @IsString()
-  @IsNotEmpty()
   name: string;
 
-  @ApiPropertyOptional({ description: 'Regional Center status', enum: Status, default: Status.ACTIVE })
+  @ApiProperty({ description: 'Status', enum: Status })
+  @Expose()
   @IsEnum(Status)
-  @IsOptional()
-  status?: Status;
+  status: Status;
 
-  constructor(dto: Partial<RegionalCenterDto> = {}) {
+  @ApiPropertyOptional({ type: () => CampusDto })
+  @Expose()
+  @Type(() => CampusDto)
+  @IsOptional()
+  campus?: CampusDto;
+
+  constructor(partial: Partial<RegionalCenterDto> | any = {}) {
     super();
-    Object.assign(this, dto);
+    Object.assign(this, partial);
+
+    if (partial.campus && !(partial.campus instanceof CampusDto)) {
+      this.campus = new CampusDto(partial.campus);
+    }
   }
 }

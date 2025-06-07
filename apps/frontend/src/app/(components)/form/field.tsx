@@ -1,7 +1,7 @@
 'use client'
 
 import { useController, Control, FieldError, Path } from 'react-hook-form'
-import { Input } from '@una-gc/ui/components/input'
+import { Input as ShadInput } from '@una-gc/ui/components/input' // Import ShadCN Input
 import { Label } from '@una-gc/ui/components/label'
 
 interface FormFieldProps<T extends Record<string, any>> {
@@ -52,7 +52,7 @@ export const FormField = <T extends Record<string, any>>({
         {label}
         {required && <span className="text-red-500">*</span>}
       </Label>
-      <Input
+      <ShadInput // Use ShadCN Input component
         id={id}
         type={type}
         placeholder={placeholder}
@@ -62,7 +62,7 @@ export const FormField = <T extends Record<string, any>>({
         min={min}
         max={max}
         step={step}
-        className={error ? 'border-red-500' : ''}
+        className={error ? 'border-red-500' : ''} // Conditional error styling
         {...inputProps}
       />
       {error && <p className="text-sm text-red-500">{error.message}</p>}

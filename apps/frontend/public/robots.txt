@@ -1,0 +1,10 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Disallow specific paths that shouldn't be indexed
+Disallow: /api/
+Disallow: /admin/
+Disallow: /auth/
+
+Sitemap: https://gestion-calidad.una.ac.cr/sitemap.xml

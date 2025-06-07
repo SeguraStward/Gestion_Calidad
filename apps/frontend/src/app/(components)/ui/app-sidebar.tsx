@@ -19,7 +19,6 @@ import {
   Users
 } from 'lucide-react'
 import { NavMain } from './nav-main'
-import { NavProjects } from './nav-projects'
 import { NavUser } from './nav-user'
 import { TeamSwitcher } from './team-switcher'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@una-gc/ui/components/sidebar'
@@ -28,7 +27,7 @@ const data = {
   user: {
     name: 'Daniel Araya',
     email: 'darayaroma@gmail.com',
-    avatar: '/assets/una-gc.jpg'
+    avatar: '/assets/images/default-profile-image.png'
   },
   teams: [
     {
@@ -44,12 +43,17 @@ const data = {
       icon: Building,
       items: [
         { title: 'Importación de datos', url: '/academic-management/bulk-import' },
-        { title: 'Asignación de profesores', url: '/academic-management/professor-assignment' },
-        //{ title: 'Horarios', url: '/academic-management/schedule-assignment' },
-        { title: 'Mantenimientos académicos', url: '/academic-management/academic-maintenance' }
+        { title: 'Asignación de profesores', url: '/academic-management/academic-load' },
+        { title: 'Mantenimiento General', url: '/academic-management/academic-maintenance' }
       ]
     },
     {
+      title: 'Gestión de Usuarios',
+      url: '/gestión-usuarios',
+      icon: Users,
+      items: [{ title: 'Lista de Informes', url: '/final-reports' }]
+    },
+    /*{
       title: 'Formación Académica',
       url: '/admin/academics',
       icon: GalleryVerticalEnd,
@@ -84,26 +88,26 @@ const data = {
       url: '/admin/graduation-works',
       icon: GraduationCap,
       items: [{ title: 'Lista de Trabajos', url: '/admin/graduation-works' }]
-    },
+    },*/
     {
       title: 'Informe Final',
       url: '/final-report',
       icon: FileText,
       items: [{ title: 'Lista de Informes', url: '/final-reports' }]
     },
-    {
+    /*{
       title: 'Modelos SINAES',
       url: '/admin/sinaes-models',
       icon: Building2,
       items: [{ title: 'Lista de Modelos', url: '/admin/sinaes-models' }]
-    },
+    },*/
     {
       title: 'Reportes',
       url: '/admin/reports',
       icon: BarChart3,
       items: [{ title: 'Lista de Reportes', url: '/admin/reports' }]
     },
-    {
+    /*{
       title: 'Comisiones',
       url: '/admin/commissions',
       icon: Users,
@@ -114,12 +118,6 @@ const data = {
       url: '/admin/final-graduation-work',
       icon: Award,
       items: [{ title: 'Lista de Trabajos', url: '/admin/final-graduation-work' }]
-    },
-    {
-      title: 'Cambio de Rol',
-      url: '/auth/select-role',
-      icon: Frame,
-      items: [{ title: 'Selecciona tu rol', url: '/auth/select-role' }]
     }
   ],
   projects: [
@@ -137,6 +135,12 @@ const data = {
       name: 'Travel',
       url: '#',
       icon: Map
+    }*/
+    {
+      title: 'Cambio de Rol',
+      url: '/auth/select-role',
+      icon: Users,
+      items: [{ title: 'Seleccionar Rol', url: '/auth/select-role' }]
     }
   ]
 }
@@ -149,7 +153,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

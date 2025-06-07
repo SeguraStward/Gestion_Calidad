@@ -10,6 +10,7 @@ import { UserDto } from './dtos/user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 
 import { PrismaService } from '@src/prisma/prisma.service';
+import { PaginatedResponse } from '@src/core/http/interfaces/paginated-response.interface';
 
 @Injectable()
 export class UsersService extends GenericService<User, UserDto, UserDto> {
@@ -146,5 +147,44 @@ export class UsersService extends GenericService<User, UserDto, UserDto> {
     }
 
     return requestedRole;
+  }
+
+  /**
+   * Finds users by role name and user status
+   * @param roleName - Name of the role to filter users by
+   * @param userStatus - Status of the user (e.g., 'ACTIVE', 'INACTIVE')
+   * @param page - Page number for pagination
+   * @param limit - Number of items per page
+   * @returns Paginated list of users with the specified role and user status
+   */
+  async findUsersByRoleNameAndStatus(
+    roleName: string,
+    userStatus: string = 'ACTIVE',
+    page = 1,
+    limit = 10,
+  ): Promise<PaginatedResponse<UserDto>> {
+    this.logger.log(`Finding users with role name: ${roleName} and user status: ${userStatus}`);
+
+    try {
+      // Create a where clause for the query
+      const where = {
+        status: userStatus, // Filter by user status instead of role status
+        roles: {
+          some: {
+            name: roleName,
+          },
+        },
+      };
+
+      // Use the parent class's findAll method which handles pagination and DTO transformation
+      return await super.findAll(page, limit, where);
+    } catch (error) {
+      if (error instanceof Error) {
+        this.logger.error(`Error finding users by role and status: ${error.message}`, error.stack);
+      } else {
+        this.logger.error(`Error finding users by role and status:`, JSON.stringify(error));
+      }
+      throw error;
+    }
   }
 }

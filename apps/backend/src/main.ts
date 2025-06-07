@@ -10,7 +10,7 @@ import cookieParser from 'cookie-parser';
 
 import { HttpResponseInterceptor } from '@core/http/interceptors/http-response.interceptor';
 import { ErrorResponseFilter } from '@core/http/filters/error-response.filter';
-// import { AuditFieldsInterceptor } from '@core/common/interceptors/audit-fields.interceptor';
+import { AuditFieldsInterceptor } from '@core/common/interceptors/audit-fields.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -25,7 +25,10 @@ async function bootstrap() {
 
   app.use(helmet());
 
-  // app.useGlobalInterceptors(new AuditFieldsInterceptor());
+  if (!(process.env.DISABLED_AUDIT_FIELDS == 'true')) {
+    app.useGlobalInterceptors(new AuditFieldsInterceptor());
+  }
+
   app.useGlobalInterceptors(new HttpResponseInterceptor());
   app.useGlobalFilters(new ErrorResponseFilter());
   app.useGlobalPipes(new ValidationPipe());

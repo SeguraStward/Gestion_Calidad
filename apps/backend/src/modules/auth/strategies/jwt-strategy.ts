@@ -50,29 +50,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Usuario no encontrado');
     }
 
-    // Verificar el rol activo si existe en el payload
-    let activeRole = null;
-    if (payload.activeRole) {
-      // Verificar que el usuario tenga este rol
-      const matchingRole = user.roles.find((role) => role.id === payload.activeRole.id);
-
-      if (!matchingRole) {
-        this.logger.warn(
-          `User ${user.id} has an active role in token that doesn't belong to them: ${payload.activeRole.id}`,
-        );
-        // No lanzamos excepción porque queremos permitir que continúe sin rol activo
-      } else {
-        activeRole = payload.activeRole;
-      }
-    }
-
+    // Ya no manejamos activeRole aquí, se manejará en el PermissionsGuard
     return {
       id: user.id,
       sub: user.id,
       email: user.email,
       fullName: user.fullName,
       fullLastName: user.fullLastName,
-      activeRole: activeRole,
       roles: user.roles,
     };
   }

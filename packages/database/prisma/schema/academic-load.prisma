@@ -3,7 +3,7 @@ model AcademicLoad {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   version Int    @default(0) @map("__v")
 
-  nrc String  
+  nrc String
 
   maximumCapacity  Int
   enrolledCapacity Int

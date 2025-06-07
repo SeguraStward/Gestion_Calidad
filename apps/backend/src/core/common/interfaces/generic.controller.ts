@@ -10,21 +10,23 @@ import {
   NotFoundException,
   HttpStatus,
   HttpCode,
-  // UseGuards,
+  UseGuards,
   ExecutionContext,
   createParamDecorator,
 } from '@nestjs/common';
 import type { IGenericService } from './generic-service.interface';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-// import { UseGuards } from '@nestjs/common';
-// import { JwtAuthGuard } from '@src/modules/auth/guards/jwt-auth.guard';
+
 import { buildPrismaInclude } from '@src/utils/prisma-include.parser';
 
-// import { JwtAuthGuard } from '@src/modules/auth/guards/jwt-auth.guard';
-// import { PermissionsGuard } from '@src/modules/auth/guards/permissions.guard';
-// import { RequirePermissions } from '@src/modules/auth/decorators/require-permissions.decorator';
+import { JwtAuthGuard } from '@src/modules/auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '@src/modules/auth/guards/permissions.guard';
+import {
+  RequirePermissions,
+  RESOURCE_NAME_TOKEN,
+} from '@src/modules/auth/decorators/require-permissions.decorator';
 
-// import { PermissionType } from '@una-gc/database/prisma/generated/client';
+import { PermissionType } from '@una-gc/database/prisma/generated/client';
 
 export const ResourceNameParam = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
   const controller = ctx.getClass();
@@ -32,7 +34,7 @@ export const ResourceNameParam = createParamDecorator((data: unknown, ctx: Execu
   return instance().resourceName;
 });
 
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 export abstract class GenericController<D, C, U = Partial<C>> {
   protected abstract readonly logger: Logger;
 
@@ -42,8 +44,8 @@ export abstract class GenericController<D, C, U = Partial<C>> {
 
   @Get()
   @ApiOperation({ summary: 'Find all records with pagination and optional relations' })
-  // @UseGuards(PermissionsGuard)
-  // @RequirePermissions((params) => ({ resource: params.resourceName, action: PermissionType.READ }))
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.READ })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Find all records with pagination' })
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -97,8 +99,8 @@ export abstract class GenericController<D, C, U = Partial<C>> {
 
   @Get(':id')
   @ApiOperation({ summary: 'Find record by id with optional relations' })
-  // @UseGuards(PermissionsGuard)
-  // @RequirePermissions((params) => ({ resource: params.resourceName, action: PermissionType.READ }))
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.READ })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Find record by id' })
   @ApiParam({ name: 'id', type: String })
@@ -121,8 +123,8 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   }
 
   @Post()
-  // @UseGuards(PermissionsGuard)
-  // @RequirePermissions((params) => ({ resource: params.resourceName, action: PermissionType.READ }))
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.CREATE })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create new record' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Record successfully created' })
@@ -132,8 +134,8 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   }
 
   @Put(':id')
-  // @UseGuards(PermissionsGuard)
-  // @RequirePermissions((params) => ({ resource: params.resourceName, action: PermissionType.READ }))
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.UPDATE })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update record by id' })
   @ApiParam({ name: 'id', type: String })
@@ -143,8 +145,8 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   }
 
   @Delete(':id')
-  // @UseGuards(PermissionsGuard)
-  // @RequirePermissions((params) => ({ resource: params.resourceName, action: PermissionType.READ }))
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.DELETE })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete record by id' })
   @ApiParam({ name: 'id', type: String })

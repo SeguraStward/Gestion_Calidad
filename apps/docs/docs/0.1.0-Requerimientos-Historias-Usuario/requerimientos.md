@@ -16,16 +16,16 @@ sidebar_position: 1
 
 - Inicio de sesión con credenciales de usuario (correo institucional). ✅
 - Autenticación con Google utilizando el dominio institucional. ✅
-- Activación e inactivación de usuarios por parte de administradores. ❌
 - Gestión de roles y permisos específicos para distintos usuarios (administradores, profesores, "ASISTENTES"). 🔄
 - Registro de actividad de inicio de sesión (IP, ubicación, dispositivo utilizado). ❌
 
-### 1.2 Módulo de Perfil de Usuario (FRANCISCO MORA CABEZAS) ESTE ES URGENTE
+### 1.2 Módulo de Perfil de Gestión de Usuarios (FRANCISCO MORA CABEZAS) ESTE ES URGENTE
 
 - Visualización del perfil con información básica (nombre, rol, permisos, correo).
 - Edición de información personal (nombre, teléfono, foto de perfil).
 - Personalización de interfaz con opciones de accesibilidad.
 - Configuración de privacidad para definir la información visible a otros usuarios.
+- Activación e inactivación de usuarios por parte de administradores. ❌
 
 ### 1.3 Módulo de Configuración General y Accesibilidad (FRANCISCO MORA CABEZAS) ESTE NO ES URGENTE
 

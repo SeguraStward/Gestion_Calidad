@@ -1,226 +1,131 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { CheckCircle, Loader2, RefreshCcw } from 'lucide-react'
+import { Loader2, ArrowLeft, AlertTriangle, UserCheck, Shield, Users } from 'lucide-react'
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@una-gc/ui/components/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@una-gc/ui/components/card'
 import { Button } from '@una-gc/ui/components/button'
-import { Skeleton } from '@una-gc/ui/components/skeleton'
 import { Alert, AlertDescription } from '@una-gc/ui/components/alert'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@una-gc/ui/components/collapsible'
-import { RadioGroup, RadioGroupItem } from '@una-gc/ui/components/radio-group'
-import { Label } from '@una-gc/ui/components/label'
+import { RadioGroup } from '@una-gc/ui/components/radio-group'
+import { Badge } from '@una-gc/ui/components/badge'
+import { Separator } from '@una-gc/ui/components/separator'
 
 import { cn } from '@una-gc/ui/lib/utils'
-import { Role, AuthService } from '@/modules/auth/auth.service'
-import { toast } from 'sonner'
-import axios, { AxiosError } from 'axios'
+import { useRoleSelection } from '@/modules/auth/hooks'
+import { AuthLayout, RoleCard, RoleLoadingSkeleton, EmptyRoleState } from '@/modules/auth/components'
 
 export default function SelectRolePage() {
-  const [roles, setRoles] = useState<Role[]>([])
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [debugInfo, setDebugInfo] = useState<string>('')
-  const router = useRouter()
-
-  function handleApiError(error: any) {
-    if (typeof error === 'object' && error !== null && 'response' in error && error.response) {
-      setDebugInfo(
-        JSON.stringify(
-          {
-            status: error.response.status,
-            statusText: error.response.statusText,
-            data: error.response.data
-          },
-          null,
-          2
-        )
-      )
-    } else {
-      setDebugInfo(JSON.stringify(error, null, 2))
-    }
-  }
-
-  const fetchRoles = useCallback(async () => {
-    console.log('🏁 Starting to fetch user roles...')
-    try {
-      setLoading(true)
-      const userRoles = await AuthService.getUserActiveRoles()
-      console.log('📊 User roles received:', userRoles)
-
-      if (Array.isArray(userRoles)) {
-        setRoles(userRoles)
-
-        // Auto-select if only one role is available
-        if (userRoles.length === 1 && userRoles[0]) {
-          setSelectedRole(userRoles[0])
-        }
-      } else {
-        console.error('❌ Invalid response format for roles:', userRoles)
-        setRoles([])
-        toast.error('Formato de respuesta inválido. Contacta al soporte.')
-      }
-    } catch (error) {
-      console.error('❌ Error fetching roles:', error)
-      handleApiError(error)
-      toast.error('No se pudieron cargar tus roles. Intenta de nuevo.')
-    } finally {
-      setLoading(false)
-    }
-  }, []) // Sin dependencias ya que no usa variables externas
-
-  useEffect(() => {
-    fetchRoles()
-  }, [fetchRoles])
-
-  const handleSubmit = async () => {
-    if (!selectedRole) return
-
-    try {
-      setSubmitting(true)
-      console.log('🔄 Starting role switch for role:', selectedRole)
-      const response = await AuthService.switchRole(selectedRole.id)
-      console.log('✅ Role switch successful, response:', response)
-
-      if (!response.success) {
-        throw new Error('Role switch was unsuccessful')
-      }
-
-      // Solo guardamos la información del rol para uso local
-      const roleData = {
-        id: selectedRole.id,
-        name: selectedRole.name,
-        permissions: selectedRole.permissions || []
-      }
-
-      localStorage.setItem('selected_role', JSON.stringify(roleData))
-
-      toast.success(`Rol cambiado a: ${selectedRole.name}`)
-      router.push('/profile')
-    } catch (error) {
-      console.error('❌ Error in handleSubmit:', error)
-
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError
-        handleApiError(axiosError)
-
-        if (axiosError.response?.status === 401) {
-          toast.error('Sesión expirada. Por favor inicia sesión nuevamente.')
-        } else if (axiosError.response?.status === 403) {
-          toast.error('No tienes permiso para usar este rol.')
-        } else {
-          toast.error('Error al seleccionar rol. Intenta de nuevo.')
-        }
-      } else {
-        handleApiError(error)
-        toast.error('Error inesperado. Intenta de nuevo.')
-      }
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  const {
+    roles,
+    selectedRole,
+    loading,
+    submitting,
+    error,
+    canSkip,
+    hasActiveRole,
+    setSelectedRole,
+    handleSubmit,
+    handleSkip,
+    fetchRoles
+  } = useRoleSelection()
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-center">Selecciona tu rol</CardTitle>
-      </CardHeader>
+    <AuthLayout
+      title="Selecciona tu rol"
+      subtitle="Elige el rol con el que deseas trabajar"
+      icon={<Users className="w-6 h-6 text-primary" />}
+      maxWidth="lg"
+    >
+      {/* Status Badge */}
+      {hasActiveRole && (
+        <div className="flex justify-center">
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <UserCheck className="w-3 h-3 mr-1" />
+            Ya tienes un rol activo
+          </Badge>
+        </div>
+      )}
 
-      <CardContent className="space-y-4">
-        {loading ? (
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3">
-              <Skeleton className="h-4 w-4 rounded-full" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-            <div className="flex items-center space-x-3">
-              <Skeleton className="h-4 w-4 rounded-full" />
-              <Skeleton className="h-4 w-40" />
-            </div>
-            <div className="flex items-center space-x-3">
-              <Skeleton className="h-4 w-4 rounded-full" />
-              <Skeleton className="h-4 w-36" />
-            </div>
-          </div>
-        ) : roles.length === 0 ? (
-          <div className="space-y-4">
-            <Alert variant="destructive">
-              <AlertDescription>No tienes roles asignados o hubo un problema al cargar tus roles.</AlertDescription>
+      {/* Card principal */}
+      <Card className="shadow-xl border border-border bg-white/90 dark:bg-zinc-900/90 rounded-xl overflow-hidden">
+        <CardHeader className="pb-4 bg-primary/5">
+          <CardTitle className="text-2xl font-bold flex items-center gap-2 text-primary">
+            <Shield className="w-6 h-6 text-primary" />
+            Roles Disponibles
+          </CardTitle>
+          <CardDescription className="text-base text-muted-foreground">
+            {hasActiveRole
+              ? 'Ya tienes un rol activo. Puedes seleccionar un nuevo rol o continuar con el actual.'
+              : roles.length > 1
+                ? `Tienes ${roles.length} roles disponibles. Selecciona uno para continuar.`
+                : roles.length === 1
+                  ? 'Tienes 1 rol disponible.'
+                  : 'Cargando roles disponibles...'}
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-6 py-8 px-6">
+          {error && (
+            <Alert variant="destructive" className="border-red-200 bg-red-50">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-red-800">{error}</AlertDescription>
             </Alert>
+          )}
 
-            <Button onClick={fetchRoles} variant="outline" className="w-full">
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              Intentar de nuevo
-            </Button>
-
-            {debugInfo && (
-              <Collapsible className="border rounded-md">
-                <CollapsibleTrigger className="w-full p-3 text-sm font-medium text-left text-yellow-800 bg-yellow-50 hover:bg-yellow-100 rounded-md">
-                  Información de depuración
-                </CollapsibleTrigger>
-                <CollapsibleContent className="p-3 bg-yellow-50 rounded-md">
-                  <pre className="text-xs overflow-auto bg-white p-2 rounded border border-yellow-200 max-h-60">
-                    {debugInfo || 'Sin información adicional'}
-                  </pre>
-                </CollapsibleContent>
-              </Collapsible>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
+          {loading ? (
+            <RoleLoadingSkeleton />
+          ) : roles.length === 0 ? (
+            <EmptyRoleState onRetry={fetchRoles} />
+          ) : (
             <RadioGroup
               value={selectedRole?.id.toString()}
               onValueChange={(value) => {
                 const role = roles.find((r) => r.id.toString() === value)
                 if (role) setSelectedRole(role)
               }}
+              className="space-y-3"
             >
-              {roles.map((role) => (
-                <div
-                  key={role.id}
-                  className={cn(
-                    'flex items-center space-x-2 rounded-md border p-3',
-                    selectedRole?.id === role.id ? 'border-primary bg-accent' : 'border-input'
-                  )}
-                >
-                  <RadioGroupItem value={role.id.toString()} id={`role-${role.id}`} />
-                  <Label htmlFor={`role-${role.id}`} className="flex-1 cursor-pointer">
-                    <div className="font-medium">{role.name}</div>
-                    {role.description && <div className="text-xs text-muted-foreground mt-1">{role.description}</div>}
-                  </Label>
-                  {selectedRole?.id === role.id && <CheckCircle className="h-4 w-4 text-primary" />}
+              {roles.map((role, index) => (
+                <div key={role.id}>
+                  <RoleCard role={role} isSelected={selectedRole?.id === role.id} index={index} totalRoles={roles.length} />
+                  {index < roles.length - 1 && <Separator className="my-3" />}
                 </div>
               ))}
             </RadioGroup>
-
-            <Collapsible className="border rounded-md">
-              <CollapsibleTrigger className="w-full p-2 text-sm font-medium text-left text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-md">
-                Mostrar información de depuración
-              </CollapsibleTrigger>
-              <CollapsibleContent className="p-2 bg-gray-50 rounded-md">
-                <pre className="text-xs overflow-auto bg-white p-2 rounded border border-gray-200 max-h-60">
-                  {JSON.stringify({ roles, selectedRole }, null, 2)}
-                </pre>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )}
-      </CardContent>
-
-      <CardFooter>
-        <Button onClick={handleSubmit} disabled={!selectedRole || submitting || loading} className="w-full">
-          {submitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Procesando...
-            </>
-          ) : (
-            'Continuar'
           )}
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardContent>
+
+        <CardFooter className="flex gap-3 pt-6 bg-muted/40 px-6 pb-6 rounded-b-xl">
+          {canSkip && (
+            <Button onClick={handleSkip} variant="outline" disabled={submitting} className="flex-1 hover:bg-secondary">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {hasActiveRole ? 'Regresar al Inicio' : 'Cancelar selección'}
+            </Button>
+          )}
+
+          <Button
+            onClick={handleSubmit}
+            disabled={!selectedRole || submitting || loading || !!error}
+            className={cn('transition-all shadow-md hover:shadow-lg font-semibold h-12 text-base', canSkip ? 'flex-1' : 'w-full')}
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Procesando...
+              </>
+            ) : (
+              <>
+                <Shield className="mr-2 h-4 w-4" />
+                Continuar
+              </>
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
+
+      {/* Footer info */}
+      <div className="text-center">
+        <p className="text-xs text-muted-foreground">Los roles determinan tus permisos y acceso al sistema</p>
+      </div>
+    </AuthLayout>
   )
 }

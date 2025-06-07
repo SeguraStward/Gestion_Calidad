@@ -33,6 +33,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
   async validate(req: Request, payload: any) {
     const refreshTokenFromCookie = req?.cookies?.refresh_token;
     if (!refreshTokenFromCookie) {
+      this.logger.error('Refresh token not found in request cookie.');
       throw new UnauthorizedException('Refresh token not found in request cookie.');
     }
 
@@ -46,7 +47,6 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
       this.logger.warn(
         `Refresh token (hash: ${hashedToken}) not found in DB. User ID from payload: ${payload.sub}`,
       );
-      // To prevent enumerating valid user IDs, we don't invalidate family here if token is unknown.
       throw new UnauthorizedException('Invalid refresh token.');
     }
 
@@ -54,7 +54,6 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
       this.logger.error(
         `Refresh token (ID: ${dbRefreshToken.id}) owner mismatch. DB UserID: ${dbRefreshToken.userId}, Payload UserID: ${payload.sub}.`,
       );
-      // This is a severe issue. Invalidate tokens for the user ID in the token's DB record.
       await this.invalidateTokenFamily(dbRefreshToken.userId, 'Token owner mismatch security event.');
       throw new UnauthorizedException('Refresh token mismatch. Session terminated.');
     }
@@ -73,24 +72,23 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
       this.logger.warn(
         `Refresh token (ID: ${dbRefreshToken.id}) has expired (checked from DB). User: ${payload.sub}`,
       );
-      // Mark as revoked if expired but not yet marked.
       await this.prisma.refreshToken.update({
         where: { id: dbRefreshToken.id },
-        data: { revokedAt: new Date() }, // Or usedAt, depending on policy
+        data: { revokedAt: new Date() },
       });
       throw new UnauthorizedException('Refresh token has expired.');
     }
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, email: true /* Add other necessary fields */ },
+      select: { id: true, email: true, fullName: true, fullLastName: true },
     });
 
     if (!user) {
+      this.logger.error('User not found for refresh token payload.');
       throw new UnauthorizedException('User not found for refresh token payload.');
     }
 
-    // Attach necessary info for the AuthService to use for marking token as used.
     return { ...user, refreshTokenFromCookie, refreshTokenDbId: dbRefreshToken.id };
   }
 
