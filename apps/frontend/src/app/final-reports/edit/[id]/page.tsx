@@ -1,149 +1,115 @@
 'use client'
 
+import { useRouter, useParams } from 'next/navigation'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { useForm, UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
-import { useParams, useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
-import { Card, CardContent } from '@una-gc/ui/components/card'
 
-import { useFinalReport, useUpdateFinalReport } from '@/modules/final-reports/service/final-reports.service'
-import type {
+import { Button } from '@una-gc/ui/components/button'
+import { Card } from '@una-gc/ui/components/card' // Added Card import
+import { Loader2, FileText, AlertTriangle, CheckCircle, Save } from 'lucide-react'
+
+// Schemas, Types, and Components for each step
+import { Step1FormData, step1Schema, Step1Form, transformReportToStep1Data } from '@/modules/final-reports/components/form-step1'
+import { Step2FormData, step2Schema, Step2Form, transformReportToStep2Data } from '@/modules/final-reports/components/form-step2'
+import { Step3FormData, step3Schema, Step3Form, transformReportToStep3Data } from '@/modules/final-reports/components/form-step3'
+import { Step4FormData, step4Schema, Step4Form, transformReportToStep4Data } from '@/modules/final-reports/components/form-step4'
+import {
+  Step5FormData,
+  step5Schema,
+  Step5EditForm,
+  transformReportToStep5Data
+} from '@/modules/final-reports/components/form-step5-edit'
+import {
+  Step6FormData,
+  step6Schema,
+  Step6EditForm,
+  transformReportToStep6Data,
+  OTHER_TOOLS_QUESTION_ID
+} from '@/modules/final-reports/components/form-step6-edit'
+import { Step7FormData, step7Schema, Step7EditForm } from '@/modules/final-reports/components/form-step7-edit'
+
+// Mocks and services
+// MODIFIED IMPORTS FOR MOCKS:
+import { step5QuestionsMock, step6QuestionsPageMock, step7QuestionsPageMock } from '@/modules/final-reports/mocks/questions'
+
+// Service hooks
+import { useFinalReport, useUpdateFinalReport } from '@/modules/final-reports/service/final-reports.service' // Corrected: useGetFinalReportById to useFinalReport
+import {
   FullFinalReport,
   UpdateFinalReportDto,
   FinalReportEvaluationFE,
-  ReportType // Changed from TipoInforme
-} from '@/modules/final-reports/types/final-reports.types'
-
-import { Step1Form, Step1FormData, step1Schema } from '@/modules/final-reports/components/form-step1'
-import { Step2Form, Step2FormData, step2Schema } from '@/modules/final-reports/components/form-step2'
-import { Step3Form, Step3FormData, step3Schema } from '@/modules/final-reports/components/form-step3'
-import { Step4Form, Step4FormData, step4Schema } from '@/modules/final-reports/components/form-step4'
-import { Step5EditForm, Step5FormData, step5Schema } from '@/modules/final-reports/components/form-step5-edit'
-import { Step6EditForm, Step6FormData, step6Schema } from '@/modules/final-reports/components/form-step6-edit'
-import { Step7EditForm, Step7FormData, step7Schema } from '@/modules/final-reports/components/form-step7-edit'
-import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header'
-
-// Import translated mock data names
-import {
-  step5QuestionsMock, // Was preguntasPaso5Mock
-  step6QuestionsPageMock, // Was preguntasPaso6PageMock
-  step7QuestionsPageMock // Was preguntasPaso7PageMock
-} from '@/modules/final-reports/mocks/questions'
+  ReportType
+} from '@/modules/final-reports/types/final-reports.types' // Ensure ReportType is imported here if used by transform functions in this file
 
 const TOTAL_STEPS = 7
-// User-facing labels remain in Spanish
-const STEP_LABELS_EDIT = ['Información', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
 
-const MAIN_TOOLS_QUESTION_ID = 'herramientas_utilizadas' // ID Canónico para la pregunta de herramientas
-const OTHER_TOOLS_QUESTION_ID = 'otras_herramientas_utilizadas' // ID para el campo de texto de otras herramientas
+const steps = [
+  { id: 1, name: 'Información del Curso' },
+  { id: 2, name: 'Estadísticas Estudiantiles' },
+  { id: 3, name: 'Salvaguardas' },
+  { id: 4, name: 'Ajustes Razonables' },
+  { id: 5, name: 'Evaluación General' },
+  { id: 6, name: 'Herramientas Tecnológicas' },
+  { id: 7, name: 'Percepción y Desempeño' }
+]
 
-// Data transformation functions
-function transformReportToStep1Data(report: FullFinalReport): Step1FormData | null {
-  if (!report?.academicLoad) return null
-  return {
-    academicLoadId: report.academicLoadId,
-    nrc: report.academicLoad.nrc,
-    courseName: report.academicLoad.course?.name || '',
-    groupNumber: report.academicLoad.group?.number || '',
-    professorName: report.academicLoad.professor?.fullName || report.professor?.fullName || '',
-    courseCode: report.academicLoad.course?.code || '',
-    groupLevel: report.academicLoad.course?.level ? String(report.academicLoad.course.level) : '',
-    enrolledCapacity: report.academicLoad.enrolledCapacity
-  }
-}
-
-function transformReportToStep2Data(report: FullFinalReport, enrolledFromStep1?: number | null): Step2FormData | null {
-  const stats = report?.statistics
-  return {
-    totalEnrolled: enrolledFromStep1 ?? undefined,
-    totalWithdrawn: stats?.dropouts ?? 0,
-    totalPassed: stats?.passed ?? 0,
-    totalFailed: stats?.failed ?? 0
-  }
-}
-
-function transformReportToStep3Data(report: FullFinalReport): Step3FormData | null {
-  const safeguards = report.studentInformation?.safeguards
-  return {
-    // User-facing form data keys remain in Spanish if Step3Form expects them
-    salvaguardaEstudiantes: safeguards
-      ? safeguards.map((s) => ({
-          cedula: s.idNumber,
-          nombre: s.name,
-          nota: parseFloat(s.grade) || 0,
-          observacion: s.observation || ''
-        }))
-      : []
-  }
-}
-
-function transformReportToStep4Data(report: FullFinalReport): Step4FormData | null {
-  if (!report?.studentInformation?.adjustments) return { ajustesEstudiantes: [] }
-  return {
-    // User-facing form data keys remain in Spanish if Step4Form expects them
-    ajustesEstudiantes: report.studentInformation.adjustments.map((a) => ({
-      id: a.idNumber, // Assuming Step4Form uses 'id' internally for rows
-      cedula: a.idNumber,
-      nombre: a.name,
-      apoyo: a.support,
-      nota: parseFloat(a.grade) || 0,
-      observacion: a.observation || ''
-    }))
-  }
-}
-
-function transformReportToStep5Data(report: FullFinalReport): Step5FormData | null {
-  // Use translated mock name and property 'questionId'
-  if (!report?.evaluation) return { respuestas: step5QuestionsMock.map((p) => ({ idPregunta: p.questionId, respuesta: '' })) }
-  const step5Responses = step5QuestionsMock.map((p) => {
-    const existingResponse = report.evaluation.find((e) => e.questionId === p.questionId)
-    // Form data keys remain as expected by Step5EditForm
-    return { idPregunta: p.questionId, respuesta: existingResponse?.response || '' }
-  })
-  return { respuestas: step5Responses }
-}
-
-function transformReportToStep6Data(report: FullFinalReport): Step6FormData | null {
-  const defaultData = {
-    respuestasMultiples: [{ idPregunta: MAIN_TOOLS_QUESTION_ID, respuestasSeleccionadas: [] }],
-    otrasHerramientas: ''
-  }
-  if (!report?.evaluation) return defaultData
-
-  const toolsQuestionEvaluation = report.evaluation.find((e) => e.questionId === MAIN_TOOLS_QUESTION_ID) // Usar constante
-  const otherToolsResponse = report.evaluation.find((e) => e.questionId === OTHER_TOOLS_QUESTION_ID)?.response || '' // Usar constante
-
-  return {
-    respuestasMultiples: [
-      {
-        idPregunta: MAIN_TOOLS_QUESTION_ID, // Usar constante
-        respuestasSeleccionadas: toolsQuestionEvaluation?.multipleResponse || []
-      }
-    ],
-    otrasHerramientas: otherToolsResponse
-  }
-}
-
+// Helper function to transform report data for Step 7 (ensure it's defined or imported)
+// (La función transformReportToStep7Data que me mostraste antes iría aquí o importada)
+// ... (tu función transformReportToStep7Data)
 function transformReportToStep7Data(report: FullFinalReport, currentReportType: ReportType): Step7FormData | null {
-  // Use translated mock name and property 'appliesTo' and 'questionId'
+  console.log(`[transformReportToStep7Data] Iniciando transformación para reportType: ${currentReportType}`)
   const filteredQuestions = step7QuestionsPageMock.filter((q) => {
     if (Array.isArray(q.appliesTo)) {
-      // Changed from aplicaPara
       return q.appliesTo.includes(currentReportType) || q.appliesTo.includes('TODOS')
     }
     return false
   })
+  console.log(`[transformReportToStep7Data] ${filteredQuestions.length} preguntas filtradas para el tipo de informe.`)
 
-  const step7Responses = filteredQuestions.map((p) => {
-    const existingResponse = report.evaluation?.find((e) => e.questionId === p.questionId) // Changed from idPregunta
-    // Form data keys remain as expected by Step7EditForm
+  const step7Responses = filteredQuestions.map((p, index) => {
+    const existingEvaluation = report.evaluation?.find((e) => e.questionId === p.questionId)
+    let formResponseValue = ''
+
+    console.log(
+      `[transformReportToStep7Data] Procesando pregunta visible #${index + 1}: ID="${p.questionId}", Pregunta="${p.question}"`
+    )
+
+    if (existingEvaluation) {
+      console.log(
+        `[transformReportToStep7Data]   Encontrada evaluación existente para ID="${p.questionId}": Response Label="${existingEvaluation.response}"`
+      )
+      const questionDetails = step7QuestionsPageMock.find((mockQuestion) => mockQuestion.questionId === p.questionId)
+      if (questionDetails && questionDetails.options) {
+        const matchedOption = questionDetails.options.find((opt) => opt.label === existingEvaluation.response)
+        if (matchedOption) {
+          formResponseValue = matchedOption.value
+          console.log(
+            `[transformReportToStep7Data]     Coincidencia de opción encontrada: Label="${matchedOption.label}" -> Value="${formResponseValue}"`
+          )
+        } else {
+          console.warn(
+            `[transformReportToStep7Data]     ¡ADVERTENCIA! No se encontró opción coincidente para Label="${existingEvaluation.response}" en pregunta ID="${p.questionId}". Se usará valor vacío.`
+          )
+        }
+      } else {
+        console.warn(
+          `[transformReportToStep7Data]     ¡ADVERTENCIA! No se encontraron detalles de pregunta o opciones en mock para ID="${p.questionId}".`
+        )
+      }
+    } else {
+      console.log(
+        `[transformReportToStep7Data]   No se encontró evaluación existente para ID="${p.questionId}". Se usará valor vacío.`
+      )
+    }
+
     return {
-      idPregunta: p.questionId, // Changed from idPregunta
-      respuesta: existingResponse?.response || ''
+      idPregunta: p.questionId,
+      respuesta: formResponseValue
     }
   })
+  console.log('[transformReportToStep7Data] Datos transformados finales para Step 7 form:', { respuestasRadio: step7Responses })
   return { respuestasRadio: step7Responses }
 }
 
@@ -154,22 +120,30 @@ export default function EditFinalReportPage() {
   const initialLoadCompletedRef = useRef(false)
 
   const [currentStep, setCurrentStep] = useState(1)
-  const [reportType, setReportType] = useState<ReportType>('INFORME_FINAL_V1')
+  const [reportType, setReportType] = useState<ReportType>('INFORME_FINAL_V1') // Default or load from report
 
+  // State for each step's data
   const [step1Data, setStep1Data] = useState<Step1FormData | null>(null)
   const [step2Data, setStep2Data] = useState<Step2FormData | null>(null)
   const [step3Data, setStep3Data] = useState<Step3FormData | null>(null)
   const [step4Data, setStep4Data] = useState<Step4FormData | null>(null)
   const [step5Data, setStep5Data] = useState<Step5FormData | null>(null)
   const [step6Data, setStep6Data] = useState<Step6FormData | null>(null)
-  // step7Data sigue siendo útil para inicializar el formulario y si el usuario navega hacia atrás/adelante
   const [step7Data, setStep7Data] = useState<Step7FormData | null>(null)
 
-  const { data: fetchedReport, isLoading: isLoadingReport } = useGetFinalReportById(reportId, {
-    enabled: !!reportId && !initialLoadCompletedRef.current
+  const {
+    data: fetchedReport,
+    isLoading: isLoadingReport, // This isLoading is for useFinalReport (fetch)
+    error: reportError
+  } = useFinalReport(reportId, undefined, {
+    enabled: !!reportId && !initialLoadCompletedRef.current,
+    retry: 1
   })
 
-  const { mutateAsync: updateReportMutation } = useUpdateFinalReport(reportId)
+  // MODIFIED: Call useUpdateFinalReport and derive loading state from status
+  const updateMutation = useUpdateFinalReport()
+  const { mutateAsync: updateReportMutation } = updateMutation // Destructure only mutateAsync
+  const isUpdatingReport = updateMutation.status === 'pending' // Derive loading state from status, changed 'loading' to 'pending'
 
   // Definiciones de useForm para cada paso (incluyendo el resolver)
   const formStep1Methods = useForm<Step1FormData>({ resolver: zodResolver(step1Schema) })
@@ -190,19 +164,19 @@ export default function EditFinalReportPage() {
         formStep1Methods.reset(initialStep1)
       }
 
-      const initialStep2 = transformReportToStep2Data(fetchedReport)
+      const initialStep2 = transformReportToStep2Data(fetchedReport, initialStep1?.enrolledCapacity) // Pasar enrolledCapacity
       if (initialStep2) {
         setStep2Data(initialStep2)
         formStep2Methods.reset(initialStep2)
       }
 
-      const initialStep3 = transformReportToStep3Data(fetchedReport, reportType)
+      const initialStep3 = transformReportToStep3Data(fetchedReport) // No necesita reportType
       if (initialStep3) {
         setStep3Data(initialStep3)
         formStep3Methods.reset(initialStep3)
       }
 
-      const initialStep4 = transformReportToStep4Data(fetchedReport, reportType)
+      const initialStep4 = transformReportToStep4Data(fetchedReport) // No necesita reportType
       if (initialStep4) {
         setStep4Data(initialStep4)
         formStep4Methods.reset(initialStep4)
@@ -220,11 +194,12 @@ export default function EditFinalReportPage() {
         formStep6Methods.reset(initialStep6)
       }
 
+      // ESTA LLAMADA AHORA DEBERÍA PROPORCIONAR VALORES NUMÉRICOS
       const initialStep7 = transformReportToStep7Data(fetchedReport, reportType)
       if (initialStep7) {
         setStep7Data(initialStep7)
         formStep7Methods.reset(initialStep7)
-        console.log('[EditFinalReportPage] Initial Step 7 Data set and form reset:', initialStep7)
+        console.log('[EditFinalReportPage] Initial Step 7 Data set and form reset (should have numeric values):', initialStep7)
       }
       initialLoadCompletedRef.current = true
     }
@@ -317,7 +292,7 @@ export default function EditFinalReportPage() {
 
     const currentStep7ValuesFromForm = formStep7Methods.getValues()
     console.log(
-      '[handleSubmitAllSteps] Valores actuales del form Paso 7 (getValues):',
+      '[handleSubmitAllSteps] Valores actuales del form Paso 7 (getValues) - ESTOS DEBEN SER VALORES NUMÉRICOS:',
       JSON.stringify(currentStep7ValuesFromForm, null, 2)
     )
 
@@ -340,11 +315,19 @@ export default function EditFinalReportPage() {
       !step4Data ||
       !step5Data ||
       !step6Data ||
-      !currentStep7ValuesFromForm
+      !currentStep7ValuesFromForm ||
+      currentStep7ValuesFromForm.respuestasRadio.some((r) => !r.idPregunta) // Chequeo adicional
     ) {
-      toast.error('Faltan datos de algunos pasos. Por favor complete el formulario.')
+      toast.error('Faltan datos de algunos pasos o hay IDs de pregunta faltantes en el paso 7. Por favor complete el formulario.')
       console.error('Datos faltantes para handleSubmitAllSteps:', {
-        /* ... */
+        fetchedReport: !!fetchedReport,
+        step1Data: !!step1Data,
+        step2Data: !!step2Data,
+        step3Data: !!step3Data,
+        step4Data: !!step4Data,
+        step5Data: !!step5Data,
+        step6Data: !!step6Data,
+        currentStep7ValuesFromForm
       })
       return
     }
@@ -363,47 +346,64 @@ export default function EditFinalReportPage() {
         ...(step6Data?.respuestasMultiples.flatMap((rm) =>
           rm.respuestasSeleccionadas.map((sel) => ({
             questionId: rm.idPregunta,
-            response: sel, // Cada selección es una "respuesta" individual en el modelo de backend
+            response: sel,
             responseType: 'SELECCION_MULTIPLE',
             questionGroup: step6QuestionsPageMock.find((q) => q.questionId === rm.idPregunta)?.group || 'herramientas',
             question: step6QuestionsPageMock.find((q) => q.questionId === rm.idPregunta)?.question || rm.idPregunta,
             options: step6QuestionsPageMock.find((q) => q.questionId === rm.idPregunta)?.options || [],
-            multipleResponse: rm.respuestasSeleccionadas // Opcional, si el backend lo usa
+            multipleResponse: rm.respuestasSeleccionadas
           }))
         ) || []),
         ...(step6Data?.otrasHerramientas && step6Data.otrasHerramientas.trim() !== ''
           ? [
               {
-                questionId: 'otras_herramientas_descritas', // ID específico para el texto libre de otras herramientas
+                questionId: OTHER_TOOLS_QUESTION_ID,
                 response: step6Data.otrasHerramientas,
                 responseType: 'TEXTO_LIBRE',
                 questionGroup: 'herramientas',
-                question: 'Descripción de otras herramientas utilizadas',
+                question:
+                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
+                  'Descripción de otras herramientas utilizadas',
                 options: [],
                 multipleResponse: []
               }
             ]
           : []),
+
+        // PASO 7: currentStep7ValuesFromForm.respuestasRadio.respuesta YA DEBERÍA SER EL VALOR NUMÉRICO
         ...currentStep7ValuesFromForm.respuestasRadio.map((resp) => {
           const questionDetails = step7QuestionsPageMock.find((q) => q.questionId === resp.idPregunta)
-          let responseToSend: string | undefined = undefined
+          let responseLabelToSend: string | undefined = undefined
+
           if (questionDetails) {
             if (resp.respuesta && resp.respuesta.trim() !== '') {
+              // resp.respuesta es el valor numérico "1", "2", etc.
               const selectedOption = questionDetails.options.find((opt) => opt.value === resp.respuesta)
               if (selectedOption) {
-                responseToSend = selectedOption.label
+                responseLabelToSend = selectedOption.label // Convertir el valor numérico a etiqueta para el backend
               } else {
-                console.error(`[Step 7] Opción no encontrada para qId: "${resp.idPregunta}", respVal: "${resp.respuesta}"`)
+                console.error(
+                  `[handleSubmitAllSteps - Step 7] Opción no encontrada para questionId: "${resp.idPregunta}" con el VALOR de respuesta: "${resp.respuesta}". Esto no debería ocurrir si el formulario se inicializó correctamente.`
+                )
+                // Podrías decidir enviar resp.respuesta directamente si es un valor numérico válido y el backend lo puede manejar,
+                // o enviar undefined si se prefiere no enviar nada si la etiqueta no se encuentra.
+                // responseLabelToSend = resp.respuesta; // O undefined
               }
             }
           } else {
-            console.error(`[Step 7] Detalles no encontrados para qId: "${resp.idPregunta}"`)
+            console.error(
+              `[handleSubmitAllSteps - Step 7] No se encontraron detalles para questionId: "${resp.idPregunta}" en step7QuestionsPageMock.`
+            )
           }
-          console.log(`[Step 7 Map] qId: ${resp.idPregunta}, respForm: ${resp.respuesta}, respToSend: ${responseToSend}`)
+
+          console.log(
+            `[handleSubmitAllSteps - Step 7 Map] qId: ${resp.idPregunta}, respForm (valor numérico): ${resp.respuesta}, respLabelToSend: ${responseLabelToSend}`
+          )
+
           return {
             questionId: resp.idPregunta,
-            response: responseToSend,
-            responseType: 'SELECCION_UNICA',
+            response: responseLabelToSend, // Enviar la etiqueta al backend
+            responseType: 'SELECCION_UNICA' as const,
             questionGroup: questionDetails?.group || 'percepcion_general',
             options:
               questionDetails?.options?.map((opt) => ({
@@ -431,15 +431,29 @@ export default function EditFinalReportPage() {
           dropouts: step2Data.totalWithdrawn ?? 0
         },
         studentInformation: {
-          adjustments: step4Data.ajustesEstudiantes.map((adj) => ({ ...adj, grade: String(adj.nota) })),
-          safeguards: step3Data.salvaguardaEstudiantes.map((sg) => ({ ...sg, grade: String(sg.nota) }))
+          adjustments: step4Data.ajustesEstudiantes.map((adj) => ({
+            idNumber: adj.cedula,
+            name: adj.nombre,
+            support: adj.apoyo,
+            grade: String(adj.nota),
+            observation: adj.observacion || '' // Ensure observation is always a string
+            // id: adj.id,
+          })),
+          safeguards: step3Data.salvaguardaEstudiantes.map((sg) => ({
+            idNumber: sg.cedula,
+            name: sg.nombre,
+            grade: String(sg.nota),
+            observation: sg.observacion || '' // Ensure observation is always a string
+            // id: sg.id,
+          }))
         },
         evaluation: evaluationData,
         version: reportType === 'INFORME_FINAL_V1' ? 1 : 2
       }
 
       console.log('[handleSubmitAllSteps] Payload FINAL para UpdateFinalReportDto:', JSON.stringify(updatePayload, null, 2))
-      await updateReportMutation.mutateAsync({ id: reportId, data: updatePayload })
+      // Corrected: Call updateReportMutation directly
+      await updateReportMutation({ id: reportId, data: updatePayload })
       router.push('/final-reports')
     } catch (error: any) {
       console.error('Error en handleSubmitAllSteps:', error)

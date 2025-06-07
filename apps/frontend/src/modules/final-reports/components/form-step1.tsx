@@ -13,6 +13,7 @@ import { Loader2 } from 'lucide-react'
 import useDevStore from '@/store/devStore'
 import { useAcademicLoadsByProfessor } from '@/modules/academic-loads/service/academic-loads.service'
 import type { FullAcademicLoad } from '@/modules/academic-loads/types/academic-loads.types'
+import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types'
 
 export const step1Schema = z.object({
   academicLoadId: z.string().min(1, 'Debe seleccionar una carga académica.'), // Ahora siempre requerido
@@ -26,6 +27,20 @@ export const step1Schema = z.object({
 })
 
 export type Step1FormData = z.infer<typeof step1Schema>
+
+export function transformReportToStep1Data(report: FullFinalReport): Step1FormData | null {
+  if (!report.academicLoad) return null
+  return {
+    academicLoadId: report.academicLoadId,
+    nrc: report.academicLoad.nrc,
+    courseName: report.academicLoad.course?.name || '',
+    groupNumber: report.academicLoad.group?.number || '',
+    professorName: report.academicLoad.professor?.fullName || '',
+    courseCode: report.academicLoad.course?.code || '',
+    groupLevel: report.academicLoad.course?.level ? String(report.academicLoad.course.level) : '',
+    enrolledCapacity: report.academicLoad.enrolledCapacity ?? undefined
+  }
+}
 
 interface TransformedAcademicLoad {
   id: string

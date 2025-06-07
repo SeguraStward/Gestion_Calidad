@@ -8,6 +8,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@una-gc/ui/components/input'
 import { UseFormReturn, FormProvider } from 'react-hook-form'
 import { AlertCircle, CheckCircle2, MinusCircle, Users, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react'
+import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types'
 
 // Schema de validación con Zod para el Paso 2
 export const step2Schema = z
@@ -67,6 +68,15 @@ export const step2Schema = z
   )
 
 export type Step2FormData = z.infer<typeof step2Schema>
+
+export function transformReportToStep2Data(report: FullFinalReport, enrolledCapacity?: number | null): Step2FormData | null {
+  return {
+    totalEnrolled: enrolledCapacity ?? report.statistics?.totalStudents ?? undefined,
+    totalWithdrawn: report.statistics?.dropouts ?? undefined,
+    totalPassed: report.statistics?.passed ?? undefined,
+    totalFailed: report.statistics?.failed ?? undefined
+  }
+}
 
 interface Step2FormProps {
   formMethods: UseFormReturn<Step2FormData>

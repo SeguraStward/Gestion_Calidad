@@ -10,6 +10,7 @@ import { step5QuestionsMock } from '@/modules/final-reports/mocks/questions' // 
 import { Separator } from '@una-gc/ui/components/separator'
 import { MessageSquareText, AlertTriangle } from 'lucide-react'
 import { cn } from '@una-gc/ui/lib/utils' // For conditional class names
+import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types'
 
 // Schema for a single response item
 const respuestaStep5Schema = z.object({
@@ -24,6 +25,17 @@ export const step5Schema = z.object({
 })
 
 export type Step5FormData = z.infer<typeof step5Schema>
+
+export function transformReportToStep5Data(report: FullFinalReport): Step5FormData | null {
+  const respuestas = step5QuestionsMock.map((mockQuestion) => {
+    const existingEval = report.evaluation?.find((e) => e.questionId === mockQuestion.questionId)
+    return {
+      idPregunta: mockQuestion.questionId,
+      respuesta: existingEval?.response || ''
+    }
+  })
+  return { respuestas }
+}
 
 interface Step5EditFormProps {
   formMethods: UseFormReturn<Step5FormData>

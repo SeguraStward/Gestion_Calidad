@@ -10,7 +10,7 @@ import { Textarea } from '@una-gc/ui/components/textarea'
 import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card'
 import { Separator } from '@una-gc/ui/components/separator'
 import { PlusCircle, Trash2, Users, Edit3, Check, X } from 'lucide-react'
-import type { ReportType } from '../types/final-reports.types' // Import ReportType
+import type { ReportType, FullFinalReport } from '../types/final-reports.types' // Import ReportType
 
 // Esquema para un solo estudiante de salvaguarda
 const salvaguardaEstudianteSchema = z.object({
@@ -34,6 +34,18 @@ export const step3Schema = z.object({
 })
 
 export type Step3FormData = z.infer<typeof step3Schema>
+
+export function transformReportToStep3Data(report: FullFinalReport): Step3FormData | null {
+  if (!report.studentInformation?.safeguards) return { salvaguardaEstudiantes: [] }
+  return {
+    salvaguardaEstudiantes: report.studentInformation.safeguards.map((sg) => ({
+      cedula: sg.idNumber,
+      nombre: sg.name,
+      nota: parseFloat(sg.grade),
+      observacion: sg.observation || ''
+    }))
+  }
+}
 
 interface Step3FormProps {
   formMethods: UseFormReturn<Step3FormData>

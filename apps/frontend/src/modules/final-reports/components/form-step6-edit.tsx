@@ -14,6 +14,7 @@ import {
 } from '../mocks/questions'
 import { MoveRight, MoveLeft, Settings2, AlertTriangle } from 'lucide-react'
 import { cn } from '@una-gc/ui/lib/utils'
+import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types'
 
 // Schema for a single multiple response item
 const multipleResponseSchema = z.object({
@@ -42,6 +43,9 @@ export const step6Schema = z
   )
 
 export type Step6FormData = z.infer<typeof step6Schema>
+
+export const OTHER_TOOLS_QUESTION_ID = 'otras_herramientas_utilizadas' // Define and export
+const MAIN_TOOLS_QUESTION_ID_INTERNAL = 'herramientas_utilizadas' // Internal usage if different from exported
 
 interface Step6EditFormProps {
   formMethods: UseFormReturn<Step6FormData>
@@ -298,4 +302,19 @@ export function Step6EditForm({
       </FormProvider>
     </div>
   )
+}
+
+export function transformReportToStep6Data(report: FullFinalReport): Step6FormData | null {
+  const herramientasEval = report.evaluation?.find((e) => e.questionId === MAIN_TOOLS_QUESTION_ID_INTERNAL)
+  const otrasHerramientasEval = report.evaluation?.find((e) => e.questionId === OTHER_TOOLS_QUESTION_ID)
+
+  return {
+    respuestasMultiples: [
+      {
+        idPregunta: MAIN_TOOLS_QUESTION_ID_INTERNAL,
+        respuestasSeleccionadas: herramientasEval?.multipleResponse || []
+      }
+    ],
+    otrasHerramientas: otrasHerramientasEval?.response || ''
+  }
 }

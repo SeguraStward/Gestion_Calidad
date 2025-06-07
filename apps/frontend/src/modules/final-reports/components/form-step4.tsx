@@ -9,6 +9,7 @@ import { Input } from '@una-gc/ui/components/input'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card'
 import { PlusCircle, Trash2, Settings, Edit3, Check, X } from 'lucide-react'
+import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types'
 
 // Esquema para un solo estudiante con ajustes
 const ajusteEstudianteSchema = z.object({
@@ -30,6 +31,19 @@ export const step4Schema = z.object({
 })
 
 export type Step4FormData = z.infer<typeof step4Schema>
+
+export function transformReportToStep4Data(report: FullFinalReport): Step4FormData | null {
+  if (!report.studentInformation?.adjustments) return { ajustesEstudiantes: [] }
+  return {
+    ajustesEstudiantes: report.studentInformation.adjustments.map((adj) => ({
+      cedula: adj.idNumber,
+      nombre: adj.name,
+      apoyo: adj.support,
+      nota: parseFloat(adj.grade),
+      observacion: adj.observation || ''
+    }))
+  }
+}
 
 interface Step4FormProps {
   formMethods: UseFormReturn<Step4FormData>

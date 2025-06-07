@@ -4,6 +4,7 @@ import React, { useEffect, useMemo } from 'react'
 import { UseFormReturn, FormProvider } from 'react-hook-form'
 // import { zodResolver } from '@hookform/resolvers/zod' // Already in page
 import * as z from 'zod' // Already in page
+import { toast } from 'sonner' // <--- IMPORT TOAST HERE
 import { Button } from '@una-gc/ui/components/button'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '@una-gc/ui/components/card'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
@@ -11,8 +12,8 @@ import { RadioGroup, RadioGroupItem } from '@una-gc/ui/components/radio-group'
 // Import the translated mock name and its types (Step7Question, ReportType)
 import { step7QuestionsPageMock, Step7Question, ReportType } from '@/modules/final-reports/mocks/questions' // Was preguntasPaso7PageMock, PreguntaPaso7, TipoInforme
 import { Separator } from '@una-gc/ui/components/separator'
-// useRouter, CheckCircle, ArrowLeft are not directly used in this component's JSX anymore
-import { Activity } from 'lucide-react' // For consistency with form-step7
+
+import { Activity } from 'lucide-react'
 
 // Schema for a single radio response item (ensure this is identical to form-step7.tsx if it's not already)
 const respuestaRadioStep7Schema = z.object({
@@ -80,13 +81,13 @@ const getOptionColors = (value: string, isSelected: boolean) => {
 
 export function Step7EditForm({
   formMethods,
-  onSaveAndNext, // Usada si el usuario navega hacia atrás y queremos guardar el estado actual del form
+  onSaveAndNext,
   onPrevious,
   totalSteps,
-  initialData,
+  initialData, // Se espera que initialData.respuestasRadio[n].respuesta sea el valor numérico
   isEditing = true,
   reportType,
-  onFinalSubmit // Esta es handleSubmitAllSteps
+  onFinalSubmit
 }: Step7EditFormProps) {
   const { control, handleSubmit, reset, watch, register, getValues } = formMethods
 
@@ -96,19 +97,30 @@ export function Step7EditForm({
   )
 
   useEffect(() => {
-    const currentAnswers = initialData?.respuestasRadio || []
-    const initialFormValues = todasLasPreguntasFiltradas.map((p) => {
-      const existing = currentAnswers.find((r) => r.idPregunta === p.questionId)
-      const questionWithOptions = step7QuestionsPageMock.find((q) => q.questionId === p.questionId)
-      const optionValue = questionWithOptions?.options.find((opt) => opt.label === existing?.respuesta)?.value
-      return {
-        idPregunta: p.questionId,
-        respuesta: optionValue || existing?.respuesta || ''
+    // initialData.respuestasRadio ya debería tener los valores numéricos correctos para 'respuesta'
+    // gracias a la transformación en `transformReportToStep7Data`
+    if (initialData && initialData.respuestasRadio) {
+      // Asegurarse de que solo reseteamos las preguntas que realmente se van a mostrar
+      const formValuesForVisibleQuestions = {
+        respuestasRadio: todasLasPreguntasFiltradas.map((visibleQuestion) => {
+          const existingAnswer = initialData.respuestasRadio.find((r) => r.idPregunta === visibleQuestion.questionId)
+          return {
+            idPregunta: visibleQuestion.questionId,
+            respuesta: existingAnswer?.respuesta || '' // Usar el valor numérico existente o vacío
+          }
+        })
       }
-    })
-    console.log('[Step7EditForm] Resetting form with initial values:', { respuestasRadio: initialFormValues })
-    reset({ respuestasRadio: initialFormValues })
-  }, [initialData, reset, todasLasPreguntasFiltradas, reportType])
+      console.log('[Step7EditForm] Resetting form with initial (numeric) values:', formValuesForVisibleQuestions)
+      reset(formValuesForVisibleQuestions)
+    } else if (!isEditing) {
+      // Solo para el modo de creación, si no hay initialData
+      const defaultValues = {
+        respuestasRadio: todasLasPreguntasFiltradas.map((p) => ({ idPregunta: p.questionId, respuesta: '' }))
+      }
+      console.log('[Step7EditForm] No initialData, resetting with default empty values for visible questions.')
+      reset(defaultValues)
+    }
+  }, [initialData, reset, todasLasPreguntasFiltradas, reportType, isEditing]) // Añadir isEditing
 
   // Función para manejar errores de validación
   const handleValidationErrors = (errors: any) => {
