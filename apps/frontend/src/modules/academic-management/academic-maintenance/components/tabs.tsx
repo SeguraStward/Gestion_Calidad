@@ -3,10 +3,11 @@
 import { Tabs, TabsList, TabsTrigger } from '@una-gc/ui/components/tabs'
 import { CrudTabPanel } from '@/app/(components)/crud/crud-tab-panel'
 import RegionalCentersCrud from '@/modules/academic-management/academic-maintenance/components/cruds/regional-centers'
-import CampusCrud from '@/modules/academic-management/academic-maintenance/components/cruds/campus'
+import CampusCrud from '@/modules/academic-management/academic-maintenance/components/cruds/campuses'
 import FacultiesCrud from '@/modules/academic-management/academic-maintenance/components/cruds/faculties'
 import SchoolsCrud from '@/modules/academic-management/academic-maintenance/components/cruds/schools'
 import ClassroomsCrud from '@/modules/academic-management/academic-maintenance/components/cruds/classrooms'
+import CareerCrud from '@/modules/academic-management/academic-maintenance/components/cruds/careers'
 
 interface Props {
   loading: boolean
@@ -79,6 +80,10 @@ export function InstitutionalMaintenanceTabs({ loading, SkeletonCrud }: Props) {
 
       <CrudTabPanel value="aulas" loading={loading} SkeletonCrud={SkeletonCrud}>
         <ClassroomsCrud />
+      </CrudTabPanel>
+
+      <CrudTabPanel value="carreras" loading={loading} SkeletonCrud={SkeletonCrud}>
+        <CareerCrud />
       </CrudTabPanel>
     </Tabs>
   )

@@ -19,9 +19,10 @@ export class FacultyDto extends BaseDto {
   code: string;
 
   @Expose()
-  @ApiProperty({ description: 'Description' })
+  @ApiProperty({ description: 'Description', required: false })
   @IsString()
-  description: string;
+  @IsOptional()
+  description?: string;
 
   @Expose()
   @ApiPropertyOptional({ description: 'Name' })
