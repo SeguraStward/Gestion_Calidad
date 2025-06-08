@@ -4,7 +4,7 @@ model RegionalCenter {
   version Int    @default(0) @map("__v")
 
   code String @unique
-  name String @unique // Added @unique
+  name String @unique
 
   status Status @default(ACTIVE)
 

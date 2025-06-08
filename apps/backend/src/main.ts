@@ -5,12 +5,11 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import helmet from 'helmet';
+
 import cookieParser from 'cookie-parser';
 
 import { HttpResponseInterceptor } from '@core/http/interceptors/http-response.interceptor';
 import { ErrorResponseFilter } from '@core/http/filters/error-response.filter';
-import { AuditFieldsInterceptor } from '@core/http/interceptors/audit-fields.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,12 +21,6 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
   });
-
-  app.use(helmet());
-
-  if (!(process.env.DISABLED_AUDIT_FIELDS == 'true')) {
-    app.useGlobalInterceptors(new AuditFieldsInterceptor());
-  }
 
   app.useGlobalInterceptors(new HttpResponseInterceptor());
   app.useGlobalFilters(new ErrorResponseFilter());
