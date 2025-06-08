@@ -64,7 +64,6 @@ export function useRoleSelection(): UseRoleSelectionReturn {
         case 503:
         case 504:
           return 'El servicio no está disponible temporalmente. Intenta más tarde.'
-          return 'El servicio no está disponible temporalmente.'
         default:
           return (
             (axiosError.response?.data && typeof axiosError.response.data === 'object' && 'message' in axiosError.response.data
@@ -80,6 +79,34 @@ export function useRoleSelection(): UseRoleSelectionReturn {
 
     return 'Ha ocurrido un error inesperado.'
   }, [])
+
+  const handleRolesResult = useCallback(
+    (result: Role[] | null) => {
+      if (result) {
+        setRoles(result)
+        setRetryCount(0)
+
+        // Auto-seleccionar si solo hay un rol disponible
+        if (result.length === 1 && result[0]) {
+          setSelectedRole(result[0])
+        }
+      } else if (error) {
+        // Solo mostrar el error, NO reintentos automáticos
+        setRetryCount((prev) => prev + 1)
+
+        // Manejo de errores específicos para redirección
+        if (error.includes('Token expirado') || error.includes('sesión ha expirado') || error.includes('401')) {
+          toast.error(error)
+          router.push('/auth/login')
+          return
+        }
+
+        // Para todos los demás errores, solo mostrar el mensaje
+        toast.error(error)
+      }
+    },
+    [error, router]
+  )
 
   const fetchRoles = useCallback(async () => {
     console.log('🏁 Manual fetch user roles...')
@@ -97,39 +124,16 @@ export function useRoleSelection(): UseRoleSelectionReturn {
       }
 
       // Map UserRolesResponse[] to Role[]
-      const roles: Role[] = userRoles.map((role: any) => ({
+      return userRoles.map((role: any) => ({
         id: role.id,
         name: role.name,
         description: role.description ?? '',
         permissions: role.permissions ?? []
       }))
-
-      return roles
     })
 
-    if (result) {
-      setRoles(result)
-      setRetryCount(0)
-
-      // Auto-seleccionar si solo hay un rol disponible
-      if (result.length === 1 && result[0]) {
-        setSelectedRole(result[0])
-      }
-    } else if (error) {
-      // Solo mostrar el error, NO reintentos automáticos
-      setRetryCount((prev) => prev + 1)
-
-      // Manejo de errores específicos para redirección
-      if (error.includes('Token expirado') || error.includes('sesión ha expirado') || error.includes('401')) {
-        toast.error(error)
-        router.push('/auth/login')
-        return
-      }
-
-      // Para todos los demás errores, solo mostrar el mensaje
-      toast.error(error)
-    }
-  }, [executeAsync, error, router])
+    handleRolesResult(result)
+  }, [executeAsync, handleRolesResult])
 
   const retryFetchRoles = useCallback(() => {
     // Reintento manual, sin límites automáticos
@@ -193,37 +197,16 @@ export function useRoleSelection(): UseRoleSelectionReturn {
           }
 
           // Map UserRolesResponse[] to Role[]
-          const roles: Role[] = userRoles.map((role: any) => ({
+          return userRoles.map((role: any) => ({
             id: role.id,
             name: role.name,
             description: role.description ?? '',
             permissions: role.permissions ?? []
           }))
-
-          return roles
         })
 
-        if (mounted && result) {
-          setRoles(result)
-          setRetryCount(0)
-
-          // Auto-seleccionar si solo hay un rol disponible
-          if (result.length === 1 && result[0]) {
-            setSelectedRole(result[0])
-          }
-        } else if (mounted && error) {
-          // Solo mostrar el error, NO reintentos automáticos
-          setRetryCount((prev) => prev + 1)
-
-          // Manejo de errores específicos para redirección
-          if (error.includes('Token expirado') || error.includes('sesión ha expirado') || error.includes('401')) {
-            toast.error(error)
-            router.push('/auth/login')
-            return
-          }
-
-          // Para todos los demás errores, solo mostrar el mensaje
-          toast.error(error)
+        if (mounted) {
+          handleRolesResult(result)
         }
       } catch (err) {
         if (mounted) {
@@ -237,7 +220,7 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [executeAsync, handleRolesResult])
 
   return {
     roles,
