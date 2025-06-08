@@ -36,7 +36,7 @@ export function useListFaculties(
   options?: Omit<UseQueryOptions<FacultyWithRelations[], Error>, 'queryKey' | 'queryFn'>
 ) {
   // Si no se especifica limit, usar un valor alto para selects
-  const effectiveFilters = { ...filters, limit: filters?.limit ?? 1000 }
+  const effectiveFilters = { ...filters, limit: filters?.limit ?? 1000 };
   return useQuery<FacultyWithRelations[], Error, FacultyWithRelations[]>({
     queryKey: ['faculties', effectiveFilters],
     queryFn: async () => {
@@ -53,13 +53,7 @@ export function useListFaculties(
         console.warn('useListFaculties: data no es un array', data)
         return []
       }
-      // Agrega el label con el estado para el select
-      return data.map((f) => ({
-        ...f,
-        id: f.id || (f as any)._id,
-        schools: f.schools || [],
-        label: `${f.name} (${f.status === 'ACTIVE' ? 'Activo' : 'Inactivo'})`
-      }))
+      return data.map((f) => ({ ...f, id: f.id || (f as any)._id, schools: f.schools || [] }))
     },
     staleTime: 60_000, // Example: 1 minute
     ...options
@@ -80,4 +74,9 @@ export function useListFacultiesPaginated(
 }
 
 // Exportamos todos los hooks para mantener la consistencia
-export { useOneFaculty, useCreateFaculty, useUpdateFaculty, useRemoveFaculty }
+export {
+  useOneFaculty,
+  useCreateFaculty,
+  useUpdateFaculty,
+  useRemoveFaculty
+}
