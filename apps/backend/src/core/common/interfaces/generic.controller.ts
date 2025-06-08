@@ -14,19 +14,17 @@ import {
   ExecutionContext,
   createParamDecorator,
 } from '@nestjs/common';
+
 import type { IGenericService } from './generic-service.interface';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
-import { buildPrismaInclude } from '@src/utils/prisma-include.parser';
-
-import { JwtAuthGuard } from '@src/modules/auth/guards/jwt-auth.guard';
-import { PermissionsGuard } from '@src/modules/auth/guards/permissions.guard';
-import {
-  RequirePermissions,
-  RESOURCE_NAME_TOKEN,
-} from '@src/modules/auth/decorators/require-permissions.decorator';
-
 import { PermissionType } from '@una-gc/database/prisma/generated/client';
+
+import { AuditFieldsGuard } from '@src/core/http/guards';
+import { buildPrismaInclude } from '@src/core/common/utils';
+
+import { JwtAuthGuard, PermissionsGuard } from '@src/modules/auth/guards';
+import { RequirePermissions, RESOURCE_NAME_TOKEN } from '@src/modules/auth/decorators';
 
 export const ResourceNameParam = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
   const controller = ctx.getClass();
@@ -34,20 +32,16 @@ export const ResourceNameParam = createParamDecorator((data: unknown, ctx: Execu
   return instance().resourceName;
 });
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AuditFieldsGuard)
 export abstract class GenericController<D, C, U = Partial<C>> {
   protected abstract readonly logger: Logger;
-
   protected abstract readonly resourceName: string;
 
   constructor(protected readonly service: IGenericService<D, C, U>) {}
 
   @Get()
-  @ApiOperation({ summary: 'Find all records with pagination and optional relations' })
-  @UseGuards(PermissionsGuard)
-  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.READ })
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Find all records with pagination' })
+  @ApiOperation({ summary: 'Find all records with pagination and optional relations' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({
@@ -64,6 +58,8 @@ export abstract class GenericController<D, C, U = Partial<C>> {
       'Comma-separated list of relations to include, e.g., academicLoad,professor,academicLoad.course',
   })
   @ApiResponse({ status: HttpStatus.OK, description: 'Records successfully retrieved' })
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.READ })
   async findAll(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
@@ -73,11 +69,10 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   ) {
     const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
     const filters = { ...where };
-
     delete filters.page;
     delete filters.limit;
     delete filters.orderBy;
-    delete filters.include; // Remove from 'where' filters
+    delete filters.include;
 
     const prismaInclude = buildPrismaInclude(includeQueryParam);
 
@@ -86,7 +81,7 @@ export abstract class GenericController<D, C, U = Partial<C>> {
       limit ? parseInt(String(limit), 10) : 10,
       Object.keys(filters).length > 0 ? filters : undefined,
       parsedOrderBy,
-      prismaInclude, // Pass parsed include to service
+      prismaInclude,
     );
   }
 
@@ -98,11 +93,8 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Find record by id with optional relations' })
-  @UseGuards(PermissionsGuard)
-  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.READ })
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Find record by id' })
+  @ApiOperation({ summary: 'Find record by id with optional relations' })
   @ApiParam({ name: 'id', type: String })
   @ApiQuery({
     name: 'include',
@@ -113,9 +105,11 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   })
   @ApiResponse({ status: HttpStatus.OK, description: 'Record successfully retrieved' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.READ })
   async findById(@Param('id') id: string, @Query('include') includeQueryParam?: string) {
     const prismaInclude = buildPrismaInclude(includeQueryParam);
-    const entity = await this.service.findById(id, prismaInclude); // Pass parsed include
+    const entity = await this.service.findById(id, prismaInclude);
     if (!entity) {
       throw new NotFoundException(`Entity with id ${id} not found`);
     }
@@ -123,35 +117,35 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   }
 
   @Post()
-  @UseGuards(PermissionsGuard)
-  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.CREATE })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create new record' })
   @ApiResponse({ status: HttpStatus.CREATED, description: 'Record successfully created' })
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.CREATE })
   async create(@Body() createDto: C) {
     return await this.service.save(createDto);
   }
 
   @Put(':id')
-  @UseGuards(PermissionsGuard)
-  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.UPDATE })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update record by id' })
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: HttpStatus.OK, description: 'Record successfully updated' })
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.UPDATE })
   async update(@Param('id') id: string, @Body() updateDto: U) {
     return await this.service.update(id, updateDto);
   }
 
   @Delete(':id')
-  @UseGuards(PermissionsGuard)
-  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.DELETE })
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete record by id' })
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Record successfully deleted' })
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.DELETE })
   async delete(@Param('id') id: string) {
     await this.service.deleteById(id);
     return;

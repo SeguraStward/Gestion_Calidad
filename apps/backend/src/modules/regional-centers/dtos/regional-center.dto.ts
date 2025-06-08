@@ -7,8 +7,6 @@ import { CampusDto } from '@src/modules/campuses/dtos/campus.dto';
 import { CommissionDto } from '@src/modules/commissions/dtos/commission.dto';
 import { ProjectDto } from '@src/modules/projects/dtos/project.dto';
 
-
-
 export class RegionalCenterDto extends BaseDto {
   @ApiPropertyOptional({ description: 'RegionalCenter ID' })
   @Expose()

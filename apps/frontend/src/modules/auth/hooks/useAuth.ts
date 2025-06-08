@@ -24,7 +24,6 @@ export interface UseAuthReturn extends AuthState {
 }
 
 const MAX_RETRY_ATTEMPTS = 3
-const RETRY_DELAY = 2000 // 2 segundos
 
 export function useAuth(): UseAuthReturn {
   const [state, setState] = useState<AuthState>({
@@ -53,67 +52,58 @@ export function useAuth(): UseAuthReturn {
     }))
   }, [])
 
-  const loadUserRoles = useCallback(
-    async (shouldRetry = true) => {
-      // Evitar múltiples llamadas simultáneas
-      if (state.isLoading) {
-        return
-      }
+  const loadUserRoles = useCallback(async () => {
+    // Evitar múltiples llamadas simultáneas
+    if (state.isLoading) {
+      return
+    }
 
-      try {
-        setState((prev) => ({ ...prev, isLoading: true, error: null }))
+    try {
+      setState((prev) => ({ ...prev, isLoading: true, error: null }))
 
-        const userRolesResponse = await AuthService.getUserActiveRoles()
+      const userRolesResponse = await AuthService.getUserActiveRoles()
 
-        if (!userRolesResponse || userRolesResponse.length === 0) {
-          setState((prev) => ({
-            ...prev,
-            roles: [],
-            isLoading: false,
-            error: 'No se encontraron roles disponibles para el usuario'
-          }))
-          return
-        }
-
-        // Map UserRolesResponse[] to Role[]
-        const roles: Role[] = userRolesResponse.map((role: any) => ({
-          id: role.id,
-          name: role.name,
-          description: role.description,
-          permissions: role.permissions
-        }))
-
+      if (!userRolesResponse || userRolesResponse.length === 0) {
         setState((prev) => ({
           ...prev,
-          roles,
+          roles: [],
           isLoading: false,
-          error: null,
-          retryCount: 0
+          error: 'No se encontraron roles disponibles para el usuario'
         }))
-      } catch (error: any) {
-        // Evitar reintentos automáticos si es un error de autenticación
-        if (error?.response?.status === 401 || error?.response?.status === 403) {
-          setState((prev) => ({
-            ...prev,
-            isAuthenticated: false,
-            activeRole: null,
-            roles: [],
-            isLoading: false,
-            error: 'Sesión expirada. Por favor, inicia sesión nuevamente.'
-          }))
-          return
-        }
-
-        // Error 500 - problema del servidor
-        // ELIMINADO: No más reintentos automáticos para evitar bucles
-        handleError(error, 'cargar roles')
         return
-
-        handleError(error, 'cargar roles')
       }
-    },
-    [state.retryCount, state.isLoading, handleError]
-  )
+
+      // Map UserRolesResponse[] to Role[]
+      const roles: Role[] = userRolesResponse.map((role: any) => ({
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        permissions: role.permissions
+      }))
+
+      setState((prev) => ({
+        ...prev,
+        roles,
+        isLoading: false,
+        error: null,
+        retryCount: 0
+      }))
+    } catch (error: any) {
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        setState((prev) => ({
+          ...prev,
+          isAuthenticated: false,
+          activeRole: null,
+          roles: [],
+          isLoading: false,
+          error: 'Sesión expirada. Por favor, inicia sesión nuevamente.'
+        }))
+        return
+      }
+
+      handleError(error, 'cargar roles')
+    }
+  }, [state.isLoading, handleError])
 
   const logout = useCallback(() => {
     CookieManager.removeActiveRole()
@@ -150,7 +140,6 @@ export function useAuth(): UseAuthReturn {
   }, [])
 
   const retryLoadRoles = useCallback(() => {
-    // Reintento manual, sin límites automáticos
     loadUserRoles()
   }, [loadUserRoles])
 
@@ -182,7 +171,8 @@ export function useAuth(): UseAuthReturn {
     }
 
     initializeAuth()
-  }, []) // NO agregar loadUserRoles como dependencia para evitar bucles
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Intentionally omitting loadUserRoles to prevent infinite loops
 
   return {
     ...state,
