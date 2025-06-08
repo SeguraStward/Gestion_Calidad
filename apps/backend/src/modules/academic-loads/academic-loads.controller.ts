@@ -9,7 +9,7 @@ import {
   DefaultValuePipe,
   ParseEnumPipe, // Import ParseEnumPipe
 } from '@nestjs/common';
-import { buildPrismaInclude } from '@src/utils/prisma-include.parser';
+// import { buildPrismaInclude } from '@src/utils/prisma-include.parser';
 import { Status } from '@una-gc/database/prisma/generated/client';
 
 import { AcademicLoadDto } from './dtos/academic-load.dto';
@@ -41,7 +41,7 @@ export class AcademicLoadsController extends GenericController<AcademicLoadDto, 
     );
 
     const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
-    const prismaInclude = buildPrismaInclude(includeQueryParam);
+    // const prismaInclude = buildPrismaInclude(includeQueryParam);
 
     return this.academicLoadsService.findAllByProfessorId(
       professorId,

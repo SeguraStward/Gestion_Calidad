@@ -199,7 +199,7 @@ export default function RegionalCentersCrud() {
         />
       )
     }
-  }, [campuses, isLoadingCampuses])
+  }, []) // [campuses, isLoadingCampuses]
 
   const crudConfig = useMemo(
     () => ({

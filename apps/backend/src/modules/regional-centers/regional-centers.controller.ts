@@ -9,7 +9,7 @@ import {
   DefaultValuePipe,
   ParseEnumPipe,
 } from '@nestjs/common';
-import { buildPrismaInclude } from '@src/utils/prisma-include.parser';
+// import { buildPrismaInclude } from '@src/utils/prisma-include.parser';
 import { Status } from '@una-gc/database/prisma/generated/client';
 
 import { RegionalCenterDto } from './dtos/regional-center.dto';
@@ -40,7 +40,7 @@ export class RegionalCentersController extends GenericController<RegionalCenterD
     );
 
     const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
-    const prismaInclude = buildPrismaInclude(includeQueryParam);
+    // const prismaInclude = buildPrismaInclude(includeQueryParam);
 
     return this.regionalCentersService.findAllByCampusId(campusId, page, limit, status, parsedOrderBy);
   }
@@ -61,7 +61,7 @@ export class RegionalCentersController extends GenericController<RegionalCenterD
     );
     try {
       const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
-      const prismaInclude = buildPrismaInclude(includeQueryParam);
+      // const prismaInclude = buildPrismaInclude(includeQueryParam);
       // Solo pasa los argumentos que acepta el servicio
       const where = status ? { status } : undefined;
       return await this.regionalCentersService.findAll(page, limit, where, parsedOrderBy);
