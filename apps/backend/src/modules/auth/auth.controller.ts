@@ -109,15 +109,31 @@ export class AuthController {
       this.logger.error(
         `Google authentication callback error: ${error instanceof Error ? error.message : String(error)}`,
       );
+
+      // Handle specific authentication errors
+      if (error instanceof UnauthorizedException) {
+        const errorMessage = error.message;
+        if (errorMessage.includes('pending activation') || errorMessage.includes('PRE_REGISTRATION')) {
+          return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?message=account_pending`);
+        } else if (errorMessage.includes('deactivated') || errorMessage.includes('INACTIVE')) {
+          return res.redirect(
+            `${this.configService.get('FRONTEND_URL')}/auth/error?message=account_disabled`,
+          );
+        } else if (errorMessage.includes('no access')) {
+          return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?message=access_denied`);
+        }
+
+        // Generic unauthorized error
+        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?message=unauthorized`);
+      }
+
       // If it's a ForbiddenException we threw, let it propagate or handle specifically
       if (error instanceof ForbiddenException) {
-        // If you chose Option 2 above, you might want to redirect here as well,
-        // or let NestJS handle sending the 403 response.
-        // For consistency with redirection:
         return res.redirect(
           `${this.configService.get('FRONTEND_URL')}/auth/error?message=domain_not_allowed`,
         );
       }
+
       return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?message=internal_error`);
     }
   }
@@ -130,6 +146,7 @@ export class AuthController {
   getProfile(@Req() req: Request) {
     return req.user;
   }
+
   @ApiOperation({ summary: 'Logout current user' })
   @ApiResponse({ status: 200, description: 'User logged out successfully' })
   @Get('logout')

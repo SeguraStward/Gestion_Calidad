@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios'
-import { Role } from './interfaces'
+import { UserRolesResponse } from './interfaces'
 
 // Custom error types for better error handling
 export class AuthServiceError extends Error {
@@ -69,7 +69,7 @@ export class AuthService {
    * @returns Promise resolving to an array of roles with their permissions
    * @throws AuthServiceError if the request fails
    */
-  static async getUserActiveRoles(): Promise<Role[]> {
+  static async getUserActiveRoles(): Promise<UserRolesResponse[]> {
     this.log('info', 'Fetching active roles for current user')
 
     try {
@@ -77,48 +77,25 @@ export class AuthService {
 
       this.log('debug', `Making request to ${apiUrl}/users/me/roles/active`)
       const response = await axios.get(`${apiUrl}/users/me/roles/active`, {
-        withCredentials: true
+        withCredentials: true,
+        timeout: 10000, // 10 segundos timeout
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
 
       this.log('debug', 'Raw response data:', JSON.stringify(response.data).substring(0, 200) + '...')
 
-      // Verificar formato de respuesta y normalizar
-      let normalizedRoles: Role[] = []
+      // Just extract the roles directly from response.data.data
+      const roles = response.data.data || []
 
-      if (Array.isArray(response.data)) {
-        normalizedRoles = response.data.map((role) => ({
-          id: role.id,
-          name: role.name,
-          description: role.description,
-          permissions: Array.isArray(role.permissions)
-            ? role.permissions.map((perm: any) => ({
-                id: perm.id,
-                name: perm.name,
-                code: perm.code,
-                description: perm.description || '',
-                status: perm.status,
-                type: perm.type,
-                scope: perm.scope,
-                actions: perm.actions
-              }))
-            : []
-        }))
-      } else if (response.data && typeof response.data === 'object') {
-        this.log('warn', 'Unexpected response format:', response.data)
-
-        // Intentar extraer roles de otras posibles estructuras
-        if (response.data.roles && Array.isArray(response.data.roles)) {
-          normalizedRoles = response.data.roles
-        } else if (response.data.data && Array.isArray(response.data.data)) {
-          // Algunos APIs anidan los resultados en un campo 'data'
-          normalizedRoles = response.data.data
-        } else {
-          this.log('warn', 'Could not extract roles from response, returning empty array')
-        }
+      if (!Array.isArray(roles)) {
+        this.log('error', 'Unexpected response format, expected an array of roles')
+        throw new AuthServiceError('Unexpected response format from server')
       }
 
-      this.log('info', `Successfully retrieved ${normalizedRoles.length} active roles`)
-      return normalizedRoles
+      this.log('info', `Successfully retrieved ${roles.length} active roles`)
+      return roles
     } catch (error) {
       const axiosError = error as AxiosError
       const statusCode = axiosError.response?.status
@@ -128,26 +105,83 @@ export class AuthService {
         status: statusCode,
         statusText: axiosError.response?.statusText,
         message: axiosError.message,
-        data: responseData
+        data: responseData,
+        code: axiosError.code
       })
 
-      if (axiosError.code === 'ECONNREFUSED' || axiosError.code === 'ENOTFOUND') {
+      // Errores de conexión/red
+      if (axiosError.code === 'ECONNREFUSED' || axiosError.code === 'ENOTFOUND' || axiosError.code === 'ETIMEDOUT') {
         throw new AuthNetworkError(
-          'Cannot connect to authentication server. Check your network connection.',
+          'No se puede conectar al servidor de autenticación. Verifica tu conexión de red.',
           statusCode,
           responseData
         )
       }
 
-      if (statusCode === 401) {
-        throw new AuthNetworkError('Your session has expired. Please log in again.', statusCode, responseData)
+      // Timeout
+      if (axiosError.code === 'ECONNABORTED') {
+        throw new AuthNetworkError('La solicitud ha excedido el tiempo límite. Intenta nuevamente.', statusCode, responseData)
       }
 
-      if (statusCode === 403) {
-        throw new AuthNetworkError("You don't have permission to access role information.", statusCode, responseData)
+      // Errores específicos por código de estado
+      switch (statusCode) {
+        case 401:
+          throw new AuthNetworkError('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', statusCode, responseData)
+        case 403:
+          throw new AuthNetworkError('No tienes permisos para acceder a la información de roles.', statusCode, responseData)
+        case 404:
+          throw new AuthNetworkError('No se encontraron roles disponibles para tu usuario.', statusCode, responseData)
+        case 500:
+          const serverMessage = (responseData as any)?.message || 'Error interno del servidor'
+          throw new AuthNetworkError(
+            `Error del servidor: ${serverMessage}. Si el problema persiste, contacta soporte.`,
+            statusCode,
+            responseData
+          )
+        case 502:
+        case 503:
+        case 504:
+          throw new AuthNetworkError('El servicio no está disponible temporalmente. Intenta más tarde.', statusCode, responseData)
+        default:
+          const defaultMessage = (responseData as any)?.message || axiosError.message || 'Error desconocido'
+          throw new AuthNetworkError(`Error al obtener roles: ${defaultMessage}`, statusCode, responseData)
       }
+    }
+  }
 
-      throw new AuthNetworkError(`Failed to fetch roles: ${axiosError.message}`, statusCode, responseData)
+  /**
+   * Validates if user is authenticated by checking session
+   */
+  static async validateSession(): Promise<boolean> {
+    try {
+      const apiUrl = this.validateApiUrl()
+      const response = await axios.get(`${apiUrl}/auth/me`, {
+        withCredentials: true,
+        timeout: 5000
+      })
+      return response.status === 200
+    } catch (error) {
+      this.log('debug', 'Session validation failed:', error)
+      return false
+    }
+  }
+
+  /**
+   * Logout user and clear session
+   */
+  static async logout(): Promise<void> {
+    try {
+      const apiUrl = this.validateApiUrl()
+      await axios.post(
+        `${apiUrl}/auth/logout`,
+        {},
+        {
+          withCredentials: true,
+          timeout: 5000
+        }
+      )
+    } catch (error) {
+      this.log('warn', 'Logout request failed, but continuing with local cleanup:', error)
     }
   }
 }

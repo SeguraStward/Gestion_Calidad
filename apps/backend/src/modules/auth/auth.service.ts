@@ -50,17 +50,20 @@ export class AuthService {
     });
 
     if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          email: googleUser.email,
-          fullName: googleUser.firstName,
-          fullLastName: googleUser.fullLastName || googleUser.familyName || '', // Ensure fullLastName is handled
-          googleId: googleUser.googleId,
-          photoUrl: googleUser.picture,
-          // Ensure other required User fields are handled or have defaults
-        },
-      });
-    } else if (!user.googleId && googleUser.googleId) {
+      this.logger.warn(`Login attempt with non-existent user: ${googleUser.email}`);
+      throw new UnauthorizedException(
+        'No existe una cuenta asociada a este correo electrónico. Por favor contacta al administrador del sistema.',
+      );
+    }
+
+    if (user.status === 'INACTIVE') {
+      this.logger.warn(`Login attempt from user with inactive status: ${user.email}`);
+      throw new UnauthorizedException(
+        'Tu cuenta ha sido desactivada. Contacta al administrador del sistema.',
+      );
+    }
+
+    if (!user.googleId && googleUser.googleId) {
       user = await this.prisma.user.update({
         where: { id: user.id },
         data: {
@@ -69,6 +72,8 @@ export class AuthService {
         },
       });
     }
+
+    this.logger.log(`User ${user.email} authenticated successfully with status: ${user.status}.`);
 
     const accessToken = this.generateAccessToken(user.id, user.email);
     const { rawRefreshToken } = await this.generateAndStoreRefreshToken(user.id);

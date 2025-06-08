@@ -87,17 +87,16 @@ function handleProtectedPath(request: NextRequest, accessToken?: string, activeR
 }
 
 export async function middleware(request: NextRequest) {
+  if (DISABLED_AUTH) {
+    logDebug('Auth is disabled, proceeding with request')
+    return NextResponse.next()
+  }
+
   logDebug('Middleware called', {
-    path: request.nextUrl.pathname,
-    authDisabled: DISABLED_AUTH
+    path: request.nextUrl.pathname
   })
 
   try {
-    if (DISABLED_AUTH) {
-      logDebug('Auth is disabled, proceeding with request')
-      return NextResponse.next()
-    }
-
     const pathname = request.nextUrl.pathname
     const accessToken = getAccessToken(request)
     const activeRoleId = getSelectedRoleId(request)

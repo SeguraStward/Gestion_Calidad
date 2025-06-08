@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { CheckCircle, Shield, Users, ChevronRight } from 'lucide-react'
+import { Shield } from 'lucide-react'
 import { RadioGroupItem } from '@una-gc/ui/components/radio-group'
 import { Label } from '@una-gc/ui/components/label'
 import { cn } from '@una-gc/ui/lib/utils'

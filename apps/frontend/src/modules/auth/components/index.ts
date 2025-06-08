@@ -1,5 +1,6 @@
 // Components
-export { AuthLayout } from './AuthLayout'
-export { RoleCard } from './RoleCard'
-export { RoleLoadingSkeleton } from './RoleLoadingSkeleton'
-export { EmptyRoleState } from './EmptyRoleState'
+export { RoleCard } from './role-card'
+export { ErrorCard } from './error-card'
+export { AuthLayout } from './auth-layout'
+export { EmptyRoleState } from './empty-role-state'
+export { RoleLoadingSkeleton } from './role-loading-skeleton'
