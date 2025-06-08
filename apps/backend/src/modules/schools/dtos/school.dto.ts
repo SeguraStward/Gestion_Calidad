@@ -57,4 +57,3 @@ export class SchoolDto extends BaseDto {
     Object.assign(this, dto);
   }
 }
-
