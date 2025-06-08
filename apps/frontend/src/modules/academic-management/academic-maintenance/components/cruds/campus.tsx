@@ -65,7 +65,7 @@ export default function CampusCrud() {
           size: 160,
           cell: ({ row }) => (
             <div className="flex items-center min-w-[100px] max-w-[180px] truncate whitespace-nowrap">
-              <Building2 className="h-4 w-4 text-primary mr-2 flex-shrink-0"/>
+              <Building2 className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
               <span className="font-medium">{row.original.name}</span>
             </div>
           )
@@ -84,7 +84,7 @@ export default function CampusCrud() {
             const name = row.original.regionalCenter?.name || 'Sin asignar'
             return (
               <div className="flex items-center min-w-[80px] max-w-[140px] truncate whitespace-nowrap">
-                <Globe className="h-4 w-4 text-primary mr-2 flex-shrink-0"/>
+                <Globe className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
                 <span>{name}</span>
               </div>
             )

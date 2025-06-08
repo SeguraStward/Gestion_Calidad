@@ -65,7 +65,7 @@ export default function RegionalCentersCrud() {
           size: 180,
           cell: ({ row }) => (
             <div className="flex items-center min-w-[120px] max-w-[200px] truncate whitespace-nowrap">
-              <Building className="h-4 w-4 text-primary mr-2 flex-shrink-0"/>
+              <Building className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
               <span className="font-medium">{row.original.name}</span>
             </div>
           )
@@ -86,7 +86,9 @@ export default function RegionalCentersCrud() {
           size: 90,
           cell: ({ row }) => (
             <div className="flex items-center justify-center min-w-[40px] max-w-[60px]">
-              <span className="font-semibold text-center w-full">{row.original.commissions ? row.original.commissions.length : 0}</span>
+              <span className="font-semibold text-center w-full">
+                {row.original.commissions ? row.original.commissions.length : 0}
+              </span>
             </div>
           )
         },

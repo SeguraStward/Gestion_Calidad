@@ -1,13 +1,14 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@una-gc/ui/components'
-import { Shield, Mail } from 'lucide-react'
+import { Mail } from 'lucide-react'
 
 import { ErrorCard } from '@/modules/auth/components'
 import { getAuthErrorInfo } from '@/modules/auth/utils/code-respone'
 
-export default function AuthErrorPage() {
+function ErrorContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const errorCode = searchParams.get('code')
@@ -45,5 +46,13 @@ export default function AuthErrorPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AuthErrorClient() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <ErrorContent />
+    </Suspense>
   )
 }

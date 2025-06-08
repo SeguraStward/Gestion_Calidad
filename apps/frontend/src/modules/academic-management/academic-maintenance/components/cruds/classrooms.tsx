@@ -5,7 +5,13 @@ import { useMemo } from 'react'
 import { ColumnDef } from '@tanstack/react-table'
 import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
 import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
-import { useListClassrooms, useOneClassroom, useCreateClassroom, useUpdateClassroom, useRemoveClassroom } from '@/modules/academic-management/academic-maintenance/hooks/useClassrooms'
+import {
+  useListClassrooms,
+  useOneClassroom,
+  useCreateClassroom,
+  useUpdateClassroom,
+  useRemoveClassroom
+} from '@/modules/academic-management/academic-maintenance/hooks/useClassrooms'
 import { ClassroomWithRelations, CreateClassroomInput } from '@/shared/types/classroom'
 import { Status } from '@una-gc/database/prisma/generated/client'
 import { Badge, Button } from '@una-gc/ui/components'
@@ -65,13 +71,13 @@ export default function ClassroomCrud() {
           size: 180,
           cell: ({ row }) => {
             // Solo soporta campus (según DTO y types)
-            const name = row.original.campus?.name || 'Sin asignar';
+            const name = row.original.campus?.name || 'Sin asignar'
             return (
               <div className="flex items-center min-w-[140px] max-w-[260px] truncate whitespace-nowrap">
                 <Hash className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
                 <span>{name}</span>
               </div>
-            );
+            )
           }
         },
         {
