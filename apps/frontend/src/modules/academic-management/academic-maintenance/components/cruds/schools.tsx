@@ -29,6 +29,7 @@ import {
 } from 'lucide-react'
 
 interface SchoolItem extends SchoolWithRelations {}
+//FIXED
 
 const STATUS_OPTIONS = [
   {
