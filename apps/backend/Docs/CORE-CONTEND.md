@@ -375,11 +375,11 @@ NODE_ENV=development|production
 @Injectable()
 export class UserService extends GenericPrismaRepository<User, CreateUserDto, UpdateUserDto, { id: string }> {
   protected readonly modelName = 'user';
-  
+
   constructor(prisma: PrismaService) {
     super(prisma);
   }
-  
+
   // Métodos específicos del dominio...
 }
 
@@ -400,7 +400,7 @@ export class UserController {
 - Paginación obligatoria para grandes datasets
 - Filtrado a nivel de base de datos
 
-### 2.  Interceptors
+### 2. -Interceptors
 
 - Procesamiento asíncrono donde es posible
 - Caching de transformaciones costosas

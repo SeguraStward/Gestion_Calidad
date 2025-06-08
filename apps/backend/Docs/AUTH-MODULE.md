@@ -123,8 +123,8 @@ El módulo de autenticación (`auth`) proporciona un sistema completo de autenti
 
 ```typescript
 interface RequiredPermission {
-  resource: string;        // Código del recurso (ej: 'USER', 'CAMPUS')
-  action: PermissionType;  // Tipo de acción (CREATE, READ, UPDATE, DELETE)
+  resource: string; // Código del recurso (ej: 'USER', 'CAMPUS')
+  action: PermissionType; // Tipo de acción (CREATE, READ, UPDATE, DELETE)
   scope?: PermissionScope; // Alcance (ALL, OWN)
 }
 ```
@@ -132,10 +132,10 @@ interface RequiredPermission {
 **Ejemplo de uso**:
 
 ```typescript
-@RequirePermissions({ 
-  resource: 'USER', 
-  action: PermissionType.READ, 
-  scope: PermissionScope.OWN 
+@RequirePermissions({
+  resource: 'USER',
+  action: PermissionType.READ,
+  scope: PermissionScope.OWN
 })
 ```
 
