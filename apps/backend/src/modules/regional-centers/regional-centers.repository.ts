@@ -24,7 +24,7 @@ export class RegionalCentersRepository extends GenericPrismaRepository<
         orderBy,
         skip: page && limit ? (page - 1) * limit : undefined,
         take: limit,
-        include: { ...(include || {}), campuses: true },
+        include: { ...(include || {}), campuses: true, commissions: true , projects: true},
       }),
       this.prisma.regionalCenter.count({ where }),
     ]);

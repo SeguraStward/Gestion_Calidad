@@ -4,6 +4,8 @@ import { Prisma, Status } from '@una-gc/database/prisma/generated/client'
 export type RegionalCenterWithRelations = Prisma.RegionalCenterGetPayload<{
   include: {
     campuses: true
+    commissions: true
+    projects: true
   }
 }>
 

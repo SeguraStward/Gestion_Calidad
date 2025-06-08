@@ -51,9 +51,9 @@ export default function RegionalCentersCrud() {
         {
           accessorKey: 'code',
           header: 'Código',
-          size: 120,
+          size: 100,
           cell: ({ row }) => (
-            <div className="flex items-center min-w-[90px] max-w-[160px] truncate">
+            <div className="flex items-center min-w-[80px] max-w-[120px] truncate">
               <Hash className="h-4 w-4 text-primary mr-2" />
               <span>{row.original.code}</span>
             </div>
@@ -62,28 +62,48 @@ export default function RegionalCentersCrud() {
         {
           accessorKey: 'name',
           header: 'Nombre',
-          size: 220,
+          size: 180,
           cell: ({ row }) => (
-            <div className="flex items-center min-w-[140px] max-w-[260px] truncate whitespace-nowrap">
+            <div className="flex items-center min-w-[120px] max-w-[200px] truncate whitespace-nowrap">
               <Building className="h-4 w-4 text-primary mr-2 flex-shrink-0"/>
-            <span className="font-medium">{row.original.name}</span>
+              <span className="font-medium">{row.original.name}</span>
             </div>
           )
         },
         {
           accessorKey: 'campusCount',
-          header: 'Número de Campus',
-          size: 110,
+          header: 'Campus',
+          size: 80,
           cell: ({ row }) => (
-            <div className="flex items-center justify-center min-w-[60px] max-w-[90px]">
+            <div className="flex items-center justify-center min-w-[40px] max-w-[60px]">
               <span className="font-semibold text-center w-full">{row.original.campuses ? row.original.campuses.length : 0}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'commissionCount',
+          header: 'Comisiones',
+          size: 90,
+          cell: ({ row }) => (
+            <div className="flex items-center justify-center min-w-[40px] max-w-[60px]">
+              <span className="font-semibold text-center w-full">{row.original.commissions ? row.original.commissions.length : 0}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'projectCount',
+          header: 'Proyectos',
+          size: 90,
+          cell: ({ row }) => (
+            <div className="flex items-center justify-center min-w-[40px] max-w-[60px]">
+              <span className="font-semibold text-center w-full">{row.original.projects ? row.original.projects.length : 0}</span>
             </div>
           )
         },
         {
           accessorKey: 'status',
           header: 'Estado',
-          size: 110,
+          size: 90,
           cell: ({ row }) => {
             const status = row.original.status
             let badgeClasses = ''
@@ -226,6 +246,12 @@ export default function RegionalCentersCrud() {
       preDeleteCheck: (item: RegionalCenterItem) => {
         if (item.campuses && item.campuses.length > 0) {
           return 'No se puede eliminar una sede regional con campus asociados.'
+        }
+        if (item.projects && item.projects.length > 0) {
+          return 'No se puede eliminar una sede regional con proyectos asociados.'
+        }
+        if (item.commissions && item.commissions.length > 0) {
+          return 'No se puede eliminar una sede regional con comisiones asociadas.'
         }
         return null
       }
