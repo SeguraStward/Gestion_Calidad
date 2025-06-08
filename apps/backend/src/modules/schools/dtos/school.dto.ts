@@ -5,6 +5,7 @@ import { Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
 import { FacultyDto } from '@src/modules/faculties/dtos/faculty.dto';
 import { CareerDto } from '@src/modules/careers/dtos/career.dto';
+//FIXED
 
 export class SchoolDto extends BaseDto {
   @ApiPropertyOptional({ description: 'School ID' })
@@ -56,3 +57,4 @@ export class SchoolDto extends BaseDto {
     Object.assign(this, dto);
   }
 }
+

@@ -1,4 +1,5 @@
 import { Prisma, Status } from '@una-gc/database/prisma/generated/client'
+//FIXED
 
 // Type with all relations (faculty, career)
 export type SchoolWithRelations = Prisma.SchoolGetPayload<{

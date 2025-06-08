@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { Prisma, School } from '@una-gc/database/prisma/generated/client';
 import { GenericPrismaRepository } from '@core/common/repositories/generic-prisma.repository';
 import { PrismaService } from '@src/prisma/prisma.service';
+//FIXED
 
 export class SchoolsRepository extends GenericPrismaRepository<
   School,

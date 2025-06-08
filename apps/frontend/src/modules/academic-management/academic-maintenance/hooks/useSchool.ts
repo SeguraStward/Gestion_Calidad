@@ -3,6 +3,7 @@ import { schoolService } from '../services/school.service'
 import { SchoolWithRelations, CreateSchoolInput } from '../types/school'
 import { GenericService } from '@/services/base/generic.service'
 import { useQuery, UseQueryOptions } from '@tanstack/react-query'
+//FIXED
 
 export interface SchoolFilters {
   page?: number
