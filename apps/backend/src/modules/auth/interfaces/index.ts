@@ -1,10 +1,11 @@
 // interfaces for authentication module in backend
-import { $Enums } from '@una-gc/database/prisma/generated/client';
+
+import { PermissionType, PermissionScope } from '@una-gc/database/prisma/generated/client';
 
 export interface Permission {
   permissionID: string;
-  permissions: $Enums.PermissionType[];
-  scope: $Enums.PermissionScope | null;
+  permissions: PermissionType[];
+  scope: PermissionScope | null;
   actions: string[];
 }
 

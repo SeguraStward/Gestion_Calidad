@@ -1,4 +1,4 @@
-import { PermissionType } from '@una-gc/database/prisma/generated/client'
+import { PermissionType, PermissionScope } from '@una-gc/database/prisma/generated/client'
 
 export type Permission = {
   id: string
@@ -7,7 +7,7 @@ export type Permission = {
   status: string
   type: PermissionType[]
   actions: string[]
-  scope: string
+  scope: PermissionScope
 }
 
 export type Role = {

@@ -51,16 +51,19 @@ export class AuthService {
 
     if (!user) {
       this.logger.warn(`Login attempt with non-existent user: ${googleUser.email}`);
-      throw new UnauthorizedException(
-        'No existe una cuenta asociada a este correo electrónico. Por favor contacta al administrador del sistema.',
-      );
+      throw new UnauthorizedException({
+        message:
+          'There is no account associated with this email address. Please contact the system administrator.',
+        code: 'USER_NOT_FOUND',
+      });
     }
 
     if (user.status === 'INACTIVE') {
       this.logger.warn(`Login attempt from user with inactive status: ${user.email}`);
-      throw new UnauthorizedException(
-        'Tu cuenta ha sido desactivada. Contacta al administrador del sistema.',
-      );
+      throw new UnauthorizedException({
+        message: 'Your account has been deactivated. Please contact the system administrator.',
+        code: 'ACCOUNT_INACTIVE',
+      });
     }
 
     if (!user.googleId && googleUser.googleId) {
