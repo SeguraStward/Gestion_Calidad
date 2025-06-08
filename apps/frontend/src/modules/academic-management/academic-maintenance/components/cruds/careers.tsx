@@ -1,161 +1,275 @@
-// HAY QUE ADAPTAR ESTE CÓDIGO PARA QUE FUNCIONE CON LA NUEVA ESTRUCTURA DE CRUDS
+'use client'
 
-// 'use client'
+import { useMemo } from 'react'
+import { ColumnDef } from '@tanstack/react-table'
+import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
+import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
+import {
+  useCreateCareer,
+  useUpdateCareer,
+  useRemoveCareer,
+  useOneCareer,
+  useListCareersPaginated
+} from '@/modules/academic-management/academic-maintenance/hooks/useCareer'
+import { useListSchoolsFlat } from '@/modules/academic-management/academic-maintenance/hooks/useSchool'
+import { CareerWithRelations, CreateCareerInput } from '@/modules/academic-management/academic-maintenance/types/career'
+import { Status } from '@una-gc/database/prisma/generated/client'
+import { Badge, Button } from '@una-gc/ui/components'
+import { Hash, School as SchoolIcon, BookUser, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
-// import { useCrud } from '@/modules/academic-management/academic-maintenance/hooks/useCrud'
-// import { CrudLayout } from '@/app/(components)/crud/crud-layout'
-// import { useForm, Controller } from 'react-hook-form'
-// import { toast } from 'sonner'
-// import { FormLayout } from '@/app/(components)/form/form-layout'
-// import { FormField } from '@/app/(components)/form/field'
-// import { FormTextarea } from '@/app/(components)/form/textarea'
-// import { Button } from '@una-gc/ui/components/button'
-// import { Card, CardContent } from '@una-gc/ui/components/card'
-// import { FormSelect } from '@/app/(components)/form/select'
-// import { useEffect } from 'react'
-// import { Career } from '@/modules/academic-management/academic-maintenance/types/curricular/career'
-// import { School } from '@/modules/academic-management/academic-maintenance/types/institutional/school'
+interface CareerItem extends CareerWithRelations {}
 
-// export default function CareerCrud() {
-//   const { items: careers, add, update, remove, editandoId, setEditandoId, idAEliminar, setIdAEliminar } = useCrud<Career>()
+const STATUS_OPTIONS = [
+  {
+    id: Status.ACTIVE,
+    name: 'Activo',
+    icon: <CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" />,
+    description: 'La carrera está operativa y visible en el sistema'
+  },
+  {
+    id: Status.INACTIVE,
+    name: 'Inactivo',
+    icon: <XCircle className="h-4 w-4 text-red-500 mr-2" />,
+    description: 'La carrera no está operativa y permanecerá oculta'
+  }
+]
 
-//   const escuelasMock: School[] = [
-//     { id: '1', nombre: 'Escuela de Informática', descripcion: '', facultadId: '1' },
-//     { id: '2', nombre: 'Escuela de Matemática', descripcion: '', facultadId: '1' },
-//     { id: '3', nombre: 'Escuela de Historia', descripcion: '', facultadId: '2' }
-//   ]
+export default function CareerCrud() {
+  // Schools for select
+  const { data: schools, isLoading: isLoadingSchools } = useListSchoolsFlat()
 
-//   const {
-//     register,
-//     handleSubmit,
-//     control,
-//     reset,
-//     formState: { errors }
-//   } = useForm<Career>()
+  // Table columns
+  const renderColumns = useMemo(
+    () =>
+      (utils: ColumnUtilities<CareerItem>): ColumnDef<CareerItem>[] => [
+        {
+          accessorKey: 'code',
+          header: 'Código',
+          size: 80,
+          cell: ({ row }) => (
+            <div className="flex items-center min-w-[60px] max-w-[90px]">
+              <Hash className="h-4 w-4 text-primary mr-2" />
+              <span>{row.original.code}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'name',
+          header: 'Nombre',
+          size: 180,
+          cell: ({ row }) => (
+            <div className="flex items-center min-w-[120px] max-w-[200px] truncate whitespace-nowrap">
+              <BookUser className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
+              <span className="font-medium">{row.original.name}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'school.name',
+          header: 'Escuela',
+          size: 140,
+          cell: ({ row }) => {
+            const name = row.original.school?.name || 'Sin asignar'
+            return (
+              <div className="flex items-center min-w-[80px] max-w-[140px] truncate whitespace-nowrap">
+                <SchoolIcon className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
+                <span>{name}</span>
+              </div>
+            )
+          }
+        },
+        {
+          accessorKey: 'coursesCount',
+          header: 'Cursos',
+          size: 70,
+          cell: ({ row }) => (
+            <div className="flex items-center justify-center min-w-[30px] max-w-[50px]">
+              <span className="font-semibold text-center w-full">
+                <span className="font-semibold text-center w-full">{row.original.courses ? row.original.courses.length : 0}</span>
+              </span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'rpjectsCount',
+          header: 'Proyectos',
+          size: 80,
+          cell: ({ row }) => (
+            <div className="flex items-center justify-center min-w-[30px] max-w-[60px]">
+              <span className="font-semibold text-center w-full">{row.original.projects ? row.original.projects.length : 0}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'status',
+          header: 'Estado',
+          size: 80,
+          cell: ({ row }) => {
+            const status = row.original.status
+            let badgeClasses = ''
+            let statusText = ''
+            if (status === Status.ACTIVE) {
+              badgeClasses =
+                'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+              statusText = 'Activo'
+            } else {
+              badgeClasses = 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800'
+              statusText = 'Inactivo'
+            }
+            return (
+              <Badge variant="outline" className={badgeClasses}>
+                {statusText}
+              </Badge>
+            )
+          }
+        },
+        {
+          id: 'actions',
+          header: () => <div className="text-right">Acciones</div>,
+          size: 90,
+          cell: ({ row }) => (
+            <div className="text-right flex gap-1 justify-end min-w-[80px]">
+              <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => utils.onEdit(row.original.id)} title="Editar">
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50"
+                title="Eliminar"
+                onClick={() => utils.onDelete(row.original.id)}
+                disabled={utils.isProcessing}
+              >
+                {utils.isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              </Button>
+            </div>
+          )
+        }
+      ],
+    [schools]
+  )
 
-//   useEffect(() => {
-//     if (editandoId) {
-//       const career = careers.find((c) => c.id === editandoId)
-//       if (career) reset(career)
-//     } else {
-//       reset()
-//     }
-//   }, [editandoId, careers, reset])
+  // Form sections for create/edit
+  const renderForm = useMemo(() => {
+    function CareerCrudForm({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) {
+      return (
+        <CrudFormAdapter
+          control={control}
+          errors={errors}
+          editingItem={editingItem}
+          isUpdate={isUpdate}
+          isProcessing={isProcessing}
+          handleSubmitForm={handleSubmitForm}
+          handleCancel={handleCancel}
+          title={isUpdate ? 'Editar Carrera' : 'Crear Nueva Carrera'}
+          description={isUpdate ? 'Actualice los datos de la carrera' : 'Complete los datos para registrar una nueva carrera'}
+          sections={() => [
+            {
+              title: 'Datos de la Carrera',
+              description: 'Información principal de la carrera',
+              fields: [
+                {
+                  type: 'text',
+                  name: 'code',
+                  label: 'Código',
+                  required: true,
+                  placeholder: 'Ej: CAR-001',
+                  helperText: 'Código único de la carrera',
+                  disabled: isUpdate
+                },
+                {
+                  type: 'text',
+                  name: 'name',
+                  label: 'Nombre',
+                  required: true,
+                  placeholder: 'Ej: Ingeniería en Sistemas',
+                  helperText: 'Nombre completo de la carrera'
+                },
+                {
+                  type: 'select',
+                  name: 'schoolId',
+                  label: 'Escuela',
+                  required: true,
+                  options: ((schools || []) as any[]).map((s) => ({ id: s.id, name: s.name || '', status: s.status })),
+                  isLoading: isLoadingSchools,
+                  placeholder: isLoadingSchools ? 'Cargando escuelas...' : 'Seleccionar escuela',
+                  helperText: 'Seleccione la escuela a la que pertenece esta carrera',
+                  renderOption: (option: any) => (
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`inline-block w-2 h-2 rounded-full ${option.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-red-500'}`}
+                      ></span>
+                      <span>{option.name}</span>
+                      <span className={`ml-2 text-xs ${option.status === 'ACTIVE' ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {option.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </div>
+                  )
+                },
+                {
+                  type: 'select',
+                  name: 'status',
+                  label: 'Estado',
+                  required: true,
+                  options: STATUS_OPTIONS,
+                  helperText: 'Estado actual de la carrera',
+                  renderOption: (option: any) => (
+                    <div className="flex items-center">
+                      {option.icon}
+                      <span>{option.name}</span>
+                    </div>
+                  )
+                }
+              ]
+            }
+          ]}
+        />
+      )
+    }
+    CareerCrudForm.displayName = 'CareerCrudForm'
+    return CareerCrudForm
+  }, [schools, isLoadingSchools])
 
-//   const onSubmit = (data: Career) => {
-//     if (editandoId) {
-//       update(editandoId, data)
-//       toast.success('¡Carrera actualizada!')
-//       setEditandoId(null)
-//     } else {
-//       add({ ...data, id: crypto.randomUUID() })
-//       toast.success('¡Carrera registrada!')
-//     }
+  const crudConfig = useMemo(
+    () => ({
+      entityName: 'Carrera',
+      entityNamePlural: 'Carreras',
+      searchPlaceholder: 'Buscar por código, nombre o escuela...',
+      usePaginatedQuery: useListCareersPaginated,
+      useCreateMutation: useCreateCareer,
+      useUpdateMutation: useUpdateCareer,
+      useDeleteMutation: useRemoveCareer,
+      useOneQuery: (id: string, options?: any) => useOneCareer(id, undefined, options),
+      defaultFormValues: {
+        code: '',
+        name: '',
+        schoolId: '',
+        status: Status.ACTIVE
+      } as unknown as CreateCareerInput,
+      renderForm,
+      renderColumns,
+      processItemForEditing: (item: CareerItem) => ({
+        code: item.code || '',
+        name: item.name || '',
+        schoolId: item.school?.id || '',
+        status: item.status || Status.ACTIVE
+      }),
+      processFormValues: (values: any) => ({
+        ...values,
+        schoolId: values.schoolId
+      }),
+      preDeleteCheck: (item: CareerItem) => {
+        // Si tiene cursos asociados, advertir
+        if (item.courses && item.courses.length > 0) {
+          return 'No se puede eliminar una carrera con cursos asociados.'
+        }
+        if (item.projects && item.projects.length > 0) {
+          return 'No se puede eliminar una carrera con proyectos asociados.'
+        }
+        return null
+      }
+    }),
+    [renderForm, renderColumns]
+  )
 
-//     reset({
-//       nombre: '',
-//       descripcion: '',
-//       escuelaId: ''
-//     })
-//   }
-
-//   return (
-//     <CrudLayout
-//       nombreEntidad="Carrera"
-//       items={careers}
-//       editandoId={editandoId}
-//       setEditandoId={setEditandoId}
-//       idAEliminar={idAEliminar}
-//       setIdAEliminar={setIdAEliminar}
-//       onDelete={remove}
-//       getItemName={(c) => c.nombre}
-//       renderForm={() => (
-//         <Card>
-//           <CardContent className="p-6">
-//             <FormLayout onSubmit={handleSubmit(onSubmit)} title={editandoId ? 'Editar Carrera' : 'Registrar Carrera'}>
-//               <FormField
-//                 id="nombre"
-//                 label="Nombre"
-//                 control={control}
-//                 name="nombre"
-//                 required
-//                 error={errors.nombre}
-//                 placeholder="Ej: Ingeniería Informática"
-//                 rules={{ required: 'El nombre es obligatorio' }}
-//               />
-
-//               <FormTextarea
-//                 id="descripcion"
-//                 label="Descripción"
-//                 register={register('descripcion')}
-//                 error={errors.descripcion}
-//                 placeholder="Detalles adicionales..."
-//               />
-
-//               <div className="pt-4">
-//                 <Controller
-//                   control={control}
-//                   name="escuelaId"
-//                   rules={{ required: 'La escuela es obligatoria' }}
-//                   render={({ field }) => (
-//                     <FormSelect
-//                       label="Escuela"
-//                       value={field.value || null}
-//                       options={escuelasMock.map((e) => ({ id: e.id, name: e.nombre }))}
-//                       onChange={field.onChange}
-//                       placeholder="Seleccione una escuela"
-//                       error={errors.escuelaId}
-//                     />
-//                   )}
-//                 />
-//                 {errors.escuelaId && <p className="text-red-600 text-sm mt-1">{errors.escuelaId.message}</p>}
-//               </div>
-
-//               <div className="flex justify-end gap-2 pt-4">
-//                 {editandoId && (
-//                   <Button
-//                     type="button"
-//                     variant="outline"
-//                     onClick={() => {
-//                       setEditandoId(null)
-//                       reset({
-//                         nombre: '',
-//                         descripcion: '',
-//                         escuelaId: ''
-//                       })
-//                     }}
-//                   >
-//                     Cancelar
-//                   </Button>
-//                 )}
-//                 <Button type="submit">{editandoId ? 'Actualizar' : 'Registrar'}</Button>
-//               </div>
-//             </FormLayout>
-//           </CardContent>
-//         </Card>
-//       )}
-//       renderItem={(career, isEditing, onEdit, onDelete) => (
-//         <Card key={career.id} className={isEditing ? 'ring-2 ring-blue-400' : ''}>
-//           <CardContent className="p-4 space-y-2">
-//             <div className="flex justify-between">
-//               <h3 className="text-lg font-semibold">{career.nombre}</h3>
-//               {isEditing && <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">Editando</span>}
-//             </div>
-//             <p className="text-sm text-muted-foreground">{career.descripcion}</p>
-//             <p className="text-sm text-muted-foreground font-semibold">
-//               Escuela: {escuelasMock.find((e) => e.id === career.escuelaId)?.nombre || 'N/A'}
-//             </p>
-//             <div className="flex gap-2 border-t pt-2">
-//               <Button size="sm" variant="outline" onClick={onEdit}>
-//                 Editar
-//               </Button>
-//               <Button size="sm" variant="destructive" onClick={onDelete} disabled={isEditing}>
-//                 Eliminar
-//               </Button>
-//             </div>
-//           </CardContent>
-//         </Card>
-//       )}
-//     />
-//   )
-// }
+  return <CrudModuleBase {...crudConfig} />
+}
