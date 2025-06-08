@@ -2,9 +2,11 @@
 
 import { Tabs, TabsList, TabsTrigger } from '@una-gc/ui/components/tabs'
 import { CrudTabPanel } from '@/app/(components)/crud/crud-tab-panel'
-import RegionRegionalCentersCrud from '@/modules/academic-management/academic-maintenance/components/cruds/regional-centers'
-// import SchoolsCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/institutional/cruds/schools'
-// import ClassroomsCrud from '@/modules/academic-management/academic-maintenance/components/sub-maintenance/institutional/cruds/classrooms'
+import RegionalCentersCrud from '@/modules/academic-management/academic-maintenance/components/cruds/regional-centers'
+import CampusCrud from '@/modules/academic-management/academic-maintenance/components/cruds/campus'
+import FacultiesCrud from '@/modules/academic-management/academic-maintenance/components/cruds/faculties'
+import SchoolsCrud from '@/modules/academic-management/academic-maintenance/components/cruds/schools'
+import ClassroomsCrud from '@/modules/academic-management/academic-maintenance/components/cruds/classrooms'
 
 interface Props {
   loading: boolean
@@ -60,24 +62,24 @@ export function InstitutionalMaintenanceTabs({ loading, SkeletonCrud }: Props) {
       </TabsList>
 
       <CrudTabPanel value="sedes" loading={loading} SkeletonCrud={SkeletonCrud}>
-        <RegionRegionalCentersCrud />
+        <RegionalCentersCrud />
       </CrudTabPanel>
 
-      {/* <CrudTabPanel value="campus" loading={loading} SkeletonCrud={SkeletonCrud}>
+      <CrudTabPanel value="campus" loading={loading} SkeletonCrud={SkeletonCrud}>
         <CampusCrud />
-      </CrudTabPanel> */}
+      </CrudTabPanel>
 
-      {/* <CrudTabPanel value="facultades" loading={loading} SkeletonCrud={SkeletonCrud}>
+      <CrudTabPanel value="facultades" loading={loading} SkeletonCrud={SkeletonCrud}>
         <FacultiesCrud />
-      </CrudTabPanel> */}
+      </CrudTabPanel>
 
-      {/* <CrudTabPanel value="escuelas" loading={loading} SkeletonCrud={SkeletonCrud}>
+      <CrudTabPanel value="escuelas" loading={loading} SkeletonCrud={SkeletonCrud}>
         <SchoolsCrud />
-      </CrudTabPanel> */}
+      </CrudTabPanel>
 
-      {/* <CrudTabPanel value="aulas" loading={loading} SkeletonCrud={SkeletonCrud}>
+      <CrudTabPanel value="aulas" loading={loading} SkeletonCrud={SkeletonCrud}>
         <ClassroomsCrud />
-      </CrudTabPanel> */}
+      </CrudTabPanel>
     </Tabs>
   )
 }

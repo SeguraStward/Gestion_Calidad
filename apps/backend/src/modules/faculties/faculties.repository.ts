@@ -11,6 +11,7 @@ export class FacultiesRepository extends GenericPrismaRepository<
 > {
   private readonly logger = new Logger(FacultiesRepository.name);
   protected readonly modelName = 'faculty';
+  protected readonly defaultIncludes = { schools: true };
 
   constructor(protected readonly prisma: PrismaService) {
     super(prisma);

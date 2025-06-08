@@ -1,320 +1,256 @@
-// 'use client'
+// Faculty CRUD datatable and form using form-adapter
+/* eslint-disable react/display-name */
+'use client'
 
-// import { useEffect, useState, useMemo } from 'react' // Added useMemo
-// import { useForm, Controller } from 'react-hook-form'
-// import { toast } from 'sonner'
-// import { GraduationCap } from 'lucide-react'
+import { useMemo } from 'react'
+import { ColumnDef } from '@tanstack/react-table'
+import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
+import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
+import {
+  useCreateFaculty,
+  useUpdateFaculty,
+  useRemoveFaculty,
+  useOneFaculty,
+  useListFacultiesPaginated
+} from '@/modules/academic-management/academic-maintenance/hooks/useFaculty'
+import { FacultyWithRelations, CreateFacultyInput } from '@/modules/academic-management/academic-maintenance/types/faculty'
+import { Status } from '@una-gc/database/prisma/generated/client'
+import { Badge, Button } from '@una-gc/ui/components'
+import { GraduationCap, Hash, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
-// import { Button } from '@una-gc/ui/components/button'
-// import { Card, CardContent } from '@una-gc/ui/components/card'
-// import { Badge } from '@una-gc/ui/components/badge'
-// import { CrudLayout } from '@/app/(components)/crud/crud-layout'
-// import { FormLayout } from '@/app/(components)/form/form-layout'
-// import { FormField } from '@/app/(components)/form/field'
-// import { FormTextarea } from '@/app/(components)/form/textarea' // Assuming this exists
-// import { FormSelectMultiple } from '@/app/(components)/form/select-multiple' // Assuming this exists
+// Define the item type for CrudModuleBase
+interface FacultyItem extends FacultyWithRelations {}
 
-// import {
-//   useListFaculties,
-//   useOneFaculty,
-//   useCreateFaculty,
-//   useUpdateFaculty,
-//   useRemoveFaculty
-// } from '@/modules/academic-management/academic-maintenance/hooks/institutional/useFaculty'
-// // Assuming a hook for listing schools exists, similar to useListCampuses
-// // import { useListSchools } from '@/modules/academic-management/academic-maintenance/hooks/institutional/useSchool'
-// import { CreateFacultyInput, FacultyWithRelations } from '@/modules/academic-management/academic-maintenance/types/institutional/faculty'
+// Faculty status options with enhanced icons and descriptions
+const STATUS_OPTIONS = [
+  {
+    id: Status.ACTIVE,
+    name: 'Activo',
+    icon: <CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" />,
+    description: 'La facultad está operativa y visible en el sistema'
+  },
+  {
+    id: Status.INACTIVE,
+    name: 'Inactivo',
+    icon: <XCircle className="h-4 w-4 text-red-500 mr-2" />,
+    description: 'La facultad no está operativa y permanecerá oculta'
+  }
+]
 
-// // Mock school data and hook if useListSchools doesn't exist yet
-// const useListSchools = () => ({ data: { data: [{ id: 'school1', name: 'Escuela de Informática' }, { id: 'school2', name: 'Escuela de Matemática' }] }, isLoading: false })
+export default function FacultyCrud() {
+  // Definición de columnas para la tabla de facultades
+  const renderColumns = useMemo(
+    () =>
+      (utils: ColumnUtilities<FacultyItem>): ColumnDef<FacultyItem>[] => [
+        {
+          accessorKey: 'code',
+          header: 'Código',
+          size: 120,
+          cell: ({ row }) => (
+            <div className="flex items-center min-w-[90px] max-w-[160px] truncate">
+              <Hash className="h-4 w-4 text-primary mr-2" />
+              <span>{row.original.code}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'name',
+          header: 'Nombre',
+          size: 220,
+          cell: ({ row }) => (
+            <div className="flex items-center min-w-[140px] max-w-[260px] truncate whitespace-nowrap">
+              <GraduationCap className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
+              <span className="font-medium truncate">{row.original.name}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'description',
+          header: 'Descripción',
+          size: 250,
+          cell: ({ row }) => <div className="truncate max-w-xs">{row.original.description}</div>
+        },
+        {
+          accessorKey: 'schoolCount',
+          header: 'Número de Escuelas',
+          size: 110,
+          cell: ({ row }) => (
+            <div className="flex items-center justify-center min-w-[60px] max-w-[90px]">
+              <span className="font-semibold text-center w-full">{row.original.schools ? row.original.schools.length : 0}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'status',
+          header: 'Estado',
+          size: 110,
+          cell: ({ row }) => {
+            const status = row.original.status
+            let badgeClasses = ''
+            let statusText = ''
+            if (status === Status.ACTIVE) {
+              badgeClasses =
+                'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+              statusText = 'Activo'
+            } else {
+              badgeClasses = 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800'
+              statusText = 'Inactivo'
+            }
+            return (
+              <Badge variant="outline" className={badgeClasses + ' min-w-[70px] justify-center'}>
+                {statusText}
+              </Badge>
+            )
+          }
+        },
+        {
+          id: 'actions',
+          header: () => <div className="text-right">Acciones</div>,
+          size: 90,
+          cell: ({ row }) => (
+            <div className="text-right flex gap-1 justify-end min-w-[80px]">
+              <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => utils.onEdit(row.original.id)} title="Editar">
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50"
+                title="Eliminar"
+                disabled={utils.isProcessing}
+                onClick={() => utils.onDelete(row.original.id)}
+              >
+                {utils.isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              </Button>
+            </div>
+          )
+        }
+      ],
+    []
+  )
 
-// export default function FacultyCrud() {
-//   const [editingId, setEditingId] = useState<string | null>(null)
-//   const [idAEliminar, setIdAEliminar] = useState<string | null>(null)
+  // Formulario con campos básicos
+  const renderForm = useMemo(() => {
+    return ({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) => {
+      return (
+        <CrudFormAdapter
+          control={control}
+          errors={errors}
+          editingItem={editingItem}
+          isUpdate={isUpdate}
+          isProcessing={isProcessing}
+          handleSubmitForm={handleSubmitForm}
+          handleCancel={handleCancel}
+          title={isUpdate ? 'Editar Facultad' : 'Crear Nueva Facultad'}
+          description={isUpdate ? 'Actualice los datos de la facultad' : 'Complete los datos para registrar una nueva facultad'}
+          sections={() => [
+            {
+              title: 'Datos básicos',
+              description: 'Información principal de la facultad',
+              icon: <GraduationCap className="h-5 w-5 text-primary mr-2" />,
+              fields: [
+                {
+                  type: 'text',
+                  name: 'code',
+                  label: 'Código',
+                  required: true,
+                  placeholder: 'Ej: FCTEC',
+                  helperText: 'Código único de la facultad',
+                  rules: {
+                    minLength: { value: 2, message: 'El código debe tener al menos 2 caracteres' },
+                    maxLength: { value: 20, message: 'El código no puede exceder 20 caracteres' },
+                    pattern: { value: /^[A-Za-z0-9\-_]+$/, message: 'Solo letras, números, guiones y guiones bajos' }
+                  },
+                  disabled: isUpdate
+                },
+                {
+                  type: 'text',
+                  name: 'name',
+                  label: 'Nombre',
+                  required: true,
+                  placeholder: 'Ej: Facultad de Ciencias',
+                  helperText: 'Nombre completo de la facultad',
+                  rules: {
+                    minLength: { value: 3, message: 'El nombre debe tener al menos 3 caracteres' },
+                    maxLength: { value: 100, message: 'El nombre no puede exceder 100 caracteres' }
+                  }
+                },
+                {
+                  type: 'text',
+                  name: 'description',
+                  label: 'Descripción',
+                  required: true,
+                  placeholder: 'Descripción de la facultad',
+                  helperText: 'Breve descripción de la facultad',
+                  rules: {
+                    minLength: { value: 3, message: 'La descripción debe tener al menos 3 caracteres' },
+                    maxLength: { value: 200, message: 'La descripción no puede exceder 200 caracteres' }
+                  }
+                },
+                {
+                  type: 'select',
+                  name: 'status',
+                  label: 'Estado',
+                  required: true,
+                  options: STATUS_OPTIONS.map((option) => ({
+                    id: option.id,
+                    name: option.name
+                  })),
+                  helperText: 'Estado actual de la facultad',
+                  renderOption: (option: any) => (
+                    <div className="flex items-center">
+                      {STATUS_OPTIONS.find((opt) => opt.id === option.id)?.icon}
+                      <span>{option.name}</span>
+                    </div>
+                  )
+                }
+              ]
+            }
+          ]}
+        />
+      )
+    }
+  }, [])
 
-//   const { data: faculties, refetch, isLoading: isLoadingList } = useListFaculties()
+  // Adapter to match CrudModuleBase's expected useOneQuery signature
+  const useOneFacultyAdapter = (id: string, options?: { [key: string]: any; enabled?: boolean }) => {
+    return useOneFaculty(id, undefined, options)
+  }
 
-//   const processedFaculties = useMemo(() => {
-//     return faculties
-//       ? faculties.map(faculty => ({
-//           ...faculty,
-//           id: faculty.id || (faculty as any)._id, // Handle both id formats
-//           schools: faculty.schools || []
-//         }))
-//       : []
-//   }, [faculties])
+  const crudConfig = useMemo(
+    () => ({
+      entityName: 'Facultad',
+      entityNamePlural: 'Facultades',
+      searchPlaceholder: 'Buscar por código, nombre o descripción...',
+      usePaginatedQuery: useListFacultiesPaginated, // Pasa el hook directamente
+      useCreateMutation: useCreateFaculty,
+      useUpdateMutation: useUpdateFaculty,
+      useDeleteMutation: useRemoveFaculty,
+      useOneQuery: useOneFacultyAdapter,
+      defaultFormValues: {
+        code: '',
+        name: '',
+        description: '',
+        status: Status.ACTIVE
+      } as CreateFacultyInput,
+      renderForm,
+      renderColumns,
+      processItemForEditing: (item: FacultyItem) => ({
+        code: item.code || '',
+        name: item.name || '',
+        description: item.description || '',
+        status: item.status || Status.ACTIVE
+      }),
+      preDeleteCheck: (item: FacultyItem) => {
+        if (item.schools && item.schools.length > 0) {
+          return 'No se puede eliminar una facultad con escuelas asociadas.'
+        }
+        return null
+      }
+    }),
+    [renderForm, renderColumns]
+  )
 
-//   useEffect(() => {
-//     console.log('Faculties data:', faculties);
-//     console.log('Processed faculties data:', processedFaculties);
-//   }, [faculties, processedFaculties]);
+  return <CrudModuleBase {...crudConfig} />
+}
 
-//   const { mutate: createFaculty, isLoading: isCreating, error: createError } = useCreateFaculty({
-//     onSuccess: async () => {
-//       toast.success('Facultad creada exitosamente');
-//       await refetch();
-//       reset({
-//         code: '',
-//         name: '',
-//         description: '',
-//         schools: { connect: [] }
-//       });
-//     },
-//     onError: (error: any) => {
-//       console.error('Error al crear facultad:', error);
-//       toast.error(`Error al crear: ${error.message || 'Error desconocido'}`);
-//     }
-//   });
-
-//   const { mutate: updateFaculty, isLoading: isUpdating, error: updateError } = useUpdateFaculty({
-//     onSuccess: async () => {
-//       toast.success('Facultad actualizada exitosamente');
-//       setEditingId(null);
-//       await refetch();
-//       reset({
-//         code: '',
-//         name: '',
-//         description: '',
-//         schools: { connect: [] }
-//       });
-//     },
-//     onError: (error: any) => {
-//       console.error('Error al actualizar facultad:', error);
-//       toast.error(`Error al actualizar: ${error.message || 'Error desconocido'}`);
-//     }
-//   });
-
-//   const { mutate: removeFaculty, isLoading: isRemoving } = useRemoveFaculty({
-//     onSuccess: async () => {
-//       toast.success('Facultad eliminada exitosamente');
-//       await refetch();
-//     },
-//     onError: (error: any) => {
-//       console.error('Error al eliminar facultad:', error);
-//       toast.error(`Error al eliminar: ${error.message || 'Error desconocido'}`);
-//     }
-//   });
-
-//   const { data: editingItem } = useOneFaculty(editingId || '', undefined, {
-//     enabled: !!editingId
-//   });
-
-//   // Replace with actual useListSchools when available
-//   const { data: schoolsResponse, isLoading: loadingSchools } = useListSchools()
-//   const schoolsData = schoolsResponse?.data || []
-
-//   const { control, handleSubmit, reset, setValue, register, formState: { errors } } = useForm<CreateFacultyInput>({
-//     defaultValues: {
-//       code: '',
-//       name: '',
-//       description: '',
-//       schools: { connect: [] }
-//     }
-//   });
-
-//   useEffect(() => {
-//     if (editingId && editingItem) {
-//       reset({
-//         code: editingItem.code,
-//         name: editingItem.name || '', // Ensure name is not undefined
-//         description: editingItem.description || '', // Ensure description is not undefined
-//         schools: {
-//           connect: editingItem.schools && editingItem.schools.length > 0
-//             ? editingItem.schools.map((s) => ({ id: s.id }))
-//             : []
-//         }
-//       });
-//     } else if (!editingId) {
-//       reset({
-//         code: '',
-//         name: '',
-//         description: '',
-//         schools: { connect: [] }
-//       });
-//     }
-//   }, [editingId, editingItem, reset]);
-
-//   const onSubmit = (data: CreateFacultyInput) => {
-//     try {
-//       const connectSchools = data.schools?.connect || [];
-//       const payload = {
-//         ...data,
-//         schools: {
-//           connect: connectSchools.filter(s => s && s.id)
-//         }
-//       };
-
-//       if (editingId) {
-//         updateFaculty({
-//           id: editingId,
-//           data: payload
-//         });
-//       } else {
-//         createFaculty(payload);
-//       }
-//     } catch (error) {
-//       console.error('Error en formulario:', error)
-//       toast.error('Error al procesar el formulario')
-//     }
-//   }
-
-//   useEffect(() => {
-//     if (createError) {
-//       console.error('Create error details:', createError);
-//     }
-//     if (updateError) {
-//       console.error('Update error details:', updateError);
-//     }
-//   }, [createError, updateError]);
-
-//   return (
-//     <CrudLayout
-//       nombreEntidad="Facultad"
-//       items={processedFaculties}
-//       editandoId={editingId}
-//       idAEliminar={idAEliminar}
-//       isLoading={isLoadingList}
-//       setEditandoId={setEditingId}
-//       setIdAEliminar={setIdAEliminar}
-//       onDelete={(id) => {
-//         const validId = id?.toString();
-//         if (validId) {
-//           removeFaculty(validId);
-//         } else {
-//           toast.error('ID inválido para eliminación');
-//         }
-//         setIdAEliminar(null);
-//       }}
-//       getItemName={(f) => f.name || 'Facultad sin nombre'}
-//       renderForm={() => (
-//         <Card>
-//           <CardContent className="p-6">
-//             <FormLayout title={editingId ? 'Editar Facultad' : 'Registrar Facultad'} onSubmit={handleSubmit(onSubmit)}>
-//               <FormField
-//                 id="code"
-//                 name="code"
-//                 control={control}
-//                 label="Código"
-//                 placeholder="Ej: FAC001"
-//                 required
-//                 rules={{
-//                   required: 'El código es obligatorio',
-//                   pattern: {
-//                     value: /^[A-Za-z0-9-]+$/,
-//                     message: 'El código solo puede contener letras, números y guiones'
-//                   }
-//                 }}
-//                 error={errors.code}
-//               />
-
-//               <FormField
-//                 id="name"
-//                 name="name"
-//                 control={control}
-//                 label="Nombre"
-//                 placeholder="Ej: Facultad de Ciencias Exactas"
-//                 required
-//                 rules={{ required: 'El nombre es obligatorio' }}
-//                 error={errors.name}
-//               />
-
-//               <FormTextarea
-//                 id="description"
-//                 label="Descripción"
-//                 control={control} // Pass control for Controller-based FormTextarea
-//                 name="description" // Pass name for Controller-based FormTextarea
-//                 // register={register('description')} // Use this if FormTextarea is not Controller-based
-//                 error={errors.description}
-//                 placeholder="Detalles de la facultad..."
-//               />
-
-//               <Controller
-//                 control={control}
-//                 name="schools.connect"
-//                 defaultValue={[]}
-//                 // Add rules if schools are required, e.g.
-//                 // rules={{ required: 'Debe seleccionar al menos una escuela' }}
-//                 render={({ field }) => (
-//                   <FormSelectMultiple
-//                     label="Escuelas asignadas"
-//                     value={field.value || []}
-//                     options={schoolsData.map((s: any) => ({ id: s.id, name: s.name }))}
-//                     onChange={(newValue) => {
-//                       field.onChange(newValue || []);
-//                     }}
-//                     placeholder={loadingSchools ? 'Cargando escuelas...' : 'Seleccione una o más'}
-//                     disabled={loadingSchools}
-//                     error={errors?.schools?.connect as any} // Adjust error display as needed
-//                   />
-//                 )}
-//               />
-
-//               <div className="flex justify-end gap-2 pt-6">
-//                 {editingId && (
-//                   <Button type="button" variant="outline" onClick={() => {
-//                     setEditingId(null)
-//                     reset()
-//                   }}>
-//                     Cancelar
-//                   </Button>
-//                 )}
-//                 <Button
-//                   type="submit"
-//                   disabled={isCreating || isUpdating}
-//                 >
-//                   {isCreating || isUpdating ? 'Procesando...' : (editingId ? 'Actualizar' : 'Registrar')}
-//                 </Button>
-//               </div>
-//             </FormLayout>
-//           </CardContent>
-//         </Card>
-//       )}
-//       renderItem={(faculty, isEditing, onEdit, onDelete) => (
-//         <Card key={faculty.id} className={`${isEditing ? 'ring-2 ring-blue-500' : ''} overflow-hidden`}>
-//           <CardContent className="p-4 space-y-3">
-//             <div className="flex justify-between items-start">
-//               <div>
-//                 <h3 className="text-lg font-semibold">{faculty.name || 'Facultad sin nombre'}</h3>
-//                 <p className="text-sm text-muted-foreground font-mono">Código: {faculty.code}</p>
-//               </div>
-//               {isEditing && (
-//                 <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full shrink-0">Editando</span>
-//               )}
-//             </div>
-
-//             {faculty.description && (
-//               <p className="text-sm text-muted-foreground">{faculty.description}</p>
-//             )}
-
-//             <div className="flex flex-wrap gap-2 items-center">
-//               <div className="flex items-center gap-1 text-sm text-muted-foreground">
-//                 <GraduationCap className="h-4 w-4 text-primary" />
-//                 <span>Escuelas:</span>
-//               </div>
-//               {faculty.schools && faculty.schools.length > 0 ? (
-//                 faculty.schools.map((school) => (
-//                   <Badge key={school.id} variant="secondary" className="font-normal">
-//                     {school.name || 'Escuela sin nombre'}
-//                   </Badge>
-//                 ))
-//               ) : (
-//                 <Badge variant="outline" className="font-normal">Ninguna</Badge>
-//               )}
-//             </div>
-//             <div className="flex gap-2 border-t pt-3 mt-3">
-//               <Button size="sm" variant="outline" onClick={() => onEdit(faculty.id)}>Editar</Button>
-//               <Button
-//                 size="sm"
-//                 variant="destructive"
-//                 onClick={() => onDelete(faculty.id)}
-//                 disabled={isEditing || (faculty.schools && faculty.schools.length > 0)}
-//               >
-//                 Eliminar
-//               </Button>
-//             </div>
-//           </CardContent>
-//         </Card>
-//       )}
-//     />
-//   )
-// }
+FacultyCrud.displayName = 'FacultyCrud'

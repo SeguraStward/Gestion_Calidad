@@ -4,6 +4,8 @@ import { Prisma, Status } from '@una-gc/database/prisma/generated/client'
 export type RegionalCenterWithRelations = Prisma.RegionalCenterGetPayload<{
   include: {
     campuses: true
+    commissions: true
+    projects: true
   }
 }>
 
@@ -29,6 +31,7 @@ export interface CampusSelectOption {
 export interface RegionalCenterFilters {
   search?: string
   status?: Status
+  limit?: number // Permite paginación o traer todos para selects
 }
 
 // Type for regional center selection in forms

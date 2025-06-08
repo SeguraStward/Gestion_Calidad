@@ -14,7 +14,6 @@ export interface FacultyFilters {
 }
 
 const {
-  useList: useListFacultiesPaginated, // Renamed to avoid conflict
   useOne: useOneFaculty,
   useCreate: useCreateFaculty,
   useUpdate: useUpdateFaculty,
@@ -36,25 +35,17 @@ export function useListFaculties(
   filters?: FacultyFilters,
   options?: Omit<UseQueryOptions<FacultyWithRelations[], Error>, 'queryKey' | 'queryFn'>
 ) {
+  // Si no se especifica limit, usar un valor alto para selects
+  const effectiveFilters = { ...filters, limit: filters?.limit ?? 1000 };
   return useQuery<FacultyWithRelations[], Error, FacultyWithRelations[]>({
-    queryKey: ['faculties', filters],
+    queryKey: ['faculties', effectiveFilters],
     queryFn: async () => {
-      const response = await facultyService.list(filters)
-      // Assuming response might be PaginatedResponse<FacultyWithRelations> or FacultyWithRelations[]
-      // Adjust based on actual structure of 'response' from facultyService.list
-      const data = response as any // Use 'as any' for now, or define a more specific type for response
-
+      const response = await facultyService.list(effectiveFilters)
+      // El backend devuelve { data, meta }
+      const data = (response as any)?.data || response
       if (Array.isArray(data)) {
-        return data
+        return data.map((f: any) => ({ ...f, schools: f.schools || [] }))
       }
-      // If the data is paginated, it might be in a property like 'items' or 'data'
-      if (data && Array.isArray(data.items)) {
-        return data.items
-      }
-      if (data && Array.isArray(data.data)) {
-        return data.data
-      }
-      console.warn('❌ No se pudo extraer la lista de facultades:', data)
       return []
     },
     select: (data) => {
@@ -62,9 +53,22 @@ export function useListFaculties(
         console.warn('useListFaculties: data no es un array', data)
         return []
       }
-      return data.map((f) => ({ ...f, id: f.id || (f as any)._id, schools: f.schools || [] })) // Handle _id and ensure schools array
+      return data.map((f) => ({ ...f, id: f.id || (f as any)._id, schools: f.schools || [] }))
     },
     staleTime: 60_000, // Example: 1 minute
+    ...options
+  })
+}
+
+// Hook paginado explícito para el CRUD (igual que regional centers)
+export function useListFacultiesPaginated(
+  filters?: FacultyFilters,
+  options?: Omit<UseQueryOptions<PaginatedResponse<FacultyWithRelations>, Error>, 'queryKey' | 'queryFn'>
+) {
+  const { page = 1, limit = 10, ...rest } = filters || {}
+  return useQuery<PaginatedResponse<FacultyWithRelations>, Error>({
+    queryKey: ['faculties', 'paginated', page, limit, rest],
+    queryFn: () => facultyService.list({ ...rest, page, limit }),
     ...options
   })
 }
@@ -74,6 +78,5 @@ export {
   useOneFaculty,
   useCreateFaculty,
   useUpdateFaculty,
-  useRemoveFaculty,
-  useListFacultiesPaginated // Exporting the paginated version as well
+  useRemoveFaculty
 }
