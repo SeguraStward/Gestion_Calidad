@@ -4,7 +4,7 @@ import { Prisma, Status } from '@una-gc/database/prisma/generated/client'
 export type SchoolWithRelations = Prisma.SchoolGetPayload<{
   include: {
     faculty: true
-    career: true
+    careers: true
   }
 }>
 

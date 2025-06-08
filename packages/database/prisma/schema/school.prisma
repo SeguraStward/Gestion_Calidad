@@ -7,7 +7,7 @@ model School {
   name        String // descripcion migra a name
   description String? // esto queda vacio
 
-  facultyId String? @db.ObjectId
+  facultyId String @db.ObjectId
 
   status Status @default(ACTIVE)
 
@@ -15,7 +15,7 @@ model School {
   faculty Faculty? @relation(fields: [facultyId], references: [id])
 
   // courses Course[]
-  career Career[]
+  careers Career[]
 
   // Audit fields
   createdAt DateTime @default(now())
