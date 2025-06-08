@@ -51,7 +51,7 @@ export function useListRegionalCenters(
   >
 ) {
   // Si no se especifica limit, usar un valor alto para selects
-  const effectiveFilters = { ...filters, limit: filters?.limit ?? 1000 }
+  const effectiveFilters = { ...filters, limit: filters?.limit ?? 1000 };
   return useQuery({
     queryKey: [QUERY_KEY_PREFIX, effectiveFilters],
     queryFn: async () => {
@@ -60,8 +60,7 @@ export function useListRegionalCenters(
         id: item.id,
         code: item.code,
         name: item.name,
-        status: item.status,
-        label: `${item.name} (${item.status === 'ACTIVE' ? 'Activo' : 'Inactivo'})`
+        status: item.status
       }))
     },
     ...options
