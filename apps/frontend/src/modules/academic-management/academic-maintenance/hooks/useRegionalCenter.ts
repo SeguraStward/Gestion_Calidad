@@ -51,7 +51,7 @@ export function useListRegionalCenters(
   >
 ) {
   // Si no se especifica limit, usar un valor alto para selects
-  const effectiveFilters = { ...filters, limit: filters?.limit ?? 1000 };
+  const effectiveFilters = { ...filters, limit: filters?.limit ?? 1000 }
   return useQuery({
     queryKey: [QUERY_KEY_PREFIX, effectiveFilters],
     queryFn: async () => {

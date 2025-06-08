@@ -237,7 +237,7 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     return () => {
       mounted = false
     }
-  }, []) // Sin dependencias para evitar bucles
+  }, [executeAsync, error, router])
 
   return {
     roles,
