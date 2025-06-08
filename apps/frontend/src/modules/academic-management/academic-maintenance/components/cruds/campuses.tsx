@@ -12,7 +12,7 @@ import {
   useOneCampus,
   useListCampusesPaginated
 } from '@/modules/academic-management/academic-maintenance/hooks/useCampus'
-import { useListRegionalCenters } from '@/modules/academic-management/academic-maintenance/hooks/useRegionalCenter'
+import { useListRegionalCentersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useRegionalCenter'
 import { CampusWithRelations, CreateCampusInput } from '@/shared/types/campus'
 import { Status } from '@una-gc/database/prisma/generated/client'
 import { Badge, Button } from '@una-gc/ui/components'
@@ -42,7 +42,7 @@ export default function CampusCrud() {
   const deleteMutation = useRemoveCampus()
 
   // Regional centers for select (traer todos, sin paginación)
-  const { data: regionalCenters, isLoading: isLoadingRegionalCenters } = useListRegionalCenters()
+  const { data: regionalCenters = [], isLoading: isLoadingRegionalCenters } = useListRegionalCentersFlat()
 
   // Table columns
   const renderColumns = useMemo(
@@ -65,7 +65,7 @@ export default function CampusCrud() {
           size: 160,
           cell: ({ row }) => (
             <div className="flex items-center min-w-[100px] max-w-[180px] truncate whitespace-nowrap">
-              <Building2 className="h-4 w-4 text-primary mr-2 flex-shrink-0"/>
+              <Building2 className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
               <span className="font-medium">{row.original.name}</span>
             </div>
           )
@@ -84,7 +84,7 @@ export default function CampusCrud() {
             const name = row.original.regionalCenter?.name || 'Sin asignar'
             return (
               <div className="flex items-center min-w-[80px] max-w-[140px] truncate whitespace-nowrap">
-                <Globe className="h-4 w-4 text-primary mr-2 flex-shrink-0"/>
+                <Globe className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
                 <span>{name}</span>
               </div>
             )
@@ -216,7 +216,11 @@ export default function CampusCrud() {
                   label: 'Sede Regional',
                   required: true,
                   // Pass the full regional center object for status rendering
-                  options: (regionalCenters || []).map((rc) => ({ id: rc.id, name: rc.name, status: rc.status })),
+                  options: (regionalCenters || []).map((rc: any) => ({
+                    id: rc.id,
+                    name: rc.name,
+                    status: rc.status
+                  })),
                   isLoading: isLoadingRegionalCenters,
                   placeholder: isLoadingRegionalCenters ? 'Cargando sedes...' : 'Seleccionar sede regional',
                   helperText: 'Seleccione la sede regional a la que pertenece este campus',
