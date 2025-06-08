@@ -47,10 +47,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     if (!user) {
       this.logger.warn(`User with id ${payload.sub} not found during JWT validation`);
-      throw new UnauthorizedException('Usuario no encontrado');
+      throw new UnauthorizedException('User not found');
     }
 
-    // Ya no manejamos activeRole aquí, se manejará en el PermissionsGuard
     return {
       id: user.id,
       sub: user.id,

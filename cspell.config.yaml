@@ -27,6 +27,7 @@ ignorePaths:
   - "./project-words.txt"
   - "./packages/database/prisma/generated"
   - "*package.json"
+  - "/packages"
   - "*.http"
   - "*.bat"
   - .git
@@ -37,6 +38,8 @@ ignorePaths:
   - "package-lock.json"
   - "pnpm-lock.yaml"
   - "yarn.lock"
+  - "*.json"
+  - "*.csv"
 
 dictionaryDefinitions:
   - name: project-words

@@ -21,10 +21,6 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
       inject: [ConfigService],
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       useFactory: async (configService: ConfigService) => {
-        // Aunque las estrategias y servicios a menudo especifican el secreto explícitamente,
-        // podrías configurar un secreto predeterminado aquí si fuera necesario para otros usos de JwtService.
-        // Por ahora, devolver un objeto vacío está bien si todas las operaciones de firma/verificación
-        // proporcionan sus propias opciones (como secreto y expiración).
         return {};
       },
     }),

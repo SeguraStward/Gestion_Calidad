@@ -8,7 +8,6 @@ export class BaseDto {
   @IsOptional()
   version?: number;
 
-  // Campos de auditoría opcionales (solo para respuestas)
   @ApiPropertyOptional({ description: 'Creation timestamp', readOnly: true })
   @IsDate()
   @IsOptional()

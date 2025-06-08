@@ -38,7 +38,7 @@ export const ResourceNameParam = createParamDecorator((data: unknown, ctx: Execu
 export abstract class GenericController<D, C, U = Partial<C>> {
   protected abstract readonly logger: Logger;
 
-  protected abstract readonly resourceName: string; // definir el nombre del recurso en la implementacion hija
+  protected abstract readonly resourceName: string;
 
   constructor(protected readonly service: IGenericService<D, C, U>) {}
 

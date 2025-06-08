@@ -22,53 +22,46 @@ export class PermissionsGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const disable = process.env.DISABLED_ROLES == 'true';
+    if (disable) {
+      this.logger.warn('This guard is disabled, all requests will be allowed (DISABLED_ROLES=true)');
+      return true;
+    }
+
     try {
-      this.logger.debug('Iniciando verificación de permisos');
+      this.logger.debug('Starting permissions verification');
 
-      // validar si en el env está habilitado el guard
-      const disable = process.env.DISABLED_ROLES == 'true';
-      if (disable) {
-        this.logger.warn('This guard is disabled, all requests will be allowed (DISABLED_ROLES=true)');
-        return true;
-      }
-
-      // Obtener los permisos requeridos para el endpoint
       const requiredPermissions = this.reflector.getAllAndOverride<RequiredPermission[]>(PERMISSIONS_KEY, [
         context.getHandler(),
         context.getClass(),
       ]);
 
-      // Si no hay permisos requeridos, permitir acceso
       if (!requiredPermissions || requiredPermissions.length === 0) {
-        this.logger.debug('No se requieren permisos para este endpoint');
+        this.logger.debug('No permissions required for this endpoint');
         return true;
       }
 
       const request = context.switchToHttp().getRequest();
       const user = request.user;
 
-      // Verificar que el usuario exista
       if (!user) {
         this.logger.warn('No user found in request');
-        throw new ForbiddenException('Usuario no autenticado');
+        throw new ForbiddenException('User not authenticated');
       }
 
-      // Obtener el ID del rol activo desde la cookie
       const activeRoleId = request.cookies?.user_active_role_id;
 
       if (!activeRoleId) {
         this.logger.warn(`User ${user.id} without active role trying to access protected resource`);
-        throw new ForbiddenException('Tu rol no está activo o no tienes un rol seleccionado');
+        throw new ForbiddenException('Your role is not active or not selected');
       }
 
-      // Verificar que el usuario tenga acceso a este rol
       const userRole = user.roles?.find((role: any) => role.id === activeRoleId);
       if (!userRole) {
         this.logger.warn(`User ${user.id} trying to use role ${activeRoleId} that doesn't belong to them`);
-        throw new ForbiddenException('No tienes acceso al rol seleccionado');
+        throw new ForbiddenException('You do not have access to the selected role');
       }
 
-      // Cargar el rol completo con permisos desde la base de datos
       const activeRole = await this.prisma.userRole.findUnique({
         where: {
           id: activeRoleId,
@@ -84,18 +77,16 @@ export class PermissionsGuard implements CanActivate {
 
       if (!activeRole) {
         this.logger.error(`Active role not found or not active: ${activeRoleId}`);
-        throw new ForbiddenException('Rol no encontrado o no está activo');
+        throw new ForbiddenException('Role not found or not active');
       }
 
-      // Obtener el nombre del recurso de los metadatos del controlador
       const resourceName = this.reflector.getAllAndOverride<string>(RESOURCE_NAME_KEY, [context.getClass()]);
 
-      // Procesar permisos requeridos y reemplazar tokens especiales
       const processedPermissions = requiredPermissions.map((permission) => {
         if (permission.resource === RESOURCE_NAME_TOKEN) {
           if (!resourceName) {
             this.logger.error(`Resource name token used but no @ResourceName decorator found on controller`);
-            throw new ForbiddenException('Error de configuración de permisos');
+            throw new ForbiddenException('Permissions configuration error');
           }
           return {
             ...permission,
@@ -107,18 +98,16 @@ export class PermissionsGuard implements CanActivate {
 
       this.logger.debug(`Processed permissions: ${JSON.stringify(processedPermissions)}`);
 
-      // Verificar cada permiso requerido
       for (const requiredPermission of processedPermissions) {
-        // Verificar que el permiso requerido tenga los campos necesarios
         if (!requiredPermission.resource || !requiredPermission.action) {
           this.logger.error(
             `Invalid permission configuration: resource=${requiredPermission.resource}, action=${requiredPermission.action}`,
           );
-          throw new ForbiddenException('Error de configuración de permisos');
+          throw new ForbiddenException('Permissions configuration error');
         }
 
         this.logger.debug(
-          `Verificando permiso para usuario ${user.email}: acción=${requiredPermission.action}, recurso=${requiredPermission.resource}`,
+          `Checking permission for user ${user.email}: action=${requiredPermission.action}, resource=${requiredPermission.resource}`,
         );
 
         const hasPermission = await this.checkPermission(activeRole.permissions, requiredPermission);
@@ -128,19 +117,19 @@ export class PermissionsGuard implements CanActivate {
             `Access denied for ${user.email}: Requires ${requiredPermission.action} on ${requiredPermission.resource}`,
           );
           throw new ForbiddenException(
-            `No tienes permiso para ${this.getActionLabel(requiredPermission.action)} este recurso`,
+            `You do not have permission to ${this.getActionLabel(requiredPermission.action)} this resource`,
           );
         }
       }
 
-      this.logger.debug(`Permisos verificados correctamente para usuario ${user.email}`);
+      this.logger.debug(`Permissions successfully verified for user ${user.email}`);
       return true;
     } catch (error: any) {
-      this.logger.error('Error en PermissionsGuard', error.stack || error);
+      this.logger.error('Error in PermissionsGuard', error.stack || error);
       if (error instanceof ForbiddenException) {
         throw error;
       }
-      throw new ForbiddenException('Error al verificar permisos');
+      throw new ForbiddenException('Error verifying permissions');
     }
   }
 
@@ -149,7 +138,6 @@ export class PermissionsGuard implements CanActivate {
     requiredPermission: RequiredPermission,
   ): Promise<boolean> {
     try {
-      // Validar que los parámetros requeridos no sean undefined
       if (!requiredPermission.resource || !requiredPermission.action) {
         this.logger.warn(
           `Invalid permission check: resource=${requiredPermission.resource}, action=${requiredPermission.action}`,
@@ -157,11 +145,10 @@ export class PermissionsGuard implements CanActivate {
         return false;
       }
 
-      // 1. Encontrar el ID del permiso basado en el código
       const permissionEntity = await this.prisma.userPermission.findUnique({
         where: {
           code: requiredPermission.resource,
-          status: 'ACTIVE', // Asegurarse que el permiso esté activo
+          status: 'ACTIVE',
         },
         select: { id: true },
       });
@@ -171,7 +158,6 @@ export class PermissionsGuard implements CanActivate {
         return false;
       }
 
-      // 2. Buscar el permiso en los permisos del rol usando el ID obtenido
       const resourcePermission = rolePermissions?.find((p) => p.permissionID === permissionEntity.id);
 
       if (!resourcePermission) {
@@ -179,7 +165,6 @@ export class PermissionsGuard implements CanActivate {
         return false;
       }
 
-      // 3. Verificar si tiene el tipo de acción permitida
       const hasActionType = resourcePermission.permissions.includes(requiredPermission.action);
 
       if (!hasActionType) {
@@ -189,7 +174,6 @@ export class PermissionsGuard implements CanActivate {
         return false;
       }
 
-      // 4. Verificar el scope si se requiere
       if (requiredPermission.scope && resourcePermission.scope) {
         const scopeMatches = resourcePermission.scope === requiredPermission.scope;
         if (!scopeMatches) {
@@ -202,19 +186,19 @@ export class PermissionsGuard implements CanActivate {
 
       return true;
     } catch (error: any) {
-      this.logger.error('Error en checkPermission', error.stack || error);
+      this.logger.error('Error in checkPermission', error.stack || error);
       return false;
     }
   }
 
   private getActionLabel(action: PermissionType): string {
     const labels = {
-      [PermissionType.CREATE]: 'crear',
-      [PermissionType.READ]: 'ver',
-      [PermissionType.UPDATE]: 'actualizar',
-      [PermissionType.DELETE]: 'eliminar',
-      [PermissionType.REPORT]: 'generar reportes de',
+      [PermissionType.CREATE]: 'create',
+      [PermissionType.READ]: 'view',
+      [PermissionType.UPDATE]: 'update',
+      [PermissionType.DELETE]: 'delete',
+      [PermissionType.REPORT]: 'generate reports for',
     };
-    return labels[action] || 'acceder a';
+    return labels[action] || 'access';
   }
 }

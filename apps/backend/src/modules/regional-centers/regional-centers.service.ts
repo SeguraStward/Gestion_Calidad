@@ -35,7 +35,6 @@ export class RegionalCentersService extends GenericService<
       code: payload.code,
       name: payload.name,
       status: payload.status,
-      // No se conecta campus aquí
     };
     return super.save(data as any);
   }
@@ -47,7 +46,6 @@ export class RegionalCentersService extends GenericService<
       code: payload.code,
       name: payload.name,
       status: payload.status,
-      // No se conecta campus aquí
     };
     return super.update(id, data as any);
   }

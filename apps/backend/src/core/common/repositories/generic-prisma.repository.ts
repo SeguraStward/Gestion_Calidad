@@ -44,11 +44,9 @@ export abstract class GenericPrismaRepository<T, CreateInput, UpdateInput, Where
     const finalInclude = { ...this.defaultIncludes, ...include };
     const effectiveInclude = Object.keys(finalInclude).length > 0 ? finalInclude : undefined;
 
-    // Obtener los campos válidos del modelo Prisma
     const validFields = Object.keys(model.fields || {});
     const safeWhere = filterValidFields(where, validFields);
 
-    // Add this log
     this.internalLogger.debug(
       `[${this.modelName}] Effective include for findAll: ${JSON.stringify(effectiveInclude)}`,
     );
@@ -80,7 +78,6 @@ export abstract class GenericPrismaRepository<T, CreateInput, UpdateInput, Where
     const finalInclude = { ...this.defaultIncludes, ...include };
     const effectiveInclude = Object.keys(finalInclude).length > 0 ? finalInclude : undefined;
 
-    // Add this log
     this.internalLogger.debug(
       `[${this.modelName}] Effective include for findById (${id}): ${JSON.stringify(effectiveInclude)}`,
     );
@@ -155,7 +152,6 @@ export abstract class GenericPrismaRepository<T, CreateInput, UpdateInput, Where
     const finalInclude = { ...this.defaultIncludes, ...include };
     const effectiveInclude = Object.keys(finalInclude).length > 0 ? finalInclude : undefined;
 
-    // Add this log
     this.internalLogger.debug(
       `[${this.modelName}] Effective include for findOne: ${JSON.stringify(effectiveInclude)}`,
     );

@@ -1,32 +1,10 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '@src/prisma/prisma.service';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
-import { $Enums } from '@una-gc/database/prisma/generated/client';
 
-export interface Permission {
-  permissionID: string;
-  permissions: $Enums.PermissionType[];
-  scope: $Enums.PermissionScope | null;
-  actions: string[];
-}
-
-interface GoogleUser {
-  googleId: string;
-  email: string;
-  firstName: string;
-  fullLastName?: string;
-  familyName?: string;
-  picture?: string;
-}
-
-export interface SelectedRole {
-  id: string;
-  name: string;
-  description?: string | null;
-  permissions: Permission[];
-}
+import { PrismaService } from '@src/prisma/prisma.service';
+import { GoogleUser } from './interfaces';
 
 @Injectable()
 export class AuthService {
@@ -109,7 +87,6 @@ export class AuthService {
   }
 
   generateAccessToken(userId: string, email: string): string {
-    // Remover el parámetro role del JWT
     const payload = { sub: userId, email };
     const accessTokenExpirationString = this.configService.get<string>('JWT_EXPIRATION') || '1m';
     const expiresIn = this.parseExpiryToMilliseconds(accessTokenExpirationString);
@@ -167,7 +144,6 @@ export class AuthService {
       throw new UnauthorizedException('Error processing refresh token. Please try logging in again.');
     }
 
-    // Generar nuevo access token sin rol
     const newAccessToken = this.generateAccessToken(userId, email);
     const { rawRefreshToken: newRawRefreshToken } = await this.generateAndStoreRefreshToken(userId);
 

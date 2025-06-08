@@ -62,7 +62,7 @@ export class RegionalCentersController extends GenericController<RegionalCenterD
     try {
       const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
       // const prismaInclude = buildPrismaInclude(includeQueryParam);
-      // Solo pasa los argumentos que acepta el servicio
+      // Only pass the arguments that the service accepts
       const where = status ? { status } : undefined;
       return await this.regionalCentersService.findAll(page, limit, where, parsedOrderBy);
     } catch (err) {

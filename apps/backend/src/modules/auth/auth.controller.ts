@@ -1,31 +1,23 @@
 import {
   Controller,
+  ForbiddenException,
   Get,
+  Logger,
   Post,
   Req,
   Res,
-  UseGuards,
-  Logger,
   UnauthorizedException,
-  ForbiddenException,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
+import type { Request, Response } from 'express';
+
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
-import { ConfigService } from '@nestjs/config';
-import type { Request, Response } from 'express';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-
-// Definir una interfaz para GoogleUser
-interface GoogleUser {
-  googleId: string;
-  email: string;
-  firstName: string;
-  fullLastName?: string;
-  familyName?: string;
-  picture?: string;
-}
+import { GoogleUser } from './interfaces';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -153,7 +145,6 @@ export class AuthController {
       }
     }
 
-    // Limpiar todas las cookies relacionadas con autenticación
     res.clearCookie('auth_token', {
       httpOnly: true,
       secure: this.configService.get('NODE_ENV') === 'production',
@@ -180,7 +171,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Return new access token' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post('refresh')
-  @UseGuards(JwtRefreshGuard) // This guard uses JwtRefreshStrategy
+  @UseGuards(JwtRefreshGuard)
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     // JwtRefreshStrategy populates req.user with { id, email, refreshTokenFromCookie, refreshTokenDbId }
     const userFromStrategy = req.user as {
