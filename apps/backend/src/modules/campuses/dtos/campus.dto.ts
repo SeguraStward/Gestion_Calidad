@@ -6,7 +6,7 @@ import { Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
 import { RegionalCenterDto } from '@src/modules/regional-centers/dtos/regional-center.dto';
 import { AcademicLoadDto } from '@src/modules/academic-loads/dtos/academic-load.dto';
-import { SchoolDto } from '@src/modules/schools/dtos/school.dto';
+import { ClassroomDto } from '@src/modules/classrooms/dtos/classroom.dto';
 
 export class CampusDto extends BaseDto {
   @ApiPropertyOptional({ description: 'Campus ID' })
@@ -45,10 +45,10 @@ export class CampusDto extends BaseDto {
   regionalCenter?: RegionalCenterDto;
 
   @Expose()
-  @ApiPropertyOptional({ type: () => [SchoolDto] })
-  @Type(() => SchoolDto)
+  @ApiPropertyOptional({ type: () => [ClassroomDto] })
+  @Type(() => ClassroomDto)
   @IsOptional()
-  schools?: SchoolDto[];
+  classrooms?: ClassroomDto[];
 
   @Expose()
   @ApiPropertyOptional({ type: () => [AcademicLoadDto] })

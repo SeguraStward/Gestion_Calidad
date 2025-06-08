@@ -51,9 +51,9 @@ export default function CampusCrud() {
         {
           accessorKey: 'code',
           header: 'Código',
-          size: 100,
+          size: 90,
           cell: ({ row }) => (
-            <div className="flex items-center">
+            <div className="flex items-center min-w-[60px] max-w-[100px]">
               <Hash className="h-4 w-4 text-primary mr-2" />
               <span>{row.original.code}</span>
             </div>
@@ -62,10 +62,10 @@ export default function CampusCrud() {
         {
           accessorKey: 'name',
           header: 'Nombre',
-          size: 200,
+          size: 160,
           cell: ({ row }) => (
-            <div className="flex items-center min-w-[140px] max-w-[260px] truncate whitespace-nowrap">
-              <Building2 className="h-4 w-4 text-primary mr-2" flex-shrink-0/>
+            <div className="flex items-center min-w-[100px] max-w-[180px] truncate whitespace-nowrap">
+              <Building2 className="h-4 w-4 text-primary mr-2 flex-shrink-0"/>
               <span className="font-medium">{row.original.name}</span>
             </div>
           )
@@ -73,27 +73,51 @@ export default function CampusCrud() {
         {
           accessorKey: 'description',
           header: 'Descripción',
-          size: 250,
-          cell: ({ row }) => <div className="truncate max-w-xs">{row.original.description}</div>
+          size: 180,
+          cell: ({ row }) => <div className="truncate max-w-[160px]">{row.original.description}</div>
         },
         {
           accessorKey: 'regionalCenter.name',
           header: 'Sede Regional',
-          size: 180,
+          size: 140,
           cell: ({ row }) => {
             const name = row.original.regionalCenter?.name || 'Sin asignar'
             return (
-              <div className="flex items-center min-w-[140px] max-w-[260px] truncate whitespace-nowrap">
-                <Globe className="h-4 w-4 text-primary mr-2" flex-shrink-0/>
+              <div className="flex items-center min-w-[80px] max-w-[140px] truncate whitespace-nowrap">
+                <Globe className="h-4 w-4 text-primary mr-2 flex-shrink-0"/>
                 <span>{name}</span>
               </div>
             )
           }
         },
         {
+          accessorKey: 'classroomCount',
+          header: () => <span>Aulas</span>,
+          size: 70,
+          cell: ({ row }) => (
+            <div className="flex items-center justify-center min-w-[30px] max-w-[50px]">
+              <span className="font-semibold text-center w-full">
+                {row.original.classrooms ? row.original.classrooms.length : 0}
+              </span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'academicLoadCount',
+          header: () => <span>Cargas Académicas</span>,
+          size: 90,
+          cell: ({ row }) => (
+            <div className="flex items-center justify-center min-w-[30px] max-w-[60px]">
+              <span className="font-semibold text-center w-full">
+                {row.original.academicLoads ? row.original.academicLoads.length : 0}
+              </span>
+            </div>
+          )
+        },
+        {
           accessorKey: 'status',
           header: 'Estado',
-          size: 100,
+          size: 80,
           cell: ({ row }) => {
             const status = row.original.status
             let badgeClasses = ''
@@ -263,9 +287,11 @@ export default function CampusCrud() {
         regionalCenterId: values.regionalCenterId // Asegura que se envía regionalCenterId
       }),
       preDeleteCheck: (item: CampusItem) => {
-        // Si tiene aulas asociadas, advertir
         if (item.classrooms && item.classrooms.length > 0) {
           return 'No se puede eliminar un campus con aulas asociadas.'
+        }
+        if (item.academicLoads && item.academicLoads.length > 0) {
+          return 'No se puede eliminar un campus con cargas académicas asociadas.'
         }
         return null
       }

@@ -24,7 +24,7 @@ export class CampusesRepository extends GenericPrismaRepository<
         orderBy,
         skip: page && limit ? (page - 1) * limit : undefined,
         take: limit,
-        include: { ...(include || {}), regionalCenter: true },
+        include: { ...(include || {}), regionalCenter: true, classrooms: true, academicLoads: true },
       }),
       this.prisma.campus.count({ where }),
     ]);
