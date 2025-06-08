@@ -4,6 +4,7 @@ import { Expose, Type } from 'class-transformer';
 import { Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
 import { FacultyDto } from '@src/modules/faculties/dtos/faculty.dto';
+import { CareerDto } from '@src/modules/careers/dtos/career.dto';
 
 export class SchoolDto extends BaseDto {
   @ApiPropertyOptional({ description: 'School ID' })
@@ -38,6 +39,12 @@ export class SchoolDto extends BaseDto {
   @Type(() => FacultyDto)
   @IsOptional()
   faculty?: FacultyDto;
+
+  @ApiPropertyOptional({ type: () => [CareerDto] })
+  @Expose()
+  @Type(() => CareerDto)
+  @IsOptional()
+  careers?: CareerDto[];
 
   @ApiProperty({ description: 'Status', enum: Status })
   @Expose()
