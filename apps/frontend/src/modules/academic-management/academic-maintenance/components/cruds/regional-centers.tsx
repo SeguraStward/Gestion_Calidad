@@ -232,7 +232,9 @@ export default function RegionalCentersCrud() {
       useCreateMutation: useCreateRegionalCenter,
       useUpdateMutation: useUpdateRegionalCenter,
       useDeleteMutation: useRemoveRegionalCenter,
-      useOneQuery: useOneRegionalCenter,
+      // Adapter to match CrudModuleBase expected signature
+      useOneQuery: (id: string, options?: { [key: string]: any; enabled?: boolean }) =>
+        useOneRegionalCenter(id, undefined, options),
       defaultFormValues: {
         code: '',
         name: '',

@@ -376,9 +376,11 @@ NODE_ENV=development|production
 export class UserService extends GenericPrismaRepository<User, CreateUserDto, UpdateUserDto, { id: string }> {
   protected readonly modelName = 'user';
 
+
   constructor(prisma: PrismaService) {
     super(prisma);
   }
+
 
   // Métodos específicos del dominio...
 }

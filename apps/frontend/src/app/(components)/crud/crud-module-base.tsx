@@ -145,7 +145,15 @@ export const CrudModuleBase = <
       }
 
       // Refrescar datos
-      await refetch()
+      const result = await refetch()
+
+      // Si es creación, ir a la última página si corresponde
+      if (!editingId || editingId === 'new') {
+        const total = result.data?.meta?.total || 0
+        const perPage = itemsPerPage
+        const lastPage = result.data?.meta?.totalPages || Math.ceil(total / perPage) || 1
+        setCurrentPage(lastPage)
+      }
 
       // Limpiar el formulario y cerrar panel de edición
       setEditingId(null)

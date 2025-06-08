@@ -12,7 +12,7 @@ import {
   useOneCampus,
   useListCampusesPaginated
 } from '@/modules/academic-management/academic-maintenance/hooks/useCampus'
-import { useListRegionalCenters } from '@/modules/academic-management/academic-maintenance/hooks/useRegionalCenter'
+import { useListRegionalCentersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useRegionalCenter'
 import { CampusWithRelations, CreateCampusInput } from '@/shared/types/campus'
 import { Status } from '@una-gc/database/prisma/generated/client'
 import { Badge, Button } from '@una-gc/ui/components'
@@ -42,7 +42,7 @@ export default function CampusCrud() {
   const deleteMutation = useRemoveCampus()
 
   // Regional centers for select (traer todos, sin paginación)
-  const { data: regionalCenters, isLoading: isLoadingRegionalCenters } = useListRegionalCenters()
+  const { data: regionalCenters = [], isLoading: isLoadingRegionalCenters } = useListRegionalCentersFlat()
 
   // Table columns
   const renderColumns = useMemo(
@@ -216,7 +216,11 @@ export default function CampusCrud() {
                   label: 'Sede Regional',
                   required: true,
                   // Pass the full regional center object for status rendering
-                  options: (regionalCenters || []).map((rc) => ({ id: rc.id, name: rc.name, status: rc.status })),
+                  options: (regionalCenters || []).map((rc: any) => ({
+                    id: rc.id,
+                    name: rc.name,
+                    status: rc.status
+                  })),
                   isLoading: isLoadingRegionalCenters,
                   placeholder: isLoadingRegionalCenters ? 'Cargando sedes...' : 'Seleccionar sede regional',
                   helperText: 'Seleccione la sede regional a la que pertenece este campus',

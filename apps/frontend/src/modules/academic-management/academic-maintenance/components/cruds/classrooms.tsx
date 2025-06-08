@@ -1,21 +1,21 @@
 'use client'
 
-import { useListCampuses, useOneCampus, useCreateCampus, useUpdateCampus, useRemoveCampus } from '../../hooks/useCampus'
+import { useListCampusesFlat } from '../../hooks/useCampus'
 import { useMemo } from 'react'
 import { ColumnDef } from '@tanstack/react-table'
 import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
 import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
 import {
-  useListClassrooms,
+  useListClassroomsPaginated,
   useOneClassroom,
   useCreateClassroom,
   useUpdateClassroom,
   useRemoveClassroom
-} from '@/modules/academic-management/academic-maintenance/hooks/useClassrooms'
+} from '@/modules/academic-management/academic-maintenance/hooks/useClassroom'
 import { ClassroomWithRelations, CreateClassroomInput } from '@/shared/types/classroom'
 import { Status } from '@una-gc/database/prisma/generated/client'
 import { Badge, Button } from '@una-gc/ui/components'
-import { School as SchoolIcon, Hash, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { School as SchoolIcon, Hash, Building2, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
 interface ClassroomItem extends ClassroomWithRelations {}
 
@@ -36,7 +36,7 @@ const STATUS_OPTIONS = [
 
 export default function ClassroomCrud() {
   // Campus para el select
-  const { data: campuses, isLoading: isLoadingCampuses } = useListCampuses()
+  const { data: campuses, isLoading: isLoadingCampuses } = useListCampusesFlat()
 
   // Columnas de la tabla
   const renderColumns = useMemo(
@@ -45,9 +45,9 @@ export default function ClassroomCrud() {
         {
           accessorKey: 'roomNumber',
           header: 'Aula',
-          size: 120,
+          size: 90,
           cell: ({ row }) => (
-            <div className="flex items-center min-w-[90px] max-w-[160px] truncate">
+            <div className="flex items-center min-w-[60px] max-w-[100px] truncate">
               <Hash className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
               <span>{row.original.roomNumber}</span>
             </div>
@@ -56,34 +56,45 @@ export default function ClassroomCrud() {
         {
           accessorKey: 'capacity',
           header: 'Capacidad',
-          size: 100,
+          size: 80,
           cell: ({ row }) => <span>{row.original.capacity}</span>
         },
         {
           accessorKey: 'description',
           header: 'Descripción',
-          size: 200,
-          cell: ({ row }) => <div className="truncate max-w-xs">{row.original.description}</div>
+          size: 140,
+          cell: ({ row }) => <div className="truncate max-w-[120px]">{row.original.description}</div>
         },
         {
           accessorKey: 'campus.name',
           header: 'Campus',
-          size: 180,
+          size: 120,
           cell: ({ row }) => {
-            // Solo soporta campus (según DTO y types)
             const name = row.original.campus?.name || 'Sin asignar'
             return (
-              <div className="flex items-center min-w-[140px] max-w-[260px] truncate whitespace-nowrap">
-                <Hash className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
+              <div className="flex items-center min-w-[80px] max-w-[120px] truncate whitespace-nowrap">
+                <Building2 className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
                 <span>{name}</span>
               </div>
             )
           }
         },
         {
+          accessorKey: 'academicLoadCount',
+          header: 'Cargas Académicas',
+          size: 90,
+          cell: ({ row }) => (
+            <div className="flex items-center justify-center min-w-[30px] max-w-[60px]">
+              <span className="font-semibold text-center w-full">
+                {row.original.academicLoads ? row.original.academicLoads.length : 0}
+              </span>
+            </div>
+          )
+        },
+        {
           accessorKey: 'status',
           header: 'Estado',
-          size: 100,
+          size: 80,
           cell: ({ row }) => {
             // Normaliza el status a string para evitar errores de comparación
             const statusStr = String(row.original.status).toUpperCase()
@@ -217,7 +228,21 @@ export default function ClassroomCrud() {
       entityName: 'Aula',
       entityNamePlural: 'Aulas',
       searchPlaceholder: 'Buscar por número, descripción o campus...',
-      usePaginatedQuery: useListClassrooms,
+      usePaginatedQuery: (params: any) => {
+        // Permite filtrar por roomNumber si se provee en el search
+        const { search, ...rest } = params || {}
+        let where: any = {}
+        if (search) {
+          where = {
+            OR: [
+              { roomNumber: { contains: search, mode: 'insensitive' } },
+              { description: { contains: search, mode: 'insensitive' } },
+              { campus: { name: { contains: search, mode: 'insensitive' } } }
+            ]
+          }
+        }
+        return useListClassroomsPaginated({ ...rest, where })
+      },
       useCreateMutation: useCreateClassroom,
       useUpdateMutation: useUpdateClassroom,
       useDeleteMutation: useRemoveClassroom,
@@ -241,7 +266,13 @@ export default function ClassroomCrud() {
       processFormValues: (values: any) => ({
         ...values,
         campusId: values.campusId
-      })
+      }),
+      preDeleteCheck: (item: ClassroomItem) => {
+        if (item.academicLoads && item.academicLoads.length > 0) {
+          return 'No se puede eliminar un aula con cargas académicas asociadas.'
+        }
+        return null
+      }
     }),
     [renderForm, renderColumns]
   )

@@ -3,7 +3,6 @@ import { campusService } from '../services/campus.service'
 import { CampusWithRelations, CreateCampusInput } from '../../../../shared/types/campus'
 import { GenericService } from '@/services/base/generic.service'
 import { useQuery, UseQueryOptions } from '@tanstack/react-query'
-import { PaginatedResponse } from '@/services/interfaces'
 
 export interface CampusFilters {
   page?: number
@@ -33,7 +32,7 @@ const {
 )
 
 // Hook personalizado que siempre devuelve un array plano de campus
-export function useListCampuses(
+export function useListCampusesFlat(
   filters?: Omit<CampusFilters, 'page' | 'limit'>, // Allow all filters except pagination for a flat list
   options?: Omit<UseQueryOptions<CampusWithRelations[], Error>, 'queryKey' | 'queryFn'>
 ) {
