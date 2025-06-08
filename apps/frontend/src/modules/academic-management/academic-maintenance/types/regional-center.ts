@@ -29,6 +29,7 @@ export interface CampusSelectOption {
 export interface RegionalCenterFilters {
   search?: string
   status?: Status
+  limit?: number // Permite paginación o traer todos para selects
 }
 
 // Type for regional center selection in forms

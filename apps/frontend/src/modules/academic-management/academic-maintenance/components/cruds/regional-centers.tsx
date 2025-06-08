@@ -19,7 +19,7 @@ import {
 } from '@/modules/academic-management/academic-maintenance/types/regional-center'
 import { Status } from '@una-gc/database/prisma/generated/client'
 import { Badge, Button } from '@una-gc/ui/components'
-import { Building2, Hash, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { Building, Hash, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
 // Define the item type for CrudModuleBase
 interface RegionalCenterItem extends RegionalCenterWithRelations {}
@@ -64,9 +64,9 @@ export default function RegionalCentersCrud() {
           header: 'Nombre',
           size: 220,
           cell: ({ row }) => (
-            <div className="flex items-center min-w-[140px] max-w-[260px] truncate">
-              <Building2 className="h-4 w-4 text-primary mr-2" />
-              <span className="font-medium">{row.original.name}</span>
+            <div className="flex items-center min-w-[140px] max-w-[260px] truncate whitespace-nowrap">
+              <Building className="h-4 w-4 text-primary mr-2 flex-shrink-0"/>
+            <span className="font-medium">{row.original.name}</span>
             </div>
           )
         },
@@ -148,7 +148,7 @@ export default function RegionalCentersCrud() {
             {
               title: 'Datos básicos',
               description: 'Información principal del centro regional',
-              icon: <Building2 className="h-5 w-5 text-primary mr-2" />,
+              icon: <Building className="h-5 w-5 text-primary mr-2" />,
               fields: [
                 {
                   type: 'text',
@@ -199,7 +199,7 @@ export default function RegionalCentersCrud() {
         />
       )
     }
-  }, []) // [campuses, isLoadingCampuses]
+  }, [])
 
   const crudConfig = useMemo(
     () => ({
@@ -223,7 +223,12 @@ export default function RegionalCentersCrud() {
         name: item.name || '',
         status: item.status || Status.ACTIVE
       }),
-      preDeleteCheck: () => null
+      preDeleteCheck: (item: RegionalCenterItem) => {
+        if (item.campuses && item.campuses.length > 0) {
+          return 'No se puede eliminar una sede regional con campus asociados.'
+        }
+        return null
+      }
     }),
     [renderForm, renderColumns]
   )

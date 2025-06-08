@@ -27,18 +27,17 @@ export class RegionalCenterDto extends BaseDto {
   @IsEnum(Status)
   status: Status;
 
-  @ApiPropertyOptional({ type: () => CampusDto })
+  @ApiPropertyOptional({ type: () => [CampusDto] })
   @Expose()
   @Type(() => CampusDto)
   @IsOptional()
-  campus?: CampusDto;
+  campuses?: CampusDto[];
 
   constructor(partial: Partial<RegionalCenterDto> | any = {}) {
     super();
     Object.assign(this, partial);
-
-    if (partial.campus && !(partial.campus instanceof CampusDto)) {
-      this.campus = new CampusDto(partial.campus);
+    if (partial.campuses && Array.isArray(partial.campuses)) {
+      this.campuses = partial.campuses.map((c: any) => (c instanceof CampusDto ? c : new CampusDto(c)));
     }
   }
 }
