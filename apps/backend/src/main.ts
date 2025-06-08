@@ -10,7 +10,7 @@ import cookieParser from 'cookie-parser';
 
 import { HttpResponseInterceptor } from '@core/http/interceptors/http-response.interceptor';
 import { ErrorResponseFilter } from '@core/http/filters/error-response.filter';
-import { AuditFieldsInterceptor } from '@core/common/interceptors/audit-fields.interceptor';
+import { AuditFieldsInterceptor } from '@core/http/interceptors/audit-fields.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
