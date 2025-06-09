@@ -331,23 +331,37 @@ export default function CourseCrud() {
         independentHours: 0,
         careerId: '',
         status: Status.ACTIVE
-      } as unknown as CreateCourseInput,
+      },
       renderForm,
       renderColumns,
       processItemForEditing: (item: CourseItem) => ({
         code: item.code || '',
         name: item.name || '',
         description: item.description || '',
-        credits: item.credits || 0,
-        level: item.level || 1,
-        contactHours: item.contactHours || 0,
-        independentHours: item.independentHours || 0,
+        credits: typeof item.credits === 'number' ? item.credits : Number(item.credits) || 0,
+        level: typeof item.level === 'number' ? item.level : Number(item.level) || 1,
+        contactHours: typeof item.contactHours === 'number' ? item.contactHours : Number(item.contactHours) || 0,
+        independentHours: typeof item.independentHours === 'number' ? item.independentHours : Number(item.independentHours) || 0,
         careerId: item.career?.id || '',
         status: item.status || Status.ACTIVE
       }),
-      processFormValues: (values: StrictCreateCourseInput): StrictCreateCourseOutput => ({
-        ...values
-      }),
+      processFormValues: (values: CreateCourseInput | Partial<CreateCourseInput>): CreateCourseInput | Partial<CreateCourseInput> => {
+        const processed = {
+          ...values,
+          credits: Number(values.credits),
+          level: Number(values.level),
+          contactHours: Number(values.contactHours),
+          independentHours: values.independentHours ? Number(values.independentHours) : undefined
+        }
+        // Log para depuración
+        console.log('🟢 processFormValues (course) salida:', processed, {
+          creditsType: typeof processed.credits,
+          levelType: typeof processed.level,
+          contactHoursType: typeof processed.contactHours,
+          independentHoursType: typeof processed.independentHours
+        })
+        return processed
+      },
       preDeleteCheck: (item: CourseItem) => {
         // Si tiene cargas académicas asociadas, advertir
         if (item.academicLoads && item.academicLoads.length > 0) {

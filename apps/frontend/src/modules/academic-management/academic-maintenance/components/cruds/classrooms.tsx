@@ -257,21 +257,23 @@ export default function ClassroomCrud() {
       useOneQuery: useOneClassroomAdapter,
       defaultFormValues: {
         roomNumber: '',
-        capacity: 0,
+        capacity: 0 as number,
         description: '',
         campusId: '',
         status: Status.ACTIVE
-      } as StrictCreateClassroomInput,
+      },
       renderForm,
       renderColumns,
       processItemForEditing: (item: ClassroomItem) => ({
         roomNumber: item.roomNumber || '',
-        capacity: item.capacity || 0,
+        capacity: typeof item.capacity === 'number' ? item.capacity : Number(item.capacity) || 0,
         description: item.description || '',
         campusId: item.campus?.id || '',
         status: item.status || Status.ACTIVE
       }),
-      processFormValues: (values: StrictCreateClassroomInput): StrictCreateClassroomOutput => {
+      processFormValues: (
+        values: CreateClassroomInput | Partial<CreateClassroomInput>
+      ): CreateClassroomInput | Partial<CreateClassroomInput> => {
         const processed = {
           ...values,
           capacity: Number(values.capacity)

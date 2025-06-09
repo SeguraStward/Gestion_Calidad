@@ -64,5 +64,6 @@ export type CrudConfig<
   ) => React.ReactNode
   processItem?: (item: any) => TItem
   processItemForEditing?: (item: TItem) => TUpdateInput
+  processFormValues?: (values: TCreateInput | TUpdateInput) => TCreateInput | TUpdateInput
   preDeleteCheck?: (item: TItem) => string | null
 }
