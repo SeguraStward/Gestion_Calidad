@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt } from 'class-validator';
+import { IsOptional, IsString, IsInt, ValidateNested } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
 import { Status } from '@una-gc/database/prisma/generated/client';
 import { IsEnum } from 'class-validator';
@@ -22,6 +22,7 @@ export class ClassroomDto extends BaseDto {
 
   @ApiProperty({ description: 'Classroom Capacity' })
   @IsInt()
+  @Type(() => Number)
   @Expose()
   capacity: number;
 
@@ -39,6 +40,7 @@ export class ClassroomDto extends BaseDto {
   @Expose()
   @Type(() => CampusDto)
   @IsOptional()
+  @ValidateNested()
   campus?: CampusDto;
 
   @Expose()

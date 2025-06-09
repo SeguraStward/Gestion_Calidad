@@ -5,6 +5,7 @@ import { Expose, Type } from 'class-transformer';
 import { Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
 import { CareerDto } from '@src/modules/careers/dtos/career.dto';
+import { AcademicLoadDto } from '@src/modules/academic-loads/dtos/academic-load.dto';
 
 export class CourseDto extends BaseDto {
   @ApiPropertyOptional({ description: 'Course ID' })
@@ -69,6 +70,12 @@ export class CourseDto extends BaseDto {
   @ValidateNested()
   @IsOptional()
   career?: CareerDto;
+
+  @ApiPropertyOptional({ type: () => [AcademicLoadDto], description: 'Associated AcademicLoads' })
+  @Expose()
+  @Type(() => AcademicLoadDto)
+  @IsOptional()
+  academicLoads?: AcademicLoadDto[];
 
   constructor(dto: Partial<CourseDto> | any = {}) {
     super();

@@ -32,7 +32,7 @@ const {
 )
 
 // Hook personalizado que siempre devuelve un array plano de carreras
-export function useListCareers(
+export function useListCareersFlat(
   filters?: Omit<CareerFilters, 'page' | 'limit'>,
   options?: Omit<UseQueryOptions<CareerWithRelations[], Error>, 'queryKey' | 'queryFn'>
 ) {

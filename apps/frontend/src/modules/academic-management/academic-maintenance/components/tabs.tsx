@@ -8,7 +8,7 @@ import FacultiesCrud from '@/modules/academic-management/academic-maintenance/co
 import SchoolsCrud from '@/modules/academic-management/academic-maintenance/components/cruds/schools'
 import ClassroomsCrud from '@/modules/academic-management/academic-maintenance/components/cruds/classrooms'
 import CareerCrud from '@/modules/academic-management/academic-maintenance/components/cruds/careers'
-
+import CourseCrud from '@/modules/academic-management/academic-maintenance/components/cruds/courses'
 interface Props {
   loading: boolean
   SkeletonCrud: React.FC
@@ -84,6 +84,10 @@ export function InstitutionalMaintenanceTabs({ loading, SkeletonCrud }: Props) {
 
       <CrudTabPanel value="carreras" loading={loading} SkeletonCrud={SkeletonCrud}>
         <CareerCrud />
+      </CrudTabPanel>
+
+      <CrudTabPanel value="cursos" loading={loading} SkeletonCrud={SkeletonCrud}>
+        <CourseCrud />
       </CrudTabPanel>
     </Tabs>
   )

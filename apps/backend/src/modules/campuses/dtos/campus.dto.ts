@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsNotEmpty } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsNotEmpty, ValidateNested } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
 
 import { Status } from '@una-gc/database/prisma/generated/client';
@@ -41,6 +41,7 @@ export class CampusDto extends BaseDto {
   @ApiPropertyOptional({ type: () => RegionalCenterDto })
   @Expose()
   @Type(() => RegionalCenterDto)
+  @ValidateNested()
   @IsOptional()
   regionalCenter?: RegionalCenterDto;
 
