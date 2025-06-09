@@ -91,7 +91,7 @@ export default function CareerCrud() {
           )
         },
         {
-          accessorKey: 'rpjectsCount',
+          accessorKey: 'projectsCount', // corregido el typo
           header: 'Proyectos',
           size: 80,
           cell: ({ row }) => (
@@ -145,7 +145,7 @@ export default function CareerCrud() {
           )
         }
       ],
-    [schools]
+    []
   )
 
   // Form sections for create/edit
@@ -227,7 +227,7 @@ export default function CareerCrud() {
     }
     CareerCrudForm.displayName = 'CareerCrudForm'
     return CareerCrudForm
-  }, [schools, isLoadingSchools])
+  }, [isLoadingSchools])
 
   const crudConfig = useMemo(
     () => ({
@@ -247,12 +247,15 @@ export default function CareerCrud() {
       } as unknown as CreateCareerInput,
       renderForm,
       renderColumns,
-      processItemForEditing: (item: CareerItem) => ({
-        code: item.code || '',
-        name: item.name || '',
-        schoolId: item.school?.id || '',
-        status: item.status || Status.ACTIVE
-      }),
+      processItemForEditing: (item: CareerItem) => {
+        // Solo extraer los campos primitivos, nunca school ni relaciones
+        return {
+          code: item.code || '',
+          name: item.name || '',
+          schoolId: item.school?.id || '',
+          status: item.status || Status.ACTIVE
+        }
+      },
       processFormValues: (values: any) => {
         // Limpiar y validar campos
         const code = typeof values.code === 'string' ? values.code.trim() : ''
@@ -260,18 +263,7 @@ export default function CareerCrud() {
         const schoolId = typeof values.schoolId === 'string' ? values.schoolId.trim() : ''
         const status = values.status
 
-        console.log('🔍 Valores originales del formulario:', values)
-        console.log('🔍 Valores procesados:', { code, name, schoolId, status })
-
-        // Validación básica (puedes mostrar errores en el frontend si quieres)
-        if (!code || !name || !schoolId) {
-          throw new Error('Todos los campos obligatorios deben estar completos')
-        }
-
-        if (!status) {
-          throw new Error('El estado es requerido')
-        }
-
+        // Solo devolver los campos que espera el backend
         return {
           code,
           name,

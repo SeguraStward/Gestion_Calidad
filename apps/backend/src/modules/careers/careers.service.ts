@@ -36,7 +36,17 @@ export class CareersService {
     }
   }
 
-  async create(dto: CareerDto): Promise<CareerDto> {
+    async findOne(id: string, include?: any): Promise<CareerDto> {
+    try {
+      const career = await this.careersRepository.findOne(id, include);
+      return plainToClass(CareerDto, career, { excludeExtraneousValues: true });
+    } catch (error: any) {
+      this.logger.error(`Error finding career by id ${id}: ${error?.message}`, error?.stack);
+      throw error;
+    }
+  }
+
+  async save(dto: CareerDto): Promise<CareerDto> {
     this.logger.debug(`Creating career with data: ${JSON.stringify(dto)}`);
     
     // Transform the DTO to Prisma input format
@@ -88,12 +98,22 @@ export class CareersService {
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async deleteById(id: string): Promise<boolean> {
     try {
-      await this.careersRepository.delete(id);
+      await this.careersRepository.deleteById(id);
       this.logger.debug(`Deleted career with id: ${id}`);
+      return true;
     } catch (error: any) {
       this.logger.error(`Error deleting career: ${error?.message}`, error?.stack);
+      throw error;
+    }
+  }
+
+  async count(where?: Prisma.CareerWhereInput): Promise<number> {
+    try {
+      return await this.careersRepository.count(where);
+    } catch (error: any) {
+      this.logger.error(`Error counting careers: ${error?.message}`, error?.stack);
       throw error;
     }
   }

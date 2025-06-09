@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, ValidateNested } from 'class-validator';
-
+import { IsOptional, IsString, IsEnum, ValidateNested, IsNotEmpty } from 'class-validator';
 import { Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
 import { Expose, Type } from 'class-transformer';
@@ -26,7 +25,7 @@ export class CareerDto extends BaseDto {
   name: string;
 
   @ApiProperty({ description: 'School ID' })
-  @Expose()
+  @IsNotEmpty()
   @IsString()
   schoolId: string;
 
