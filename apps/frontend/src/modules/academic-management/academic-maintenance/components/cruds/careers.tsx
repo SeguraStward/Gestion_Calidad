@@ -260,9 +260,16 @@ export default function CareerCrud() {
         const schoolId = typeof values.schoolId === 'string' ? values.schoolId.trim() : ''
         const status = values.status
 
+        console.log('🔍 Valores originales del formulario:', values)
+        console.log('🔍 Valores procesados:', { code, name, schoolId, status })
+
         // Validación básica (puedes mostrar errores en el frontend si quieres)
         if (!code || !name || !schoolId) {
           throw new Error('Todos los campos obligatorios deben estar completos')
+        }
+
+        if (!status) {
+          throw new Error('El estado es requerido')
         }
 
         return {

@@ -42,7 +42,7 @@ const data = {
       url: '/gestion-academica',
       icon: Building,
       items: [
-        { title: 'Importación de datos', url: '/academic-management/bulk-import' },
+        //{ title: 'Importación de datos', url: '/academic-management/bulk-import' },
         { title: 'Asignación de profesores', url: '/academic-management/academic-load' },
         { title: 'Mantenimiento General', url: '/academic-management/academic-maintenance' }
       ]

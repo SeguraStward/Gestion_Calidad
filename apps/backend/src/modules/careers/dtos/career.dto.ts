@@ -26,6 +26,7 @@ export class CareerDto extends BaseDto {
   name: string;
 
   @ApiProperty({ description: 'School ID' })
+  @Expose()
   @IsString()
   schoolId: string;
 
