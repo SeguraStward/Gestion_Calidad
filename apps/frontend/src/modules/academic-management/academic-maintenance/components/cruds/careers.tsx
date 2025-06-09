@@ -253,10 +253,25 @@ export default function CareerCrud() {
         schoolId: item.school?.id || '',
         status: item.status || Status.ACTIVE
       }),
-      processFormValues: (values: any) => ({
-        ...values,
-        schoolId: values.schoolId
-      }),
+      processFormValues: (values: any) => {
+        // Limpiar y validar campos
+        const code = typeof values.code === 'string' ? values.code.trim() : ''
+        const name = typeof values.name === 'string' ? values.name.trim() : ''
+        const schoolId = typeof values.schoolId === 'string' ? values.schoolId.trim() : ''
+        const status = values.status
+
+        // Validación básica (puedes mostrar errores en el frontend si quieres)
+        if (!code || !name || !schoolId) {
+          throw new Error('Todos los campos obligatorios deben estar completos')
+        }
+
+        return {
+          code,
+          name,
+          schoolId,
+          status
+        }
+      },
       preDeleteCheck: (item: CareerItem) => {
         // Si tiene cursos asociados, advertir
         if (item.courses && item.courses.length > 0) {

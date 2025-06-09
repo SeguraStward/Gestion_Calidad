@@ -1,4 +1,4 @@
-import { Prisma } from '@una-gc/database/prisma/generated/client'
+import { Prisma, Status } from '@una-gc/database/prisma/generated/client'
 
 // Type with all relations (campus, academicLoads)
 export type ClassroomWithRelations = Prisma.ClassroomGetPayload<{
@@ -19,3 +19,19 @@ export type CreateClassroomInput = Omit<
 
 // Type for updating a Classroom (partial of create)
 export type UpdateClassroomInput = Partial<CreateClassroomInput>
+
+export interface StrictCreateClassroomInput {
+  roomNumber: string
+  capacity: number
+  description?: string | null
+  campusId: string
+  status: Status
+}
+
+export interface StrictCreateClassroomOutput {
+  roomNumber: string
+  capacity: number
+  description?: string | null
+  campusId: string
+  status: Status
+}

@@ -10,7 +10,6 @@ export interface CareerFilters {
   search?: string
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
-  schoolId?: string // Filtro por escuela
 }
 
 const {

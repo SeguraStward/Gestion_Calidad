@@ -12,7 +12,12 @@ import {
   useUpdateClassroom,
   useRemoveClassroom
 } from '@/modules/academic-management/academic-maintenance/hooks/useClassroom'
-import { ClassroomWithRelations, CreateClassroomInput } from '@/shared/types/classroom'
+import {
+  ClassroomWithRelations,
+  CreateClassroomInput,
+  StrictCreateClassroomInput,
+  StrictCreateClassroomOutput
+} from '@/shared/types/classroom'
 import { Status } from '@una-gc/database/prisma/generated/client'
 import { Badge, Button } from '@una-gc/ui/components'
 import { School as SchoolIcon, Hash, Building2, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
@@ -173,7 +178,10 @@ export default function ClassroomCrud() {
                   label: 'Capacidad',
                   required: true,
                   placeholder: 'Ej: 35',
-                  helperText: 'Cantidad máxima de estudiantes'
+                  helperText: 'Cantidad máxima de estudiantes',
+                  min: 1,
+                  step: 1,
+                  valueAsNumber: true // <-- Asegura que el valor sea número
                 },
                 {
                   type: 'text',
@@ -253,7 +261,7 @@ export default function ClassroomCrud() {
         description: '',
         campusId: '',
         status: Status.ACTIVE
-      } as unknown as CreateClassroomInput,
+      } as StrictCreateClassroomInput,
       renderForm,
       renderColumns,
       processItemForEditing: (item: ClassroomItem) => ({
@@ -263,10 +271,15 @@ export default function ClassroomCrud() {
         campusId: item.campus?.id || '',
         status: item.status || Status.ACTIVE
       }),
-      processFormValues: (values: any) => ({
-        ...values,
-        campusId: values.campusId
-      }),
+      processFormValues: (values: StrictCreateClassroomInput): StrictCreateClassroomOutput => {
+        const processed = {
+          ...values,
+          capacity: Number(values.capacity)
+        }
+        // Log para depuración
+        console.log('🟢 processFormValues (classroom) salida:', processed, typeof processed.capacity)
+        return processed
+      },
       preDeleteCheck: (item: ClassroomItem) => {
         if (item.academicLoads && item.academicLoads.length > 0) {
           return 'No se puede eliminar un aula con cargas académicas asociadas.'

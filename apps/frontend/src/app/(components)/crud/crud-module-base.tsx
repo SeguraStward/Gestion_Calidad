@@ -119,6 +119,7 @@ export const CrudModuleBase = <
   const processedItems = useMemo(() => {
     return processItem ? (paginatedData?.data || []).map(processItem) : (paginatedData?.data as TItem[]) || []
   }, [paginatedData?.data, processItem]) // Manejar envío de formulario
+  
   const handleSubmitForm = handleSubmit(async (formData) => {
     setIsProcessing(true)
     try {
@@ -145,15 +146,7 @@ export const CrudModuleBase = <
       }
 
       // Refrescar datos
-      const result = await refetch()
-
-      // Si es creación, ir a la última página si corresponde
-      if (!editingId || editingId === 'new') {
-        const total = result.data?.meta?.total || 0
-        const perPage = itemsPerPage
-        const lastPage = result.data?.meta?.totalPages || Math.ceil(total / perPage) || 1
-        setCurrentPage(lastPage)
-      }
+      await refetch()
 
       // Limpiar el formulario y cerrar panel de edición
       setEditingId(null)

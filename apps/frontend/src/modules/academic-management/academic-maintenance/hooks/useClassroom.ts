@@ -10,6 +10,7 @@ export interface ClassroomFilters {
   search?: string
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
+  capacity?: number
 }
 
 export const {

@@ -20,6 +20,7 @@ interface BaseFieldConfig<T extends FieldValues> {
   helperText?: string
   className?: string
   hidden?: boolean
+  valueAsNumber?: boolean // <-- Añadido para conversión automática
 }
 
 // Configuración específica para campos de texto
@@ -133,7 +134,6 @@ export function CrudForm<T extends FieldValues>({
     // Renderizar campos select
     if (field.type === 'select') {
       const options = typeof field.options === 'function' ? field.options() : field.options
-
       return (
         <div key={String(name)} className={`space-y-1 ${className || ''}`}>
           <Controller
@@ -146,7 +146,13 @@ export function CrudForm<T extends FieldValues>({
                 label={label}
                 options={options}
                 value={value}
-                onChange={onChange}
+                onChange={(val) => {
+                  if (field.valueAsNumber) {
+                    onChange(val === '' ? undefined : Number(val))
+                  } else {
+                    onChange(val)
+                  }
+                }}
                 placeholder={field.isLoading ? 'Cargando...' : placeholder}
                 required={required}
                 error={errors[name] ? ({ message: errors[name]?.message as string } as FieldError) : undefined}
@@ -171,9 +177,10 @@ export function CrudForm<T extends FieldValues>({
           error={errors[name] ? ({ message: errors[name]?.message as string } as FieldError) : undefined}
           required={required}
           disabled={disabled || isSubmitting}
-          min={field.type === 'number' ? field.min : undefined}
+          min={field.type === 'number' ? (field.min ?? 1) : undefined}
           max={field.type === 'number' ? field.max : undefined}
           step={field.type === 'number' ? field.step : undefined}
+          registerOptions={field.type === 'number' ? { valueAsNumber: true } : undefined}
         />
         {helperText && <p className="text-xs text-muted-foreground mt-1">{helperText}</p>}
       </div>
