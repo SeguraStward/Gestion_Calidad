@@ -38,6 +38,7 @@ export function useRoleSelection(): UseRoleSelectionReturn {
   const [canSkip, setCanSkip] = useState(false)
   const [hasActiveRole, setHasActiveRole] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
+  const [hasInitialized, setHasInitialized] = useState(false)
 
   const router = useRouter()
   const { loading, error, execute: executeAsync } = useAsyncOperation<Role[]>()
@@ -46,6 +47,62 @@ export function useRoleSelection(): UseRoleSelectionReturn {
   const resetError = useCallback(() => {
     setRetryCount(0)
   }, [])
+
+  const processRolesData = useCallback((userRoles: any[]): Role[] => {
+    if (!Array.isArray(userRoles)) {
+      throw new Error('Formato de respuesta inválido del servidor.')
+    }
+
+    if (userRoles.length === 0) {
+      throw new Error('No tienes roles asignados. Contacta al administrador.')
+    }
+
+    return userRoles.map((role: any) => ({
+      id: role.id,
+      name: role.name,
+      description: role.description ?? '',
+      permissions: role.permissions ?? []
+    }))
+  }, [])
+
+  const handleAuthError = useCallback(
+    (errorMessage: string) => {
+      if (
+        errorMessage.includes('Token expirado') ||
+        errorMessage.includes('sesión ha expirado') ||
+        errorMessage.includes('401')
+      ) {
+        toast.error(errorMessage)
+        router.push('/auth/login')
+        return true
+      }
+      return false
+    },
+    [router]
+  )
+
+  const handleRolesSuccess = useCallback((rolesData: Role[]) => {
+    setRoles(rolesData)
+    setRetryCount(0)
+
+    // Auto-seleccionar si solo hay un rol disponible
+    if (rolesData.length === 1 && rolesData[0]) {
+      setSelectedRole(rolesData[0])
+    }
+  }, [])
+
+  const handleRolesError = useCallback(
+    (errorMessage: string) => {
+      setRetryCount((prev) => prev + 1)
+
+      // Verificar si es un error de autenticación
+      if (!handleAuthError(errorMessage)) {
+        // Para todos los demás errores, solo mostrar el mensaje
+        toast.error(errorMessage)
+      }
+    },
+    [handleAuthError]
+  )
 
   const getErrorMessage = useCallback((error: unknown): string => {
     if (axios.isAxiosError(error)) {
@@ -80,63 +137,28 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     return 'Ha ocurrido un error inesperado.'
   }, [])
 
-  const handleRolesResult = useCallback(
-    (result: Role[] | null) => {
-      if (result) {
-        setRoles(result)
-        setRetryCount(0)
-
-        // Auto-seleccionar si solo hay un rol disponible
-        if (result.length === 1 && result[0]) {
-          setSelectedRole(result[0])
-        }
-      } else if (error) {
-        // Solo mostrar el error, NO reintentos automáticos
-        setRetryCount((prev) => prev + 1)
-
-        // Manejo de errores específicos para redirección
-        if (error.includes('Token expirado') || error.includes('sesión ha expirado') || error.includes('401')) {
-          toast.error(error)
-          router.push('/auth/login')
-          return
-        }
-
-        // Para todos los demás errores, solo mostrar el mensaje
-        toast.error(error)
-      }
-    },
-    [error, router]
-  )
-
   const fetchRoles = useCallback(async () => {
     console.log('🏁 Manual fetch user roles...')
 
-    const result = await executeAsync(async () => {
-      const userRoles = await AuthService.getUserActiveRoles()
-      console.log('📊 User roles received:', userRoles)
+    try {
+      const result = await executeAsync(async () => {
+        const userRoles = await AuthService.getUserActiveRoles()
+        console.log('📊 User roles received:', userRoles)
+        return processRolesData(userRoles)
+      })
 
-      if (!Array.isArray(userRoles)) {
-        throw new Error('Formato de respuesta inválido del servidor.')
+      if (result) {
+        handleRolesSuccess(result)
       }
-
-      if (userRoles.length === 0) {
-        throw new Error('No tienes roles asignados. Contacta al administrador.')
-      }
-
-      // Map UserRolesResponse[] to Role[]
-      return userRoles.map((role: any) => ({
-        id: role.id,
-        name: role.name,
-        description: role.description ?? '',
-        permissions: role.permissions ?? []
-      }))
-    })
-
-    handleRolesResult(result)
-  }, [executeAsync, handleRolesResult])
+    } catch (err) {
+      console.error('Error in fetchRoles:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
+      handleRolesError(errorMessage)
+    }
+  }, [executeAsync, processRolesData, handleRolesSuccess, handleRolesError])
 
   const retryFetchRoles = useCallback(() => {
-    // Reintento manual, sin límites automáticos
+    // Reintento manual únicamente
     fetchRoles()
   }, [fetchRoles])
 
@@ -178,7 +200,10 @@ export function useRoleSelection(): UseRoleSelectionReturn {
 
   // Cargar roles al montar el componente (solo una vez)
   useEffect(() => {
+    if (hasInitialized) return
+
     let mounted = true
+    setHasInitialized(true)
 
     const loadRoles = async () => {
       try {
@@ -187,30 +212,17 @@ export function useRoleSelection(): UseRoleSelectionReturn {
         const result = await executeAsync(async () => {
           const userRoles = await AuthService.getUserActiveRoles()
           console.log('📊 User roles received:', userRoles)
-
-          if (!Array.isArray(userRoles)) {
-            throw new Error('Formato de respuesta inválido del servidor.')
-          }
-
-          if (userRoles.length === 0) {
-            throw new Error('No tienes roles asignados. Contacta al administrador.')
-          }
-
-          // Map UserRolesResponse[] to Role[]
-          return userRoles.map((role: any) => ({
-            id: role.id,
-            name: role.name,
-            description: role.description ?? '',
-            permissions: role.permissions ?? []
-          }))
+          return processRolesData(userRoles)
         })
 
-        if (mounted) {
-          handleRolesResult(result)
+        if (mounted && result) {
+          handleRolesSuccess(result)
         }
       } catch (err) {
         if (mounted) {
           console.error('Error loading roles:', err)
+          const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
+          handleRolesError(errorMessage)
         }
       }
     }
@@ -220,7 +232,14 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     return () => {
       mounted = false
     }
-  }, [executeAsync, handleRolesResult])
+  }, [hasInitialized])
+
+  // Manejo de errores del hook useAsyncOperation por separado
+  useEffect(() => {
+    if (error && hasInitialized) {
+      handleRolesError(error)
+    }
+  }, [error, hasInitialized, handleRolesError])
 
   return {
     roles,
