@@ -337,7 +337,7 @@ export default function EditFinalReportPage() {
         ...(step5Data?.respuestas.map((resp) => ({
           questionId: resp.idPregunta,
           response: resp.respuesta,
-          responseType: 'TEXTO_LIBRE',
+          responseType: 'TEXT',
           questionGroup: step5QuestionsMock.find((q) => q.questionId === resp.idPregunta)?.group || 'evaluacion_general_curso',
           question: step5QuestionsMock.find((q) => q.questionId === resp.idPregunta)?.question || resp.idPregunta,
           options: [],
@@ -359,7 +359,7 @@ export default function EditFinalReportPage() {
               {
                 questionId: OTHER_TOOLS_QUESTION_ID,
                 response: step6Data.otrasHerramientas,
-                responseType: 'TEXTO_LIBRE',
+                responseType: 'TEXT',
                 questionGroup: 'herramientas',
                 question:
                   step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
