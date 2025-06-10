@@ -51,7 +51,7 @@ const data = {
       title: 'Gestión de Usuarios',
       url: '/gestión-usuarios',
       icon: Users,
-      items: [{ title: 'Lista de Informes', url: '/final-reports' }]
+      items: [{ title: 'Mantenimiento', url: '/user-management/user-maintenance' }]
     },
     /*{
       title: 'Formación Académica',
