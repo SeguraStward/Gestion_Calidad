@@ -1,19 +1,25 @@
-import { Prisma } from '@una-gc/database/prisma/generated/client'
+import type {
+  User as PrismaUser,
+  UserRole,
+  UserLanguage,
+  UserWorkExperience,
+  AcademicLoad,
+  Province,
+  UserStatus,
+  UserPhone
+} from '@una-gc/database/prisma/generated/client'
 
-// Type with main relations (roles, academicLoads, userLanguages, workExperiences, etc.)
-export type UserWithRelations = Prisma.UserGetPayload<{
-  include: {
-    roles: true
-    academicLoads: true
-    userLanguages: true
-    workExperiences: true
-    // Agrega aquí otras relaciones si las necesitas en el frontend
-  }
-}>
+// Incluye relaciones principales
+export type UserWithRelations = PrismaUser & {
+  roles: UserRole[]
+  academicLoads: AcademicLoad[]
+  userLanguages: UserLanguage[]
+  workExperiences: UserWorkExperience[]
+}
 
-// Type for creating a User (omit id, version, createdAt, updatedAt, and relations)
+// Input para crear usuario (sin campos automáticos y relaciones directas)
 export type CreateUserInput = Omit<
-  Prisma.UserCreateInput,
+  PrismaUser,
   'id' | 'version' | 'createdAt' | 'updatedAt' | 'roles' | 'academicLoads' | 'userLanguages' | 'workExperiences'
 > & {
   roles?: { connect: { id: string }[] }
@@ -22,5 +28,8 @@ export type CreateUserInput = Omit<
   workExperiences?: { connect: { id: string }[] }
 }
 
-// Type for updating a User (partial of create)
+// Input para actualizar usuario (parcial)
 export type UpdateUserInput = Partial<CreateUserInput>
+
+// Exporta enums útiles
+export type { Province, UserStatus, UserPhone }

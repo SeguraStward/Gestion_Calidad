@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card } from '@una-gc/ui/components/card'
 import { InstitutionalMaintenanceTabs } from '@/modules/academic-management/academic-maintenance/components/tabs'
 import { Skeleton } from '@una-gc/ui/components/skeleton'
-import { PageHeader } from '@/modules/academic-management/academic-maintenance/components/page-header'
+import { PageHeader } from '@/app/(components)/ui/page-header'
 import { Layers3 } from 'lucide-react'
 
 export function AcademicMaintenancePage() {

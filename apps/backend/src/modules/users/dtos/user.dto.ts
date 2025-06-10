@@ -8,6 +8,7 @@ import {
   IsDate,
   IsEmail,
   IsMongoId,
+  IsNumberString,
 } from 'class-validator';
 
 import { Type, Expose } from 'class-transformer'; // Import Expose
@@ -17,6 +18,7 @@ import { BaseDto } from '@src/modules/generalDto';
 class UserPhoneDto {
   @ApiProperty({ description: 'Phone number' })
   @IsString()
+  @IsNumberString()
   @Expose() // Added Expose
   number: string;
 
@@ -60,6 +62,7 @@ export class UserDto extends BaseDto {
   @ApiPropertyOptional({ description: 'National ID' })
   @IsString()
   @IsOptional()
+  @IsNumberString()
   @Expose() // Added Expose
   nationalId?: string;
 
@@ -73,6 +76,7 @@ export class UserDto extends BaseDto {
   @ApiPropertyOptional({ description: 'Primary phone' })
   @IsString()
   @IsOptional()
+  @IsNumberString()
   @Expose() // Added Expose
   primaryPhone?: string;
 

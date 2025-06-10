@@ -74,17 +74,9 @@ export const CrudModuleBase = <
     }
 
     if (previousTotalItems !== undefined && paginatedData?.meta?.total && paginatedData.meta.total > previousTotalItems) {
-      const oldTotalPages = Math.ceil(previousTotalItems / itemsPerPage) || 1
       const newTotalPages = paginatedData.meta.totalPages || Math.ceil(paginatedData.meta.total / itemsPerPage)
-
-      // Primer item en lista vacía
-      if (oldTotalPages === 0 && newTotalPages === 1) {
-        setCurrentPage(1)
-      }
-      // Item añadido al final de página completa
-      else if (currentPage === oldTotalPages && paginatedData.data.length >= itemsPerPage && newTotalPages > oldTotalPages) {
-        setCurrentPage(newTotalPages)
-      }
+      // Siempre ir a la última página cuando se crea un nuevo registro
+      setCurrentPage(newTotalPages)
     }
 
     if (paginatedData?.meta?.total) {
@@ -93,9 +85,7 @@ export const CrudModuleBase = <
   }, [
     paginatedData?.meta?.total,
     previousTotalItems,
-    currentPage,
     itemsPerPage,
-    paginatedData?.data?.length,
     paginatedData?.meta?.totalPages,
     setCurrentPage
   ])
