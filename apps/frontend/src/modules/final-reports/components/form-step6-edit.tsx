@@ -50,7 +50,7 @@ const MAIN_TOOLS_QUESTION_ID_INTERNAL = 'herramientas_utilizadas' // Internal us
 interface Step6EditFormProps {
   formMethods: UseFormReturn<Step6FormData>
   onSaveAndNext: (data: Step6FormData) => void
-  onPrevious?: () => void
+  onPrevious?: (data: Step6FormData) => void
   totalSteps: number
   initialData?: Step6FormData | null
   isEditing?: boolean // isEditing is used in useEffect
@@ -150,7 +150,12 @@ export function Step6EditForm({
   const handleFormSubmitError = (errors: any) => {
     console.error('Step 6 Edit Form Validation Errors:', errors)
   }
-
+  const handlePreviousClick = () => {
+    if (onPrevious) {
+      const currentData = getValues()
+      onPrevious(currentData)
+    }
+  }
   return (
     <div className="p-4 md:p-6 h-full flex flex-col">
       {/* Header Section - MODIFIED to match form-step6.tsx */}
@@ -287,7 +292,7 @@ export function Step6EditForm({
               <Button
                 type="button"
                 variant="outline"
-                onClick={onPrevious ? onPrevious : () => console.warn('onPrevious not provided')}
+                onClick= {handlePreviousClick}
                 className="px-8 shadow-sm"
               >
                 Anterior

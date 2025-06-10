@@ -31,7 +31,7 @@ export type Step7FormData = z.infer<typeof step7Schema>
 interface Step7EditFormProps {
   formMethods: UseFormReturn<Step7FormData>
   onSaveAndNext: (data: Step7FormData) => void // Para actualizar estado local si navega hacia atrás
-  onPrevious?: () => void
+  onPrevious?: (data: Step7FormData) => void
   totalSteps: number
   initialData?: Step7FormData | null
   isEditing?: boolean
@@ -141,9 +141,11 @@ export function Step7EditForm({
 
   const handlePreviousClickInternal = () => {
     const currentData = getValues() // Obtener datos actuales del formulario
-    onSaveAndNext(currentData) // Actualizar estado en la página padre
+    // No es estrictamente necesario llamar a onSaveAndNext aquí si la página padre
+    // ya usa los datos pasados a onPrevious para actualizar su estado.
+    // onSaveAndNext(currentData)
     if (onPrevious) {
-      onPrevious() // Navegar hacia atrás
+      onPrevious(currentData) // <--- CORRECCIÓN: Pasar currentData
     }
   }
 

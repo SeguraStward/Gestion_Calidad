@@ -1,15 +1,19 @@
 'use client'
 
 import { useRouter, useParams } from 'next/navigation'
-import React, { useState, useEffect, useRef, useMemo } from 'react' // useRef se mantiene por si lo usas para otra cosa, pero no para initialLoadCompletedRef
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useForm, UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { useQueryClient } from '@tanstack/react-query' // <<--- AÑADIDO: Importar useQueryClient
+import { useQueryClient } from '@tanstack/react-query'
 
 import { Button } from '@una-gc/ui/components/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card' // Card ya estaba, añadidos subcomponentes si los usas directamente
+// Card y sus subcomponentes ya estaban, pero asegúrate de que se usan consistentemente
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card'
 import { Loader2, FileText, AlertTriangle, CheckCircle, Save } from 'lucide-react'
+
+// Importa ReportPageHeader
+import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header' // <<--- AÑADIDO
 
 // Schemas, Types, and Components for each step
 import { Step1FormData, step1Schema, Step1Form, transformReportToStep1Data } from '@/modules/final-reports/components/form-step1'
@@ -45,15 +49,8 @@ import {
 
 const TOTAL_STEPS = 7
 
-const steps = [
-  { id: 1, name: 'Información del Curso' },
-  { id: 2, name: 'Estadísticas Estudiantiles' },
-  { id: 3, name: 'Salvaguardas' },
-  { id: 4, name: 'Ajustes Razonables' },
-  { id: 5, name: 'Evaluación General' },
-  { id: 6, name: 'Herramientas Tecnológicas' },
-  { id: 7, name: 'Percepción y Desempeño' }
-]
+// Mantén los mismos labels que en new/page.tsx si quieres consistencia
+const STEP_LABELS_SPANISH = ['Información', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
 
 function transformReportToStep7Data(report: FullFinalReport, currentReportType: ReportType): Step7FormData | null {
   console.log(`[transformReportToStep7Data] Iniciando transformación para reportType: ${currentReportType}`)
@@ -114,9 +111,8 @@ export default function EditFinalReportPage() {
   const router = useRouter()
   const params = useParams()
   const reportId = params.id as string
-  // const initialLoadCompletedRef = useRef(false) // <<--- MODIFICADO: Ya no se necesita para controlar la carga inicial
 
-  const queryClient = useQueryClient() // <<--- AÑADIDO: Obtener el queryClient
+  const queryClient = useQueryClient()
 
   const [currentStep, setCurrentStep] = useState(1)
   const [reportType, setReportType] = useState<ReportType>('INFORME_FINAL_V1')
@@ -137,14 +133,12 @@ export default function EditFinalReportPage() {
     reportId,
     { include: 'academicLoad,academicLoad.course,academicLoad.group,academicLoad.professor' },
     {
-      enabled: !!reportId, // <<--- MODIFICADO: Simplificado, la query se habilita si hay reportId
+      enabled: !!reportId,
       retry: 1
-      // Podrías considerar `staleTime: 0` si siempre quieres que se considere "stale" al montar,
-      // o `refetchOnWindowFocus: true` (que es el default)
     }
   )
 
-  const updateReportHook = useUpdateFinalReport() // Renombrado para evitar conflicto
+  const updateReportHook = useUpdateFinalReport()
   const { mutateAsync: updateReportMutation } = updateReportHook
   const isUpdatingReport = updateReportHook.status === 'pending'
 
@@ -157,11 +151,8 @@ export default function EditFinalReportPage() {
   const formStep7Methods = useForm<Step7FormData>({ resolver: step7Schema ? zodResolver(step7Schema) : undefined })
 
   useEffect(() => {
-    // <<--- MODIFICADO: Eliminada la condición !initialLoadCompletedRef.current
     if (fetchedReport && reportType) {
       console.log('[EditFinalReportPage] Fetched report or reportType changed, processing data...', fetchedReport)
-      // Aquí también podrías querer actualizar el reportType si viene del fetchedReport
-      // Ejemplo: if (fetchedReport.version) setReportType(fetchedReport.version === 1 ? 'INFORME_FINAL_V1' : 'INFORME_FINAL_V2');
 
       const initialStep1 = transformReportToStep1Data(fetchedReport)
       if (initialStep1) {
@@ -205,10 +196,9 @@ export default function EditFinalReportPage() {
         formStep7Methods.reset(initialStep7)
         console.log('[EditFinalReportPage] Initial Step 7 Data set and form reset:', initialStep7)
       }
-      // initialLoadCompletedRef.current = true // <<--- MODIFICADO: Ya no se establece
     }
   }, [
-    fetchedReport, // Este useEffect se re-ejecutará si fetchedReport cambia (datos frescos)
+    fetchedReport,
     reportType,
     formStep1Methods,
     formStep2Methods,
@@ -217,13 +207,8 @@ export default function EditFinalReportPage() {
     formStep5Methods,
     formStep6Methods,
     formStep7Methods
-    // No incluyas los estados stepXData aquí para evitar bucles si solo quieres que se base en fetchedReport
   ])
 
-  // Los useEffects individuales para resetear formularios basados en stepXData pueden ser redundantes
-  // si el useEffect principal anterior ya lo hace cuando fetchedReport cambia.
-  // Evalúa si aún los necesitas o si causan resets no deseados.
-  // Por ahora los mantendré como estaban en tu código.
   useEffect(() => {
     if (step1Data) formStep1Methods.reset(step1Data)
   }, [step1Data, formStep1Methods])
@@ -252,12 +237,24 @@ export default function EditFinalReportPage() {
   const handleUpdateStepData = (step: number, data: any) => {
     console.log(`[handleUpdateStepData] Step: ${step}, Data:`, data)
     switch (step) {
-      case 1: setStep1Data(data); break
-      case 2: setStep2Data(data); break
-      case 3: setStep3Data(data); break
-      case 4: setStep4Data(data); break
-      case 5: setStep5Data(data); break
-      case 6: setStep6Data(data); break
+      case 1:
+        setStep1Data(data)
+        break
+      case 2:
+        setStep2Data(data)
+        break
+      case 3:
+        setStep3Data(data)
+        break
+      case 4:
+        setStep4Data(data)
+        break
+      case 5:
+        setStep5Data(data)
+        break
+      case 6:
+        setStep6Data(data)
+        break
       case 7:
         setStep7Data(data as Step7FormData)
         console.log('[handleUpdateStepData - Case 7] Step 7 data updated in state:', data)
@@ -292,19 +289,27 @@ export default function EditFinalReportPage() {
     }
 
     if (
-      !fetchedReport || !step1Data || !step2Data || !step3Data || !step4Data ||
-      !step5Data || !step6Data || !currentStep7ValuesFromForm ||
+      !fetchedReport ||
+      !step1Data ||
+      !step2Data ||
+      !step3Data ||
+      !step4Data ||
+      !step5Data ||
+      !step6Data ||
+      !currentStep7ValuesFromForm ||
       currentStep7ValuesFromForm.respuestasRadio.some((r) => !r.idPregunta)
     ) {
       toast.error('Faltan datos de algunos pasos o hay IDs de pregunta faltantes en el paso 7.')
-      console.error('Datos faltantes para handleSubmitAllSteps:', { /* ... */ })
+      console.error('Datos faltantes para handleSubmitAllSteps:', {
+        /* ... */
+      })
       return
     }
 
     try {
       const evaluationData: FinalReportEvaluationFE[] = [
         // ... (tu lógica para construir evaluationData) ...
-         ...(step5Data?.respuestas.map((resp) => ({
+        ...(step5Data?.respuestas.map((resp) => ({
           questionId: resp.idPregunta,
           response: resp.respuesta,
           responseType: 'TEXT', // Asumiendo que todas las del paso 5 son TEXT
@@ -314,7 +319,7 @@ export default function EditFinalReportPage() {
           multipleResponse: []
         })) || []),
         ...(step6Data?.respuestasMultiples.flatMap((rm) => {
-          const questionDetails = step6QuestionsPageMock.find((q) => q.questionId === rm.idPregunta);
+          const questionDetails = step6QuestionsPageMock.find((q) => q.questionId === rm.idPregunta)
           return rm.respuestasSeleccionadas.map((sel) => ({
             questionId: rm.idPregunta,
             response: sel, // En SELECCION_MULTIPLE, 'response' puede ser cada valor seleccionado
@@ -323,7 +328,7 @@ export default function EditFinalReportPage() {
             question: questionDetails?.question || rm.idPregunta,
             options: questionDetails?.options || [],
             multipleResponse: rm.respuestasSeleccionadas // Guardar todas las seleccionadas aquí
-          }));
+          }))
         }) || []),
         ...(step6Data?.otrasHerramientas && step6Data.otrasHerramientas.trim() !== ''
           ? [
@@ -356,9 +361,7 @@ export default function EditFinalReportPage() {
               }
             }
           } else {
-            console.error(
-              `[handleSubmitAllSteps - Step 7] No se encontraron detalles para questionId: "${resp.idPregunta}".`
-            )
+            console.error(`[handleSubmitAllSteps - Step 7] No se encontraron detalles para questionId: "${resp.idPregunta}".`)
           }
           return {
             questionId: resp.idPregunta,
@@ -382,7 +385,6 @@ export default function EditFinalReportPage() {
         options: item.options || [],
         questionGroup: item.questionGroup || 'general'
       })) as FinalReportEvaluationFE[]
-
 
       const updatePayload: UpdateFinalReportDto = {
         statistics: {
@@ -429,6 +431,7 @@ export default function EditFinalReportPage() {
   }
 
   const renderCurrentStepForm = () => {
+    // <<--- MODIFICADO: Simplificada la condición, si no hay fetchedReport después de cargar, no se encontró.
     if (isLoadingReport) {
       return (
         <div className="flex justify-center items-center min-h-[300px]">
@@ -439,19 +442,33 @@ export default function EditFinalReportPage() {
     }
     if (reportError) {
       return (
-        <Card className="p-6 text-center">
-          <p className="text-destructive">Error: {reportError.message}</p>
+        // Este Card es para el error, está bien aquí
+        <Card className="p-6 text-center border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Error al Cargar el Informe</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>{reportError.message}</p>
+            <Button onClick={() => router.push('/final-reports')} className="mt-4">
+              Volver a Informes
+            </Button>
+          </CardContent>
         </Card>
       )
     }
-    // <<--- MODIFICADO: Simplificada la condición, si no hay fetchedReport después de cargar, no se encontró.
     if (!fetchedReport) {
       return (
+        // Este Card es para "no encontrado", está bien aquí
         <Card className="p-6 text-center">
-          <p>No se encontró el informe o el ID es inválido.</p>
-           <Button onClick={() => router.push('/final-reports')} className="mt-4">
-            Volver a Informes
-          </Button>
+          <CardHeader>
+            <CardTitle>Informe No Encontrado</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>No se encontró el informe o el ID es inválido.</p>
+            <Button onClick={() => router.push('/final-reports')} className="mt-4">
+              Volver a Informes
+            </Button>
+          </CardContent>
         </Card>
       )
     }
@@ -464,8 +481,9 @@ export default function EditFinalReportPage() {
             onSaveAndNext={(data) => handleUpdateStepData(1, data)}
             isEditing={true}
             totalSteps={TOTAL_STEPS}
-            initialData={step1Data} // step1Data se actualiza desde fetchedReport
+            initialData={step1Data}
             onCancel={() => router.push('/final-reports')}
+            // onPrevious no se usa en el primer paso de edición si no hay a dónde ir antes
           />
         )
       case 2:
@@ -473,12 +491,14 @@ export default function EditFinalReportPage() {
           <Step2Form
             formMethods={formStep2Methods}
             onSaveAndNext={(data) => handleUpdateStepData(2, data)}
-            onPrevious={handlePreviousStep}
+            onPrevious={(data) => {
+              setStep2Data(data) // Guardar datos del paso actual antes de retroceder
+              handlePreviousStep()
+            }}
             totalSteps={TOTAL_STEPS}
-            initialData={step2Data} // step2Data se actualiza desde fetchedReport
+            initialData={step2Data}
             isEditing={true}
-            // Asegúrate que enrolledCapacity se pase correctamente si Step2Form lo necesita
-             enrolledCapacity={step1Data?.enrolledCapacity}
+            enrolledCapacity={step1Data?.enrolledCapacity}
           />
         )
       case 3:
@@ -486,9 +506,12 @@ export default function EditFinalReportPage() {
           <Step3Form
             formMethods={formStep3Methods}
             onSaveAndNext={(data) => handleUpdateStepData(3, data)}
-            onPrevious={handlePreviousStep}
+            onPrevious={(data) => {
+              setStep3Data(data)
+              handlePreviousStep()
+            }}
             totalSteps={TOTAL_STEPS}
-            initialData={step3Data} // step3Data se actualiza desde fetchedReport
+            initialData={step3Data}
             isEditing={true}
             reportType={reportType}
           />
@@ -498,9 +521,12 @@ export default function EditFinalReportPage() {
           <Step4Form
             formMethods={formStep4Methods}
             onSaveAndNext={(data) => handleUpdateStepData(4, data)}
-            onPrevious={handlePreviousStep}
+            onPrevious={(data) => {
+              setStep4Data(data)
+              handlePreviousStep()
+            }}
             totalSteps={TOTAL_STEPS}
-            initialData={step4Data} // step4Data se actualiza desde fetchedReport
+            initialData={step4Data}
             isEditing={true}
           />
         )
@@ -509,9 +535,12 @@ export default function EditFinalReportPage() {
           <Step5EditForm
             formMethods={formStep5Methods}
             onSaveAndNext={(data) => handleUpdateStepData(5, data)}
-            onPrevious={handlePreviousStep}
+            onPrevious={(data) => {
+              setStep5Data(data)
+              handlePreviousStep()
+            }}
             totalSteps={TOTAL_STEPS}
-            initialData={step5Data} // step5Data se actualiza desde fetchedReport
+            initialData={step5Data}
             isEditing={true}
           />
         )
@@ -520,9 +549,12 @@ export default function EditFinalReportPage() {
           <Step6EditForm
             formMethods={formStep6Methods}
             onSaveAndNext={(data) => handleUpdateStepData(6, data)}
-            onPrevious={handlePreviousStep}
+            onPrevious={(data) => {
+              setStep6Data(data)
+              handlePreviousStep()
+            }}
             totalSteps={TOTAL_STEPS}
-            initialData={step6Data} // step6Data se actualiza desde fetchedReport
+            initialData={step6Data}
             isEditing={true}
           />
         )
@@ -531,35 +563,75 @@ export default function EditFinalReportPage() {
           <Step7EditForm
             formMethods={formStep7Methods}
             onSaveAndNext={(dataFromStep7Form) => {
-              console.log('[EditFinalReportPage - Step7 onSaveAndNext (local state update only)] Data:', dataFromStep7Form)
               setStep7Data(dataFromStep7Form)
+              // En edición, el "SaveAndNext" del último paso usualmente es el submit final
+              // o no hace nada si el submit es un botón separado.
+              // Si tienes un botón "Guardar" en el Step7EditForm que llama a esto,
+              // y otro "Finalizar Edición" que llama a onFinalSubmit, está bien.
             }}
-            onPrevious={handlePreviousStep}
+            onPrevious={(data) => {
+              setStep7Data(data)
+              handlePreviousStep()
+            }}
             totalSteps={TOTAL_STEPS}
-            initialData={step7Data} // step7Data se actualiza desde fetchedReport
+            initialData={step7Data}
             isEditing={true}
             reportType={reportType}
-            onFinalSubmit={handleSubmitAllSteps}
+            onFinalSubmit={handleSubmitAllSteps} // Este es el que realmente guarda todo
           />
         )
       default:
         return <div>Paso desconocido</div>
     }
   }
- 
+
+  // <<--- MODIFICADO: Estructura del return principal para que coincida con new/page.tsx
   return (
-     
-            <main className="flex-1 p-4 md:p-6 lg:p-8 relative">
+    <div className="container mx-auto flex flex-col h-screen max-h-screen overflow-hidden">
+      <ReportPageHeader
+        pageTitle="Editar Informe Final"
+        pageDescription={
+          fetchedReport?.academicLoad?.course?.name
+            ? `${fetchedReport.academicLoad.course.name} - NRC: ${fetchedReport.academicLoad.nrc}`
+            : 'Cargando detalles del curso...'
+        }
+        stepLabels={STEP_LABELS_SPANISH}
+        currentStep={currentStep}
+        backButton={{ href: '/final-reports', text: 'Volver a Informes' }}
+        // nrc={step1Data?.nrc || fetchedReport?.academicLoad?.nrc} // Opcional, si quieres mostrar NRC
+      />
+      <main className="flex-grow flex flex-col items-center overflow-hidden pt-2 pb-6 md:pt-4">
+        <Card className="shadow-lg border-border/50 w-full max-w-5xl flex flex-col flex-grow overflow-hidden rounded-lg">
+          <CardContent className="flex-grow overflow-y-auto p-0">
+            {' '}
+            {/* p-0 para que los forms internos manejen su padding */}
+            {/* Sidebar de Pasos (opcional, si lo quieres replicar exactamente) */}
+            {/* Si no necesitas el sidebar de pasos aquí, puedes omitir esta parte
+                y renderizar directamente el contenido del formulario.
+                Si lo quieres, copia la estructura de <aside> y <main> de new/page.tsx
+                y ajusta el renderCurrentStepForm para que se coloque en el <main> correcto.
+                Por simplicidad, aquí solo renderizaré el formulario directamente.
+            */}
+            {/* Contenido del Formulario del Paso Actual */}
+            {/* Aplicar padding aquí si los forms internos no lo tienen, o en los forms */}
+            <div className="p-4 md:p-6 lg:p-8 relative h-full">
+              {' '}
+              {/* Añadido h-full y padding */}
               {isUpdatingReport && (
-                <div className="absolute inset-0 bg-white/80 dark:bg-black/80 flex justify-center items-center z-50 rounded-b-lg md:rounded-r-lg">
+                <div className="absolute inset-0 bg-white/80 dark:bg-black/80 flex justify-center items-center z-50 rounded-lg">
                   <Loader2 className="h-10 w-10 animate-spin text-primary" />
                   <p className="ml-3 text-lg">Guardando informe...</p>
                 </div>
               )}
-              <div className={isUpdatingReport ? 'opacity-50 pointer-events-none' : ''}>
+              <div className={`${isUpdatingReport ? 'opacity-50 pointer-events-none' : ''} h-full`}>
+                {' '}
+                {/* Añadido h-full */}
                 {renderCurrentStepForm()}
               </div>
-            </main>
-         
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+    </div>
   )
 }

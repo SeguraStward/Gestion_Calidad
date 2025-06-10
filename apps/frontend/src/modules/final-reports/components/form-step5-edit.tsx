@@ -40,7 +40,7 @@ export function transformReportToStep5Data(report: FullFinalReport): Step5FormDa
 interface Step5EditFormProps {
   formMethods: UseFormReturn<Step5FormData>
   onSaveAndNext: (data: Step5FormData) => void
-  onPrevious?: () => void
+  onPrevious?: (data: Step5FormData) => void
   totalSteps: number
   initialData?: Step5FormData | null
   isEditing?: boolean
@@ -54,7 +54,7 @@ export function Step5EditForm({
   initialData,
   isEditing = true
 }: Step5EditFormProps) {
-  const { control, handleSubmit, reset, register, formState } = formMethods
+  const { control, handleSubmit, reset, register, formState, getValues } = formMethods // Added getValues
 
   useEffect(() => {
     const currentAnswers = initialData?.respuestas || []
@@ -68,6 +68,13 @@ export function Step5EditForm({
     })
     reset({ respuestas: initialFormValues })
   }, [initialData, reset])
+
+  const handlePreviousClick = () => {
+    if (onPrevious) {
+      const currentData = getValues() // Obtener los datos actuales del formulario
+      onPrevious(currentData) // Pasar los datos al llamar a onPrevious
+    }
+  }
 
   return (
     <div className="p-4 md:p-6 h-full flex flex-col">
@@ -154,7 +161,7 @@ export function Step5EditForm({
             {/* Navigation Buttons (Stays Visible at the bottom) */}
             <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
               {onPrevious && (
-                <Button type="button" variant="outline" onClick={onPrevious} className="px-8 shadow-sm">
+                <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8 shadow-sm">
                   Anterior
                 </Button>
               )}
