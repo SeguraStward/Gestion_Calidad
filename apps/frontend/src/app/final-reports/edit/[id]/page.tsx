@@ -546,9 +546,7 @@ export default function EditFinalReportPage() {
         return <div>Paso desconocido</div>
     }
   }
-  // El return principal de tu componente EditFinalReportPage
-  // Asegúrate que la estructura del Card y el layout general estén como los tenías.
-  // Este es un ejemplo basado en tu código anterior.
+ 
   return (
      
             <main className="flex-1 p-4 md:p-6 lg:p-8 relative">

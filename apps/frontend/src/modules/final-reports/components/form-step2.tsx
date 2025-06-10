@@ -81,10 +81,11 @@ export function transformReportToStep2Data(report: FullFinalReport, enrolledCapa
 interface Step2FormProps {
   formMethods: UseFormReturn<Step2FormData>
   onSaveAndNext: (data: Step2FormData) => void
-  onPrevious?: (data: Step2FormData) => void // MODIFIED: Make it accept data and optional if step 1 doesn't have it
+  onPrevious?: (data: Step2FormData) => void
   totalSteps: number
   initialData?: Step2FormData | null
   isEditing?: boolean
+  enrolledCapacity?: number | null | undefined // <<--- AÑADIR ESTA LÍNEA
 }
 
 export function Step2Form({
