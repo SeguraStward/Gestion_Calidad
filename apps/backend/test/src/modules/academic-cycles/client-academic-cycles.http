@@ -27,7 +27,7 @@ Content-Type: application/json
   "startDate": "2025-02-01T00:00:00.000Z",
   "endDate": "2025-06-30T23:59:59.999Z",
   "finalMonth": 6,
-  "intMonth": 4,
+  "initMonth": 4,
   "status": "ACTIVE"
 }
 
@@ -45,7 +45,7 @@ Content-Type: application/json
   "startDate": "2025-01-15T00:00:00.000Z",
   "endDate": "2025-07-31T23:59:59.999Z",
   "finalMonth": 7,
-  "intMonth": 4,
+  "initMonth": 4,
   "status": "ACTIVE"  
 }
 
@@ -76,7 +76,7 @@ Content-Type: application/json
   "startDate": "2025-02-01T00:00:00.000Z",
   "endDate": "2025-07-15T23:59:59.999Z",
   "finalMonth": 7,
-  "intMonth": 5,
+  "initMonth": 5,
   "status": "ACTIVE"
 }
 
