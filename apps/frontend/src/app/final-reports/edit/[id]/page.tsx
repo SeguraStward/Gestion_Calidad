@@ -1,13 +1,14 @@
 'use client'
 
 import { useRouter, useParams } from 'next/navigation'
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react' // useRef se mantiene por si lo usas para otra cosa, pero no para initialLoadCompletedRef
 import { useForm, UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query' // <<--- AÑADIDO: Importar useQueryClient
 
 import { Button } from '@una-gc/ui/components/button'
-import { Card } from '@una-gc/ui/components/card' // Added Card import
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card' // Card ya estaba, añadidos subcomponentes si los usas directamente
 import { Loader2, FileText, AlertTriangle, CheckCircle, Save } from 'lucide-react'
 
 // Schemas, Types, and Components for each step
@@ -31,17 +32,16 @@ import {
 import { Step7FormData, step7Schema, Step7EditForm } from '@/modules/final-reports/components/form-step7-edit'
 
 // Mocks and services
-// MODIFIED IMPORTS FOR MOCKS:
 import { step5QuestionsMock, step6QuestionsPageMock, step7QuestionsPageMock } from '@/modules/final-reports/mocks/questions'
 
 // Service hooks
-import { useFinalReport, useUpdateFinalReport } from '@/modules/final-reports/service/final-reports.service' // Corrected: useGetFinalReportById to useFinalReport
+import { useFinalReport, useUpdateFinalReport } from '@/modules/final-reports/service/final-reports.service'
 import {
   FullFinalReport,
   UpdateFinalReportDto,
   FinalReportEvaluationFE,
   ReportType
-} from '@/modules/final-reports/types/final-reports.types' // Ensure ReportType is imported here if used by transform functions in this file
+} from '@/modules/final-reports/types/final-reports.types'
 
 const TOTAL_STEPS = 7
 
@@ -55,16 +55,13 @@ const steps = [
   { id: 7, name: 'Percepción y Desempeño' }
 ]
 
-// Helper function to transform report data for Step 7 (ensure it's defined or imported)
-// (La función transformReportToStep7Data que me mostraste antes iría aquí o importada)
-// ... (tu función transformReportToStep7Data)
 function transformReportToStep7Data(report: FullFinalReport, currentReportType: ReportType): Step7FormData | null {
   console.log(`[transformReportToStep7Data] Iniciando transformación para reportType: ${currentReportType}`)
   const filteredQuestions = step7QuestionsPageMock.filter((q) => {
     if (Array.isArray(q.appliesTo)) {
       return q.appliesTo.includes(currentReportType) || q.appliesTo.includes('TODOS')
     }
-    return false
+    return false // O true si las preguntas sin 'appliesTo' deben incluirse siempre
   })
   console.log(`[transformReportToStep7Data] ${filteredQuestions.length} preguntas filtradas para el tipo de informe.`)
 
@@ -117,12 +114,13 @@ export default function EditFinalReportPage() {
   const router = useRouter()
   const params = useParams()
   const reportId = params.id as string
-  const initialLoadCompletedRef = useRef(false)
+  // const initialLoadCompletedRef = useRef(false) // <<--- MODIFICADO: Ya no se necesita para controlar la carga inicial
+
+  const queryClient = useQueryClient() // <<--- AÑADIDO: Obtener el queryClient
 
   const [currentStep, setCurrentStep] = useState(1)
-  const [reportType, setReportType] = useState<ReportType>('INFORME_FINAL_V1') // Default or load from report
+  const [reportType, setReportType] = useState<ReportType>('INFORME_FINAL_V1')
 
-  // State for each step's data
   const [step1Data, setStep1Data] = useState<Step1FormData | null>(null)
   const [step2Data, setStep2Data] = useState<Step2FormData | null>(null)
   const [step3Data, setStep3Data] = useState<Step3FormData | null>(null)
@@ -133,54 +131,57 @@ export default function EditFinalReportPage() {
 
   const {
     data: fetchedReport,
-    isLoading: isLoadingReport, // This isLoading is for useFinalReport (fetch)
+    isLoading: isLoadingReport,
     error: reportError
   } = useFinalReport(
     reportId,
     { include: 'academicLoad,academicLoad.course,academicLoad.group,academicLoad.professor' },
     {
-      enabled: !!reportId && !initialLoadCompletedRef.current,
+      enabled: !!reportId, // <<--- MODIFICADO: Simplificado, la query se habilita si hay reportId
       retry: 1
+      // Podrías considerar `staleTime: 0` si siempre quieres que se considere "stale" al montar,
+      // o `refetchOnWindowFocus: true` (que es el default)
     }
   )
 
-  // MODIFIED: Call useUpdateFinalReport and derive loading state from status
-  const updateMutation = useUpdateFinalReport()
-  const { mutateAsync: updateReportMutation } = updateMutation // Destructure only mutateAsync
-  const isUpdatingReport = updateMutation.status === 'pending' // Derive loading state from status, changed 'loading' to 'pending'
+  const updateReportHook = useUpdateFinalReport() // Renombrado para evitar conflicto
+  const { mutateAsync: updateReportMutation } = updateReportHook
+  const isUpdatingReport = updateReportHook.status === 'pending'
 
-  // Definiciones de useForm para cada paso (incluyendo el resolver)
   const formStep1Methods = useForm<Step1FormData>({ resolver: zodResolver(step1Schema) })
   const formStep2Methods = useForm<Step2FormData>({ resolver: zodResolver(step2Schema) })
   const formStep3Methods = useForm<Step3FormData>({ resolver: zodResolver(step3Schema) })
   const formStep4Methods = useForm<Step4FormData>({ resolver: zodResolver(step4Schema) })
   const formStep5Methods = useForm<Step5FormData>({ resolver: zodResolver(step5Schema) })
   const formStep6Methods = useForm<Step6FormData>({ resolver: zodResolver(step6Schema) })
-  const formStep7Methods = useForm<Step7FormData>({ resolver: step7Schema ? zodResolver(step7Schema) : undefined }) // Asegúrate que step7Schema esté definido
+  const formStep7Methods = useForm<Step7FormData>({ resolver: step7Schema ? zodResolver(step7Schema) : undefined })
 
-  // useEffect para cargar datos iniciales y resetear formularios (importante que esté bien)
   useEffect(() => {
-    if (fetchedReport && !initialLoadCompletedRef.current && reportType) {
-      console.log('[EditFinalReportPage] Fetched report, processing initial data...', fetchedReport)
+    // <<--- MODIFICADO: Eliminada la condición !initialLoadCompletedRef.current
+    if (fetchedReport && reportType) {
+      console.log('[EditFinalReportPage] Fetched report or reportType changed, processing data...', fetchedReport)
+      // Aquí también podrías querer actualizar el reportType si viene del fetchedReport
+      // Ejemplo: if (fetchedReport.version) setReportType(fetchedReport.version === 1 ? 'INFORME_FINAL_V1' : 'INFORME_FINAL_V2');
+
       const initialStep1 = transformReportToStep1Data(fetchedReport)
       if (initialStep1) {
         setStep1Data(initialStep1)
         formStep1Methods.reset(initialStep1)
       }
 
-      const initialStep2 = transformReportToStep2Data(fetchedReport, initialStep1?.enrolledCapacity) // Pasar enrolledCapacity
+      const initialStep2 = transformReportToStep2Data(fetchedReport, initialStep1?.enrolledCapacity)
       if (initialStep2) {
         setStep2Data(initialStep2)
         formStep2Methods.reset(initialStep2)
       }
 
-      const initialStep3 = transformReportToStep3Data(fetchedReport) // No necesita reportType
+      const initialStep3 = transformReportToStep3Data(fetchedReport)
       if (initialStep3) {
         setStep3Data(initialStep3)
         formStep3Methods.reset(initialStep3)
       }
 
-      const initialStep4 = transformReportToStep4Data(fetchedReport) // No necesita reportType
+      const initialStep4 = transformReportToStep4Data(fetchedReport)
       if (initialStep4) {
         setStep4Data(initialStep4)
         formStep4Methods.reset(initialStep4)
@@ -198,17 +199,16 @@ export default function EditFinalReportPage() {
         formStep6Methods.reset(initialStep6)
       }
 
-      // ESTA LLAMADA AHORA DEBERÍA PROPORCIONAR VALORES NUMÉRICOS
       const initialStep7 = transformReportToStep7Data(fetchedReport, reportType)
       if (initialStep7) {
         setStep7Data(initialStep7)
         formStep7Methods.reset(initialStep7)
-        console.log('[EditFinalReportPage] Initial Step 7 Data set and form reset (should have numeric values):', initialStep7)
+        console.log('[EditFinalReportPage] Initial Step 7 Data set and form reset:', initialStep7)
       }
-      initialLoadCompletedRef.current = true
+      // initialLoadCompletedRef.current = true // <<--- MODIFICADO: Ya no se establece
     }
   }, [
-    fetchedReport,
+    fetchedReport, // Este useEffect se re-ejecutará si fetchedReport cambia (datos frescos)
     reportType,
     formStep1Methods,
     formStep2Methods,
@@ -217,9 +217,13 @@ export default function EditFinalReportPage() {
     formStep5Methods,
     formStep6Methods,
     formStep7Methods
+    // No incluyas los estados stepXData aquí para evitar bucles si solo quieres que se base en fetchedReport
   ])
 
-  // useEffects para resetear formularios individuales si su estado cambia (ej. por navegación)
+  // Los useEffects individuales para resetear formularios basados en stepXData pueden ser redundantes
+  // si el useEffect principal anterior ya lo hace cuando fetchedReport cambia.
+  // Evalúa si aún los necesitas o si causan resets no deseados.
+  // Por ahora los mantendré como estaban en tu código.
   useEffect(() => {
     if (step1Data) formStep1Methods.reset(step1Data)
   }, [step1Data, formStep1Methods])
@@ -245,35 +249,19 @@ export default function EditFinalReportPage() {
     }
   }, [step7Data, formStep7Methods])
 
-  // MODIFICADO: handleUpdateStepData solo actualiza el estado y avanza. NO guarda todo.
   const handleUpdateStepData = (step: number, data: any) => {
     console.log(`[handleUpdateStepData] Step: ${step}, Data:`, data)
     switch (step) {
-      case 1:
-        setStep1Data(data)
-        break
-      case 2:
-        setStep2Data(data)
-        break
-      case 3:
-        setStep3Data(data)
-        break
-      case 4:
-        setStep4Data(data)
-        break
-      case 5:
-        setStep5Data(data)
-        break
-      case 6:
-        setStep6Data(data)
-        break
+      case 1: setStep1Data(data); break
+      case 2: setStep2Data(data); break
+      case 3: setStep3Data(data); break
+      case 4: setStep4Data(data); break
+      case 5: setStep5Data(data); break
+      case 6: setStep6Data(data); break
       case 7:
-        // Para el paso 7, solo actualizamos el estado. El guardado se hace por onFinalSubmit.
         setStep7Data(data as Step7FormData)
         console.log('[handleUpdateStepData - Case 7] Step 7 data updated in state:', data)
-        // NO llamamos a handleSubmitAllSteps aquí.
-        // El botón "Guardar y Finalizar" del Paso 7 lo hará.
-        return // No avanzar automáticamente desde el paso 7 con este manejador.
+        return
     }
     if (step < TOTAL_STEPS) {
       setCurrentStep(step + 1)
@@ -281,28 +269,20 @@ export default function EditFinalReportPage() {
   }
 
   const handlePreviousStep = () => {
-    // Opcional: Guardar datos del paso actual antes de retroceder
-    // if (currentStep === 7) {
-    //   const currentStep7FormData = formStep7Methods.getValues();
-    //   setStep7Data(currentStep7FormData);
-    // }
-    // ... (lógica similar para otros pasos si se desea guardar al retroceder)
     setCurrentStep((prev) => Math.max(1, prev - 1))
   }
 
-  // handleSubmitAllSteps se llama SOLO al final (desde el Paso 7)
   const handleSubmitAllSteps = async () => {
     console.log('[handleSubmitAllSteps] INVOCADA.')
-
     const currentStep7ValuesFromForm = formStep7Methods.getValues()
     console.log(
-      '[handleSubmitAllSteps] Valores actuales del form Paso 7 (getValues) - ESTOS DEBEN SER VALORES NUMÉRICOS:',
+      '[handleSubmitAllSteps] Valores actuales del form Paso 7 (getValues):',
       JSON.stringify(currentStep7ValuesFromForm, null, 2)
     )
 
     try {
       if (step7Schema) {
-        step7Schema.parse(currentStep7ValuesFromForm) // Validar datos del Paso 7
+        step7Schema.parse(currentStep7ValuesFromForm)
       }
       console.log('[handleSubmitAllSteps] Validación de datos del Paso 7 (getValues) exitosa.')
     } catch (validationError) {
@@ -312,59 +292,46 @@ export default function EditFinalReportPage() {
     }
 
     if (
-      !fetchedReport ||
-      !step1Data ||
-      !step2Data ||
-      !step3Data ||
-      !step4Data ||
-      !step5Data ||
-      !step6Data ||
-      !currentStep7ValuesFromForm ||
-      currentStep7ValuesFromForm.respuestasRadio.some((r) => !r.idPregunta) // Chequeo adicional
+      !fetchedReport || !step1Data || !step2Data || !step3Data || !step4Data ||
+      !step5Data || !step6Data || !currentStep7ValuesFromForm ||
+      currentStep7ValuesFromForm.respuestasRadio.some((r) => !r.idPregunta)
     ) {
-      toast.error('Faltan datos de algunos pasos o hay IDs de pregunta faltantes en el paso 7. Por favor complete el formulario.')
-      console.error('Datos faltantes para handleSubmitAllSteps:', {
-        fetchedReport: !!fetchedReport,
-        step1Data: !!step1Data,
-        step2Data: !!step2Data,
-        step3Data: !!step3Data,
-        step4Data: !!step4Data,
-        step5Data: !!step5Data,
-        step6Data: !!step6Data,
-        currentStep7ValuesFromForm
-      })
+      toast.error('Faltan datos de algunos pasos o hay IDs de pregunta faltantes en el paso 7.')
+      console.error('Datos faltantes para handleSubmitAllSteps:', { /* ... */ })
       return
     }
 
     try {
       const evaluationData: FinalReportEvaluationFE[] = [
-        ...(step5Data?.respuestas.map((resp) => ({
+        // ... (tu lógica para construir evaluationData) ...
+         ...(step5Data?.respuestas.map((resp) => ({
           questionId: resp.idPregunta,
           response: resp.respuesta,
-          responseType: 'TEXT',
+          responseType: 'TEXT', // Asumiendo que todas las del paso 5 son TEXT
           questionGroup: step5QuestionsMock.find((q) => q.questionId === resp.idPregunta)?.group || 'evaluacion_general_curso',
           question: step5QuestionsMock.find((q) => q.questionId === resp.idPregunta)?.question || resp.idPregunta,
-          options: [],
+          options: [], // Las preguntas de texto no tienen opciones predefinidas aquí
           multipleResponse: []
         })) || []),
-        ...(step6Data?.respuestasMultiples.flatMap((rm) =>
-          rm.respuestasSeleccionadas.map((sel) => ({
+        ...(step6Data?.respuestasMultiples.flatMap((rm) => {
+          const questionDetails = step6QuestionsPageMock.find((q) => q.questionId === rm.idPregunta);
+          return rm.respuestasSeleccionadas.map((sel) => ({
             questionId: rm.idPregunta,
-            response: sel,
+            response: sel, // En SELECCION_MULTIPLE, 'response' puede ser cada valor seleccionado
             responseType: 'SELECCION_MULTIPLE',
-            questionGroup: step6QuestionsPageMock.find((q) => q.questionId === rm.idPregunta)?.group || 'herramientas',
-            question: step6QuestionsPageMock.find((q) => q.questionId === rm.idPregunta)?.question || rm.idPregunta,
-            options: step6QuestionsPageMock.find((q) => q.questionId === rm.idPregunta)?.options || [],
-            multipleResponse: rm.respuestasSeleccionadas
-          }))
-        ) || []),
+            questionGroup: questionDetails?.group || 'herramientas',
+            question: questionDetails?.question || rm.idPregunta,
+            options: questionDetails?.options || [],
+            multipleResponse: rm.respuestasSeleccionadas // Guardar todas las seleccionadas aquí
+          }));
+        }) || []),
         ...(step6Data?.otrasHerramientas && step6Data.otrasHerramientas.trim() !== ''
           ? [
               {
                 questionId: OTHER_TOOLS_QUESTION_ID,
                 response: step6Data.otrasHerramientas,
                 responseType: 'TEXT',
-                questionGroup: 'herramientas',
+                questionGroup: 'herramientas', // O el grupo que corresponda
                 question:
                   step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
                   'Descripción de otras herramientas utilizadas',
@@ -373,47 +340,36 @@ export default function EditFinalReportPage() {
               }
             ]
           : []),
-
-        // PASO 7: currentStep7ValuesFromForm.respuestasRadio.respuesta YA DEBERÍA SER EL VALOR NUMÉRICO
         ...currentStep7ValuesFromForm.respuestasRadio.map((resp) => {
           const questionDetails = step7QuestionsPageMock.find((q) => q.questionId === resp.idPregunta)
           let responseLabelToSend: string | undefined = undefined
 
           if (questionDetails) {
             if (resp.respuesta && resp.respuesta.trim() !== '') {
-              // resp.respuesta es el valor numérico "1", "2", etc.
               const selectedOption = questionDetails.options.find((opt) => opt.value === resp.respuesta)
               if (selectedOption) {
-                responseLabelToSend = selectedOption.label // Convertir el valor numérico a etiqueta para el backend
+                responseLabelToSend = selectedOption.label
               } else {
                 console.error(
-                  `[handleSubmitAllSteps - Step 7] Opción no encontrada para questionId: "${resp.idPregunta}" con el VALOR de respuesta: "${resp.respuesta}". Esto no debería ocurrir si el formulario se inicializó correctamente.`
+                  `[handleSubmitAllSteps - Step 7] Opción no encontrada para questionId: "${resp.idPregunta}" con VALOR: "${resp.respuesta}".`
                 )
-                // Podrías decidir enviar resp.respuesta directamente si es un valor numérico válido y el backend lo puede manejar,
-                // o enviar undefined si se prefiere no enviar nada si la etiqueta no se encuentra.
-                // responseLabelToSend = resp.respuesta; // O undefined
               }
             }
           } else {
             console.error(
-              `[handleSubmitAllSteps - Step 7] No se encontraron detalles para questionId: "${resp.idPregunta}" en step7QuestionsPageMock.`
+              `[handleSubmitAllSteps - Step 7] No se encontraron detalles para questionId: "${resp.idPregunta}".`
             )
           }
-
-          console.log(
-            `[handleSubmitAllSteps - Step 7 Map] qId: ${resp.idPregunta}, respForm (valor numérico): ${resp.respuesta}, respLabelToSend: ${responseLabelToSend}`
-          )
-
           return {
             questionId: resp.idPregunta,
-            response: responseLabelToSend, // Enviar la etiqueta al backend
+            response: responseLabelToSend,
             responseType: 'SELECCION_UNICA' as const,
             questionGroup: questionDetails?.group || 'percepcion_general',
             options:
               questionDetails?.options?.map((opt) => ({
                 value: opt.value,
                 label: opt.label,
-                category: questionDetails?.group
+                category: questionDetails?.group // O opt.category si lo tienes
               })) || [],
             question: questionDetails?.question || resp.idPregunta,
             multipleResponse: []
@@ -421,11 +377,12 @@ export default function EditFinalReportPage() {
         })
       ].map((item) => ({
         ...item,
-        response: item.response, // Asegurar que response esté definido
+        response: item.response,
         multipleResponse: item.multipleResponse || [],
         options: item.options || [],
-        questionGroup: item.questionGroup || 'general' // Default group
+        questionGroup: item.questionGroup || 'general'
       })) as FinalReportEvaluationFE[]
+
 
       const updatePayload: UpdateFinalReportDto = {
         statistics: {
@@ -439,25 +396,31 @@ export default function EditFinalReportPage() {
             idNumber: adj.cedula,
             name: adj.nombre,
             support: adj.apoyo,
-            grade: String(adj.nota),
-            observation: adj.observacion || '' // Ensure observation is always a string
-            // id: adj.id,
+            grade: String(adj.nota), // Asegurar que sea string si el backend lo espera así
+            observation: adj.observacion || ''
+            // id: adj.id, // Descomentar si necesitas enviar el ID del ajuste
           })),
           safeguards: step3Data.salvaguardaEstudiantes.map((sg) => ({
             idNumber: sg.cedula,
             name: sg.nombre,
-            grade: String(sg.nota),
-            observation: sg.observacion || '' // Ensure observation is always a string
-            // id: sg.id,
+            grade: String(sg.nota), // Asegurar que sea string
+            observation: sg.observacion || ''
+            // id: sg.id, // Descomentar si necesitas enviar el ID de la salvaguarda
           }))
         },
         evaluation: evaluationData,
-        version: reportType === 'INFORME_FINAL_V1' ? 1 : 2
+        version: reportType === 'INFORME_FINAL_V1' ? 1 : 2 // Asegúrate que esto coincida con tu lógica de backend
       }
 
       console.log('[handleSubmitAllSteps] Payload FINAL para UpdateFinalReportDto:', JSON.stringify(updatePayload, null, 2))
-      // Corrected: Call updateReportMutation directly
       await updateReportMutation({ id: reportId, data: updatePayload })
+
+      // <<--- AÑADIDO: Invalidar la query para este informe específico
+      // La queryKey debe coincidir con la usada por useFinalReport (useOne)
+      // que es [queryKeyPrefix, id] -> ['finalReports', reportId]
+      await queryClient.invalidateQueries({ queryKey: ['finalReports', reportId] })
+      toast.success('Informe actualizado exitosamente!') // Mover toast aquí para mejor flujo
+
       router.push('/final-reports')
     } catch (error: any) {
       console.error('Error en handleSubmitAllSteps:', error)
@@ -474,18 +437,24 @@ export default function EditFinalReportPage() {
         </div>
       )
     }
-    if (reportError)
+    if (reportError) {
       return (
         <Card className="p-6 text-center">
           <p className="text-destructive">Error: {reportError.message}</p>
         </Card>
       )
-    if (!fetchedReport && !isLoadingReport)
+    }
+    // <<--- MODIFICADO: Simplificada la condición, si no hay fetchedReport después de cargar, no se encontró.
+    if (!fetchedReport) {
       return (
         <Card className="p-6 text-center">
-          <p>No se encontró el informe.</p>
+          <p>No se encontró el informe o el ID es inválido.</p>
+           <Button onClick={() => router.push('/final-reports')} className="mt-4">
+            Volver a Informes
+          </Button>
         </Card>
       )
+    }
 
     switch (currentStep) {
       case 1:
@@ -495,7 +464,7 @@ export default function EditFinalReportPage() {
             onSaveAndNext={(data) => handleUpdateStepData(1, data)}
             isEditing={true}
             totalSteps={TOTAL_STEPS}
-            initialData={step1Data}
+            initialData={step1Data} // step1Data se actualiza desde fetchedReport
             onCancel={() => router.push('/final-reports')}
           />
         )
@@ -506,8 +475,10 @@ export default function EditFinalReportPage() {
             onSaveAndNext={(data) => handleUpdateStepData(2, data)}
             onPrevious={handlePreviousStep}
             totalSteps={TOTAL_STEPS}
-            initialData={step2Data}
+            initialData={step2Data} // step2Data se actualiza desde fetchedReport
             isEditing={true}
+            // Asegúrate que enrolledCapacity se pase correctamente si Step2Form lo necesita
+             enrolledCapacity={step1Data?.enrolledCapacity}
           />
         )
       case 3:
@@ -517,9 +488,9 @@ export default function EditFinalReportPage() {
             onSaveAndNext={(data) => handleUpdateStepData(3, data)}
             onPrevious={handlePreviousStep}
             totalSteps={TOTAL_STEPS}
-            initialData={step3Data}
+            initialData={step3Data} // step3Data se actualiza desde fetchedReport
             isEditing={true}
-            reportType={reportType} // Changed from tipoInforme to reportType
+            reportType={reportType}
           />
         )
       case 4:
@@ -529,7 +500,7 @@ export default function EditFinalReportPage() {
             onSaveAndNext={(data) => handleUpdateStepData(4, data)}
             onPrevious={handlePreviousStep}
             totalSteps={TOTAL_STEPS}
-            initialData={step4Data}
+            initialData={step4Data} // step4Data se actualiza desde fetchedReport
             isEditing={true}
           />
         )
@@ -540,7 +511,7 @@ export default function EditFinalReportPage() {
             onSaveAndNext={(data) => handleUpdateStepData(5, data)}
             onPrevious={handlePreviousStep}
             totalSteps={TOTAL_STEPS}
-            initialData={step5Data}
+            initialData={step5Data} // step5Data se actualiza desde fetchedReport
             isEditing={true}
           />
         )
@@ -551,7 +522,7 @@ export default function EditFinalReportPage() {
             onSaveAndNext={(data) => handleUpdateStepData(6, data)}
             onPrevious={handlePreviousStep}
             totalSteps={TOTAL_STEPS}
-            initialData={step6Data}
+            initialData={step6Data} // step6Data se actualiza desde fetchedReport
             isEditing={true}
           />
         )
@@ -559,33 +530,38 @@ export default function EditFinalReportPage() {
         return (
           <Step7EditForm
             formMethods={formStep7Methods}
-            // onSaveAndNext ya no es necesario si el único submit es el final.
-            // Podrías quitarlo o dejarlo para actualizar el estado local si el usuario navega hacia atrás.
             onSaveAndNext={(dataFromStep7Form) => {
               console.log('[EditFinalReportPage - Step7 onSaveAndNext (local state update only)] Data:', dataFromStep7Form)
               setStep7Data(dataFromStep7Form)
-              // NO AVANZA NI GUARDA TODO AQUÍ
             }}
             onPrevious={handlePreviousStep}
             totalSteps={TOTAL_STEPS}
-            initialData={step7Data}
+            initialData={step7Data} // step7Data se actualiza desde fetchedReport
             isEditing={true}
             reportType={reportType}
-            onFinalSubmit={handleSubmitAllSteps} // Prop para el guardado final
+            onFinalSubmit={handleSubmitAllSteps}
           />
         )
       default:
         return <div>Paso desconocido</div>
     }
   }
-
+  // El return principal de tu componente EditFinalReportPage
+  // Asegúrate que la estructura del Card y el layout general estén como los tenías.
+  // Este es un ejemplo basado en tu código anterior.
   return (
-    <div className="container mx-auto px-4 py-8 md:px-6 md:py-10 lg:py-12 max-w-5xl">
-      {/* ... (Header de la página) ... */}
-      <div className="bg-card shadow-xl rounded-lg">
-        {/* ... (Stepper) ... */}
-        <div className="p-6 md:p-8 min-h-[500px] flex flex-col">{renderCurrentStepForm()}</div>
-      </div>
-    </div>
+     
+            <main className="flex-1 p-4 md:p-6 lg:p-8 relative">
+              {isUpdatingReport && (
+                <div className="absolute inset-0 bg-white/80 dark:bg-black/80 flex justify-center items-center z-50 rounded-b-lg md:rounded-r-lg">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                  <p className="ml-3 text-lg">Guardando informe...</p>
+                </div>
+              )}
+              <div className={isUpdatingReport ? 'opacity-50 pointer-events-none' : ''}>
+                {renderCurrentStepForm()}
+              </div>
+            </main>
+         
   )
 }
