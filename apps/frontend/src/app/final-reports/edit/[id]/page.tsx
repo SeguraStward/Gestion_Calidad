@@ -135,10 +135,14 @@ export default function EditFinalReportPage() {
     data: fetchedReport,
     isLoading: isLoadingReport, // This isLoading is for useFinalReport (fetch)
     error: reportError
-  } = useFinalReport(reportId, undefined, {
-    enabled: !!reportId && !initialLoadCompletedRef.current,
-    retry: 1
-  })
+  } = useFinalReport(
+    reportId,
+    { include: 'academicLoad,academicLoad.course,academicLoad.group,academicLoad.professor' },
+    {
+      enabled: !!reportId && !initialLoadCompletedRef.current,
+      retry: 1
+    }
+  )
 
   // MODIFIED: Call useUpdateFinalReport and derive loading state from status
   const updateMutation = useUpdateFinalReport()
