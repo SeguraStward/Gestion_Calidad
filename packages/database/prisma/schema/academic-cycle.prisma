@@ -12,7 +12,7 @@ model AcademicCycle {
   endDate   DateTime?
 
   finalMonth Int?
-  intMonth   Int?
+  initMonth  Int?
 
   status Status @default(ACTIVE)
 

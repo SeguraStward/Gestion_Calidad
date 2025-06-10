@@ -59,7 +59,7 @@ export class AcademicCycleDto extends BaseDto {
   @Expose()
   @IsInt()
   @IsOptional()
-  intMonth?: number;
+  initMonth?: number;
 
   @ApiProperty({ description: 'Status of the academic cycle' })
   @Expose()
