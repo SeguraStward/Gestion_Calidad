@@ -95,33 +95,33 @@ export function Step2Form({
   totalSteps,
   initialData,
   isEditing = false,
-  // enrolledCapacity prop is used by transformReportToStep2Data and potentially to initialize totalEnrolled
   enrolledCapacity
 }: Step2FormProps) {
-  const { control, handleSubmit, reset, watch, formState, getValues, setValue } = formMethods // Added setValue
+  const { control, handleSubmit, reset, watch, formState, getValues, setValue } = formMethods
 
   useEffect(() => {
     if (initialData) {
-      // Si initialData tiene undefined para algún campo, RHF lo tomará como undefined.
-      // El 'value' prop de los inputs se encargará de mostrarlo como "0" o vacío según decidamos.
-      reset(initialData)
+      // initialData está presente (modo edición con datos cargados)
+      const dataToReset = { ...initialData } // Crear una copia para modificarla de forma segura
+
+      // Si enrolledCapacity (del Paso 1) está disponible y es diferente
+      // al totalEnrolled en initialData, debe tener precedencia.
+      if (typeof enrolledCapacity === 'number' && initialData.totalEnrolled !== enrolledCapacity) {
+        dataToReset.totalEnrolled = enrolledCapacity
+      }
+      reset(dataToReset)
     } else if (!isEditing) {
-      // Para nuevos reportes, si no hay initialData (ej. primer acceso al step 2)
-      // Establecer los valores lógicos a 0 para los campos editables.
-      // totalEnrolled se basa en enrolledCapacity o se deja undefined para que se cargue.
+      // initialData es null y no estamos en modo edición (creando un nuevo informe)
       reset({
-        totalEnrolled: enrolledCapacity ?? undefined,
+        totalEnrolled: enrolledCapacity ?? undefined, // Usar enrolledCapacity del Paso 1 si está disponible
         totalWithdrawn: 0,
         totalPassed: 0,
         totalFailed: 0
       })
     }
-    // Si enrolledCapacity cambia (viene del paso 1), actualizamos totalEnrolled
-    // Esto es importante si el usuario navega atrás y adelante.
-    else if (initialData && typeof enrolledCapacity === 'number' && initialData.totalEnrolled !== enrolledCapacity) {
-      setValue('totalEnrolled', enrolledCapacity, { shouldValidate: true, shouldDirty: true })
-    }
-  }, [initialData, isEditing, reset, enrolledCapacity, setValue])
+    // Si initialData es null Y isEditing es true (implica que los datos aún están cargando o hubo un error),
+    // este useEffect no hace nada, lo cual es correcto, ya que deberíamos esperar a que initialData se cargue.
+  }, [initialData, isEditing, reset, enrolledCapacity]) // setValue ya no se llama directamente aquí
 
   const watchedValues = watch()
 
@@ -229,21 +229,14 @@ export function Step2Form({
                             <Input
                               type="text" // Tipo texto para control manual
                               inputMode="numeric" // Ayuda en teclados móviles
-                              // pattern="[0-9]*" // El replace(/\D/g, '') ya lo maneja
                               placeholder="0" // Se muestra si el input está vacío
-                              {...field}
-                              // Si el valor lógico es 0, se muestra "0".
-                              // Si el valor lógico es > 0, se muestra el número.
-                              // Si el input está vacío (el usuario borró), el valor lógico es 0, y aquí se mostraría "0".
-                              // Para que se muestre vacío cuando el usuario borra (y el valor lógico es 0):
+                              {...field} // Pasa el ref callback aquí
                               value={
-                                field.value === 0 && formState.dirtyFields[fieldName] // Si es 0 y fue tocado/modificado
-                                  ? document.activeElement === field.ref // Si el campo tiene foco
-                                    ? (field.ref as HTMLInputElement)?.value // Mantener lo que el usuario está escribiendo
-                                    : '' // Mostrar vacío si no tiene foco y es 0 y dirty
+                                field.value === 0 && formState.dirtyFields[fieldName]
+                                  ? '' // Si es 0 y dirty, mostrar vacío. El usuario verá "0" mientras escribe debido al onChange.
                                   : field.value === undefined || field.value === null
-                                    ? ''
-                                    : String(field.value)
+                                    ? '' // Si es undefined/null, mostrar vacío
+                                    : String(field.value) // Sino, mostrar el valor
                               }
                               onChange={(e) => {
                                 const inputValue = e.target.value
@@ -252,29 +245,36 @@ export function Step2Form({
                                 if (cleanedValue === '') {
                                   field.onChange(0) // Lógica: 0 si está vacío
                                 } else {
+                                  // Si el valor actual es 0 (y se está mostrando vacío o '0')
+                                  // y el usuario escribe un nuevo número, queremos que reemplace el 0.
+                                  // Number() se encarga de esto (ej. Number("05") es 5).
                                   field.onChange(Number(cleanedValue))
                                 }
                               }}
                               onFocus={(e) => {
-                                // Si el valor es 0 (podría ser el 0 lógico por defecto o ingresado)
+                                // Si el valor es 0 (lógico) y el input muestra "0" o está vacío (debido a la lógica del value)
                                 // seleccionar para fácil reemplazo.
                                 if (field.value === 0) {
-                                  // Solo seleccionar si el contenido actual es literalmente "0"
-                                  if (e.target.value === '0') {
+                                  // Si el input está vacío porque value lo hizo así, pero lógicamente es 0
+                                  if (e.target.value === '') {
+                                    // Temporalmente poner '0' para seleccionar, onChange lo manejará
+                                    // e.target.value = '0'; // Esto es una mutación directa, no ideal.
+                                    // Mejor confiar en que el usuario escriba y onChange lo maneje.
+                                    // O, si el input está vacío y el valor es 0, no hacer nada especial en focus.
+                                  } else if (e.target.value === '0') {
                                     e.target.select()
                                   }
                                 }
                               }}
                               onBlur={() => {
                                 field.onBlur() // Marcar como "touched"
-                                // Si el valor es 0, y el input está vacío (porque el 'value' prop lo dejó así)
-                                // no es necesario hacer nada extra aquí, ya que el valor lógico ya es 0.
-                                // Si el usuario deja el campo vacío, onChange ya puso 0.
-                                // Si el usuario escribió "0", onChange ya puso 0.
-                                // Forzar un re-renderizado si es necesario para que el 'value' prop actualice la vista
-                                if (field.value === 0 && (field.ref as HTMLInputElement)?.value !== '0') {
-                                  setValue(fieldName, 0, { shouldValidate: true })
-                                }
+                                // Si el valor es 0 y el input está vacío (porque el 'value' prop lo dejó así)
+                                // y queremos que muestre "0" al perder el foco si es 0:
+                                // if (field.value === 0 && (field.ref as HTMLInputElement)?.value === '') {
+                                //   setValue(fieldName, 0, { shouldValidate: false }); // Forzar que se muestre "0"
+                                // }
+                                // La lógica actual del 'value' prop ya intenta mostrar vacío si es 0 y dirty.
+                                // Si el usuario borra todo, onChange pone 0, y 'value' lo muestra vacío.
                               }}
                               className="h-10"
                             />
