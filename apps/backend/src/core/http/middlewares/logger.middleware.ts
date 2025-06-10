@@ -21,15 +21,12 @@ export class LoggerMiddleware implements NestMiddleware {
     const startTime = Date.now();
     const { method, originalUrl } = req;
 
-    // Log de inicio de solicitud
     this.logRequestStart(method, originalUrl);
 
-    // Configurar listener para el final de la respuesta
     res.on('finish', () => {
       this.logRequestFinish(req, res, startTime);
     });
 
-    // Manejar errores de respuesta
     res.on('error', (error) => {
       this.logger.error(`Request error for ${method} ${originalUrl}:`, error.message);
     });
@@ -47,12 +44,10 @@ export class LoggerMiddleware implements NestMiddleware {
     const contentLength = res.get('content-length') || '0';
     const responseTime = Date.now() - startTime;
 
-    // Log principal con información básica
     this.logger.log(
       `${this.getStatusEmoji(statusCode)} ${method} ${originalUrl} - Status: ${statusCode} - Size: ${contentLength}b - Time: ${responseTime}ms`,
     );
 
-    // Log detallado para debug
     this.logDebugDetails(req, res, responseTime);
   }
 
@@ -96,24 +91,3 @@ export class LoggerMiddleware implements NestMiddleware {
     return '✓';
   }
 }
-
-/*
-Funcionalidad principal
-Intercepta cada solicitud HTTP: Se ejecuta antes de que las solicitudes lleguen a los controladores.
-
-Captura datos iniciales de la solicitud:
-
-El método HTTP (GET, POST, etc.)
-La URL solicitada
-El user-agent del cliente
-La dirección IP del cliente
-La hora de inicio de la solicitud
-Registra métricas de rendimiento:
-
-Se suscribe al evento 'finish' de la respuesta
-Cuando la respuesta termina, calcula:
-El código de estado HTTP (200, 404, etc.)
-El tamaño de la respuesta en bytes
-El tiempo de respuesta en milisegundos
-Genera un log completo: Combina toda esta información en un único mensaje de registro
-*/

@@ -33,6 +33,7 @@ export const CrudModuleBase = <
     renderColumns,
     processItem,
     processItemForEditing,
+    processFormValues,
     preDeleteCheck,
     searchPlaceholder = `Buscar ${entityNamePlural.toLowerCase()}...`
   } = props
@@ -119,6 +120,7 @@ export const CrudModuleBase = <
   const processedItems = useMemo(() => {
     return processItem ? (paginatedData?.data || []).map(processItem) : (paginatedData?.data as TItem[]) || []
   }, [paginatedData?.data, processItem]) // Manejar envío de formulario
+
   const handleSubmitForm = handleSubmit(async (formData) => {
     setIsProcessing(true)
     try {
@@ -132,16 +134,21 @@ export const CrudModuleBase = <
           sanitizedData[key] = null
         }
       })
+
+      // Procesar los valores si existe la función processFormValues
+      const processedData = processFormValues ? processFormValues(sanitizedData as any) : sanitizedData
+
       if (editingId && editingId !== 'new') {
         // Conversión segura utilizando unknown como intermediario
         // Si no se ha editado nada, usar los valores actuales del item
-        const updateData = {
+        let updateData = {
           ...editingItem,
-          ...formData
+          ...processedData
         } as unknown as TUpdateInput
+
         await updateMutation.mutateAsync({ id: editingId, data: updateData })
       } else {
-        await createMutation.mutateAsync(formData as TCreateInput)
+        await createMutation.mutateAsync(processedData as TCreateInput)
       }
 
       // Refrescar datos

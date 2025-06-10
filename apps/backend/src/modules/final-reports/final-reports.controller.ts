@@ -9,7 +9,8 @@ import {
   DefaultValuePipe,
   ParseEnumPipe,
 } from '@nestjs/common';
-import { buildPrismaInclude } from '@src/utils/prisma-include.parser';
+
+import { buildPrismaInclude } from '@src/core/common/utils';
 import { FinalReportStatus } from '@una-gc/database/prisma/generated/client';
 
 import { FinalReportDto } from './dtos/final-report.dto';

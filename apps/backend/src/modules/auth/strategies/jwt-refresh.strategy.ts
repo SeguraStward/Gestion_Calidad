@@ -81,12 +81,20 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, email: true, fullName: true, fullLastName: true },
+      select: { id: true, email: true, fullName: true, fullLastName: true, status: true },
     });
 
     if (!user) {
       this.logger.error('User not found for refresh token payload.');
       throw new UnauthorizedException('User not found for refresh token payload.');
+    }
+
+    // Validar que el usuario esté activo
+    if (user.status !== 'ACTIVE') {
+      this.logger.warn(
+        `Refresh token validation failed: User ${user.email} has inactive status: ${user.status}`,
+      );
+      throw new UnauthorizedException('Account is not active');
     }
 
     return { ...user, refreshTokenFromCookie, refreshTokenDbId: dbRefreshToken.id };

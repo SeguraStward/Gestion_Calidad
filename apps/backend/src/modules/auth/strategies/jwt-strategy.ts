@@ -34,6 +34,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         email: true,
         fullName: true,
         fullLastName: true,
+        status: true,
         roles: {
           where: { status: 'ACTIVE' },
           select: {
@@ -47,10 +48,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     if (!user) {
       this.logger.warn(`User with id ${payload.sub} not found during JWT validation`);
-      throw new UnauthorizedException('Usuario no encontrado');
+      throw new UnauthorizedException('User not found');
     }
 
-    // Ya no manejamos activeRole aquí, se manejará en el PermissionsGuard
+    // Validar que el usuario esté activo
+    if (user.status !== 'ACTIVE') {
+      this.logger.warn(`JWT validation failed: User ${user.email} has inactive status: ${user.status}`);
+      throw new UnauthorizedException('Account is not active');
+    }
+
     return {
       id: user.id,
       sub: user.id,

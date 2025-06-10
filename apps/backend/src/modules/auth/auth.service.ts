@@ -1,32 +1,10 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '@src/prisma/prisma.service';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
-import { $Enums } from '@una-gc/database/prisma/generated/client';
 
-export interface Permission {
-  permissionID: string;
-  permissions: $Enums.PermissionType[];
-  scope: $Enums.PermissionScope | null;
-  actions: string[];
-}
-
-interface GoogleUser {
-  googleId: string;
-  email: string;
-  firstName: string;
-  fullLastName?: string;
-  familyName?: string;
-  picture?: string;
-}
-
-export interface SelectedRole {
-  id: string;
-  name: string;
-  description?: string | null;
-  permissions: Permission[];
-}
+import { PrismaService } from '@src/prisma/prisma.service';
+import { GoogleUser } from './interfaces';
 
 @Injectable()
 export class AuthService {
@@ -72,17 +50,23 @@ export class AuthService {
     });
 
     if (!user) {
-      user = await this.prisma.user.create({
-        data: {
-          email: googleUser.email,
-          fullName: googleUser.firstName,
-          fullLastName: googleUser.fullLastName || googleUser.familyName || '', // Ensure fullLastName is handled
-          googleId: googleUser.googleId,
-          photoUrl: googleUser.picture,
-          // Ensure other required User fields are handled or have defaults
-        },
+      this.logger.warn(`Login attempt with non-existent user: ${googleUser.email}`);
+      throw new UnauthorizedException({
+        message:
+          'There is no account associated with this email address. Please contact the system administrator.',
+        code: 'USER_NOT_FOUND',
       });
-    } else if (!user.googleId && googleUser.googleId) {
+    }
+
+    if (user.status === 'INACTIVE') {
+      this.logger.warn(`Login attempt from user with inactive status: ${user.email}`);
+      throw new UnauthorizedException({
+        message: 'Your account has been deactivated. Please contact the system administrator.',
+        code: 'ACCOUNT_INACTIVE',
+      });
+    }
+
+    if (!user.googleId && googleUser.googleId) {
       user = await this.prisma.user.update({
         where: { id: user.id },
         data: {
@@ -91,6 +75,8 @@ export class AuthService {
         },
       });
     }
+
+    this.logger.log(`User ${user.email} authenticated successfully with status: ${user.status}.`);
 
     const accessToken = this.generateAccessToken(user.id, user.email);
     const { rawRefreshToken } = await this.generateAndStoreRefreshToken(user.id);
@@ -109,7 +95,6 @@ export class AuthService {
   }
 
   generateAccessToken(userId: string, email: string): string {
-    // Remover el parámetro role del JWT
     const payload = { sub: userId, email };
     const accessTokenExpirationString = this.configService.get<string>('JWT_EXPIRATION') || '1m';
     const expiresIn = this.parseExpiryToMilliseconds(accessTokenExpirationString);
@@ -167,7 +152,6 @@ export class AuthService {
       throw new UnauthorizedException('Error processing refresh token. Please try logging in again.');
     }
 
-    // Generar nuevo access token sin rol
     const newAccessToken = this.generateAccessToken(userId, email);
     const { rawRefreshToken: newRawRefreshToken } = await this.generateAndStoreRefreshToken(userId);
 

@@ -1,6 +1,6 @@
 import { GenericService } from '@core/common/interfaces/generic.service';
 import { DtoValidator } from '@core/common/dto-validator';
-import { Injectable, Logger, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Prisma, Status } from '@una-gc/database/prisma/generated/client';
 
 import { RegionalCenterDto } from './dtos/regional-center.dto';
@@ -35,7 +35,6 @@ export class RegionalCentersService extends GenericService<
       code: payload.code,
       name: payload.name,
       status: payload.status,
-      // No se conecta campus aquí
     };
     return super.save(data as any);
   }
@@ -47,7 +46,6 @@ export class RegionalCentersService extends GenericService<
       code: payload.code,
       name: payload.name,
       status: payload.status,
-      // No se conecta campus aquí
     };
     return super.update(id, data as any);
   }

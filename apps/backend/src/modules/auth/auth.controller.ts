@@ -1,31 +1,13 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-  Logger,
-  UnauthorizedException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Controller, Get, Logger, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
+import type { Request, Response } from 'express';
+
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
-import { ConfigService } from '@nestjs/config';
-import type { Request, Response } from 'express';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-
-// Definir una interfaz para GoogleUser
-interface GoogleUser {
-  googleId: string;
-  email: string;
-  firstName: string;
-  fullLastName?: string;
-  familyName?: string;
-  picture?: string;
-}
+import { GoogleUser } from './interfaces';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -66,9 +48,6 @@ export class AuthController {
     // Guard initiates Google OAuth flow
   }
 
-  @ApiOperation({ summary: 'Handle Google OAuth callback' })
-  @ApiResponse({ status: 302, description: 'Redirect after successful authentication' })
-  @ApiResponse({ status: 403, description: 'Email domain not allowed' })
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
@@ -76,9 +55,7 @@ export class AuthController {
     try {
       if (!req.user) {
         this.logger.error('User not found in request after Google OAuth callback');
-        return res.redirect(
-          `${this.configService.get('FRONTEND_URL')}/auth/error?message=authentication_failed`,
-        );
+        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_001`);
       }
 
       // Assuming req.user from GoogleStrategy has an 'email' property
@@ -87,10 +64,7 @@ export class AuthController {
 
       if (!googleUser.email || !googleUser.email.endsWith(allowedDomain)) {
         this.logger.warn(`Login attempt from disallowed domain: ${googleUser.email || 'No email provided'}`);
-        // Option 1: Redirect to an error page on the frontend
-        return res.redirect(`${this.configService.get('FRONTEND_URL')}`);
-        // Option 2: Throw a ForbiddenException (frontend would need to handle this 403 error)
-        // throw new ForbiddenException(`Access restricted to ${allowedDomain} emails.`);
+        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_002`);
       }
 
       const result = await this.authService.googleLogin(req.user as GoogleUser);
@@ -112,21 +86,35 @@ export class AuthController {
         path: '/',
       });
 
-      return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/select-role`); // Or dashboard
+      return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/select-role`);
     } catch (error) {
       this.logger.error(
         `Google authentication callback error: ${error instanceof Error ? error.message : String(error)}`,
       );
-      // If it's a ForbiddenException we threw, let it propagate or handle specifically
-      if (error instanceof ForbiddenException) {
-        // If you chose Option 2 above, you might want to redirect here as well,
-        // or let NestJS handle sending the 403 response.
-        // For consistency with redirection:
-        return res.redirect(
-          `${this.configService.get('FRONTEND_URL')}/auth/error?message=domain_not_allowed`,
-        );
+
+      // Handle specific authentication errors with standardized error codes
+      if (error instanceof UnauthorizedException) {
+        const errorCode = error.getResponse()['code'];
+
+        switch (errorCode) {
+          case 'USER_NOT_FOUND':
+            return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_010`);
+          case 'ACCOUNT_INACTIVE':
+            return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_011`);
+          default:
+            // Fallback to checking error message for backward compatibility
+            const errorMessage = error.message;
+            if (errorMessage.includes('pending activation') || errorMessage.includes('PRE_REGISTRATION')) {
+              return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_003`);
+            } else if (errorMessage.includes('deactivated') || errorMessage.includes('INACTIVE')) {
+              return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_004`);
+            } else if (errorMessage.includes('no access')) {
+              return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_005`);
+            }
+            // Generic unauthorized error
+            return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_006`);
+        }
       }
-      return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?message=internal_error`);
     }
   }
 
@@ -138,6 +126,7 @@ export class AuthController {
   getProfile(@Req() req: Request) {
     return req.user;
   }
+
   @ApiOperation({ summary: 'Logout current user' })
   @ApiResponse({ status: 200, description: 'User logged out successfully' })
   @Get('logout')
@@ -153,7 +142,6 @@ export class AuthController {
       }
     }
 
-    // Limpiar todas las cookies relacionadas con autenticación
     res.clearCookie('auth_token', {
       httpOnly: true,
       secure: this.configService.get('NODE_ENV') === 'production',
@@ -180,7 +168,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Return new access token' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Post('refresh')
-  @UseGuards(JwtRefreshGuard) // This guard uses JwtRefreshStrategy
+  @UseGuards(JwtRefreshGuard)
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     // JwtRefreshStrategy populates req.user with { id, email, refreshTokenFromCookie, refreshTokenDbId }
     const userFromStrategy = req.user as {

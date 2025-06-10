@@ -4,6 +4,8 @@ import { Expose, Type } from 'class-transformer';
 import { Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
 import { CampusDto } from '@src/modules/campuses/dtos/campus.dto';
+import { CommissionDto } from '@src/modules/commissions/dtos/commission.dto';
+import { ProjectDto } from '@src/modules/projects/dtos/project.dto';
 
 export class RegionalCenterDto extends BaseDto {
   @ApiPropertyOptional({ description: 'RegionalCenter ID' })
@@ -27,18 +29,29 @@ export class RegionalCenterDto extends BaseDto {
   @IsEnum(Status)
   status: Status;
 
-  @ApiPropertyOptional({ type: () => CampusDto })
+  @ApiPropertyOptional({ type: () => [CampusDto] })
   @Expose()
   @Type(() => CampusDto)
   @IsOptional()
-  campus?: CampusDto;
+  campuses?: CampusDto[];
+
+  @ApiPropertyOptional({ type: () => [CommissionDto] })
+  @Expose()
+  @Type(() => CommissionDto)
+  @IsOptional()
+  commissions?: CommissionDto[];
+
+  @ApiPropertyOptional({ type: () => [ProjectDto] })
+  @Expose()
+  @Type(() => ProjectDto)
+  @IsOptional()
+  projects?: ProjectDto[];
 
   constructor(partial: Partial<RegionalCenterDto> | any = {}) {
     super();
     Object.assign(this, partial);
-
-    if (partial.campus && !(partial.campus instanceof CampusDto)) {
-      this.campus = new CampusDto(partial.campus);
+    if (partial.campuses && Array.isArray(partial.campuses)) {
+      this.campuses = partial.campuses.map((c: any) => (c instanceof CampusDto ? c : new CampusDto(c)));
     }
   }
 }

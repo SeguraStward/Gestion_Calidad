@@ -1,143 +1,296 @@
-// 'use client'
+'use client'
 
-// import { useCrud } from '@/modules/academic-management/academic-maintenance/hooks/useCrud'
-// import { CrudLayout } from '@/app/(components)/crud/crud-layout'
-// import { useForm } from 'react-hook-form'
-// import { toast } from 'sonner'
-// import { FormLayout } from '@/app/(components)/form/form-layout'
-// import { FormField } from '@/app/(components)/form/field'
-// import { FormTextarea } from '@/app/(components)/form/textarea'
-// import { Button } from '@una-gc/ui/components/button'
-// import { Card, CardContent } from '@una-gc/ui/components/card'
-// import { useEffect } from 'react'
-// import { Classroom } from '@/modules/types/institutional/classroom'
+import { useListCampusesFlat } from '../../hooks/useCampus'
+import { useMemo } from 'react'
+import { ColumnDef } from '@tanstack/react-table'
+import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
+import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
+import {
+  useListClassroomsPaginated,
+  useOneClassroom,
+  useCreateClassroom,
+  useUpdateClassroom,
+  useRemoveClassroom
+} from '@/modules/academic-management/academic-maintenance/hooks/useClassroom'
+import {
+  ClassroomWithRelations,
+  CreateClassroomInput,
+  StrictCreateClassroomInput,
+  StrictCreateClassroomOutput
+} from '@/shared/types/classroom'
+import { Status } from '@una-gc/database/prisma/generated/client'
+import { Badge, Button } from '@una-gc/ui/components'
+import { School as SchoolIcon, Hash, Building2, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
-// export default function ClassroomsCrud() {
-//   const { items: classrooms, add, update, remove, editandoId, setEditandoId, idAEliminar, setIdAEliminar } = useCrud<Classroom>()
+interface ClassroomItem extends ClassroomWithRelations {}
 
-//   const {
-//     register,
-//     handleSubmit,
-//     control,
-//     reset,
-//     formState: { errors }
-//   } = useForm<Classroom>()
+const STATUS_OPTIONS = [
+  {
+    id: Status.ACTIVE,
+    name: 'Activo',
+    icon: <CheckCircle2 className="h-4 w-4 text-emerald-500 mr-2" />,
+    description: 'El aula está operativa y visible en el sistema'
+  },
+  {
+    id: Status.INACTIVE,
+    name: 'Inactivo',
+    icon: <XCircle className="h-4 w-4 text-red-500 mr-2" />,
+    description: 'El aula no está operativa y permanecerá oculta'
+  }
+]
 
-//   useEffect(() => {
-//     if (editandoId) {
-//       const classroom = classrooms.find((a) => a.id === editandoId)
-//       if (classroom) {
-//         reset(classroom)
-//       }
-//     } else {
-//       reset()
-//     }
-//   }, [editandoId, classrooms, reset])
+export default function ClassroomCrud() {
+  // Campus para el select
+  const { data: campuses, isLoading: isLoadingCampuses } = useListCampusesFlat()
 
-//   const onSubmit = (data: Classroom) => {
-//     if (editandoId) {
-//       update(editandoId, data)
-//       toast.success('¡Aula actualizada!')
-//       setEditandoId(null)
-//     } else {
-//       add({ ...data, id: crypto.randomUUID() })
-//       toast.success('¡Aula registrada!')
-//     }
+  // Columnas de la tabla
+  const renderColumns = useMemo(
+    () =>
+      (utils: ColumnUtilities<ClassroomItem>): ColumnDef<ClassroomItem>[] => [
+        {
+          accessorKey: 'roomNumber',
+          header: 'Aula',
+          size: 90,
+          cell: ({ row }) => (
+            <div className="flex items-center min-w-[60px] max-w-[100px] truncate">
+              <Hash className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
+              <span>{row.original.roomNumber}</span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'capacity',
+          header: 'Capacidad',
+          size: 80,
+          cell: ({ row }) => <span>{row.original.capacity}</span>
+        },
+        {
+          accessorKey: 'description',
+          header: 'Descripción',
+          size: 140,
+          cell: ({ row }) => <div className="truncate max-w-[120px]">{row.original.description}</div>
+        },
+        {
+          accessorKey: 'campus.name',
+          header: 'Campus',
+          size: 120,
+          cell: ({ row }) => {
+            const name = row.original.campus?.name || 'Sin asignar'
+            return (
+              <div className="flex items-center min-w-[80px] max-w-[120px] truncate whitespace-nowrap">
+                <Building2 className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
+                <span>{name}</span>
+              </div>
+            )
+          }
+        },
+        {
+          accessorKey: 'academicLoadCount',
+          header: 'Cargas Académicas',
+          size: 90,
+          cell: ({ row }) => (
+            <div className="flex items-center justify-center min-w-[30px] max-w-[60px]">
+              <span className="font-semibold text-center w-full">
+                {row.original.academicLoads ? row.original.academicLoads.length : 0}
+              </span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'status',
+          header: 'Estado',
+          size: 80,
+          cell: ({ row }) => {
+            // Normaliza el status a string para evitar errores de comparación
+            const statusStr = String(row.original.status).toUpperCase()
+            let badgeClasses = ''
+            let statusText = ''
+            if (statusStr === 'ACTIVE') {
+              badgeClasses =
+                'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+              statusText = 'Activo'
+            } else {
+              badgeClasses = 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800'
+              statusText = 'Inactivo'
+            }
+            return (
+              <Badge variant="outline" className={badgeClasses}>
+                {statusText}
+              </Badge>
+            )
+          }
+        },
+        {
+          id: 'actions',
+          header: () => <div className="text-right">Acciones</div>,
+          size: 80,
+          cell: ({ row }) => (
+            <div className="text-right flex gap-1 justify-end">
+              <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => utils.onEdit(row.original.id)} title="Editar">
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50"
+                title="Eliminar"
+                onClick={() => utils.onDelete(row.original.id)}
+                disabled={utils.isProcessing}
+              >
+                {utils.isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              </Button>
+            </div>
+          )
+        }
+      ],
+    [campuses]
+  )
 
-//     reset({
-//       nombre: '',
-//       descripcion: '',
-//       capacidad: 0
-//     })
-//   }
+  // Formulario para crear/editar
+  const renderForm = useMemo(() => {
+    function ClassroomCrudForm({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) {
+      return (
+        <CrudFormAdapter
+          control={control}
+          errors={errors}
+          editingItem={editingItem}
+          isUpdate={isUpdate}
+          isProcessing={isProcessing}
+          handleSubmitForm={handleSubmitForm}
+          handleCancel={handleCancel}
+          title={isUpdate ? 'Editar Aula' : 'Crear Nueva Aula'}
+          description={isUpdate ? 'Actualice los datos del aula' : 'Complete los datos para registrar una nueva aula'}
+          sections={() => [
+            {
+              title: 'Datos del Aula',
+              description: 'Información principal del aula',
+              fields: [
+                {
+                  type: 'text',
+                  name: 'roomNumber',
+                  label: 'Número de Aula',
+                  required: true,
+                  placeholder: 'Ej: A-101',
+                  helperText: 'Identificador único del aula'
+                },
+                {
+                  type: 'number',
+                  name: 'capacity',
+                  label: 'Capacidad',
+                  required: true,
+                  placeholder: 'Ej: 35',
+                  helperText: 'Cantidad máxima de estudiantes',
+                  min: 1,
+                  step: 1,
+                  valueAsNumber: true // <-- Asegura que el valor sea número
+                },
+                {
+                  type: 'text',
+                  name: 'description',
+                  label: 'Descripción',
+                  required: false,
+                  placeholder: 'Descripción del aula',
+                  helperText: 'Breve descripción del aula'
+                },
+                {
+                  type: 'select',
+                  name: 'campusId',
+                  label: 'Campus',
+                  required: true,
+                  options: (campuses || []).map((c) => ({ id: c.id, name: c.name || '' })),
+                  isLoading: isLoadingCampuses,
+                  placeholder: isLoadingCampuses ? 'Cargando campus...' : 'Seleccionar campus',
+                  helperText: 'Seleccione el campus al que pertenece este aula'
+                },
+                {
+                  type: 'select',
+                  name: 'status',
+                  label: 'Estado',
+                  required: true,
+                  options: STATUS_OPTIONS,
+                  helperText: 'Estado actual del aula',
+                  renderOption: (option: any) => (
+                    <div className="flex items-center">
+                      {option.icon}
+                      <span>{option.name}</span>
+                    </div>
+                  )
+                }
+              ]
+            }
+          ]}
+        />
+      )
+    }
+    ClassroomCrudForm.displayName = 'ClassroomCrudForm'
+    return ClassroomCrudForm
+  }, [campuses, isLoadingCampuses])
 
-//   return (
-//     <CrudLayout
-//       nombreEntidad="Aula"
-//       items={classrooms}
-//       editandoId={editandoId}
-//       setEditandoId={setEditandoId}
-//       idAEliminar={idAEliminar}
-//       setIdAEliminar={setIdAEliminar}
-//       onDelete={remove}
-//       getItemName={(a) => a.nombre}
-//       renderForm={() => (
-//         <Card>
-//           <CardContent className="p-6">
-//             <FormLayout onSubmit={handleSubmit(onSubmit)} title={editandoId ? 'Editar Aula' : 'Registrar Aula'}>
-//               <FormField
-//                 id="nombre"
-//                 label="Nombre"
-//                 control={control}
-//                 name="nombre"
-//                 required
-//                 error={errors.nombre}
-//                 placeholder="Ej: Aula 101"
-//                 rules={{ required: 'El nombre es obligatorio' }}
-//               />
+  // Adapter to match expected signature for useOneQuery
+  const useOneClassroomAdapter = (id: string, options?: { [key: string]: any }) => {
+    // Ignore filters, only pass id and options to the original hook
+    return useOneClassroom(id, undefined, options)
+  }
 
-//               <FormTextarea
-//                 id="descripcion"
-//                 label="Descripción"
-//                 register={register('descripcion')}
-//                 error={errors.descripcion}
-//                 placeholder="Detalles del aula..."
-//               />
+  const crudConfig = useMemo(
+    () => ({
+      entityName: 'Aula',
+      entityNamePlural: 'Aulas',
+      searchPlaceholder: 'Buscar por número, descripción o campus...',
+      usePaginatedQuery: (params: any) => {
+        // Permite filtrar por roomNumber si se provee en el search
+        const { search, ...rest } = params || {}
+        let where: any = {}
+        if (search) {
+          where = {
+            OR: [
+              { roomNumber: { contains: search, mode: 'insensitive' } },
+              { description: { contains: search, mode: 'insensitive' } },
+              { campus: { name: { contains: search, mode: 'insensitive' } } }
+            ]
+          }
+        }
+        return useListClassroomsPaginated({ ...rest, where })
+      },
+      useCreateMutation: useCreateClassroom,
+      useUpdateMutation: useUpdateClassroom,
+      useDeleteMutation: useRemoveClassroom,
+      useOneQuery: useOneClassroomAdapter,
+      defaultFormValues: {
+        roomNumber: '',
+        capacity: 0 as number,
+        description: '',
+        campusId: '',
+        status: Status.ACTIVE
+      },
+      renderForm,
+      renderColumns,
+      processItemForEditing: (item: ClassroomItem) => ({
+        roomNumber: item.roomNumber || '',
+        capacity: typeof item.capacity === 'number' ? item.capacity : Number(item.capacity) || 0,
+        description: item.description || '',
+        campusId: item.campus?.id || '',
+        status: item.status || Status.ACTIVE
+      }),
+      processFormValues: (
+        values: CreateClassroomInput | Partial<CreateClassroomInput>
+      ): CreateClassroomInput | Partial<CreateClassroomInput> => {
+        const processed = {
+          ...values,
+          capacity: Number(values.capacity)
+        }
+        // Log para depuración
+        console.log('🟢 processFormValues (classroom) salida:', processed, typeof processed.capacity)
+        return processed
+      },
+      preDeleteCheck: (item: ClassroomItem) => {
+        if (item.academicLoads && item.academicLoads.length > 0) {
+          return 'No se puede eliminar un aula con cargas académicas asociadas.'
+        }
+        return null
+      }
+    }),
+    [renderForm, renderColumns]
+  )
 
-//               <FormField
-//                 id="capacidad"
-//                 label="Capacidad"
-//                 type="number"
-//                 control={control}
-//                 name="capacidad"
-//                 required
-//                 error={errors.capacidad}
-//                 placeholder="Ej: 35"
-//                 rules={{
-//                   required: 'La capacidad es obligatoria',
-//                   min: { value: 1, message: 'Debe ser al menos 1' }
-//                 }}
-//               />
-
-//               <div className="flex justify-end gap-2 pt-6">
-//                 {editandoId && (
-//                   <Button
-//                     type="button"
-//                     variant="outline"
-//                     onClick={() => {
-//                       setEditandoId(null)
-//                       reset({ nombre: '', descripcion: '', capacidad: 0 })
-//                     }}
-//                   >
-//                     Cancelar
-//                   </Button>
-//                 )}
-//                 <Button type="submit">{editandoId ? 'Actualizar' : 'Registrar'}</Button>
-//               </div>
-//             </FormLayout>
-//           </CardContent>
-//         </Card>
-//       )}
-//       renderItem={(aula, isEditing, onEdit, onDelete) => (
-//         <Card key={aula.id} className={isEditing ? 'ring-2 ring-blue-400' : ''}>
-//           <CardContent className="p-4 space-y-2">
-//             <div className="flex justify-between">
-//               <h3 className="text-lg font-semibold">{aula.nombre}</h3>
-//               {isEditing && <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">Editando</span>}
-//             </div>
-//             <p className="text-sm text-muted-foreground">{aula.descripcion}</p>
-//             <p className="text-sm text-muted-foreground font-semibold">Capacidad: {aula.capacidad}</p>
-//             <div className="flex gap-2 border-t pt-2">
-//               <Button size="sm" variant="outline" onClick={onEdit}>
-//                 Editar
-//               </Button>
-//               <Button size="sm" variant="destructive" onClick={onDelete} disabled={isEditing}>
-//                 Eliminar
-//               </Button>
-//             </div>
-//           </CardContent>
-//         </Card>
-//       )}
-//     />
-//   )
-// }
+  return <CrudModuleBase {...crudConfig} />
+}

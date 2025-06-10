@@ -7,7 +7,7 @@ import { Label } from '@una-gc/ui/components/label'
 interface FormFieldProps<T extends Record<string, any>> {
   label: string
   id: string
-  type?: 'text' | 'number' | 'email' | 'password' | 'date' | 'tel' | 'url' | 'time'
+  type?: 'text' | 'number' | 'email' | 'password' | 'date' | 'tel' | 'url' | 'time' | 'integer'
   placeholder?: string
   error?: FieldError
   control: Control<T>
@@ -19,6 +19,7 @@ interface FormFieldProps<T extends Record<string, any>> {
   max?: number
   step?: number
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>
+  registerOptions?: any // <-- Añadido para pasar opciones a register
 }
 
 export const FormField = <T extends Record<string, any>>({
@@ -35,7 +36,8 @@ export const FormField = <T extends Record<string, any>>({
   min,
   max,
   step,
-  inputProps = {}
+  inputProps = {},
+  registerOptions // <-- Añadido
 }: FormFieldProps<T>) => {
   const {
     field: { onChange, value }
@@ -43,7 +45,7 @@ export const FormField = <T extends Record<string, any>>({
     control,
     name,
     defaultValue: '' as any,
-    rules
+    rules: rules || registerOptions // <-- Usar registerOptions como fallback si no hay rules
   })
 
   return (

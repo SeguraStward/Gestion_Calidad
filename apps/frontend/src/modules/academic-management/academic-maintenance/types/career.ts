@@ -1,4 +1,4 @@
-import { Prisma } from '@una-gc/database/prisma/generated/client'
+import { Prisma, Status } from '@una-gc/database/prisma/generated/client'
 
 // Type with all relations (school, courses, projects)
 export type CareerWithRelations = Prisma.CareerGetPayload<{
@@ -10,13 +10,11 @@ export type CareerWithRelations = Prisma.CareerGetPayload<{
 }>
 
 // Type for creating a Career (omit id, version, createdAt, updatedAt, and relations)
-export type CreateCareerInput = Omit<
-  Prisma.CareerCreateInput,
-  'id' | 'version' | 'createdAt' | 'updatedAt' | 'school' | 'courses' | 'projects'
-> & {
-  school: { connect: { id: string } }
-  courses?: { connect: { id: string }[] }
-  projects?: { connect: { id: string }[] }
+export type CreateCareerInput = {
+  code: string
+  name: string
+  schoolId: string
+  status: Status
 }
 
 // Type for updating a Career (partial of create)

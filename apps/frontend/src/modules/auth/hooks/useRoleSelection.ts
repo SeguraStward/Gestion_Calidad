@@ -17,23 +17,35 @@ export interface UseRoleSelectionReturn {
   error: string | null
   canSkip: boolean
   hasActiveRole: boolean
+  retryCount: number
+  canRetry: boolean
 
   // Actions
   setSelectedRole: (role: Role | null) => void
   handleSubmit: () => Promise<void>
   handleSkip: () => void
   fetchRoles: () => Promise<void>
+  retryFetchRoles: () => void
+  resetError: () => void
 }
+
+const MAX_RETRY_ATTEMPTS = 3
+const RETRY_DELAY = 2000
 
 export function useRoleSelection(): UseRoleSelectionReturn {
   const [roles, setRoles] = useState<Role[]>([])
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
   const [canSkip, setCanSkip] = useState(false)
   const [hasActiveRole, setHasActiveRole] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
 
   const router = useRouter()
   const { loading, error, execute: executeAsync } = useAsyncOperation<Role[]>()
   const { loading: submitting, execute: executeSubmit } = useAsyncOperation<void>()
+
+  const resetError = useCallback(() => {
+    setRetryCount(0)
+  }, [])
 
   const getErrorMessage = useCallback((error: unknown): string => {
     if (axios.isAxiosError(error)) {
@@ -47,9 +59,11 @@ export function useRoleSelection(): UseRoleSelectionReturn {
         case 404:
           return 'No se encontraron roles disponibles para tu usuario.'
         case 500:
-          return 'Error interno del servidor. Intenta más tarde.'
+          return 'Error interno del servidor. Si el problema persiste, contacta soporte.'
+        case 502:
         case 503:
-          return 'El servicio no está disponible temporalmente.'
+        case 504:
+          return 'El servicio no está disponible temporalmente. Intenta más tarde.'
         default:
           return (
             (axiosError.response?.data && typeof axiosError.response.data === 'object' && 'message' in axiosError.response.data
@@ -66,8 +80,36 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     return 'Ha ocurrido un error inesperado.'
   }, [])
 
+  const handleRolesResult = useCallback(
+    (result: Role[] | null) => {
+      if (result) {
+        setRoles(result)
+        setRetryCount(0)
+
+        // Auto-seleccionar si solo hay un rol disponible
+        if (result.length === 1 && result[0]) {
+          setSelectedRole(result[0])
+        }
+      } else if (error) {
+        // Solo mostrar el error, NO reintentos automáticos
+        setRetryCount((prev) => prev + 1)
+
+        // Manejo de errores específicos para redirección
+        if (error.includes('Token expirado') || error.includes('sesión ha expirado') || error.includes('401')) {
+          toast.error(error)
+          router.push('/auth/login')
+          return
+        }
+
+        // Para todos los demás errores, solo mostrar el mensaje
+        toast.error(error)
+      }
+    },
+    [error, router]
+  )
+
   const fetchRoles = useCallback(async () => {
-    console.log('🏁 Starting to fetch user roles...')
+    console.log('🏁 Manual fetch user roles...')
 
     const result = await executeAsync(async () => {
       const userRoles = await AuthService.getUserActiveRoles()
@@ -81,22 +123,22 @@ export function useRoleSelection(): UseRoleSelectionReturn {
         throw new Error('No tienes roles asignados. Contacta al administrador.')
       }
 
-      return userRoles
+      // Map UserRolesResponse[] to Role[]
+      return userRoles.map((role: any) => ({
+        id: role.id,
+        name: role.name,
+        description: role.description ?? '',
+        permissions: role.permissions ?? []
+      }))
     })
 
-    if (result) {
-      setRoles(result)
+    handleRolesResult(result)
+  }, [executeAsync, handleRolesResult])
 
-      // Auto-seleccionar si solo hay un rol disponible
-      if (result.length === 1 && result[0]) {
-        setSelectedRole(result[0])
-      }
-    }
-
-    if (error) {
-      toast.error(error)
-    }
-  }, [executeAsync, error])
+  const retryFetchRoles = useCallback(() => {
+    // Reintento manual, sin límites automáticos
+    fetchRoles()
+  }, [fetchRoles])
 
   const handleSubmit = useCallback(async () => {
     if (!selectedRole) {
@@ -134,10 +176,51 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     setCanSkip(hasRole)
   }, [])
 
-  // Cargar roles al montar el componente
+  // Cargar roles al montar el componente (solo una vez)
   useEffect(() => {
-    fetchRoles()
-  }, [fetchRoles])
+    let mounted = true
+
+    const loadRoles = async () => {
+      try {
+        console.log('🏁 Starting to fetch user roles...')
+
+        const result = await executeAsync(async () => {
+          const userRoles = await AuthService.getUserActiveRoles()
+          console.log('📊 User roles received:', userRoles)
+
+          if (!Array.isArray(userRoles)) {
+            throw new Error('Formato de respuesta inválido del servidor.')
+          }
+
+          if (userRoles.length === 0) {
+            throw new Error('No tienes roles asignados. Contacta al administrador.')
+          }
+
+          // Map UserRolesResponse[] to Role[]
+          return userRoles.map((role: any) => ({
+            id: role.id,
+            name: role.name,
+            description: role.description ?? '',
+            permissions: role.permissions ?? []
+          }))
+        })
+
+        if (mounted) {
+          handleRolesResult(result)
+        }
+      } catch (err) {
+        if (mounted) {
+          console.error('Error loading roles:', err)
+        }
+      }
+    }
+
+    loadRoles()
+
+    return () => {
+      mounted = false
+    }
+  }, [executeAsync, handleRolesResult])
 
   return {
     roles,
@@ -147,9 +230,13 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     error,
     canSkip,
     hasActiveRole,
+    retryCount,
+    canRetry: retryCount < MAX_RETRY_ATTEMPTS,
     setSelectedRole,
     handleSubmit,
     handleSkip,
-    fetchRoles
+    fetchRoles,
+    retryFetchRoles,
+    resetError
   }
 }

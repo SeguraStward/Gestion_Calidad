@@ -8,12 +8,10 @@ import {
   Patch,
   Query,
   Request,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { GenericController } from '@core/common/interfaces/generic.controller';
-import { JwtAuthGuard } from '@src/modules/auth/guards/jwt-auth.guard';
 
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserDto } from './dtos/user.dto';
@@ -45,7 +43,6 @@ export class UsersController extends GenericController<UserDto, UserDto> {
   }
 
   @Get('me/roles/active')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get active roles with active permissions for the authenticated user' })
   @ApiResponse({
     status: 200,
@@ -85,7 +82,6 @@ export class UsersController extends GenericController<UserDto, UserDto> {
   }
 
   @Get('by-role/:roleName')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Find users by role name and status with pagination' })
   @ApiResponse({
     status: 200,

@@ -1,4 +1,5 @@
 import { Prisma } from '@una-gc/database/prisma/generated/client'
+import { Status } from '@una-gc/database/prisma/generated/client'
 
 // Type with all relations (career, academicLoads)
 export type CourseWithRelations = Prisma.CourseGetPayload<{
@@ -22,3 +23,27 @@ export type UpdateCourseInput = Partial<CreateCourseInput>
 
 // Type simplificado para selects
 export type CourseSelectOption = Pick<CourseWithRelations, 'id' | 'name' | 'code' | 'credits' | 'status'>
+
+export interface StrictCreateCourseInput {
+  code: string
+  name: string
+  description?: string | null
+  credits: number
+  level: number
+  contactHours: number
+  independentHours?: number | null
+  careerId?: string
+  status: Status
+}
+
+export interface StrictCreateCourseOutput {
+  code: string
+  name: string
+  description?: string | null
+  credits: number
+  level: number
+  contactHours: number
+  independentHours?: number | null
+  careerId?: string
+  status: Status
+}
