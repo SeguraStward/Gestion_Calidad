@@ -94,27 +94,34 @@ export function Step2Form({
   onPrevious,
   totalSteps,
   initialData,
-  isEditing = false
+  isEditing = false,
+  // enrolledCapacity prop is used by transformReportToStep2Data and potentially to initialize totalEnrolled
+  enrolledCapacity
 }: Step2FormProps) {
-  const { control, handleSubmit, reset, watch, formState, getValues } = formMethods // Added getValues
+  const { control, handleSubmit, reset, watch, formState, getValues, setValue } = formMethods // Added setValue
 
   useEffect(() => {
-    // Ensure initialData is correctly applied.
-    // The existing useEffect seems fine, but double-check its logic against your needs.
-    // For "new" mode, it should reset to defaults or initialData if provided.
     if (initialData) {
-      // Prioritize initialData if available (e.g., when navigating back)
+      // Si initialData tiene undefined para algún campo, RHF lo tomará como undefined.
+      // El 'value' prop de los inputs se encargará de mostrarlo como "0" o vacío según decidamos.
       reset(initialData)
     } else if (!isEditing) {
-      // For new reports, if no initialData, set defaults
-      // Defaults might be based on step1Data or static values
-      // This part seems to be handled in new/page.tsx's useEffect for step2Data
-      // So, if initialData is null here, it means new/page.tsx wants it default.
-      // Consider if a more explicit default reset is needed here if initialData can be null
-      // even after visiting the step.
-      // For now, relying on initialData from parent.
+      // Para nuevos reportes, si no hay initialData (ej. primer acceso al step 2)
+      // Establecer los valores lógicos a 0 para los campos editables.
+      // totalEnrolled se basa en enrolledCapacity o se deja undefined para que se cargue.
+      reset({
+        totalEnrolled: enrolledCapacity ?? undefined,
+        totalWithdrawn: 0,
+        totalPassed: 0,
+        totalFailed: 0
+      })
     }
-  }, [initialData, isEditing, reset])
+    // Si enrolledCapacity cambia (viene del paso 1), actualizamos totalEnrolled
+    // Esto es importante si el usuario navega atrás y adelante.
+    else if (initialData && typeof enrolledCapacity === 'number' && initialData.totalEnrolled !== enrolledCapacity) {
+      setValue('totalEnrolled', enrolledCapacity, { shouldValidate: true, shouldDirty: true })
+    }
+  }, [initialData, isEditing, reset, enrolledCapacity, setValue])
 
   const watchedValues = watch()
 
@@ -143,13 +150,6 @@ export function Step2Form({
     if (onPrevious) {
       const currentData = getValues()
       onPrevious(currentData)
-    }
-  }
-
-  const handleNumericInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
-    const value = e.target.value
-    if (value === '' || /^[0-9]+$/.test(value)) {
-      field.onChange(value === '' ? undefined : parseInt(value, 10))
     }
   }
 
@@ -187,9 +187,11 @@ export function Step2Form({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          type="text"
-                          placeholder="Cargando..."
+                          type="text" // Mantener como text si se quiere mostrar '0' para undefined
+                          placeholder="0" // O "Cargando..." si es más apropiado
                           {...field}
+                          // Si field.value es undefined (ej. aún no cargado de enrolledCapacity), muestra placeholder o "0"
+                          // Si es un número, lo muestra.
                           value={field.value === undefined || field.value === null ? '' : String(field.value)}
                           disabled
                           className="bg-muted/70 h-10"
@@ -225,13 +227,55 @@ export function Step2Form({
                           </FormLabel>
                           <FormControl>
                             <Input
-                              type="text"
-                              inputMode="numeric"
-                              pattern="[0-9]*"
-                              placeholder="0"
+                              type="text" // Tipo texto para control manual
+                              inputMode="numeric" // Ayuda en teclados móviles
+                              // pattern="[0-9]*" // El replace(/\D/g, '') ya lo maneja
+                              placeholder="0" // Se muestra si el input está vacío
                               {...field}
-                              value={field.value === undefined || field.value === null ? '' : String(field.value)}
-                              onChange={(e) => handleNumericInputChange(e, field)}
+                              // Si el valor lógico es 0, se muestra "0".
+                              // Si el valor lógico es > 0, se muestra el número.
+                              // Si el input está vacío (el usuario borró), el valor lógico es 0, y aquí se mostraría "0".
+                              // Para que se muestre vacío cuando el usuario borra (y el valor lógico es 0):
+                              value={
+                                field.value === 0 && formState.dirtyFields[fieldName] // Si es 0 y fue tocado/modificado
+                                  ? document.activeElement === field.ref // Si el campo tiene foco
+                                    ? (field.ref as HTMLInputElement)?.value // Mantener lo que el usuario está escribiendo
+                                    : '' // Mostrar vacío si no tiene foco y es 0 y dirty
+                                  : field.value === undefined || field.value === null
+                                    ? ''
+                                    : String(field.value)
+                              }
+                              onChange={(e) => {
+                                const inputValue = e.target.value
+                                const cleanedValue = inputValue.replace(/\D/g, '') // Solo dígitos
+
+                                if (cleanedValue === '') {
+                                  field.onChange(0) // Lógica: 0 si está vacío
+                                } else {
+                                  field.onChange(Number(cleanedValue))
+                                }
+                              }}
+                              onFocus={(e) => {
+                                // Si el valor es 0 (podría ser el 0 lógico por defecto o ingresado)
+                                // seleccionar para fácil reemplazo.
+                                if (field.value === 0) {
+                                  // Solo seleccionar si el contenido actual es literalmente "0"
+                                  if (e.target.value === '0') {
+                                    e.target.select()
+                                  }
+                                }
+                              }}
+                              onBlur={() => {
+                                field.onBlur() // Marcar como "touched"
+                                // Si el valor es 0, y el input está vacío (porque el 'value' prop lo dejó así)
+                                // no es necesario hacer nada extra aquí, ya que el valor lógico ya es 0.
+                                // Si el usuario deja el campo vacío, onChange ya puso 0.
+                                // Si el usuario escribió "0", onChange ya puso 0.
+                                // Forzar un re-renderizado si es necesario para que el 'value' prop actualice la vista
+                                if (field.value === 0 && (field.ref as HTMLInputElement)?.value !== '0') {
+                                  setValue(fieldName, 0, { shouldValidate: true })
+                                }
+                              }}
                               className="h-10"
                             />
                           </FormControl>
@@ -284,9 +328,15 @@ export function Step2Form({
                 disabled={
                   !(
                     (typeof watchedValues.totalEnrolled === 'number' && isValidSum) ||
+                    // Si totalEnrolled no está cargado, pero los otros campos están en 0 (su estado "vacío" por defecto)
+                    // y no han sido modificados, permitir avanzar.
                     (typeof watchedValues.totalEnrolled !== 'number' &&
-                      currentSum === 0 &&
-                      !Object.values(formState.dirtyFields).some(Boolean))
+                      (watchedValues.totalWithdrawn ?? 0) === 0 &&
+                      (watchedValues.totalPassed ?? 0) === 0 &&
+                      (watchedValues.totalFailed ?? 0) === 0 &&
+                      !formState.dirtyFields.totalWithdrawn &&
+                      !formState.dirtyFields.totalPassed &&
+                      !formState.dirtyFields.totalFailed)
                   ) || formState.isSubmitting
                 }
                 className="px-8"
