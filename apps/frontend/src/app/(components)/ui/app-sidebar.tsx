@@ -101,12 +101,12 @@ const data = {
       icon: Building2,
       items: [{ title: 'Lista de Modelos', url: '/admin/sinaes-models' }]
     },*/
-    {
-      title: 'Reportes',
-      url: '/admin/reports',
-      icon: BarChart3,
-      items: [{ title: 'Lista de Reportes', url: '/admin/reports' }]
-    },
+    // {
+    //   title: 'Reportes',
+    //   url: '/admin/reports',
+    //   icon: BarChart3,
+    //   items: [{ title: 'Lista de Reportes', url: '/admin/reports' }]
+    // },
     /*{
       title: 'Comisiones',
       url: '/admin/commissions',
