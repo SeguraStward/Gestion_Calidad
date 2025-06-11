@@ -9,14 +9,10 @@ export const {
   useCreate: useCreateUser,
   useUpdate: useUpdateUser,
   useRemove: useDeleteUser
-} = createGenericHooks<UserWithRelations, CreateUserInput, UpdateUserInput>(
-  'users',
-  userService,
-  {
-    messages: {
-      created: (u) => `Usuario creado: ${(u as any).email || ''}`,
-      updated: (u) => `Usuario actualizado: ${(u as any).email || ''}`,
-      deleted: () => 'Usuario eliminado'
-    }
+} = createGenericHooks<UserWithRelations, CreateUserInput, UpdateUserInput>('users', userService, {
+  messages: {
+    created: (u) => `Usuario creado: ${(u as any).email || ''}`,
+    updated: (u) => `Usuario actualizado: ${(u as any).email || ''}`,
+    deleted: () => 'Usuario eliminado'
   }
-)
+})

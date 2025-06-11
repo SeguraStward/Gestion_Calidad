@@ -10,7 +10,7 @@ import {
   useRemoveCourse,
   useOneCourse,
   useListCoursesPaginated
-} from '@/modules/academic-management/academic-maintenance/hooks/useCourses'
+} from '@/shared/hooks/useCourses'
 import { useListCareersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useCareer'
 import { CourseWithRelations, CreateCourseInput, StrictCreateCourseInput, StrictCreateCourseOutput } from '@/shared/types/course'
 import { Status } from '@una-gc/database/prisma/generated/client'
@@ -345,7 +345,9 @@ export default function CourseCrud() {
         careerId: item.career?.id || '',
         status: item.status || Status.ACTIVE
       }),
-      processFormValues: (values: CreateCourseInput | Partial<CreateCourseInput>): CreateCourseInput | Partial<CreateCourseInput> => {
+      processFormValues: (
+        values: CreateCourseInput | Partial<CreateCourseInput>
+      ): CreateCourseInput | Partial<CreateCourseInput> => {
         const processed = {
           ...values,
           credits: Number(values.credits),

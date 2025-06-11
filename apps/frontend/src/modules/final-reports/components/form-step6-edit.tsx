@@ -289,12 +289,7 @@ export function Step6EditForm({
 
             <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
               {/* MODIFIED: Ensure onPrevious is called correctly if it exists */}
-              <Button
-                type="button"
-                variant="outline"
-                onClick= {handlePreviousClick}
-                className="px-8 shadow-sm"
-              >
+              <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8 shadow-sm">
                 Anterior
               </Button>
               <Button type="submit" className="px-8 shadow-sm">

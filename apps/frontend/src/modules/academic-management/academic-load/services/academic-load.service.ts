@@ -76,18 +76,6 @@ export class AcademicLoadService extends GenericService<
     return response.data?.data || response.data
   }
 
-  // Override list to include all relations
-  async list(filters?: any): Promise<{ data: AcademicLoadWithRelations[]; meta: any }> {
-    const response = await HttpClient.get(`/${this.resource}`, {
-      ...this.getAuthHeaders(),
-      params: {
-        ...filters,
-        include: JSON.stringify(FULL_INCLUDE)
-      }
-    })
-    return response.data
-  }
-
   // Custom method for finding by professor
   async listByProfessorId(professorId: string, filters?: any) {
     const response = await HttpClient.get(`/${this.resource}/professor/${professorId}`, {

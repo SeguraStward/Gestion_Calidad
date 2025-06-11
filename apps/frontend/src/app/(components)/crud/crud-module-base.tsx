@@ -82,13 +82,7 @@ export const CrudModuleBase = <
     if (paginatedData?.meta?.total) {
       setPreviousTotalItems(paginatedData.meta.total)
     }
-  }, [
-    paginatedData?.meta?.total,
-    previousTotalItems,
-    itemsPerPage,
-    paginatedData?.meta?.totalPages,
-    setCurrentPage
-  ])
+  }, [paginatedData?.meta?.total, previousTotalItems, itemsPerPage, paginatedData?.meta?.totalPages, setCurrentPage])
   // Formulario
   const {
     control,
@@ -108,7 +102,11 @@ export const CrudModuleBase = <
 
   // Procesar items
   const processedItems = useMemo(() => {
-    return processItem ? (paginatedData?.data || []).map(processItem) : (paginatedData?.data as TItem[]) || []
+    // LOG para depuración de datos crudos y procesados
+    console.log('PAGINATED DATA:', paginatedData)
+    const items = processItem ? (paginatedData?.data || []).map(processItem) : (paginatedData?.data as TItem[]) || []
+    console.log('PROCESSED ITEMS:', items)
+    return items
   }, [paginatedData?.data, processItem]) // Manejar envío de formulario
 
   const handleSubmitForm = handleSubmit(async (formData) => {

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { GenericService } from '@/services/base/generic.service'
-import type { GroupWithRelations } from '@/shared/types/group'
+import type { GroupWithRelations } from '@/shared/types/academic-group'
 
 const groupService = new GenericService<GroupWithRelations, any, any>('academic-load-groups')
 

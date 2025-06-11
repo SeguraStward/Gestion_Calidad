@@ -39,7 +39,7 @@ export function transformReportToStep1Data(report: FullFinalReport): Step1FormDa
     // Decide cómo manejar esto, ¿quizás retornar null o un valor por defecto si es permisible?
     // Por ahora, para que coincida con la lógica anterior de que academicLoadId podría ser undefined:
     return {
-      academicLoadId: '',  
+      academicLoadId: '',
       nrc: report.academicLoad.nrc || '',
       courseName: report.academicLoad.course?.name || '',
       groupNumber: report.academicLoad.group?.number || '',

@@ -1,6 +1,6 @@
 'use client'
 
-import { useListCampusesFlat } from '../../hooks/useCampus'
+import { useListCampusesFlat } from '@/shared/hooks/useCampus'
 import { useMemo } from 'react'
 import { ColumnDef } from '@tanstack/react-table'
 import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
@@ -11,7 +11,7 @@ import {
   useCreateClassroom,
   useUpdateClassroom,
   useRemoveClassroom
-} from '@/modules/academic-management/academic-maintenance/hooks/useClassroom'
+} from '@/shared/hooks/useClassroom'
 import {
   ClassroomWithRelations,
   CreateClassroomInput,

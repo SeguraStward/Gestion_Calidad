@@ -15,7 +15,7 @@ export function useSchedule() {
   return useQuery({
     queryKey: ['schedules', { status: 'ACTIVE', limit: 1000 }],
     queryFn: () => scheduleService.list({ status: 'ACTIVE', limit: 1000 }).then((res) => res.data),
-    staleTime: 60_000,
+    staleTime: 600_000, // 10 minutos
     select: (data) =>
       data.map((schedule) => ({
         id: schedule.id,

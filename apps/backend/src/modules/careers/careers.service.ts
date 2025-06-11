@@ -9,15 +9,13 @@ import { CareersRepository } from './careers.repository';
 export class CareersService {
   protected readonly logger = new Logger(CareersService.name);
 
-  constructor(
-    protected readonly careersRepository: CareersRepository,
-  ) {}
+  constructor(protected readonly careersRepository: CareersRepository) {}
 
   async findAll(page = 1, limit = 10, where?: any, orderBy?: any, include?: any) {
     try {
       const result = await this.careersRepository.findAll(page, limit, where, orderBy, include);
       return {
-        data: result.data.map(career => plainToClass(CareerDto, career, { excludeExtraneousValues: true })),
+        data: result.data.map((career) => plainToClass(CareerDto, career, { excludeExtraneousValues: true })),
         meta: result.meta,
       };
     } catch (error: any) {
@@ -36,7 +34,7 @@ export class CareersService {
     }
   }
 
-    async findOne(id: string, include?: any): Promise<CareerDto> {
+  async findOne(id: string, include?: any): Promise<CareerDto> {
     try {
       const career = await this.careersRepository.findOne(id, include);
       return plainToClass(CareerDto, career, { excludeExtraneousValues: true });
@@ -48,21 +46,21 @@ export class CareersService {
 
   async save(dto: CareerDto): Promise<CareerDto> {
     this.logger.debug(`Creating career with data: ${JSON.stringify(dto)}`);
-    
+
     // Transform the DTO to Prisma input format
     const createInput: Prisma.CareerCreateInput = {
       code: dto.code,
       name: dto.name,
       status: dto.status,
       school: {
-        connect: { id: dto.schoolId }
-      }
+        connect: { id: dto.schoolId },
+      },
     };
-    
+
     this.logger.debug(`Transformed create input: ${JSON.stringify(createInput)}`);
-    
+
     try {
-      const created = await this.careersRepository.save(createInput) as Career;
+      const created = (await this.careersRepository.save(createInput)) as Career;
       this.logger.debug(`Created career: ${JSON.stringify(created)}`);
       return plainToClass(CareerDto, created, { excludeExtraneousValues: true });
     } catch (error: any) {
@@ -73,21 +71,21 @@ export class CareersService {
 
   async update(id: string, dto: Partial<CareerDto>): Promise<CareerDto> {
     this.logger.debug(`Updating career ${id} with data: ${JSON.stringify(dto)}`);
-    
+
     // Transform the DTO to Prisma input format
     const updateInput: Prisma.CareerUpdateInput = {
       ...(dto.code && { code: dto.code }),
       ...(dto.name && { name: dto.name }),
       ...(dto.status && { status: dto.status }),
-      ...(dto.schoolId && { 
+      ...(dto.schoolId && {
         school: {
-          connect: { id: dto.schoolId }
-        }
-      })
+          connect: { id: dto.schoolId },
+        },
+      }),
     };
-    
+
     this.logger.debug(`Transformed update input: ${JSON.stringify(updateInput)}`);
-    
+
     try {
       const updated = await this.careersRepository.update(id, updateInput);
       this.logger.debug(`Updated career: ${JSON.stringify(updated)}`);
