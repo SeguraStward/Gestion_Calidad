@@ -14,6 +14,7 @@ import {
 import { Type, Expose } from 'class-transformer'; // Import Expose
 import { Province, UserStatus } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
+import { UserRoleDto } from '@src/modules/user-roles/dtos/user-role.dto';
 
 class UserPhoneDto {
   @ApiProperty({ description: 'Phone number' })
@@ -138,6 +139,13 @@ export class UserDto extends BaseDto {
   @IsOptional()
   @Expose() // Added Expose
   roleIds?: string[];
+
+  @ApiPropertyOptional({ type: () => UserRoleDto, description: 'Associated Roles' })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UserRoleDto)
+  @Expose()
+  roles?: UserRoleDto[];
 
   @ApiPropertyOptional({ description: 'Google ID' })
   @IsString()

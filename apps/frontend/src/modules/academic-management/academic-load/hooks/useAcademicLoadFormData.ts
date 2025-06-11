@@ -3,10 +3,9 @@ import { useCampus } from '../../../../shared/hooks/useCampus'
 import { useAcademicGroup } from '../../../../shared/hooks/useAcademicGroup'
 import { useClassroom } from '../../../../shared/hooks/useClassroom'
 import { useSchedule } from '../../../../shared/hooks/useSchedule'
-import { useUser } from '../../../../shared/hooks/useUser'
+import { useUsersByRole } from '../../../../shared/hooks/useUser'
 import { useCourses } from '../../../../shared/hooks/useCourses'
-import { useQuery } from '@tanstack/react-query'
-import { academicLoadService } from '../services/academic-load.service'
+import { useAcademicCycle } from '../../../../shared/hooks/useAcademicCycle'
 
 // Define types for form data
 interface FormDataItem {
@@ -32,58 +31,39 @@ interface FormData {
   isLoadingSchedules: boolean
 }
 
-// Helper function to fetch and transform data
-async function fetchAndTransformData(endpoint: string, transform: (item: any) => FormDataItem) {
-  try {
-    const res = await academicLoadService.list({ include: endpoint })
-    return res.data
-      .map((item: any) => transform(item[endpoint]))
-      .filter(Boolean)
-      .filter((item: FormDataItem, index: number, self: FormDataItem[]) => index === self.findIndex((t) => t.id === item.id))
-  } catch (error) {
-    console.error(`Error fetching ${endpoint}:`, error)
-    return []
-  }
-}
-
-// Transform functions for each entity
-const transforms = {
-  academicCycle: (cycle: any) => ({
-    id: cycle.id,
-    name: cycle.name,
-    year: cycle.year,
-    cycleNumber: cycle.cycleNumber
-  })
-}
-
 export function useAcademicLoadFormData(): FormData {
   // Use the new hooks for each entity
   const { data: campuses = [], isLoading: isLoadingCampuses } = useCampus()
   const { data: groups = [], isLoading: isLoadingGroups } = useAcademicGroup()
   const { data: classrooms = [], isLoading: isLoadingClassrooms } = useClassroom()
   const { data: schedules = [], isLoading: isLoadingSchedules } = useSchedule()
-  const { data: professors = [], isLoading: isLoadingProfessors } = useUser()
+  const { data: professors = [], isLoading: isLoadingProfessors } = useUsersByRole('PROFESOR', 'ACTIVE', 1, 1000)
   const { data: courses = [], isLoading: isLoadingCourses } = useCourses()
+  const { data: academicCycles = [], isLoading: isLoadingAcademicCycles } = useAcademicCycle()
 
-  // Fetch academic cycles using the existing pattern
-  const { data: academicCycles = [], isLoading: isLoadingAcademicCycles } = useQuery({
-    queryKey: ['academicCycles'],
-    queryFn: () => fetchAndTransformData('academicCycle', transforms.academicCycle)
-  })
+  // DEBUG: Mostrar los datos de profesores en consola para depuración
+  console.log('professors hook data:', professors)
 
   return useMemo(
     () => ({
       courses,
       isLoadingCourses,
-      professors: professors.map((p: any) => ({
-        id: p.id,
-        name: `${p.name} (${p.email})`,
-        email: p.email
-      })),
+      professors: Array.isArray(professors)
+        ? professors.map((p: any) => ({
+            id: p.id,
+            name: `${p.name} (${p.email})`,
+            email: p.email,
+            roles: p.roles // Mostrar roles si existen
+          }))
+        : [],
       isLoadingProfessors,
       academicCycles,
       isLoadingAcademicCycles,
-      campuses,
+      campuses: campuses.map((c: any) => ({
+        id: c.id,
+        name: c.name ?? '', // Asegura que name nunca sea null
+        code: c.code
+      })),
       isLoadingCampuses,
       groups,
       isLoadingGroups,

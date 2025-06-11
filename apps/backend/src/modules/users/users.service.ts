@@ -166,9 +166,8 @@ export class UsersService extends GenericService<User, UserDto, UserDto> {
     this.logger.log(`Finding users with role name: ${roleName} and user status: ${userStatus}`);
 
     try {
-      // Create a where clause for the query
       const where = {
-        status: userStatus, // Filter by user status instead of role status
+        status: userStatus,
         roles: {
           some: {
             name: roleName,
@@ -176,8 +175,40 @@ export class UsersService extends GenericService<User, UserDto, UserDto> {
         },
       };
 
-      // Use the parent class's findAll method which handles pagination and DTO transformation
-      return await super.findAll(page, limit, where);
+      // Obtener usuarios sin confiar en el include de Prisma para roles
+      const rawResult = await this.repository.findAll(page, limit, where);
+      const users = rawResult.data;
+
+      // Poblar manualmente los roles de cada usuario usando roleIds
+      const allRoleIds = Array.from(new Set(users.flatMap((u) => u.roleIds)));
+      const roles =
+        allRoleIds.length > 0
+          ? await this.prisma.userRole.findMany({ where: { id: { in: allRoleIds } } })
+          : [];
+
+      // Asignar los roles correspondientes a cada usuario (usando as any para evitar error de tipo)
+      const rolesMap = new Map(roles.map((r) => [r.id, r]));
+      for (const user of users) {
+        // Asegurarse de que roles sea un array de objetos plano
+        (user as any).roles = (user.roleIds || [])
+          .map((roleId) => {
+            const role = rolesMap.get(roleId);
+            // Eliminar posibles campos no serializables
+            if (role) {
+              return JSON.parse(JSON.stringify(role));
+            }
+            return undefined;
+          })
+          .filter(Boolean);
+      }
+
+      // DEBUG opcional: console.log('USERS WITH ROLES:', JSON.stringify(users, null, 2));
+
+      // Transformar a DTO y devolver paginación
+      return {
+        ...rawResult,
+        data: users.map((u) => new UserDto(u)),
+      };
     } catch (error) {
       if (error instanceof Error) {
         this.logger.error(`Error finding users by role and status: ${error.message}`, error.stack);

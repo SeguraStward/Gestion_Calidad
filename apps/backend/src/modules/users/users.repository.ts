@@ -11,6 +11,7 @@ export class UsersRepository extends GenericPrismaRepository<
 > {
   private readonly logger = new Logger(UsersRepository.name);
   protected readonly modelName = 'user';
+  protected readonly defaultIncludes = { roles: true };
 
   constructor(protected readonly prisma: PrismaService) {
     super(prisma);

@@ -2,12 +2,7 @@ import { GenericService } from '@/services/base/generic.service'
 import type { UserWithRelations, CreateUserInput, UpdateUserInput } from '@/shared/types/user'
 
 // Puedes extender para métodos custom si lo necesitas
-export class UserService extends GenericService<
-  UserWithRelations,
-  CreateUserInput,
-  UpdateUserInput,
-  Record<string, any>
-> {
+export class UserService extends GenericService<UserWithRelations, CreateUserInput, UpdateUserInput, Record<string, any>> {
   constructor() {
     super('users') // endpoint base
   }
@@ -41,8 +36,12 @@ export class UserService extends GenericService<
       if ((key === 'province' || key === 'status') && value === '') continue
       // Si es string vacío en campos opcionales, omitir
       if (typeof value === 'string' && value.trim() === '') continue
+      // Validar que teléfono y cédula sean solo números
+      if ((key === 'primaryPhone' || key === 'nationalId') && typeof value === 'string' && value !== '') {
+        if (!/^[0-9]+$/.test(value)) continue // Omitir si no es solo números
+      }
       // Manejo especial para fechas
-      if ((key === 'hireDate' || key === 'birthDate')) {
+      if (key === 'hireDate' || key === 'birthDate') {
         if (!value) continue // null, undefined o string vacío
         if (value instanceof Date) {
           filtered[key] = value.toISOString()
@@ -59,6 +58,15 @@ export class UserService extends GenericService<
         // Si no es string ni Date, omitir
         continue
       }
+      // Manejo especial para roleIds - debe ser array
+      if (key === 'roleIds') {
+        if (Array.isArray(value)) {
+          filtered[key] = value
+        } else if (!value) {
+          filtered[key] = []
+        }
+        continue
+      }
       if (value !== undefined) filtered[key] = value
     }
     return filtered
@@ -72,6 +80,16 @@ export class UserService extends GenericService<
   async update(id: string, payload: UpdateUserInput): Promise<UserWithRelations> {
     const filtered = this.filterPayload(payload)
     return super.update(id, filtered as UpdateUserInput)
+  }
+
+  async listByRole(roleName: string, status: string = 'ACTIVE', page = 1, limit = 1000) {
+    // Usa el HttpClient directamente, como en list()
+    const response = await import('@/lib/http-client').then(({ HttpClient }) =>
+      HttpClient.get(`/Users/by-role/${roleName}`, {
+        params: { status, page, limit }
+      })
+    )
+    return response.data
   }
 }
 
