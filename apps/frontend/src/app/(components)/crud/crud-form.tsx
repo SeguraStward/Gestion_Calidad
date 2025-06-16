@@ -105,7 +105,7 @@ export function CrudForm<T extends FieldValues>({
     if (field.hidden) return null
 
     // Extraer propiedades comunes
-    const { name, label, required, disabled, placeholder, helperText, className } = field
+    const { name, label, required, disabled, placeholder, helperText, className, rules } = field as any
 
     // Si es un campo personalizado, usar la función de renderizado proporcionada
     if (field.type === 'custom' && 'render' in field) {
@@ -164,23 +164,30 @@ export function CrudForm<T extends FieldValues>({
       )
     }
 
-    // Renderizar campos de texto y numéricos
+    // Renderizar campos de texto y numéricos usando Controller para aplicar reglas
     return (
       <div key={String(name)} className={`space-y-1 ${className || ''}`}>
-        <FormField
-          control={control}
+        <Controller
           name={name}
-          label={label}
-          id={String(name)}
-          type={field.type}
-          placeholder={placeholder}
-          error={errors[name] ? ({ message: errors[name]?.message as string } as FieldError) : undefined}
-          required={required}
-          disabled={disabled || isSubmitting}
-          min={field.type === 'number' ? (field.min ?? 1) : undefined}
-          max={field.type === 'number' ? field.max : undefined}
-          step={field.type === 'number' ? field.step : undefined}
-          registerOptions={field.type === 'number' ? { valueAsNumber: true } : undefined}
+          control={control}
+          rules={rules || { required: required ? `${label} es requerido` : false }}
+          render={({ field: controllerField }) => (
+            <FormField
+              control={control}
+              name={name}
+              label={label}
+              id={String(name)}
+              type={field.type}
+              placeholder={placeholder}
+              error={errors[name] ? ({ message: errors[name]?.message as string } as FieldError) : undefined}
+              required={required}
+              disabled={disabled || isSubmitting}
+              min={field.type === 'number' ? (field.min ?? 1) : undefined}
+              max={field.type === 'number' ? field.max : undefined}
+              step={field.type === 'number' ? field.step : undefined}
+              registerOptions={field.type === 'number' ? { valueAsNumber: true } : undefined}
+            />
+          )}
         />
         {helperText && <p className="text-xs text-muted-foreground mt-1">{helperText}</p>}
       </div>
