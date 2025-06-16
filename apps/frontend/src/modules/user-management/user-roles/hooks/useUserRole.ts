@@ -86,13 +86,7 @@ export function useActiveUserRolesFlat() {
       return mappedRoles
     },
     staleTime: 60_000,
-    retry: (failureCount, error) => {
-      // No reintentar errores de autenticación
-      if ((error as any)?.statusCode === 401 || (error as any)?.response?.status === 401) {
-        return false
-      }
-      return failureCount < 3
-    }
+    retry: false
   })
 }
 
