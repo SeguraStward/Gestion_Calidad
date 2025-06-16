@@ -1,13 +1,7 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import type { FullFinalReport, FinalReportEvaluationFE } from '../types/final-reports.types';
-
-// --- Font Registration (opcional, si quieres usar fuentes específicas como Times New Roman) ---
-// Font.register({ family: 'Times New Roman', fonts: [
-//   { src: '/fonts/times.ttf' }, // Asegúrate de tener estos archivos en tu carpeta public/fonts
-//   { src: '/fonts/timesbd.ttf', fontWeight: 'bold' },
-// ]});
-
+ 
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
@@ -218,20 +212,7 @@ const styles = StyleSheet.create({
     border: '0.5px solid #E0E0E0',
     marginTop: 5,
   },
-  // --- Estilos para los textos finales (ya no se usa para la fecha y el texto de creación) ---
-  // finalTextsContainer: {
-  //   marginTop: 20,
-  //   paddingTop: 10,
-  //   borderTopWidth: 0.5,
-  //   borderTopColor: '#B0B0B0',
-  //   alignItems: 'center',
-  // },
-  // finalText: { // Puedes renombrar o reutilizar este estilo si tienes otros textos finales
-  //   fontSize: 9,
-  //   color: '#333333',
-  //   marginBottom: 3,
-  //   textAlign: 'center',
-  // },
+   
   footerContainer: {
     position: 'absolute',
     bottom: 20,
@@ -465,12 +446,7 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
           )}
         </View>
 
-        {/* --- Textos Finales (ya no se usa para la fecha y el texto de creación) --- */}
-        {/* <View style={styles.finalTextsContainer} wrap={false}> 
-        </View> */}
-        
-
-        {/* Footer */}
+         
         <View style={styles.footerContainer} fixed>
           <Text
             style={styles.footerText}
@@ -487,7 +463,7 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
               if (pageNumber === totalPages) {
                 return `Fecha de Creación del Informe: ${formatDate(report.createdAt)}`;
               }
-              return ''; // No mostrar en otras páginas
+              return '';  
             }}
           />
           <Text style={styles.footerText} render={({ pageNumber, totalPages }) => (
