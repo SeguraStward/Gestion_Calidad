@@ -18,7 +18,7 @@ model AcademicCycle {
 
   // Relations
   academicLoads AcademicLoad[]
-  Project       Project[]
+  projects      Project[]
 
   // Audit fields
   createdAt DateTime @default(now())

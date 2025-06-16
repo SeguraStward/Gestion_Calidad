@@ -38,7 +38,7 @@ model Project {
   externalReader User           @relation("ExternalReader", fields: [externalReaderId], references: [id])
 
   documents Document[]
-  review    ProjectReview[]
+  reviews   ProjectReview[]
 
   projectLogs ProjectLog[] @relation("ProjectToLog")
 

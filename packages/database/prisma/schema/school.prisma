@@ -15,7 +15,6 @@ model School {
   // Relations
   faculty Faculty? @relation(fields: [facultyId], references: [id])
 
-  // courses Course[]
   careers Career[]
 
   // Audit fields
