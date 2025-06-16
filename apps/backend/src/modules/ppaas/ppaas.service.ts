@@ -10,6 +10,11 @@ import { PpaasRepository } from './ppaas.repository';
 export class PpaasService extends GenericService<Ppaa, PpaaDto, PpaaDto> {
   protected readonly logger = new Logger(PpaasService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete Ppaa because it has associated: none.',
+  };
+
   constructor(
     protected readonly ppaasRepository: PpaasRepository,
     protected readonly dtoValidator: DtoValidator,

@@ -11,6 +11,11 @@ import { FinalReportsRepository } from './final-reports.repository';
 export class FinalReportsService extends GenericService<FinalReport, FinalReportDto, FinalReportDto> {
   protected readonly logger = new Logger(FinalReportsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete FinalReport because it has associated: none.',
+  };
+
   constructor(
     protected readonly finalReportsRepository: FinalReportsRepository,
     protected readonly dtoValidator: DtoValidator, // Assuming DtoValidator is used for create/update

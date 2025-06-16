@@ -10,6 +10,11 @@ import { UserRolesRepository } from './user-roles.repository';
 export class UserRolesService extends GenericService<UserRole, UserRoleDto, UserRoleDto> {
   protected readonly logger = new Logger(UserRolesService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete UserRole because it has associated: none.',
+  };
+
   constructor(
     protected readonly userRolesRepository: UserRolesRepository,
     protected readonly dtoValidator: DtoValidator,

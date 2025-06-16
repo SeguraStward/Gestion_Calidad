@@ -25,12 +25,17 @@ const FULL_INCLUDE: Prisma.AcademicLoadInclude = {
       status: true,
     },
   },
-  finalReport: true,
+  finalReports: true,
 };
 
 @Injectable()
 export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicLoadDto, AcademicLoadDto> {
   protected readonly logger = new Logger(AcademicLoadsService.name);
+
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete AcademicLoad because it has associated: none.',
+  };
 
   constructor(
     protected readonly academicLoadsRepository: AcademicLoadsRepository,

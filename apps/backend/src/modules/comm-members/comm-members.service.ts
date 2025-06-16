@@ -10,6 +10,11 @@ import { CommMembersRepository } from './comm-members.repository';
 export class CommMembersService extends GenericService<CommMember, CommMemberDto, CommMemberDto> {
   protected readonly logger = new Logger(CommMembersService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete CommMember because it has associated: none.',
+  };
+
   constructor(
     protected readonly commMembersRepository: CommMembersRepository,
     protected readonly dtoValidator: DtoValidator,

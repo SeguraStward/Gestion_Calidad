@@ -10,6 +10,11 @@ import { ClassroomsRepository } from './classrooms.repository';
 export class ClassroomsService extends GenericService<Classroom, ClassroomDto, ClassroomDto> {
   protected readonly logger = new Logger(ClassroomsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: ['academicLoads'],
+    errorMessage: 'Cannot delete classroom because it has associated academic loads.',
+  };
+
   constructor(
     protected readonly classroomsRepository: ClassroomsRepository,
     protected readonly dtoValidator: DtoValidator,

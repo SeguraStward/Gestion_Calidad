@@ -13,6 +13,7 @@ import {
   UseGuards,
   ExecutionContext,
   createParamDecorator,
+  Patch,
 } from '@nestjs/common';
 
 import type { IGenericService } from './generic-service.interface';
@@ -149,5 +150,16 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   async delete(@Param('id') id: string) {
     await this.service.deleteById(id);
     return;
+  }
+
+  @Patch(':id/soft-delete')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mark record as inactive (soft delete)' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Record successfully marked as inactive' })
+  @UseGuards(PermissionsGuard)
+  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.DELETE })
+  async softDelete(@Param('id') id: string) {
+    return await this.service.softDeleteById(id);
   }
 }

@@ -10,6 +10,11 @@ import { AcademicCyclesRepository } from './academic-cycles.repository';
 export class AcademicCyclesService extends GenericService<AcademicCycle, AcademicCycleDto, AcademicCycleDto> {
   protected readonly logger = new Logger(AcademicCyclesService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: ['academicLoads', 'projects'],
+    errorMessage: 'Cannot delete AcademicCycle because it has associated: academicLoads, projects.',
+  };
+
   constructor(
     protected readonly academicCyclesRepository: AcademicCyclesRepository,
     protected readonly dtoValidator: DtoValidator,

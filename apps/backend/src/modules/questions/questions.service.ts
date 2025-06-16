@@ -10,6 +10,11 @@ import { QuestionsRepository } from './questions.repository';
 export class QuestionsService extends GenericService<Question, QuestionDto, QuestionDto> {
   protected readonly logger = new Logger(QuestionsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete Question because it has associated: none.',
+  };
+
   constructor(
     protected readonly questionsRepository: QuestionsRepository,
     protected readonly dtoValidator: DtoValidator,

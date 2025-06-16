@@ -14,6 +14,11 @@ export class IntellectualProductionsService extends GenericService<
 > {
   protected readonly logger = new Logger(IntellectualProductionsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete IntellectualProductionsService because it has associated: none.',
+  };
+
   constructor(
     protected readonly intellectualProductionsRepository: IntellectualProductionsRepository,
     protected readonly dtoValidator: DtoValidator,

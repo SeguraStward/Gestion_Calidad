@@ -10,6 +10,11 @@ import { SchoolsRepository } from './schools.repository';
 export class SchoolsService extends GenericService<School, SchoolDto, SchoolDto> {
   protected readonly logger = new Logger(SchoolsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: ['careers'],
+    errorMessage: 'Cannot delete school because it has associated careers.',
+  };
+
   constructor(
     protected readonly schoolsRepository: SchoolsRepository,
     protected readonly dtoValidator: DtoValidator,

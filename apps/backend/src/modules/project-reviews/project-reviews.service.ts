@@ -10,6 +10,11 @@ import { ProjectReviewsRepository } from './project-reviews.repository';
 export class ProjectReviewsService extends GenericService<ProjectReview, ProjectReviewDto, ProjectReviewDto> {
   protected readonly logger = new Logger(ProjectReviewsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete ProjectReview because it has associated: none.',
+  };
+
   constructor(
     protected readonly projectReviewsRepository: ProjectReviewsRepository,
     protected readonly dtoValidator: DtoValidator,

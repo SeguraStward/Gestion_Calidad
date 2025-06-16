@@ -10,6 +10,11 @@ import { FinalWorksRepository } from './final-works.repository';
 export class FinalWorksService extends GenericService<FinalWork, FinalWorkDto, FinalWorkDto> {
   protected readonly logger = new Logger(FinalWorksService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete FinalWork because it has associated: none.',
+  };
+
   constructor(
     protected readonly finalWorksRepository: FinalWorksRepository,
     protected readonly dtoValidator: DtoValidator,

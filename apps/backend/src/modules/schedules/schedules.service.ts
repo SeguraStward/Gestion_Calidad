@@ -10,6 +10,11 @@ import { SchedulesRepository } from './schedules.repository';
 export class SchedulesService extends GenericService<Schedule, ScheduleDto, ScheduleDto> {
   protected readonly logger = new Logger(SchedulesService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: ['academicLoads'],
+    errorMessage: 'Cannot delete Schedule because it has associated: academicLoads.',
+  };
+
   constructor(
     protected readonly schedulesRepository: SchedulesRepository,
     protected readonly dtoValidator: DtoValidator,

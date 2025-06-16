@@ -10,6 +10,11 @@ import { ObservationsRepository } from './observations.repository';
 export class ObservationsService extends GenericService<Observation, ObservationDto, ObservationDto> {
   protected readonly logger = new Logger(ObservationsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete Observation because it has associated: none.',
+  };
+
   constructor(
     protected readonly observationsRepository: ObservationsRepository,
     protected readonly dtoValidator: DtoValidator,

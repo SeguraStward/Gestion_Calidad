@@ -10,6 +10,11 @@ import { GoogleUser } from './interfaces';
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete _entity_ because it has associated: _relation_.',
+  };
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
