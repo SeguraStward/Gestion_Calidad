@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { pdf } from '@react-pdf/renderer'
 
+import useDevStore from '@/store/devStore'
 import { useDeleteFinalReport, useFinalReportsByProfessor } from '@/modules/final-reports/service/final-reports.service'
 import type { FullFinalReport, FinalReportStatusFE } from '@/modules/final-reports/types/final-reports.types'
 import { FinalReportPDFDocument } from '@/modules/final-reports/components/final-report-pdf'
@@ -32,23 +33,30 @@ const getStatusDisplayProperties = (statusValue: FinalReportStatusFE | undefined
 
 export default function FinalReportsPage() {
   const router = useRouter()
+  const mockProfessorId = useDevStore((state) => state.mockProfessorId)
+  console.log('[FinalReportsPage] mockProfessorId:', mockProfessorId) // DEBUG
 
-  // TODO: Replace with real professorId from auth/session/context
-  const professorId = undefined // <-- Set this properly
+  const [isGeneratingPdfId, setIsGeneratingPdfId] = useState<string | null>(null)
 
   // Fetch final reports for the specific professor
   const {
-    data: paginatedFinalReports,
+    data: paginatedFinalReports, // This will be PaginatedResponse<FullFinalReport>
     isLoading,
     error,
     refetch
   } = useFinalReportsByProfessor(
-    professorId,
-    { include: 'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group' },
-    { enabled: !!professorId }
+    mockProfessorId,
+    {
+      include:
+        'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus'
+    },
+    { enabled: !!mockProfessorId }
   )
 
-  const finalReportsData: FullFinalReport[] = paginatedFinalReports?.data || []
+  console.log('[FinalReportsPage] Raw paginatedFinalReports (should be object):', paginatedFinalReports) // DEBUG
+
+  const finalReportsData: FullFinalReport[] = paginatedFinalReports?.data || [] // This will now correctly access the array
+  console.log('[FinalReportsPage] Data for table (finalReportsData):', finalReportsData) // DEBUG
 
   const deleteFinalReportMutation = useDeleteFinalReport()
 
@@ -223,12 +231,11 @@ export default function FinalReportsPage() {
       </Link>
     </Button>
   )
-
-  if (!professorId && !isLoading) {
+  if (!mockProfessorId && !isLoading) {
     return (
       <div className="container mx-auto py-8 text-center">
         <p className="text-orange-600 dark:text-orange-400 mb-4">
-          ID de profesor no configurado. Por favor, configure un ID de profesor.
+          ID de profesor no configurado. Por favor, configure un ID de profesor en el mock store.
         </p>
       </div>
     )
