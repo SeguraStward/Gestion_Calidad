@@ -1,8 +1,7 @@
-// src/modules/academic-management/academic-load/services/academic-load.service.ts
 import HttpClient from '@/lib/http-client'
 import { GenericService } from '@/services/base/generic.service'
+
 import type { AcademicLoadWithRelations, CreateAcademicLoadInput, UpdateAcademicLoadInput } from '../types/academic-load'
-import { useUserContextStore } from '@/store/authStore'
 
 // Define the include parameter for relations
 const FULL_INCLUDE = {
@@ -25,19 +24,6 @@ export class AcademicLoadService extends GenericService<
     super('academic-loads')
   }
 
-  // Helper method to get auth headers
-  private getAuthHeaders() {
-    const user = useUserContextStore.getState().currentUser
-    if (!user) {
-      throw new Error('User not authenticated')
-    }
-    return {
-      headers: {
-        Authorization: `Bearer ${user.id}` // Ajusta esto según tu implementación de tokens
-      }
-    }
-  }
-
   // Override create to handle relations
   async create(payload: CreateAcademicLoadInput): Promise<AcademicLoadWithRelations> {
     // Calculate available seats
@@ -48,7 +34,7 @@ export class AcademicLoadService extends GenericService<
       availableSeats
     }
 
-    const response = await HttpClient.post(`/${this.resource}`, data, this.getAuthHeaders())
+    const response = await HttpClient.post(`/${this.resource}`, data)
     return response.data?.data || response.data
   }
 
@@ -63,14 +49,13 @@ export class AcademicLoadService extends GenericService<
       data.availableSeats = maxCapacity - enrolled
     }
 
-    const response = await HttpClient.put(`/${this.resource}/${id}`, data, this.getAuthHeaders())
+    const response = await HttpClient.put(`/${this.resource}/${id}`, data)
     return response.data?.data || response.data
   }
 
   // Override get to include all relations
   async get(id: string): Promise<AcademicLoadWithRelations> {
     const response = await HttpClient.get(`/${this.resource}/${id}`, {
-      ...this.getAuthHeaders(),
       params: { include: JSON.stringify(FULL_INCLUDE) }
     })
     return response.data?.data || response.data
@@ -79,7 +64,6 @@ export class AcademicLoadService extends GenericService<
   // Custom method for finding by professor
   async listByProfessorId(professorId: string, filters?: any) {
     const response = await HttpClient.get(`/${this.resource}/professor/${professorId}`, {
-      ...this.getAuthHeaders(),
       params: {
         ...filters,
         include: JSON.stringify(FULL_INCLUDE)
