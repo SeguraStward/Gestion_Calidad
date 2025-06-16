@@ -17,6 +17,7 @@ interface AcademicCycle {
   id: string
   name: string
   year?: number
+  startDate?: string; // Added for deriving year if needed
   // ... other academic cycle properties
 }
 
@@ -24,6 +25,14 @@ interface Group {
   id: string
   number: string // Or however group is identified
   // ... other group properties
+}
+
+// --- Add CampusNested type ---
+interface CampusNested {
+  id: string;
+  name: string | null; // Matches Prisma schema (String?)
+  code?: string;
+  // ... other campus properties you might need
 }
 
 export type AcademicLoadStatus = 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' // Matches backend Status enum
@@ -41,12 +50,14 @@ export interface FullAcademicLoad {
   courseId?: string // Foreign key
   academicCycleId?: string // Foreign key
   groupId?: string // Foreign key
+  campusId?: string // Foreign key
 
   // Optional included relations
   course?: Course | null
   professor?: Professor | null
   academicCycle?: AcademicCycle | null
   group?: Group | null
+  campus?: CampusNested | null // --- Added campus relation ---
 
   // Timestamps if available
   createdAt?: string
