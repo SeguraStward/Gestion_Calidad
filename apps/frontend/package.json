@@ -4,13 +4,14 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
+    "dev": "next dev -p 3001 --turbopack",
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "next lint",
     "test": "jest --verbose --passWithNoTests",
     "test-watch": "jest --verbose --watch",
-    "test-coverage": "jest --coverage --verbose"
+    "test-coverage": "jest --coverage --verbose",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
@@ -29,7 +30,6 @@
     "class-validator": "^0.14.1",
     "cookies-next": "^4.2.1",
     "crypto-js": "^4.2.0",
-    "formik": "^2.4.6",
     "jose": "^6.0.6",
     "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",
