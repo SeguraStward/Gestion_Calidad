@@ -227,8 +227,7 @@ export default function CareerCrud() {
     }
     CareerCrudForm.displayName = 'CareerCrudForm'
     return CareerCrudForm
-  }, [isLoadingSchools])
-
+  }, [schools, isLoadingSchools])
   const crudConfig = useMemo(
     () => ({
       entityName: 'Carrera',

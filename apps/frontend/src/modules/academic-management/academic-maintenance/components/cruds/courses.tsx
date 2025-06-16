@@ -175,7 +175,7 @@ export default function CourseCrud() {
           )
         }
       ],
-    [careers]
+    []
   )
 
   // Form sections for create/edit

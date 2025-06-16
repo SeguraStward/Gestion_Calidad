@@ -151,7 +151,7 @@ export default function SchoolCrud() {
           )
         }
       ],
-    [faculties]
+    []
   )
 
   // Form sections for create/edit

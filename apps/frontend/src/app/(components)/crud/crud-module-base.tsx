@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useForm, FieldValues } from 'react-hook-form'
 import { toast } from 'sonner'
-import { usePagination } from '../../../shared/hooks/usePagination'
+import { usePagination } from '@/shared/hooks/usePagination'
 import { Button, Card, CardContent } from '@una-gc/ui/components'
 import { CrudConfig, CrudItemBase, ColumnUtilities } from './crud-types'
 import { AlertMessage } from '../ui/alert-message'
@@ -107,7 +107,7 @@ export const CrudModuleBase = <
     const items = processItem ? (paginatedData?.data || []).map(processItem) : (paginatedData?.data as TItem[]) || []
     console.log('PROCESSED ITEMS:', items)
     return items
-  }, [paginatedData?.data, processItem]) // Manejar envío de formulario
+  }, [paginatedData, processItem]) // Manejar envío de formulario
 
   const handleSubmitForm = handleSubmit(async (formData) => {
     setIsProcessing(true)
@@ -204,7 +204,7 @@ export const CrudModuleBase = <
   )
 
   // Obtener columnas de renderColumns
-  const columns: ColumnDef<TItem>[] = useMemo(() => {
+  const columns: ColumnDef<TItem, any>[] = useMemo(() => {
     return renderColumns(columnUtils)
   }, [renderColumns, columnUtils])
 
