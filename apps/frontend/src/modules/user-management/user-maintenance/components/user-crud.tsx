@@ -34,11 +34,14 @@ export default function UserCrud() {
   // Obtener roles disponibles en el nivel superior del componente
   const { data: rolesData, isLoading: rolesLoading, error: rolesError } = useActiveUserRolesFlat()
 
-  const roleOptions =
-    rolesData?.map((role: any) => ({
-      id: role.id,
-      name: role.name
-    })) || []
+  const roleOptions = useMemo(
+    () =>
+      rolesData?.map((role: any) => ({
+        id: role.id,
+        name: role.name
+      })) || [],
+    [rolesData]
+  )
 
   // Debug logging para verificar que los roles se cargan correctamente
   console.log('🔍 UserCrud Debug:', {

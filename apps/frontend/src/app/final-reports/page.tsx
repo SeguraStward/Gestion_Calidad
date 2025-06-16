@@ -10,7 +10,6 @@ import { DataTable } from '@/app/(components)/ui/data-table'
 import Link from 'next/link'
 import { toast } from 'sonner'
 
-import useDevStore from '@/store/devStore'
 import { useDeleteFinalReport, useFinalReportsByProfessor } from '@/modules/final-reports/service/final-reports.service'
 import type { FullFinalReport, FinalReportStatusFE } from '@/modules/final-reports/types/final-reports.types'
 
@@ -31,25 +30,23 @@ const getStatusDisplayProperties = (statusValue: FinalReportStatusFE | undefined
 
 export default function FinalReportsPage() {
   const router = useRouter()
-  const mockProfessorId = useDevStore((state) => state.mockProfessorId)
-  console.log('[FinalReportsPage] mockProfessorId:', mockProfessorId) // DEBUG
+
+  // TODO: Replace with real professorId from auth/session/context
+  const professorId = undefined // <-- Set this properly
 
   // Fetch final reports for the specific professor
   const {
-    data: paginatedFinalReports, // This will be PaginatedResponse<FullFinalReport>
+    data: paginatedFinalReports,
     isLoading,
     error,
     refetch
   } = useFinalReportsByProfessor(
-    mockProfessorId,
+    professorId,
     { include: 'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group' },
-    { enabled: !!mockProfessorId }
+    { enabled: !!professorId }
   )
 
-  console.log('[FinalReportsPage] Raw paginatedFinalReports (should be object):', paginatedFinalReports) // DEBUG
-
-  const finalReportsData: FullFinalReport[] = paginatedFinalReports?.data || [] // This will now correctly access the array
-  console.log('[FinalReportsPage] Data for table (finalReportsData):', finalReportsData) // DEBUG
+  const finalReportsData: FullFinalReport[] = paginatedFinalReports?.data || []
 
   const deleteFinalReportMutation = useDeleteFinalReport()
 
@@ -185,11 +182,12 @@ export default function FinalReportsPage() {
       </Link>
     </Button>
   )
-  if (!mockProfessorId && !isLoading) {
+
+  if (!professorId && !isLoading) {
     return (
       <div className="container mx-auto py-8 text-center">
         <p className="text-orange-600 dark:text-orange-400 mb-4">
-          ID de profesor no configurado. Por favor, configure un ID de profesor en el mock store.
+          ID de profesor no configurado. Por favor, configure un ID de profesor.
         </p>
       </div>
     )

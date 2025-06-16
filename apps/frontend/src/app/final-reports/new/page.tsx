@@ -14,30 +14,19 @@ import { Step3Form, step3Schema, Step3FormData } from '@/modules/final-reports/c
 import { Step4Form, step4Schema, Step4FormData } from '@/modules/final-reports/components/form-step4'
 import { Step5Form, step5Schema, Step5FormData } from '@/modules/final-reports/components/form-step5'
 import { Step6Form, step6Schema, Step6FormData } from '@/modules/final-reports/components/form-step6'
-// Assuming step7QuestionsFormMock (from form-step7.tsx) is now also translated
-// and its items use 'questionId', 'question', 'questionGroup', 'responseTypeFE', 'options'
 import { Step7Form, step7Schema, Step7FormData } from '@/modules/final-reports/components/form-step7'
 import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header'
 
 // Import service hook and DTO type
 import { useCreateFinalReport } from '@/modules/final-reports/service/final-reports.service'
-import type { CreateFinalReportDto, ReportType, FinalReportEvaluationFE } from '@/modules/final-reports/types/final-reports.types' // Renamed TipoInforme, Added FinalReportEvaluationFE
+import type { CreateFinalReportDto, ReportType, FinalReportEvaluationFE } from '@/modules/final-reports/types/final-reports.types'
 import useDevStore from '@/store/devStore'
 
-// Import translated mock data
-import {
-  step5QuestionsMock,
-  step6QuestionsPageMock,
-  step7QuestionsPageMock,
-  Step7Question
-} from '@/modules/final-reports/mocks/questions' // Renamed mocks, Import step7QuestionsPageMock and Step7Question
-
 const TOTAL_STEPS = 7
-// User-facing labels remain in Spanish
 const STEP_LABELS_SPANISH = ['Información', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
 
-const MAIN_TOOLS_QUESTION_ID = 'herramientas_utilizadas' // ID Canónico para la pregunta de herramientas
-const OTHER_TOOLS_QUESTION_ID = 'otras_herramientas_utilizadas' // ID para el campo de texto de otras herramientas
+const MAIN_TOOLS_QUESTION_ID = 'herramientas_utilizadas'
+const OTHER_TOOLS_QUESTION_ID = 'otras_herramientas_utilizadas'
 
 export default function NewFinalReportPage() {
   const router = useRouter()
@@ -51,7 +40,7 @@ export default function NewFinalReportPage() {
   const [step5Data, setStep5Data] = useState<Step5FormData | null>(null)
   const [step6Data, setStep6Data] = useState<Step6FormData | null>(null)
   const [step7Data, setStep7Data] = useState<Step7FormData | null>(null)
-  const [reportType, setReportType] = useState<ReportType>('INFORME_FINAL_V1')
+  const [reportType] = useState<ReportType>('INFORME_FINAL_V1')
 
   const createFinalReportMutation = useCreateFinalReport()
   const currentProfessorId = useDevStore((state) => state.mockProfessorId)
@@ -85,12 +74,8 @@ export default function NewFinalReportPage() {
   })
   const formStep7Methods = useForm<Step7FormData>({
     resolver: zodResolver(step7Schema),
-    defaultValues: { respuestasRadio: [] } // Add defaultValues for Step 7
+    defaultValues: { respuestasRadio: [] }
   })
-
-  // useEffects to reset form methods when their corresponding stepXData changes
-  // These ensure that if the parent state changes, the form instance is updated.
-  // This is particularly useful if data is loaded asynchronously or modified externally to the form component itself.
 
   useEffect(() => {
     if (step1Data) formStep1Methods.reset(step1Data)
@@ -100,7 +85,6 @@ export default function NewFinalReportPage() {
     if (step2Data) {
       formStep2Methods.reset(step2Data)
     } else if (step1Data?.enrolledCapacity !== undefined) {
-      // This handles the initial default for step 2 based on step 1
       formStep2Methods.reset({
         totalEnrolled: step1Data.enrolledCapacity,
         totalWithdrawn: 0,
@@ -108,7 +92,6 @@ export default function NewFinalReportPage() {
         totalFailed: 0
       })
     } else {
-      // Fallback to static defaults if no step2Data and no step1Data.enrolledCapacity
       formStep2Methods.reset({ totalEnrolled: undefined, totalWithdrawn: 0, totalPassed: 0, totalFailed: 0 })
     }
   }, [step1Data?.enrolledCapacity, step2Data, formStep2Methods])
@@ -134,14 +117,13 @@ export default function NewFinalReportPage() {
       formStep5Methods.reset(step5Data)
     } else {
       formStep5Methods.reset({
-        respuestas: step5QuestionsMock.map((p) => ({ idPregunta: p.questionId, respuesta: '' }))
+        respuestas: []
       })
     }
   }, [step5Data, formStep5Methods])
 
   useEffect(() => {
     if (step6Data) {
-      // Add useEffect for step6Data
       formStep6Methods.reset(step6Data)
     } else {
       formStep6Methods.reset({
@@ -153,21 +135,13 @@ export default function NewFinalReportPage() {
 
   useEffect(() => {
     if (step7Data) {
-      // Add if (step7Data) condition
       formStep7Methods.reset(step7Data)
     } else {
       formStep7Methods.reset({
-        respuestasRadio: step7QuestionsPageMock
-          .filter((p: Step7Question) => {
-            if (p.appliesTo && !(p.appliesTo.includes(reportType) || p.appliesTo.includes('TODOS'))) {
-              return false
-            }
-            return true
-          })
-          .map((p: Step7Question) => ({ idPregunta: p.questionId, respuesta: '' }))
+        respuestasRadio: []
       })
     }
-  }, [reportType, step7Data, formStep7Methods]) // Add step7Data to dependencies
+  }, [reportType, step7Data, formStep7Methods])
 
   const handleSaveStep1Data = (data: Step1FormData) => {
     setStep1Data(data)
@@ -210,8 +184,7 @@ export default function NewFinalReportPage() {
     setCurrentStep(7)
   }
   const handleSaveStep7Data = async (currentStep7DataFromForm: Step7FormData) => {
-    // Parameter is currentStep7DataFromForm
-    setStep7Data(currentStep7DataFromForm) // Save step 7 data to state
+    setStep7Data(currentStep7DataFromForm)
 
     if (!step1Data || !step2Data || !step3Data || !step4Data || !step5Data || !step6Data || !currentStep7DataFromForm) {
       toast.error('Faltan datos de pasos anteriores. Por favor, revise el formulario.')
@@ -252,97 +225,19 @@ export default function NewFinalReportPage() {
           observation: a.observacion || ''
         }))
       },
-      evaluation: [
-        ...step5Data.respuestas.map((r) => {
-          const questionDetails = step5QuestionsMock.find((p) => p.questionId === r.idPregunta)
-          return {
-            questionId: r.idPregunta,
-            question: questionDetails?.question || r.idPregunta,
-            questionGroup: questionDetails?.group || 'evaluacion_general_curso',
-            responseType: questionDetails?.responseType || ('TEXT' as const),
-            response: r.respuesta || undefined,
-            multipleResponse: [],
-            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
-            otherResponse: undefined
-          }
-        }),
-        ...step6Data.respuestasMultiples.map((r) => {
-          const questionDetails = step6QuestionsPageMock.find((p) => p.questionId === r.idPregunta)
-          return {
-            questionId: r.idPregunta,
-            question: questionDetails?.question || r.idPregunta,
-            questionGroup: questionDetails?.group || 'herramientas',
-            responseType: 'SELECCION_MULTIPLE' as const,
-            response: undefined,
-            multipleResponse: r.respuestasSeleccionadas || [],
-            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
-            otherResponse: undefined
-          }
-        }),
-        ...(step6Data.otrasHerramientas && step6Data.otrasHerramientas.trim() !== ''
-          ? [
-              {
-                questionId: OTHER_TOOLS_QUESTION_ID,
-                question:
-                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
-                  'Otras herramientas utilizadas (opcional)',
-                questionGroup:
-                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.group || 'herramientas',
-                responseType: 'TEXT' as const,
-                response: step6Data.otrasHerramientas,
-                multipleResponse: [],
-                options: [],
-                otherResponse: undefined
-              }
-            ]
-          : []),
-        ...currentStep7DataFromForm.respuestasRadio.map((r) => {
-          // Changed currentStep7Data to currentStep7DataFromForm
-          const questionDetails = step7QuestionsPageMock.find((p) => p.questionId === r.idPregunta)
-          const resolvedResponseType = questionDetails?.responseType || ('SELECCION_UNICA' as const)
-
-          const selectedOption = questionDetails?.options.find((opt) => opt.value === r.respuesta)
-          const responseValueToSend = selectedOption?.label || r.respuesta
-
-          return {
-            questionId: r.idPregunta,
-            question: questionDetails?.question || r.idPregunta,
-            questionGroup: questionDetails?.group || 'percepcion_calidad',
-            responseType: resolvedResponseType,
-            response: resolvedResponseType === 'SELECCION_MULTIPLE' ? undefined : responseValueToSend,
-            multipleResponse: resolvedResponseType === 'SELECCION_MULTIPLE' ? (r.respuesta ? [responseValueToSend] : []) : [],
-            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
-            otherResponse: undefined
-          }
-        })
-      ].map((item) => ({
-        ...item,
-        response: item.response === undefined ? undefined : item.response,
-        multipleResponse: item.multipleResponse || [],
-        options: item.options || [],
-        questionGroup: item.questionGroup || 'general',
-        // Now item.otherResponse will exist, even if undefined
-        otherResponse: item.otherResponse === undefined ? undefined : item.otherResponse
-      })) as FinalReportEvaluationFE[]
+      evaluation: [] as FinalReportEvaluationFE[]
     }
     console.log('Final Report Payload to Send:', JSON.stringify(finalReportPayload, null, 2))
     try {
       await createFinalReportMutation.mutateAsync(finalReportPayload)
-      router.push('/final-reports') // Navigate on success
+      router.push('/final-reports')
     } catch (error) {
-      // User-facing error message
       console.error('Explicit error trying to create report in page.tsx:', error)
       toast.error('Error al crear el informe. Intente nuevamente.')
     }
   }
 
   const saveDataForCurrentStepBeforeNavigatingBack = (step: number, data: any) => {
-    // Guardado "parcial" sin validación estricta al retroceder.
-    // Es importante que 'data' aquí sea el objeto de datos del formulario,
-    // que debería ser serializable.
-    console.log(`[NewPage] Saving data for step ${step} before navigating back.`)
-    // Para evitar errores de JSON.stringify con estructuras circulares en el log:
-    // console.log(`[NewPage] Data:`, JSON.stringify(data, null, 2)); // Omitir si causa problemas
     switch (step) {
       case 2:
         setStep2Data(data as Step2FormData)
@@ -369,7 +264,6 @@ export default function NewFinalReportPage() {
 
   const handlePreviousStep = (currentStepData?: any) => {
     if (currentStepData && currentStep > 1) {
-      // Solo guardar si hay datos y no estamos en el primer paso
       saveDataForCurrentStepBeforeNavigatingBack(currentStep, currentStepData)
     }
     setCurrentStep((prev) => Math.max(1, prev - 1))
@@ -382,10 +276,7 @@ export default function NewFinalReportPage() {
         pageDescription="Complete todos los pasos para crear el informe final del curso"
         stepLabels={STEP_LABELS_SPANISH}
         currentStep={currentStep}
-        // ADDED: backButton prop to navigate to the reports list
         backButton={{ href: '/final-reports', text: 'Volver a la Lista de Informes' }}
-        // You can also pass the nrc if available and desired, like in the edit page
-        // nrc={step1Data?.nrc} // Uncomment and ensure step1Data is available if you want to show NRC
       />
       <main className="flex-grow flex flex-col items-center overflow-hidden pt-2 pb-6 md:pt-4">
         <Card className="shadow-lg border-border/50 w-full max-w-5xl flex flex-col flex-grow overflow-hidden rounded-lg">
@@ -395,7 +286,7 @@ export default function NewFinalReportPage() {
                 formMethods={formStep1Methods}
                 onSaveAndNext={handleSaveStep1Data}
                 totalSteps={TOTAL_STEPS}
-                onCancel={() => router.push('/final-reports')} // This onCancel is specific to Step1Form
+                onCancel={() => router.push('/final-reports')}
                 initialData={step1Data}
                 isEditing={false}
               />
@@ -404,7 +295,7 @@ export default function NewFinalReportPage() {
               <Step2Form
                 formMethods={formStep2Methods}
                 onSaveAndNext={handleSaveStep2Data}
-                onPrevious={(data) => handlePreviousStep(data)} // PASAR DATOS
+                onPrevious={(data) => handlePreviousStep(data)}
                 totalSteps={TOTAL_STEPS}
                 initialData={step2Data}
                 isEditing={false}
@@ -414,7 +305,7 @@ export default function NewFinalReportPage() {
               <Step3Form
                 formMethods={formStep3Methods}
                 onSaveAndNext={handleSaveStep3Data}
-                onPrevious={(data) => handlePreviousStep(data)} // PASAR DATOS
+                onPrevious={(data) => handlePreviousStep(data)}
                 totalSteps={TOTAL_STEPS}
                 reportType={reportType}
                 initialData={step3Data}
@@ -425,7 +316,7 @@ export default function NewFinalReportPage() {
               <Step4Form
                 formMethods={formStep4Methods}
                 onSaveAndNext={handleSaveStep4Data}
-                onPrevious={(data) => handlePreviousStep(data)} // PASAR DATOS
+                onPrevious={(data) => handlePreviousStep(data)}
                 totalSteps={TOTAL_STEPS}
                 initialData={step4Data}
                 isEditing={false}
@@ -435,32 +326,32 @@ export default function NewFinalReportPage() {
               <Step5Form
                 formMethods={formStep5Methods}
                 onSaveAndNext={handleSaveStep5Data}
-                onPrevious={(data) => handlePreviousStep(data)} // PASAR DATOS
+                onPrevious={(data) => handlePreviousStep(data)}
                 totalSteps={TOTAL_STEPS}
                 initialData={step5Data}
-                isEditing={false} // Asegúrate que isEditing se pasa
+                isEditing={false}
               />
             )}
             {currentStep === 6 && (
               <Step6Form
                 formMethods={formStep6Methods}
                 onSaveAndNext={handleSaveStep6Data}
-                onPrevious={(data) => handlePreviousStep(data)} // PASAR DATOS
+                onPrevious={(data) => handlePreviousStep(data)}
                 totalSteps={TOTAL_STEPS}
                 initialData={step6Data}
-                isEditing={false} // Asegúrate que isEditing se pasa
+                isEditing={false}
               />
             )}
             {currentStep === 7 && (
               <Step7Form
                 formMethods={formStep7Methods}
                 onSaveAndNext={handleSaveStep7Data}
-                onPrevious={(data) => handlePreviousStep(data)} // PASAR DATOS
+                onPrevious={(data) => handlePreviousStep(data)}
                 totalSteps={TOTAL_STEPS}
                 reportType={reportType}
                 isSubmitting={createFinalReportMutation.isPending}
                 initialData={step7Data}
-                isEditing={false} // Asegúrate que isEditing se pasa
+                isEditing={false}
               />
             )}
           </CardContent>
