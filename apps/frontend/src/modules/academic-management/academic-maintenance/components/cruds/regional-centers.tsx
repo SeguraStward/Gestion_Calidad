@@ -1,4 +1,3 @@
-/* eslint-disable react/display-name */
 'use client'
 
 import { useMemo } from 'react'
@@ -152,7 +151,7 @@ export default function RegionalCentersCrud() {
 
   // Formulario con campos básicos y relación con campus
   const renderForm = useMemo(() => {
-    return ({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) => {
+    const FormComponent = ({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) => {
       return (
         <CrudFormAdapter
           control={control}
@@ -221,6 +220,8 @@ export default function RegionalCentersCrud() {
         />
       )
     }
+    FormComponent.displayName = 'RegionalCentersCrudForm'
+    return FormComponent
   }, [])
 
   const crudConfig = useMemo(

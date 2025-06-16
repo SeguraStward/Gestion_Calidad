@@ -171,8 +171,7 @@ export function useAuth(): UseAuthReturn {
     }
 
     initializeAuth()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Intentionally omitting loadUserRoles to prevent infinite loops
+  }, [loadUserRoles])
 
   return {
     ...state,

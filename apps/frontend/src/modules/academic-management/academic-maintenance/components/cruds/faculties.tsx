@@ -1,5 +1,3 @@
-// Faculty CRUD datatable and form using form-adapter
-/* eslint-disable react/display-name */
 'use client'
 
 import { useMemo } from 'react'
@@ -130,7 +128,7 @@ export default function FacultyCrud() {
 
   // Formulario con campos básicos
   const renderForm = useMemo(() => {
-    return ({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) => {
+    const FormComponent = ({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) => {
       return (
         <CrudFormAdapter
           control={control}
@@ -209,6 +207,8 @@ export default function FacultyCrud() {
         />
       )
     }
+    FormComponent.displayName = 'FacultyCrudForm'
+    return FormComponent
   }, [])
 
   // Adapter to match CrudModuleBase's expected useOneQuery signature
