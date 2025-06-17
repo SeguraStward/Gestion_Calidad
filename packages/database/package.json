@@ -10,10 +10,10 @@
     "db:pull": "prisma db pull"
   },
   "dependencies": {
-    "@prisma/client": "^6.4.1"
+    "@prisma/client": "6.4.1"
   },
   "devDependencies": {
-    "prisma": "^6.4.1",
+    "prisma": "6.4.1",
     "@types/node": "^17.0.12",
     "eslint": "^9.26.0",
     "ts-node": "^10.9.1",
