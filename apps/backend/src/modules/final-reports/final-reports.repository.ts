@@ -22,4 +22,26 @@ export class FinalReportsRepository extends GenericPrismaRepository<
   }
 
   // Specific repository methods can still be defined here if needed.
+  async findPendingWithEndedCycle(today: Date): Promise<FinalReport[]> {
+    return this.prismaService.finalReport.findMany({
+      where: {
+        status: 'PENDING',
+        academicLoad: {
+          academicCycle: {
+            endDate: {
+              not: null,
+              lt: today,
+            },
+          },
+        },
+      },
+      include: {
+        academicLoad: {
+          include: {
+            academicCycle: true,
+          },
+        },
+      },
+    });
+  }
 }
