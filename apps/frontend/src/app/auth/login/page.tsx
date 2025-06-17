@@ -2,9 +2,9 @@
 
 import { useCallback } from 'react'
 import { Button } from '@una-gc/ui/components/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@una-gc/ui/components/card'
+import { CardContent, CardHeader, CardTitle, CardDescription } from '@una-gc/ui/components/card'
 import { Badge } from '@una-gc/ui/components/badge'
-import { LogIn, Shield, Users, BookOpen } from 'lucide-react'
+import { LogIn, Shield, BookOpen } from 'lucide-react'
 import { AuthLayout } from '@/modules/auth/components'
 
 export default function LoginPage() {
