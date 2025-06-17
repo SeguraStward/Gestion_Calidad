@@ -7,7 +7,7 @@ import { Career } from '@una-gc/database/prisma/generated/client';
 import { CareersRepository } from './careers.repository';
 
 @Injectable()
-export class CareersService extends GenericService<Career, CareerDto, CareerDto, CareerDto> {
+export class CareersService extends GenericService<Career, CareerDto, CareerDto> {
   protected readonly logger = new Logger(CareersService.name);
 
   protected readonly relationCheckConfig = {
