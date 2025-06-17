@@ -21,7 +21,12 @@ const ajusteEstudianteSchema = z.object({
     .min(9, 'La cédula debe tener al menos 9 dígitos'),
   nombre: z.string().min(1, 'El nombre es requerido.'),
   apoyo: z.string().min(1, 'El tipo de apoyo es requerido.'),
-  nota: z.coerce.number().min(0, 'La nota debe ser 0 o más.').max(100, 'La nota no puede ser mayor a 100.'),
+  nota: z.coerce
+    .number()
+    .min(0, 'La nota debe ser 0 o más.')
+    .max(100, 'La nota no puede ser mayor a 100.')
+    .optional()
+    .nullable(), // Match step 2 schema
   observacion: z.string().optional()
 })
 
@@ -62,7 +67,7 @@ export function Step4Form({
   initialData,
   isEditing = false
 }: Step4FormProps) {
-  const { control, reset, handleSubmit, getValues } = formMethods // Added getValues
+  const { control, reset, handleSubmit, getValues, formState } = formMethods // Added getValues and formState
   const [editingObservacion, setEditingObservacion] = useState<number | null>(null)
 
   const { fields, append, remove } = useFieldArray({
@@ -84,7 +89,7 @@ export function Step4Form({
       cedula: '',
       nombre: '',
       apoyo: '',
-      nota: 0, // Default to 0 or undefined
+      nota: 0, // Default to 0 to match step 2 logic
       observacion: ''
     })
   }
@@ -220,15 +225,39 @@ export function Step4Form({
                                 <FormItem>
                                   <FormControl>
                                     <Input
-                                      type="number"
-                                      placeholder="0-100"
+                                      type="text"
+                                      inputMode="numeric"
+                                      placeholder="0"
                                       className="h-8 text-xs bg-background"
                                       {...field}
+                                      value={
+                                        field.value === 0 && formState.dirtyFields.ajustesEstudiantes?.[index]?.nota
+                                          ? ''
+                                          : field.value === undefined || field.value === null
+                                            ? ''
+                                            : String(field.value)
+                                      }
                                       onChange={(e) => {
-                                        const value = e.target.value
-                                        field.onChange(value === '' ? undefined : parseFloat(value))
+                                        const inputValue = e.target.value
+                                        const cleanedValue = inputValue.replace(/\D/g, '')
+
+                                        if (cleanedValue === '') {
+                                          field.onChange(0)
+                                        } else {
+                                          const num = Number(cleanedValue)
+                                          if (num <= 100) {
+                                            field.onChange(num)
+                                          }
+                                        }
                                       }}
-                                      value={field.value === undefined || field.value === null ? '' : field.value}
+                                      onFocus={(e) => {
+                                        if (field.value === 0 && e.target.value === '0') {
+                                          e.target.select()
+                                        }
+                                      }}
+                                      onBlur={() => {
+                                        field.onBlur()
+                                      }}
                                     />
                                   </FormControl>
                                   <FormMessage className="text-xs" />
