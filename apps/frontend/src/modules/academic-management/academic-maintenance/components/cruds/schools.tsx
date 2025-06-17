@@ -13,7 +13,7 @@ import {
 } from '@/modules/academic-management/academic-maintenance/hooks/useSchool'
 import { useListFacultiesFlat } from '@/modules/academic-management/academic-maintenance/hooks/useFaculty'
 import { SchoolWithRelations, CreateSchoolInput } from '@/modules/academic-management/academic-maintenance/types/school'
-import { Status } from '@una-gc/database/prisma/generated/client'
+import { Status } from '@/shared/types/status'
 import { Badge, Button } from '@una-gc/ui/components'
 import {
   School as SchoolIcon,

@@ -14,7 +14,7 @@ import {
 } from '@/shared/hooks/useCampus'
 import { useListRegionalCentersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useRegionalCenter'
 import { CampusWithRelations, CreateCampusInput } from '@/shared/types/campus'
-import { Status } from '@una-gc/database/prisma/generated/client'
+import { Status } from '@/shared/types/status'
 import { Badge, Button } from '@una-gc/ui/components'
 import { Loader2, Hash, Building2, Globe, MoreHorizontal, Pencil, Trash2, CheckCircle2, XCircle } from 'lucide-react'
 

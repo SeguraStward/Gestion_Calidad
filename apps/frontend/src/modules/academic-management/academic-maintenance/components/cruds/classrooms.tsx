@@ -13,7 +13,7 @@ import {
   useRemoveClassroom
 } from '@/shared/hooks/useClassroom'
 import { ClassroomWithRelations, CreateClassroomInput } from '@/shared/types/classroom'
-import { Status } from '@una-gc/database/prisma/generated/client'
+import { Status } from '@/shared/types/status'
 import { Badge, Button } from '@una-gc/ui/components'
 import { Hash, Building2, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 

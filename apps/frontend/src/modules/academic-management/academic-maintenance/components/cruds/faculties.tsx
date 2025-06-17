@@ -12,7 +12,7 @@ import {
   useListFacultiesPaginated
 } from '@/modules/academic-management/academic-maintenance/hooks/useFaculty'
 import { FacultyWithRelations, CreateFacultyInput } from '@/modules/academic-management/academic-maintenance/types/faculty'
-import { Status } from '@una-gc/database/prisma/generated/client'
+import { Status } from '@/shared/types/status'
 import { Badge, Button } from '@una-gc/ui/components'
 import { GraduationCap, Hash, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 

@@ -16,7 +16,7 @@ import {
   RegionalCenterWithRelations,
   CreateRegionalCenterInput
 } from '@/modules/academic-management/academic-maintenance/types/regional-center'
-import { Status } from '@una-gc/database/prisma/generated/client'
+import { Status } from '@/shared/types/status'
 import { Badge, Button } from '@una-gc/ui/components'
 import { Building, Hash, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
