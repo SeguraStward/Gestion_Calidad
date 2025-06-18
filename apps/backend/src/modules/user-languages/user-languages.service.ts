@@ -10,6 +10,11 @@ import { UserLanguagesRepository } from './user-languages.repository';
 export class UserLanguagesService extends GenericService<UserLanguage, UserLanguageDto, UserLanguageDto> {
   protected readonly logger = new Logger(UserLanguagesService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete UserLanguage because it has associated: none.',
+  };
+
   constructor(
     protected readonly userLanguagesRepository: UserLanguagesRepository,
     protected readonly dtoValidator: DtoValidator,

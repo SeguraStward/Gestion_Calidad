@@ -21,6 +21,11 @@ export class RegionalCentersService extends GenericService<
 > {
   protected readonly logger = new Logger(RegionalCentersService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: ['campuses', 'projects', 'commissions'],
+    errorMessage: 'Cannot delete RegionalCenter because it has associated: campuses, projects, commissions.',
+  };
+
   constructor(
     protected readonly regionalCentersRepository: RegionalCentersRepository,
     protected readonly dtoValidator: DtoValidator,

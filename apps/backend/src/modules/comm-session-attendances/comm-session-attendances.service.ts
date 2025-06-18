@@ -14,6 +14,11 @@ export class CommSessionAttendancesService extends GenericService<
 > {
   protected readonly logger = new Logger(CommSessionAttendancesService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete CommSessionAttendance because it has associated: none.',
+  };
+
   constructor(
     protected readonly commSessionAttendancesRepository: CommSessionAttendancesRepository,
     protected readonly dtoValidator: DtoValidator,

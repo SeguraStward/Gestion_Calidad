@@ -10,6 +10,11 @@ import { FacultiesRepository } from './faculties.repository';
 export class FacultiesService extends GenericService<Faculty, FacultyDto, FacultyDto> {
   protected readonly logger = new Logger(FacultiesService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: ['schools'],
+    errorMessage: 'Cannot delete Faculty because it has associated: schools.',
+  };
+
   constructor(
     protected readonly facultiesRepository: FacultiesRepository,
     protected readonly dtoValidator: DtoValidator,

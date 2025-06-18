@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios'
-import { UserRolesResponse } from './interfaces'
+import { UserRolesResponse } from './types'
 
 // Custom error types for better error handling
 export class AuthServiceError extends Error {

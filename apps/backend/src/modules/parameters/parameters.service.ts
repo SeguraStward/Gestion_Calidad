@@ -10,6 +10,11 @@ import { ParametersRepository } from './parameters.repository';
 export class ParametersService extends GenericService<Parameter, ParameterDto, ParameterDto> {
   protected readonly logger = new Logger(ParametersService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete Parameter because it has associated: none.',
+  };
+
   constructor(
     protected readonly parametersRepository: ParametersRepository,
     protected readonly dtoValidator: DtoValidator,

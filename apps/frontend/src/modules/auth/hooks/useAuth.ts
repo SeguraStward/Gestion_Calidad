@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
-import { CookieManager } from '@/utils/cookie-manager'
+
+import { SessionStorageManager } from '@/utils/session-storage.manager'
+import { CookieManager } from '@/utils/cookie.manager'
+
 import { AuthService } from '../auth.service'
-import { Role } from '../interfaces'
+import { Role } from '../types'
 
 interface AuthState {
   isAuthenticated: boolean
-  activeRole: ReturnType<typeof CookieManager.getActiveRole>
+  activeRole: ReturnType<typeof SessionStorageManager.getActiveRole>
   roles: Role[]
   isLoading: boolean
   error: string | null
@@ -131,7 +134,7 @@ export function useAuth(): UseAuthReturn {
 
   const refreshRole = useCallback(() => {
     CookieManager.refreshActiveRole()
-    const activeRole = CookieManager.getActiveRole()
+    const activeRole = SessionStorageManager.getActiveRole()
     setState((prev) => ({
       ...prev,
       activeRole,
@@ -147,7 +150,7 @@ export function useAuth(): UseAuthReturn {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const activeRole = CookieManager.getActiveRole()
+        const activeRole = SessionStorageManager.getActiveRole()
 
         setState((prev) => ({
           ...prev,
@@ -171,8 +174,7 @@ export function useAuth(): UseAuthReturn {
     }
 
     initializeAuth()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Intentionally omitting loadUserRoles to prevent infinite loops
+  }, [loadUserRoles])
 
   return {
     ...state,

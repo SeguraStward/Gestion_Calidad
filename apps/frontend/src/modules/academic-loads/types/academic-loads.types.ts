@@ -17,7 +17,7 @@ interface AcademicCycle {
   id: string
   name: string
   year?: number
-  startDate?: string; // Added for deriving year if needed
+  startDate?: string // Added for deriving year if needed
   // ... other academic cycle properties
 }
 
@@ -29,9 +29,9 @@ interface Group {
 
 // --- Add CampusNested type ---
 interface CampusNested {
-  id: string;
-  name: string | null; // Matches Prisma schema (String?)
-  code?: string;
+  id: string
+  name: string | null // Matches Prisma schema (String?)
+  code?: string
   // ... other campus properties you might need
 }
 

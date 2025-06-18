@@ -16,6 +16,11 @@ import { PaginatedResponse } from '@src/core/http/interfaces/paginated-response.
 export class UsersService extends GenericService<User, UserDto, UserDto> {
   protected readonly logger = new Logger(UsersService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete User because it has associated: (especial manage).',
+  };
+
   constructor(
     protected readonly usersRepository: UsersRepository,
     protected readonly dtoValidator: DtoValidator,

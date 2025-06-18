@@ -1,4 +1,3 @@
-/* eslint-disable react/display-name */
 'use client'
 
 import { useMemo } from 'react'
@@ -17,7 +16,7 @@ import {
   RegionalCenterWithRelations,
   CreateRegionalCenterInput
 } from '@/modules/academic-management/academic-maintenance/types/regional-center'
-import { Status } from '@una-gc/database/prisma/generated/client'
+import { Status } from '@/shared/types/status'
 import { Badge, Button } from '@una-gc/ui/components'
 import { Building, Hash, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
@@ -152,7 +151,7 @@ export default function RegionalCentersCrud() {
 
   // Formulario con campos básicos y relación con campus
   const renderForm = useMemo(() => {
-    return ({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) => {
+    const FormComponent = ({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) => {
       return (
         <CrudFormAdapter
           control={control}
@@ -221,6 +220,8 @@ export default function RegionalCentersCrud() {
         />
       )
     }
+    FormComponent.displayName = 'RegionalCentersCrudForm'
+    return FormComponent
   }, [])
 
   const crudConfig = useMemo(

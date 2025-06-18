@@ -1,5 +1,6 @@
 import { memo } from 'react'
 import { RefreshCcw, AlertTriangle } from 'lucide-react'
+
 import { Button } from '@una-gc/ui/components/button'
 
 interface EmptyRoleStateProps {

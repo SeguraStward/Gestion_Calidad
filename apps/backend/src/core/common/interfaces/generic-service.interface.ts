@@ -14,4 +14,5 @@ export interface IGenericService<D, C = any, U = any> {
   save(payload: C): Promise<D>;
   update(id: string, payload: U): Promise<D>;
   deleteById(id: string): Promise<boolean>;
+  softDeleteById(id: string): Promise<D>;
 }

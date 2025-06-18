@@ -14,6 +14,11 @@ export class AcademicLoadGroupsService extends GenericService<
 > {
   protected readonly logger = new Logger(AcademicLoadGroupsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: ['academicLoads'],
+    errorMessage: 'Cannot delete AcademicLoadGroup because it has associated: academicLoads.',
+  };
+
   constructor(
     protected readonly academicLoadGroupsRepository: AcademicLoadGroupsRepository,
     protected readonly dtoValidator: DtoValidator,

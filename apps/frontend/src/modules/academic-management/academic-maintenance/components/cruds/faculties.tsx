@@ -1,5 +1,3 @@
-// Faculty CRUD datatable and form using form-adapter
-/* eslint-disable react/display-name */
 'use client'
 
 import { useMemo } from 'react'
@@ -14,7 +12,7 @@ import {
   useListFacultiesPaginated
 } from '@/modules/academic-management/academic-maintenance/hooks/useFaculty'
 import { FacultyWithRelations, CreateFacultyInput } from '@/modules/academic-management/academic-maintenance/types/faculty'
-import { Status } from '@una-gc/database/prisma/generated/client'
+import { Status } from '@/shared/types/status'
 import { Badge, Button } from '@una-gc/ui/components'
 import { GraduationCap, Hash, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
@@ -130,7 +128,7 @@ export default function FacultyCrud() {
 
   // Formulario con campos básicos
   const renderForm = useMemo(() => {
-    return ({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) => {
+    const FormComponent = ({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) => {
       return (
         <CrudFormAdapter
           control={control}
@@ -209,6 +207,8 @@ export default function FacultyCrud() {
         />
       )
     }
+    FormComponent.displayName = 'FacultyCrudForm'
+    return FormComponent
   }, [])
 
   // Adapter to match CrudModuleBase's expected useOneQuery signature

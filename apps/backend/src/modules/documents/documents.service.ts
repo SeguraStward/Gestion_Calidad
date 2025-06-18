@@ -10,6 +10,11 @@ import { DocumentsRepository } from './documents.repository';
 export class DocumentsService extends GenericService<Document, DocumentDto, DocumentDto> {
   protected readonly logger = new Logger(DocumentsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete Document because it has associated: none.',
+  };
+
   constructor(
     protected readonly documentsRepository: DocumentsRepository,
     protected readonly dtoValidator: DtoValidator,

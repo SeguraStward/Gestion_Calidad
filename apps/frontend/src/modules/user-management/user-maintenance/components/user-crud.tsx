@@ -7,7 +7,7 @@ import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
 import { usePaginatedUsers, useCreateUser, useUpdateUser, useDeleteUser, useUser } from '../hooks/useUserCrud'
 import { useActiveUserRolesFlat } from '../../user-roles/hooks/useUserRole'
 import type { UserWithRelations, CreateUserInput, UpdateUserInput } from '@/shared/types/user'
-import { UserCircle2, Mail, BadgeCheck, BadgeX, Phone, Hash, Pencil, Trash2, Loader2 } from 'lucide-react'
+import { UserCircle2, Mail, Phone, Pencil, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/app/(components)/ui/page-header'
 import { Badge, Button } from '@una-gc/ui/components'
 import { FormSelectMultiple } from '@/app/(components)/form/select-multiple'
@@ -34,11 +34,14 @@ export default function UserCrud() {
   // Obtener roles disponibles en el nivel superior del componente
   const { data: rolesData, isLoading: rolesLoading, error: rolesError } = useActiveUserRolesFlat()
 
-  const roleOptions =
-    rolesData?.map((role: any) => ({
-      id: role.id,
-      name: role.name
-    })) || []
+  const roleOptions = useMemo(
+    () =>
+      rolesData?.map((role: any) => ({
+        id: role.id,
+        name: role.name
+      })) || [],
+    [rolesData]
+  )
 
   // Debug logging para verificar que los roles se cargan correctamente
   console.log('🔍 UserCrud Debug:', {
@@ -142,6 +145,7 @@ export default function UserCrud() {
       ],
     []
   )
+
   // Formulario de usuario
   const renderForm = useMemo(() => {
     function UserCrudForm({ control, errors, editingItem, isUpdate, handleSubmitForm, handleCancel, isProcessing }: any) {
@@ -283,7 +287,7 @@ export default function UserCrud() {
                       />
                       {/* Debug info */}
                       <p className="text-xs text-gray-400 mt-1">
-                        {roleOptions.length} roles cargados: {roleOptions.map((r) => r.name).join(', ')}
+                        {roleOptions.length} roles cargados: {roleOptions.map((r: any) => r.name).join(', ')}
                       </p>
                     </div>
                   )
@@ -317,7 +321,7 @@ export default function UserCrud() {
     }
     UserCrudForm.displayName = 'UserCrudForm'
     return UserCrudForm
-  }, [])
+  }, [roleOptions, rolesLoading, rolesError])
 
   // Configuración del CRUD
   const crudConfig = useMemo(

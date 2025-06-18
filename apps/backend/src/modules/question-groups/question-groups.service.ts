@@ -10,6 +10,11 @@ import { QuestionGroupsRepository } from './question-groups.repository';
 export class QuestionGroupsService extends GenericService<QuestionGroup, QuestionGroupDto, QuestionGroupDto> {
   protected readonly logger = new Logger(QuestionGroupsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: ['questions'],
+    errorMessage: 'Cannot delete QuestionGroup because it has associated: questions.',
+  };
+
   constructor(
     protected readonly questionGroupsRepository: QuestionGroupsRepository,
     protected readonly dtoValidator: DtoValidator,

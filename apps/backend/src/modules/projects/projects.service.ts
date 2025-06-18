@@ -10,6 +10,11 @@ import { ProjectsRepository } from './projects.repository';
 export class ProjectsService extends GenericService<Project, ProjectDto, ProjectDto> {
   protected readonly logger = new Logger(ProjectsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: ['documents', 'reviews'],
+    errorMessage: 'Cannot delete Project because it has associated: documents, reviews.',
+  };
+
   constructor(
     protected readonly projectsRepository: ProjectsRepository,
     protected readonly dtoValidator: DtoValidator,

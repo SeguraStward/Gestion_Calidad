@@ -4,9 +4,9 @@ import { toast } from 'sonner'
 import axios, { AxiosError } from 'axios'
 
 import { AuthService } from '@/modules/auth/auth.service'
-import { CookieManager } from '@/utils/cookie-manager'
 import { useAsyncOperation } from '@/hooks/useAsyncOperation'
-import { Role } from '../interfaces'
+import { CookieManager } from '@/utils'
+import { Role } from '../types'
 
 export interface UseRoleSelectionReturn {
   // State
@@ -86,22 +86,18 @@ export function useRoleSelection(): UseRoleSelectionReturn {
         setRoles(result)
         setRetryCount(0)
 
-        // Auto-seleccionar si solo hay un rol disponible
         if (result.length === 1 && result[0]) {
           setSelectedRole(result[0])
         }
       } else if (error) {
-        // Solo mostrar el error, NO reintentos automáticos
         setRetryCount((prev) => prev + 1)
 
-        // Manejo de errores específicos para redirección
         if (error.includes('Token expirado') || error.includes('sesión ha expirado') || error.includes('401')) {
           toast.error(error)
           router.push('/auth/login')
           return
         }
 
-        // Para todos los demás errores, solo mostrar el mensaje
         toast.error(error)
       }
     },
@@ -123,7 +119,6 @@ export function useRoleSelection(): UseRoleSelectionReturn {
         throw new Error('No tienes roles asignados. Contacta al administrador.')
       }
 
-      // Map UserRolesResponse[] to Role[]
       return userRoles.map((role: any) => ({
         id: role.id,
         name: role.name,
@@ -136,7 +131,6 @@ export function useRoleSelection(): UseRoleSelectionReturn {
   }, [executeAsync, handleRolesResult])
 
   const retryFetchRoles = useCallback(() => {
-    // Reintento manual, sin límites automáticos
     fetchRoles()
   }, [fetchRoles])
 
@@ -169,14 +163,12 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     }
   }, [canSkip, router])
 
-  // Verificar si hay un rol activo al cargar el componente
   useEffect(() => {
     const hasRole = CookieManager.hasActiveRole()
     setHasActiveRole(hasRole)
     setCanSkip(hasRole)
   }, [])
 
-  // Cargar roles al montar el componente (solo una vez)
   useEffect(() => {
     let mounted = true
 
@@ -196,7 +188,6 @@ export function useRoleSelection(): UseRoleSelectionReturn {
             throw new Error('No tienes roles asignados. Contacta al administrador.')
           }
 
-          // Map UserRolesResponse[] to Role[]
           return userRoles.map((role: any) => ({
             id: role.id,
             name: role.name,

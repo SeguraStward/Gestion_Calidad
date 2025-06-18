@@ -10,6 +10,11 @@ import { CommSessionsRepository } from './comm-sessions.repository';
 export class CommSessionsService extends GenericService<CommSession, CommSessionDto, CommSessionDto> {
   protected readonly logger = new Logger(CommSessionsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: ['documents', 'sessionAttendance'],
+    errorMessage: 'Cannot delete CommSession because it has associated: documents, sessionAttendance.',
+  };
+
   constructor(
     protected readonly commSessionsRepository: CommSessionsRepository,
     protected readonly dtoValidator: DtoValidator,

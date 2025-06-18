@@ -35,7 +35,7 @@ model AcademicLoad {
   professorId String @db.ObjectId
   professor   User   @relation("ProfessorLoad", fields: [professorId], references: [id])
 
-  finalReport FinalReport[]
+  finalReports FinalReport[]
 
   // Audit fields
   createdAt DateTime @default(now())

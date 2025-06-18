@@ -1,5 +1,6 @@
 import { PermissionType, PermissionScope } from '@una-gc/database/prisma/generated/client'
 
+// special tytpe (modifiqueted)
 export type Permission = {
   id: string
   name: string
@@ -10,6 +11,7 @@ export type Permission = {
   scope: PermissionScope
 }
 
+// especial Role type (modifiqueted)
 export type Role = {
   id: string
   name: string
@@ -17,6 +19,7 @@ export type Role = {
   permissions: Permission[]
 }
 
+// reponde expected from the API
 export type UserRolesResponse = {
   data: Role[]
 }

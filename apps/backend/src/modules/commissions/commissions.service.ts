@@ -10,6 +10,11 @@ import { CommissionsRepository } from './commissions.repository';
 export class CommissionsService extends GenericService<Commission, CommissionDto, CommissionDto> {
   protected readonly logger = new Logger(CommissionsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: ['projects', 'reviews', 'sessions', 'members'],
+    errorMessage: 'Cannot delete Commission because it has associated: projects, reviews, sessions, members.',
+  };
+
   constructor(
     protected readonly commissionsRepository: CommissionsRepository,
     protected readonly dtoValidator: DtoValidator,

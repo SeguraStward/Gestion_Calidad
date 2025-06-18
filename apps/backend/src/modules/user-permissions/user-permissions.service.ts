@@ -14,6 +14,11 @@ export class UserPermissionsService extends GenericService<
 > {
   protected readonly logger = new Logger(UserPermissionsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete UserPermission because it has associated: none.',
+  };
+
   constructor(
     protected readonly userPermissionsRepository: UserPermissionsRepository,
     protected readonly dtoValidator: DtoValidator,

@@ -74,7 +74,6 @@ export function useListClassroomsFlat(
   })
 }
 
-
 export function useClassroom() {
   return useQuery({
     queryKey: ['classrooms', { status: 'ACTIVE', limit: 1000 }],

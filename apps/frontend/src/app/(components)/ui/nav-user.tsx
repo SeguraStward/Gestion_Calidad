@@ -1,6 +1,6 @@
 'use client'
 
-import { BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles } from 'lucide-react'
+import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from 'lucide-react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@una-gc/ui/components/avatar'
 import {
@@ -50,7 +50,7 @@ export function NavUser({
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
-      import('@/utils/cookie-manager').then(({ CookieManager }) => {
+      import('@/utils/cookie.manager').then(({ CookieManager }) => {
         CookieManager.deleteTokens()
       })
     }

@@ -116,11 +116,124 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
     }
   }
 
+  /*
+   * Optional configuration for relation checks before deletion.
+   * If defined, it will check for related records before allowing deletion.
+   * If any related records are found, it will throw an error with the specified message.
+   * This is useful for preventing accidental deletions of entities that have related records.
+   */
+  protected relationCheckConfig?: {
+    relationFields: string[];
+    errorMessage: string;
+  };
+
+  /*
+   * Deletes an entity by its ID after checking for related records.
+   * If the entity has related records in the specified relation fields, it will throw an error.
+   * If no related records are found, it will proceed with the deletion.
+   * @param id - The ID of the entity to delete.
+   * @returns A promise that resolves to true if the deletion was successful, or throws an error if not.
+   * @throws NotFoundException if the entity with the given ID does not exist.
+   * @throws Error if there are related records preventing deletion.
+   */
+  async deleteById(id: string): Promise<boolean> {
+    try {
+      // If relation check config is defined, perform checks
+      if (this.relationCheckConfig) {
+        const entity = await this.repository.findById(id);
+        if (!entity) {
+          throw new NotFoundException(`Entity with id ${id} not found`);
+        }
+
+        // Check each configured relation field
+        for (const relationField of this.relationCheckConfig.relationFields) {
+          // For array relationships
+          if (Array.isArray((entity as any)[relationField]) && (entity as any)[relationField].length > 0) {
+            this.logger.warn(
+              `Cannot delete entity with id ${id}: has ${(entity as any)[relationField].length} related ${relationField}`,
+            );
+            throw new Error(
+              this.relationCheckConfig.errorMessage ||
+                `Cannot delete: Entity has related ${relationField} records`,
+            );
+          }
+          // For single object relationships (if needed)
+          else if ((entity as any)[relationField] && typeof (entity as any)[relationField] === 'object') {
+            this.logger.warn(`Cannot delete entity with id ${id}: has related ${relationField}`);
+            throw new Error(
+              this.relationCheckConfig.errorMessage ||
+                `Cannot delete: Entity has a related ${relationField} record`,
+            );
+          }
+        }
+      }
+
+      return this.repository.deleteById(id);
+    } catch (error) {
+      this.logger.error(`Error deleting entity with id ${id}:`, error);
+      throw error;
+    }
+  }
+
   async delete(id: string) {
     return this.repository.deleteById(id);
   }
 
-  async deleteById(id: string) {
-    return this.repository.deleteById(id);
+  /**
+   * Returns the payload to use for soft deletion.
+   * Override this method in derived services to customize the soft delete behavior.
+   */
+  protected getSoftDeletePayload(): Partial<U> {
+    // Default implementation assumes a status field
+    return { status: 'INACTIVE' } as unknown as Partial<U>;
+  }
+
+  /**
+   * Performs a soft delete by updating the entity's status to inactive
+   * @param id - The ID of the entity to soft delete
+   * @returns The updated entity
+   */
+  async softDeleteById(id: string): Promise<D> {
+    try {
+      const entity = await this.repository.findById(id);
+      if (!entity) {
+        throw new NotFoundException(`Entity with id ${id} not found`);
+      }
+
+      // If relation check config is defined, perform checks
+      if (this.relationCheckConfig) {
+        // Check each configured relation field
+        for (const relationField of this.relationCheckConfig.relationFields) {
+          // For array relationships
+          if (Array.isArray((entity as any)[relationField]) && (entity as any)[relationField].length > 0) {
+            this.logger.warn(
+              `Cannot soft delete entity with id ${id}: has ${(entity as any)[relationField].length} related ${relationField}`,
+            );
+            throw new Error(
+              this.relationCheckConfig.errorMessage ||
+                `Cannot soft delete: Entity has related ${relationField} records`,
+            );
+          }
+          // For single object relationships
+          else if ((entity as any)[relationField] && typeof (entity as any)[relationField] === 'object') {
+            this.logger.warn(`Cannot soft delete entity with id ${id}: has related ${relationField}`);
+            throw new Error(
+              this.relationCheckConfig.errorMessage ||
+                `Cannot soft delete: Entity has a related ${relationField} record`,
+            );
+          }
+        }
+      }
+
+      // Get the soft delete payload from the derived class
+      const softDeletePayload = this.getSoftDeletePayload();
+
+      // Update the entity status
+      const result = await this.repository.update(id, softDeletePayload as U);
+      return this.transformDto(result);
+    } catch (error) {
+      this.logger.error(`Error soft deleting entity with id ${id}:`, error);
+      throw error;
+    }
   }
 }

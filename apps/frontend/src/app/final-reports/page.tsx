@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'; // Added useState
+import React, { useMemo, useState } from 'react' // Added useState
 import { useRouter } from 'next/navigation'
 import { ColumnDef, Row } from '@tanstack/react-table'
 import { Button } from '@una-gc/ui/components/button'
@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { DataTable } from '@/app/(components)/ui/data-table'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { pdf } from '@react-pdf/renderer';
+import { pdf } from '@react-pdf/renderer'
 
 import useDevStore from '@/store/devStore'
 import { useDeleteFinalReport, useFinalReportsByProfessor } from '@/modules/final-reports/service/final-reports.service'
@@ -32,11 +32,11 @@ const getStatusDisplayProperties = (statusValue: FinalReportStatusFE | undefined
 }
 
 export default function FinalReportsPage() {
-  const router = useRouter();
-  const mockProfessorId = useDevStore((state) => state.mockProfessorId);
-  console.log('[FinalReportsPage] mockProfessorId:', mockProfessorId); // DEBUG
+  const router = useRouter()
+  const mockProfessorId = useDevStore((state) => state.mockProfessorId)
+  console.log('[FinalReportsPage] mockProfessorId:', mockProfessorId) // DEBUG
 
-  const [isGeneratingPdfId, setIsGeneratingPdfId] = useState<string | null>(null);
+  const [isGeneratingPdfId, setIsGeneratingPdfId] = useState<string | null>(null)
 
   // Fetch final reports for the specific professor
   const {
@@ -46,61 +46,64 @@ export default function FinalReportsPage() {
     refetch
   } = useFinalReportsByProfessor(
     mockProfessorId,
-    { include: 'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus' },
+    {
+      include:
+        'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus'
+    },
     { enabled: !!mockProfessorId }
-  );
+  )
 
-  console.log('[FinalReportsPage] Raw paginatedFinalReports (should be object):', paginatedFinalReports); // DEBUG
+  console.log('[FinalReportsPage] Raw paginatedFinalReports (should be object):', paginatedFinalReports) // DEBUG
 
-  const finalReportsData: FullFinalReport[] = paginatedFinalReports?.data || []; // This will now correctly access the array
-  console.log('[FinalReportsPage] Data for table (finalReportsData):', finalReportsData); // DEBUG
+  const finalReportsData: FullFinalReport[] = paginatedFinalReports?.data || [] // This will now correctly access the array
+  console.log('[FinalReportsPage] Data for table (finalReportsData):', finalReportsData) // DEBUG
 
-  const deleteFinalReportMutation = useDeleteFinalReport();
+  const deleteFinalReportMutation = useDeleteFinalReport()
 
   const handleEdit = (id: string) => {
-    router.push(`/final-reports/edit/${id}`);
-  };
+    router.push(`/final-reports/edit/${id}`)
+  }
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteFinalReportMutation.mutateAsync(id);
+      await deleteFinalReportMutation.mutateAsync(id)
       // toast.success('Informe final eliminado.'); // Handled by useDeleteFinalReport hook
     } catch (err) {
-      console.error('Error deleting final report:', err);
+      console.error('Error deleting final report:', err)
       // toast.error('Error al eliminar el informe.'); // Handled by useDeleteFinalReport hook
     }
-  };
+  }
 
   const handleDownloadPdf = async (reportToDownload: FullFinalReport | undefined) => {
     if (!reportToDownload) {
-      toast.error('No se encontró el informe para generar el PDF.');
-      return;
+      toast.error('No se encontró el informe para generar el PDF.')
+      return
     }
-    setIsGeneratingPdfId(reportToDownload.id);
-    toast.info(`Generando PDF para NRC ${reportToDownload.academicLoad?.nrc || ''}... Por favor espere.`);
+    setIsGeneratingPdfId(reportToDownload.id)
+    toast.info(`Generando PDF para NRC ${reportToDownload.academicLoad?.nrc || ''}... Por favor espere.`)
 
     try {
-      const blob = await pdf(<FinalReportPDFDocument report={reportToDownload} />).toBlob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      const fileName = `InformeFinal-${reportToDownload.academicLoad?.nrc || reportToDownload.id}.pdf`;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      
+      const blob = await pdf(<FinalReportPDFDocument report={reportToDownload} />).toBlob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      const fileName = `InformeFinal-${reportToDownload.academicLoad?.nrc || reportToDownload.id}.pdf`
+      link.setAttribute('download', fileName)
+      document.body.appendChild(link)
+      link.click()
+
       // Clean up
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      toast.success(`PDF "${fileName}" descargado.`);
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      toast.success(`PDF "${fileName}" descargado.`)
     } catch (pdfError) {
-      console.error('Error generating PDF:', pdfError);
-      toast.error('Error al generar el PDF. Revise la consola para más detalles.');
+      console.error('Error generating PDF:', pdfError)
+      toast.error('Error al generar el PDF. Revise la consola para más detalles.')
     } finally {
-      setIsGeneratingPdfId(null);
+      setIsGeneratingPdfId(null)
     }
-  };
+  }
 
   const columns = useMemo<ColumnDef<FullFinalReport>[]>(
     () => [
@@ -145,12 +148,12 @@ export default function FinalReportsPage() {
         header: 'Estado Reporte',
         size: 150,
         cell: ({ row }) => {
-          const statusDisplay = getStatusDisplayProperties(row.original.status);
+          const statusDisplay = getStatusDisplayProperties(row.original.status)
           return (
             <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusDisplay.className}`}>
               {statusDisplay.text}
             </span>
-          );
+          )
         }
       },
       {
@@ -158,9 +161,9 @@ export default function FinalReportsPage() {
         header: () => <div className="text-right">Acciones</div>,
         size: 100,
         cell: ({ row }) => {
-          const report = row.original;
-          const isCurrentPdfGenerating = isGeneratingPdfId === report.id;
-          const isDeleting = deleteFinalReportMutation.isPending && deleteFinalReportMutation.variables === report.id;
+          const report = row.original
+          const isCurrentPdfGenerating = isGeneratingPdfId === report.id
+          const isDeleting = deleteFinalReportMutation.isPending && deleteFinalReportMutation.variables === report.id
 
           return (
             <div className="text-right">
@@ -177,8 +180,8 @@ export default function FinalReportsPage() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
                     onClick={(e) => {
-                      e.stopPropagation();
-                      handleEdit(report.id);
+                      e.stopPropagation()
+                      handleEdit(report.id)
                     }}
                     disabled={isCurrentPdfGenerating || isDeleting}
                   >
@@ -187,8 +190,8 @@ export default function FinalReportsPage() {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={(e) => {
-                      e.stopPropagation();
-                      handleDownloadPdf(report);
+                      e.stopPropagation()
+                      handleDownloadPdf(report)
                     }}
                     disabled={isCurrentPdfGenerating || isDeleting}
                   >
@@ -201,29 +204,25 @@ export default function FinalReportsPage() {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(report.id);
+                      e.stopPropagation()
+                      handleDelete(report.id)
                     }}
                     className="text-red-600 hover:!text-red-600 hover:!bg-red-100 dark:hover:!bg-red-900/50"
                     disabled={isDeleting || isCurrentPdfGenerating}
                   >
-                    {isDeleting ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="mr-2 h-4 w-4" />
-                    )}
+                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
                     Eliminar
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          );
+          )
         }
       }
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [deleteFinalReportMutation.isPending, deleteFinalReportMutation.variables, router, isGeneratingPdfId]
-  );
+  )
 
   const newReportButton = (
     <Button asChild>

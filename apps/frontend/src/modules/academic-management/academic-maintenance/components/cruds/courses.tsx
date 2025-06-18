@@ -13,7 +13,7 @@ import {
 } from '@/shared/hooks/useCourses'
 import { useListCareersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useCareer'
 import { CourseWithRelations, CreateCourseInput, StrictCreateCourseInput, StrictCreateCourseOutput } from '@/shared/types/course'
-import { Status } from '@una-gc/database/prisma/generated/client'
+import { Status } from '@/shared/types/status'
 import { Badge, Button } from '@una-gc/ui/components'
 import { Hash, BookUser, GraduationCap, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 
@@ -175,7 +175,7 @@ export default function CourseCrud() {
           )
         }
       ],
-    [careers]
+    []
   )
 
   // Form sections for create/edit

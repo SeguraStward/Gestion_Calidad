@@ -1,18 +1,18 @@
 import { Prisma } from '@una-gc/database/prisma/generated/client'
 
-// Type with all relations (AcademicLoad)
+// Type with all relations (academicLoads)
 export type GroupWithRelations = Prisma.AcademicLoadGroupGetPayload<{
   include: {
-    AcademicLoad: true
+    academicLoads: true
   }
 }>
 
 // Type for creating a Group (omit id, version, createdAt, updatedAt, and relations)
 export type CreateGroupInput = Omit<
   Prisma.AcademicLoadGroupCreateInput,
-  'id' | 'version' | 'createdAt' | 'updatedAt' | 'AcademicLoad'
+  'id' | 'version' | 'createdAt' | 'updatedAt' | 'academicLoads'
 > & {
-  AcademicLoad?: { connect: { id: string }[] }
+  academicLoads?: { connect: { id: string }[] }
 }
 
 // Type for updating a Group (partial of create)

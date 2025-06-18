@@ -10,6 +10,11 @@ import { ProjectLogsRepository } from './project-logs.repository';
 export class ProjectLogsService extends GenericService<ProjectLog, ProjectLogDto, ProjectLogDto> {
   protected readonly logger = new Logger(ProjectLogsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete ProjectLog because it has associated: none.',
+  };
+
   constructor(
     protected readonly projectLogsRepository: ProjectLogsRepository,
     protected readonly dtoValidator: DtoValidator,

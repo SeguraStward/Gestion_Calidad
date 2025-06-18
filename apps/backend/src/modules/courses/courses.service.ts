@@ -10,6 +10,11 @@ import { CoursesRepository } from './courses.repository';
 export class CoursesService extends GenericService<Course, CourseDto, CourseDto> {
   protected readonly logger = new Logger(CoursesService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: ['academicLoads'],
+    errorMessage: 'Cannot delete Course because it has associated: academicLoads.',
+  };
+
   constructor(
     protected readonly coursesRepository: CoursesRepository,
     protected readonly dtoValidator: DtoValidator,

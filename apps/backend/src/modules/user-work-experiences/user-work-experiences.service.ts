@@ -14,6 +14,11 @@ export class UserWorkExperiencesService extends GenericService<
 > {
   protected readonly logger = new Logger(UserWorkExperiencesService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete UserWorkExperience because it has associated: none.',
+  };
+
   constructor(
     protected readonly userWorkExperiencesRepository: UserWorkExperiencesRepository,
     protected readonly dtoValidator: DtoValidator,

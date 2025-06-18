@@ -1,9 +1,11 @@
-import { memo } from 'react'
 import { Shield } from 'lucide-react'
+import { memo } from 'react'
+
 import { RadioGroupItem } from '@una-gc/ui/components/radio-group'
 import { Label } from '@una-gc/ui/components/label'
 import { cn } from '@una-gc/ui/lib/utils'
-import { Role } from '../interfaces'
+
+import { Role } from '../types'
 
 interface RoleCardProps {
   role: Role
@@ -13,8 +15,6 @@ interface RoleCardProps {
 }
 
 export const RoleCard = memo(function RoleCard({ role, isSelected, index, totalRoles }: RoleCardProps) {
-  const permissionCount = role.permissions?.length || 0
-
   return (
     <div
       className={cn(

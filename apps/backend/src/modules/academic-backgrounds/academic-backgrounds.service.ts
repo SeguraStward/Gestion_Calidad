@@ -14,6 +14,11 @@ export class AcademicBackgroundsService extends GenericService<
 > {
   protected readonly logger = new Logger(AcademicBackgroundsService.name);
 
+  protected readonly relationCheckConfig = {
+    relationFields: [''],
+    errorMessage: 'Cannot delete AcademicBackground because it has associated: none.',
+  };
+
   constructor(
     protected readonly academicBackgroundsRepository: AcademicBackgroundsRepository,
     protected readonly dtoValidator: DtoValidator,

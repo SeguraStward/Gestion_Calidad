@@ -16,8 +16,8 @@ model Commission {
   coordinator    User?          @relation("CommissionCoordinator", fields: [coordinatorId], references: [id])
   regionalCenter RegionalCenter @relation(fields: [regionalCenterId], references: [id])
 
-  project  Project[]
-  review   ProjectReview[]
+  projects Project[]
+  reviews  ProjectReview[]
   sessions CommSession[]
   members  CommMember[]
 

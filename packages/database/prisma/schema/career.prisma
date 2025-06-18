@@ -12,10 +12,9 @@ model Career {
   status Status @default(ACTIVE)
 
   // Relations
-  school  School   @relation(fields: [schoolId], references: [id])
-  courses Course[]
+  school School @relation(fields: [schoolId], references: [id])
 
-  // Inverse relation with TFG projects
+  courses  Course[]
   projects Project[]
 
   // Audit fields
