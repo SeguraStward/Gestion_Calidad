@@ -602,30 +602,16 @@ export default function EditFinalReportPage() {
       />
       <main className="flex-grow flex flex-col items-center overflow-hidden pt-2 pb-6 md:pt-4">
         <Card className="shadow-lg border-border/50 w-full max-w-5xl flex flex-col flex-grow overflow-hidden rounded-lg">
-          <CardContent className="flex-grow overflow-y-auto p-0">
-            {' '}
-            {/* p-0 para que los forms internos manejen su padding */}
-            {/* Sidebar de Pasos (opcional, si lo quieres replicar exactamente) */}
-            {/* Si no necesitas el sidebar de pasos aquí, puedes omitir esta parte
-                y renderizar directamente el contenido del formulario.
-                Si lo quieres, copia la estructura de <aside> y <main> de new/page.tsx
-                y ajusta el renderCurrentStepForm para que se coloque en el <main> correcto.
-                Por simplicidad, aquí solo renderizaré el formulario directamente.
-            */}
-            {/* Contenido del Formulario del Paso Actual */}
-            {/* Aplicar padding aquí si los forms internos no lo tienen, o en los forms */}
-            <div className="p-4 md:p-6 lg:p-8 relative h-full">
-              {' '}
-              {/* Añadido h-full y padding */}
+          <CardContent className="flex-grow overflow-y-auto p-0"> 
+            <div className="p-4 md:p-6 lg:p-8 relative h-full"> 
               {isUpdatingReport && (
                 <div className="absolute inset-0 bg-white/80 dark:bg-black/80 flex justify-center items-center z-50 rounded-lg">
                   <Loader2 className="h-10 w-10 animate-spin text-primary" />
                   <p className="ml-3 text-lg">Guardando informe...</p>
                 </div>
               )}
-              <div className={`${isUpdatingReport ? 'opacity-50 pointer-events-none' : ''} h-full`}>
-                {' '}
-                {/* Añadido h-full */}
+              <div className={`${isUpdatingReport ? 'opacity-50 pointer-events-none' : ''} flex-l`}>
+                {' '} 
                 {renderCurrentStepForm()}
               </div>
             </div>

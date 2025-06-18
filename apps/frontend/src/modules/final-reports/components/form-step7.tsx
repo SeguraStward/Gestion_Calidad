@@ -108,13 +108,7 @@ export function Step7Form({
   }, [reportType])
 
   useEffect(() => {
-    // Evitar JSON.stringify si initialData podría ser complejo o tener referencias circulares.
-    // Simplemente registra si existe o no, o propiedades específicas si es necesario.
-    console.log(`[Step7Form] useEffect triggered. Has initialData: ${!!initialData}, isEditing: ${isEditing}`)
-    // Si necesitas ver el contenido y sospechas de circularidad, puedes intentar serializar partes específicas
-    // o usar una librería para serialización segura si es absolutamente necesario para depurar.
-    // if (initialData) { console.log('[Step7Form] initialData.respuestasRadio:', initialData.respuestasRadio); }
-
+   
     const defaultFormValuesBasedOnCurrentQuestions = {
       respuestasRadio: flatDisplayedQuestionList.map((q) => ({
         idPregunta: q.questionId,
@@ -141,53 +135,49 @@ export function Step7Form({
   }
 
   const handleFormSubmitError = (errorsFromSubmitHandler: any) => {
-    console.error('[Step7Form] Validation Errors on Submit:', errorsFromSubmitHandler)
-    console.error('[Step7Form] formState.errors on Submit:', formState.errors)
+    // Validation errors are now displayed in the UI via FormMessage components.
   }
 
   const handlePreviousClick = () => {
     const currentData = getValues()
-    console.log('[Step7Form] Going back, saving data:', currentData)
     onPrevious(currentData) // Pasa los datos al padre
   }
 
   return (
-    <FormProvider {...formMethods}>
-      <Form {...formMethods}>
-        <form onSubmit={handleSubmit(handleFormSubmitSuccess, handleFormSubmitError)} className="flex flex-col h-full">
-          <Card className="flex flex-col flex-1 min-h-0">
-            <CardHeader className="py-2.5 px-3 sm:px-4 md:py-3 md:px-5">
-              <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-base sm:text-md md:text-lg">
-                <Activity className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 text-foreground/70" />
-                Paso {totalSteps > 0 ? `7 de ${totalSteps}: ` : ''}
-                Percepción General y Desempeño
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm pt-0.5">
-                Evalúe su percepción sobre los aspectos del curso y desempeño estudiantil. ({flatDisplayedQuestionList.length}{' '}
-                pregunta{flatDisplayedQuestionList.length !== 1 ? 's' : ''})
-              </CardDescription>
-            </CardHeader>
+    <div className="flex flex-col">
+      
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold flex items-center gap-3">
+          <Activity className="w-5 h-5 text-foreground/70" />
+          Paso {totalSteps > 0 ? `7 de ${totalSteps}: ` : ''} Percepción General y Desempeño
+        </h2>
+        <p className="text-muted-foreground text-sm mt-1">
+          Evalúe su percepción sobre los aspectos del curso y desempeño estudiantil. ({flatDisplayedQuestionList.length}{' '}
+          pregunta{flatDisplayedQuestionList.length !== 1 ? 's' : ''})
+        </p>
+      </div>
 
-            {/* General Form Error Message for array-level validation */}
-            {formState.errors.respuestasRadio?.root?.message && (
-              <div className="mx-3 sm:mx-4 md:mx-5 mb-2 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
-                <AlertTriangle className="mr-2 h-5 w-5 flex-shrink-0" />
-                <span>{formState.errors.respuestasRadio.root.message}</span>
-              </div>
-            )}
-            {/* Error a nivel de raíz del formulario si el path del refine fuera [] */}
-            {formState.errors.root?.message && (
-              <div className="mx-3 sm:mx-4 md:mx-5 mb-2 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
-                <AlertTriangle className="mr-2 h-5 w-5 flex-shrink-0" />
-                <span>{formState.errors.root.message}</span>
-              </div>
-            )}
+      {/* General Form Error Message */}
+      {formState.errors.respuestasRadio?.root?.message && (
+        <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
+          <AlertTriangle className="mr-2 h-5 w-5 flex-shrink-0" />
+          <span>{formState.errors.respuestasRadio.root.message}</span>
+        </div>
+      )}
+      {formState.errors.root?.message && (
+        <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
+          <AlertTriangle className="mr-2 h-5 w-5 flex-shrink-0" />
+          <span>{formState.errors.root.message}</span>
+        </div>
+      )}
 
-            <CardContent className="flex-1 overflow-y-auto p-2 sm:p-2.5 md:p-3 space-y-2 sm:space-y-2.5 md:space-y-3">
+      <FormProvider {...formMethods}>
+        <Form {...formMethods}>
+          <form onSubmit={handleSubmit(handleFormSubmitSuccess, handleFormSubmitError)} className="flex-1 flex flex-col min-h-0">
+            {/* Scrollable Questions Area */}
+            <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-2 sm:space-y-2.5 md:space-y-3">
               {flatDisplayedQuestionList.length === 0 ? (
                 <div className="text-center py-4 sm:py-5 text-muted-foreground flex flex-col items-center justify-center h-full">
-                  {' '}
-                  {/* ADDED: flex flex-col items-center justify-center h-full for better centering */}
                   <Activity className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 mx-auto mb-1 sm:mb-1.5 md:mb-2 opacity-50" />
                   <p className="text-xs sm:text-sm">No hay preguntas disponibles</p>
                   <p className="text-xs sm:text-sm">para este tipo de informe o configuración.</p>
@@ -226,7 +216,7 @@ export function Step7Form({
                                       <RadioGroup
                                         onValueChange={field.onChange}
                                         value={field.value || ''}
-                                        className="flex flex-wrap items-center gap-5 sm:gap-15" // This already provides good balance and wrapping. Add justify-center if you want options centered when they don't fill width.
+                                        className="flex flex-wrap items-center gap-2 sm:gap-3" // CORREGIDO: El gap era excesivo (sm:gap-15)
                                       >
                                         {questionItem.options.map((optionItem: OptionFE) => {
                                           const isSelected = currentRadioValue === optionItem.value
@@ -275,14 +265,13 @@ export function Step7Form({
                   </div>
                 ))
               )}
-            </CardContent>
-
-            <CardFooter className="flex justify-between py-2.5 px-3 sm:px-4 md:py-3 md:px-5">
-              {/* User-facing: Spanish */}
+            </div>
+            {/* Navigation Buttons (Stays Visible at the bottom) */}
+            <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
               <Button
                 type="button"
                 variant="outline"
-                onClick={handlePreviousClick} // MODIFICADO
+                onClick={handlePreviousClick}
                 className="px-6 py-2 text-sm shadow-sm"
                 disabled={isSubmitting}
               >
@@ -295,10 +284,10 @@ export function Step7Form({
               >
                 {isSubmitting ? 'Finalizando...' : 'Finalizar Informe'}
               </Button>
-            </CardFooter>
-          </Card>
-        </form>
-      </Form>
-    </FormProvider>
+            </div>
+          </form>
+        </Form>
+      </FormProvider>
+    </div>
   )
 }

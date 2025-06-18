@@ -148,7 +148,7 @@ export function Step6EditForm({
   }
 
   const handleFormSubmitError = (errors: any) => {
-    console.error('Step 6 Edit Form Validation Errors:', errors)
+    // Errors are handled by displaying messages in the UI
   }
   const handlePreviousClick = () => {
     if (onPrevious) {
@@ -196,10 +196,10 @@ export function Step6EditForm({
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={handleSubmit(onSaveAndNext, handleFormSubmitError)} className="flex-1 flex flex-col min-h-0 space-y-0">
-            <div className="flex-1 overflow-y-auto pr-1 pb-4">
-              <Card className="h-full flex flex-col">
-                {/* CardHeader for toolsQuestion - ADDED to match form-step6.tsx */}
+          <form onSubmit={handleSubmit(onSaveAndNext, handleFormSubmitError)} className="flex-1 flex flex-col min-h-0">
+            {/* Scrollable content area */}
+            <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-6">
+              <Card>
                 <CardHeader className="py-4 px-6">
                   {toolsQuestion && (
                     <div>
@@ -210,10 +210,9 @@ export function Step6EditForm({
                     </div>
                   )}
                 </CardHeader>
-                <CardContent className="flex-1 space-y-4 p-4 md:px-6 md:pb-6">
+                <CardContent className="p-4 md:px-6 md:pb-6">
                   <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1 space-y-1.5">
-                      {/* FormLabel for "No usadas" - MODIFIED */}
                       <FormLabel className="block font-medium text-sm">
                         Herramientas no usadas ({availableOptions.length})
                       </FormLabel>
@@ -239,7 +238,6 @@ export function Step6EditForm({
                     </div>
 
                     <div className="flex-1 space-y-1.5">
-                      {/* FormLabel for "Usadas" - MODIFIED */}
                       <FormLabel className="block font-medium text-sm">
                         Herramientas usadas ({usedOptionsMapped.length})
                       </FormLabel>
@@ -264,37 +262,38 @@ export function Step6EditForm({
                       </div>
                     </div>
                   </div>
-                  <FormField
-                    control={control}
-                    name="otrasHerramientas"
-                    render={({ field }) => (
-                      <FormItem className="mt-3">
-                        <FormLabel className="text-sm font-medium">
-                          Otras herramientas o metodologías utilizadas (opcional)
-                        </FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Si utilizó otras no listadas, descríbalas aquí..."
-                            {...field}
-                            className="min-h-[70px] text-sm bg-background/60"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
                 </CardContent>
               </Card>
+
+              <FormField
+                control={control}
+                name="otrasHerramientas"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base font-semibold">
+                      Otras herramientas o metodologías utilizadas (opcional)
+                    </FormLabel>
+                    <p className="text-sm text-muted-foreground mt-0.5">Si utilizó otras no listadas, descríbalas aquí.</p>
+                    <FormControl className="pt-1">
+                      <Textarea
+                        placeholder="Ej: Kahoot, Socrative, metodologías activas..."
+                        {...field}
+                        className="min-h-[80px] text-sm bg-background/60"
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
             </div>
 
+            {/* Navigation Buttons */}
             <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
-              {/* MODIFIED: Ensure onPrevious is called correctly if it exists */}
               <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8 shadow-sm">
                 Anterior
               </Button>
               <Button type="submit" className="px-8 shadow-sm">
-                {/* Assuming "Guardar Cambios" or similar for edit mode */}
-                Guardar Cambios
+                 Siguiente
               </Button>
             </div>
           </form>

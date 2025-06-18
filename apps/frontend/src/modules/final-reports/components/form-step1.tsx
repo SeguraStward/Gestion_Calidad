@@ -81,13 +81,11 @@ interface Step1FormProps {
 
   initialData?: Step1FormData | null
   onCancel?: () => void
-  onPrevious?: () => void // Add this new optional prop
 }
 
 export function Step1Form({
   formMethods,
   onSaveAndNext,
-  onPrevious,
   totalSteps,
   isEditing = false,
   initialData = null,
@@ -236,7 +234,7 @@ export function Step1Form({
   }
 
   return (
-    <div className="p-4 md:p-6 h-full flex flex-col">
+    <div className="h-full flex flex-col">
       <div className="mb-4 md:mb-6">
         <h2 className="text-xl font-semibold">
           {isEditing ? 'Información del Curso (Edición)' : `Paso 1 de ${totalSteps}: Información del Curso`}
@@ -250,8 +248,9 @@ export function Step1Form({
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={handleSubmit(onSubmitHandler)} className="flex-1 flex flex-col space-y-4">
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 overflow-y-auto pr-2">
+          <form onSubmit={handleSubmit(onSubmitHandler)} className="flex-1 flex flex-col">
+            {/* The content should not scroll on its own. The parent container will handle it. */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
               {/* Section 1: Selección de Curso */}
               <div className="space-y-4 border border-border/20 p-4 rounded-lg bg-card/50">
                 <h3 className="text-base font-medium">Selección de Curso</h3>
@@ -397,16 +396,10 @@ export function Step1Form({
             {/* Standardized Navigation Buttons Container */}
             <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
               <div>
-                {' '}
-                {/* Wrapper for optional cancel/previous button */}
-                {onCancel && !isEditing && (
+                {/* Wrapper for optional cancel button */}
+                {onCancel && (
                   <Button type="button" variant="outline" onClick={onCancel} className="px-8">
                     Cancelar
-                  </Button>
-                )}
-                {onPrevious && ( // Show Previous if onPrevious is provided (can be create or edit mode)
-                  <Button type="button" variant="outline" onClick={onPrevious} className="px-8">
-                    Anterior
                   </Button>
                 )}
               </div>

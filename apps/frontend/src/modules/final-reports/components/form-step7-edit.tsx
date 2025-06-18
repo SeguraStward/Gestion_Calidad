@@ -124,7 +124,6 @@ export function Step7EditForm({
 
   // Función para manejar errores de validación
   const handleValidationErrors = (errors: any) => {
-    console.error('[Step7EditForm] Errores de validación del formulario:', JSON.stringify(errors, null, 2))
     toast.error('Por favor, corrija los errores en el formulario del Paso 7.')
   }
 
@@ -150,23 +149,25 @@ export function Step7EditForm({
   }
 
   return (
-    <FormProvider {...formMethods}>
-      <Form {...formMethods}>
-        <form onSubmit={handleSubmit(localSubmitAndFinalize, handleValidationErrors)} className="flex flex-col h-full">
-          <Card className="flex flex-col flex-1 min-h-0">
-            <CardHeader className="py-2.5 px-3 sm:px-4 md:py-3 md:px-5">
-              <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-base sm:text-md md:text-lg">
-                <Activity className="w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 text-foreground/70" />
-                Paso {totalSteps > 0 ? `7 de ${totalSteps}: ` : ''}
-                Percepción General y Desempeño (Editando)
-              </CardTitle>
-              <CardDescription className="text-xs sm:text-sm pt-0.5">
-                Modifique su percepción sobre los aspectos del curso y desempeño estudiantil. ({todasLasPreguntasFiltradas.length}{' '}
-                pregunta{todasLasPreguntasFiltradas.length !== 1 ? 's' : ''})
-              </CardDescription>
-            </CardHeader>
+    <div className="flex flex-col">
+      {/* Header Section (Stays Visible) */}
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold flex items-center gap-3">
+          <Activity className="w-5 h-5 text-foreground/70" />
+          Paso {totalSteps > 0 ? `7 de ${totalSteps}: ` : ''}
+          Percepción General y Desempeño (Editando)
+        </h2>
+        <p className="text-muted-foreground text-sm mt-1">
+          Modifique su percepción sobre los aspectos del curso y desempeño estudiantil. ({todasLasPreguntasFiltradas.length}{' '}
+          pregunta{todasLasPreguntasFiltradas.length !== 1 ? 's' : ''})
+        </p>
+      </div>
 
-            <CardContent className="flex-1 overflow-y-auto p-2 sm:p-2.5 md:p-3 space-y-2 sm:space-y-2.5 md:space-y-3">
+      <FormProvider {...formMethods}>
+        <Form {...formMethods}>
+          <form onSubmit={handleSubmit(localSubmitAndFinalize, handleValidationErrors)} className="flex-1 flex flex-col min-h-0">
+            {/* Scrollable Questions Area */}
+            <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-2 sm:space-y-2.5 md:space-y-3">
               {todasLasPreguntasFiltradas.length === 0 ? (
                 <div className="text-center py-4 sm:py-5 text-muted-foreground">
                   <Activity className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 mx-auto mb-1 sm:mb-1.5 md:mb-2 opacity-50" />
@@ -204,7 +205,7 @@ export function Step7EditForm({
                                       <RadioGroup
                                         onValueChange={field.onChange}
                                         value={field.value || ''}
-                                        className="flex flex-wrap items-center gap-1.5 sm:gap-2"
+                                        className="flex flex-wrap items-center gap-2 sm:gap-3" // AJUSTADO: Para consistencia
                                       >
                                         {pregunta.options?.map((opcion) => {
                                           const isSelected = currentValue === opcion.value
@@ -251,9 +252,10 @@ export function Step7EditForm({
                   </div>
                 ))
               )}
-            </CardContent>
+            </div>
 
-            <CardFooter className="flex justify-between py-2.5 px-3 sm:px-4 md:py-3 md:px-5 mt-auto border-t">
+            {/* Navigation Buttons (Stays Visible at the bottom) */}
+            <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
               {onPrevious && (
                 <Button
                   type="button"
@@ -267,10 +269,10 @@ export function Step7EditForm({
               <Button type="submit" className="px-6 py-2 text-sm shadow-sm">
                 Guardar y Finalizar Informe
               </Button>
-            </CardFooter>
-          </Card>
-        </form>
-      </Form>
-    </FormProvider>
+            </div>
+          </form>
+        </Form>
+      </FormProvider>
+    </div>
   )
 }

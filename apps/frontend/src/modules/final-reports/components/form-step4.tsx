@@ -121,9 +121,9 @@ export function Step4Form({
       </div>
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col space-y-4">
+          <form onSubmit={handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col min-h-0">
             {/* Scrollable content area for the student list card */}
-            <div className="flex-1 space-y-3 md:space-y-4 overflow-y-auto pr-2">
+            <div className="flex-1 space-y-3 md:space-y-4 overflow-y-auto pr-2 pb-4">
               <Card className="border-primary/20 bg-primary/5 h-fit">
                 <CardHeader className="pb-3 pt-4 px-4 md:px-6">
                   {' '}

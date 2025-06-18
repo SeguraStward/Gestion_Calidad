@@ -166,7 +166,7 @@ export function Step5EditForm({
                 </Button>
               )}
               <Button type="submit" className="px-8 shadow-sm">
-                {isEditing ? 'Guardar Cambios' : 'Siguiente'}
+                Siguiente
               </Button>
             </div>
           </form>

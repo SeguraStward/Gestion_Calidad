@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent } from '@una-gc/ui/components/card'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 
 // Import step components and their schemas/types
 import { Step1Form, step1Schema, Step1FormData } from '@/modules/final-reports/components/form-step1'
@@ -375,6 +376,94 @@ export default function NewFinalReportPage() {
     setCurrentStep((prev) => Math.max(1, prev - 1))
   }
 
+  const renderCurrentStepForm = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <Step1Form
+            formMethods={formStep1Methods}
+            onSaveAndNext={handleSaveStep1Data}
+            totalSteps={TOTAL_STEPS}
+            onCancel={() => router.push('/final-reports')}
+            initialData={step1Data}
+            isEditing={false}
+          />
+        )
+      case 2:
+        return (
+          <Step2Form
+            formMethods={formStep2Methods}
+            onSaveAndNext={handleSaveStep2Data}
+            onPrevious={(data) => handlePreviousStep(data)}
+            totalSteps={TOTAL_STEPS}
+            initialData={step2Data}
+            isEditing={false}
+            enrolledCapacity={step1Data?.enrolledCapacity}
+          />
+        )
+      case 3:
+        return (
+          <Step3Form
+            formMethods={formStep3Methods}
+            onSaveAndNext={handleSaveStep3Data}
+            onPrevious={(data) => handlePreviousStep(data)}
+            totalSteps={TOTAL_STEPS}
+            reportType={reportType}
+            initialData={step3Data}
+            isEditing={false}
+          />
+        )
+      case 4:
+        return (
+          <Step4Form
+            formMethods={formStep4Methods}
+            onSaveAndNext={handleSaveStep4Data}
+            onPrevious={(data) => handlePreviousStep(data)}
+            totalSteps={TOTAL_STEPS}
+            initialData={step4Data}
+            isEditing={false}
+          />
+        )
+      case 5:
+        return (
+          <Step5Form
+            formMethods={formStep5Methods}
+            onSaveAndNext={handleSaveStep5Data}
+            onPrevious={(data) => handlePreviousStep(data)}
+            totalSteps={TOTAL_STEPS}
+            initialData={step5Data}
+            isEditing={false}
+          />
+        )
+      case 6:
+        return (
+          <Step6Form
+            formMethods={formStep6Methods}
+            onSaveAndNext={handleSaveStep6Data}
+            onPrevious={(data) => handlePreviousStep(data)}
+            totalSteps={TOTAL_STEPS}
+            initialData={step6Data}
+            isEditing={false}
+          />
+        )
+      case 7:
+        return (
+          <Step7Form
+            formMethods={formStep7Methods}
+            onSaveAndNext={handleSaveStep7Data}
+            onPrevious={(data) => handlePreviousStep(data)}
+            totalSteps={TOTAL_STEPS}
+            reportType={reportType}
+            isSubmitting={createFinalReportMutation.isPending}
+            initialData={step7Data}
+            isEditing={false}
+          />
+        )
+      default:
+        return <div>Paso desconocido</div>
+    }
+  }
+
   return (
     <div className="container mx-auto flex flex-col h-screen max-h-screen overflow-hidden">
       <ReportPageHeader
@@ -382,87 +471,23 @@ export default function NewFinalReportPage() {
         pageDescription="Complete todos los pasos para crear el informe final del curso"
         stepLabels={STEP_LABELS_SPANISH}
         currentStep={currentStep}
-        // ADDED: backButton prop to navigate to the reports list
         backButton={{ href: '/final-reports', text: 'Volver a la Lista de Informes' }}
-        // You can also pass the nrc if available and desired, like in the edit page
-        // nrc={step1Data?.nrc} // Uncomment and ensure step1Data is available if you want to show NRC
+        nrc={step1Data?.nrc}
       />
       <main className="flex-grow flex flex-col items-center overflow-hidden pt-2 pb-6 md:pt-4">
         <Card className="shadow-lg border-border/50 w-full max-w-5xl flex flex-col flex-grow overflow-hidden rounded-lg">
           <CardContent className="flex-grow overflow-y-auto p-0">
-            {currentStep === 1 && (
-              <Step1Form
-                formMethods={formStep1Methods}
-                onSaveAndNext={handleSaveStep1Data}
-                totalSteps={TOTAL_STEPS}
-                onCancel={() => router.push('/final-reports')} // This onCancel is specific to Step1Form
-                initialData={step1Data}
-                isEditing={false}
-              />
-            )}
-            {currentStep === 2 && (
-              <Step2Form
-                formMethods={formStep2Methods}
-                onSaveAndNext={handleSaveStep2Data}
-                onPrevious={(data) => handlePreviousStep(data)} // PASAR DATOS
-                totalSteps={TOTAL_STEPS}
-                initialData={step2Data}
-                isEditing={false}
-              />
-            )}
-            {currentStep === 3 && (
-              <Step3Form
-                formMethods={formStep3Methods}
-                onSaveAndNext={handleSaveStep3Data}
-                onPrevious={(data) => handlePreviousStep(data)} // PASAR DATOS
-                totalSteps={TOTAL_STEPS}
-                reportType={reportType}
-                initialData={step3Data}
-                isEditing={false}
-              />
-            )}
-            {currentStep === 4 && (
-              <Step4Form
-                formMethods={formStep4Methods}
-                onSaveAndNext={handleSaveStep4Data}
-                onPrevious={(data) => handlePreviousStep(data)} // PASAR DATOS
-                totalSteps={TOTAL_STEPS}
-                initialData={step4Data}
-                isEditing={false}
-              />
-            )}
-            {currentStep === 5 && (
-              <Step5Form
-                formMethods={formStep5Methods}
-                onSaveAndNext={handleSaveStep5Data}
-                onPrevious={(data) => handlePreviousStep(data)} // PASAR DATOS
-                totalSteps={TOTAL_STEPS}
-                initialData={step5Data}
-                isEditing={false} // Asegúrate que isEditing se pasa
-              />
-            )}
-            {currentStep === 6 && (
-              <Step6Form
-                formMethods={formStep6Methods}
-                onSaveAndNext={handleSaveStep6Data}
-                onPrevious={(data) => handlePreviousStep(data)} // PASAR DATOS
-                totalSteps={TOTAL_STEPS}
-                initialData={step6Data}
-                isEditing={false} // Asegúrate que isEditing se pasa
-              />
-            )}
-            {currentStep === 7 && (
-              <Step7Form
-                formMethods={formStep7Methods}
-                onSaveAndNext={handleSaveStep7Data}
-                onPrevious={(data) => handlePreviousStep(data)} // PASAR DATOS
-                totalSteps={TOTAL_STEPS}
-                reportType={reportType}
-                isSubmitting={createFinalReportMutation.isPending}
-                initialData={step7Data}
-                isEditing={false} // Asegúrate que isEditing se pasa
-              />
-            )}
+            <div className="p-4 md:p-6 lg:p-8 relative h-full">
+              {createFinalReportMutation.isPending && (
+                <div className="absolute inset-0 bg-white/80 dark:bg-black/80 flex justify-center items-center z-50 rounded-lg">
+                  <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                  <p className="ml-3 text-lg">Creando informe...</p>
+                </div>
+              )}
+              <div className={`${createFinalReportMutation.isPending ? 'opacity-50 pointer-events-none' : ''} flex-l`}>
+                {renderCurrentStepForm()}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </main>
