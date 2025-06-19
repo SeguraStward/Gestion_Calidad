@@ -16,7 +16,8 @@ import {
   Languages,
   Map,
   PieChart,
-  Users
+  Users,
+  FolderSearch
 } from 'lucide-react'
 import { NavMain } from './nav-main'
 import { NavUser } from './nav-user'
@@ -94,6 +95,16 @@ const data = {
       url: '/final-report',
       icon: FileText,
       items: [{ title: 'Lista de Informes', url: '/final-reports' }]
+    },
+    {
+      title: 'Evidencias SINAES',
+      url: '/evidence-management',
+      icon: FolderSearch,
+      items: [
+        { title: 'Gestión de Evidencias', url: '/evidence-management' },
+        { title: 'Subir Evidencia', url: '/evidence-management/upload' },
+        { title: 'Configuración', url: '/evidence-management/settings' }
+      ]
     },
     /*{
       title: 'Modelos SINAES',
