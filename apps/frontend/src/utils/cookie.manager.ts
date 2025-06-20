@@ -1,7 +1,8 @@
 import { getCookie, setCookie, deleteCookie } from 'cookies-next'
 
 import { Role } from '@/modules/auth/types'
-import { SessionStorageManager, Logger, toSeconds } from '.'
+import { SessionStorageManager, Logger } from '.'
+import { toSeconds } from './time'   
 
 /**
  * Utility class for managing authentication and role-related cookies in the frontend application.
@@ -22,7 +23,7 @@ export class CookieManager {
 
   // TODO env variable for cookie expiration base on jwt expiration
   private static readonly COOKIE_OPTIONS = {
-    maxAge: toSeconds('10h'),
+    maxAge: toSeconds('10m'),
     secure: process.env.NODE_ENV == 'production',
     sameSite: 'lax' as const
   }

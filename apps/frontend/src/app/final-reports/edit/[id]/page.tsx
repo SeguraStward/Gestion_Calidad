@@ -318,17 +318,17 @@ export default function EditFinalReportPage() {
           options: [], // Las preguntas de texto no tienen opciones predefinidas aquí
           multipleResponse: []
         })) || []),
-        ...(step6Data?.respuestasMultiples.flatMap((rm) => {
+        ...(step6Data?.respuestasMultiples.map((rm) => {
           const questionDetails = step6QuestionsPageMock.find((q) => q.questionId === rm.idPregunta)
-          return rm.respuestasSeleccionadas.map((sel) => ({
+          return {
             questionId: rm.idPregunta,
-            response: sel, // En SELECCION_MULTIPLE, 'response' puede ser cada valor seleccionado
+            response: rm.respuestasSeleccionadas[0] || '', // Solo para compatibilidad, usamos el primer valor
             responseType: 'SELECCION_MULTIPLE',
             questionGroup: questionDetails?.group || 'herramientas',
             question: questionDetails?.question || rm.idPregunta,
             options: questionDetails?.options || [],
-            multipleResponse: rm.respuestasSeleccionadas // Guardar todas las seleccionadas aquí
-          }))
+            multipleResponse: rm.respuestasSeleccionadas // Todas las selecciones en un solo objeto
+          }
         }) || []),
         ...(step6Data?.otrasHerramientas && step6Data.otrasHerramientas.trim() !== ''
           ? [

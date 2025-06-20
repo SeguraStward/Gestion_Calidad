@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useMemo, useState } from 'react' // Added useState
+import React, { useMemo, useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ColumnDef, Row } from '@tanstack/react-table'
+import { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@una-gc/ui/components/button'
 import { MoreHorizontal, FileDown, Edit, Trash2, PlusCircle, Loader2 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@una-gc/ui/components/dropdown-menu'
@@ -10,6 +10,7 @@ import { DataTable } from '@/app/(components)/ui/data-table'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { pdf } from '@react-pdf/renderer'
+import { useDebounce } from '@/shared/hooks/use-debounce'
 
 import useDevStore from '@/store/devStore'
 import { useDeleteFinalReport, useFinalReportsByProfessor } from '@/modules/final-reports/service/final-reports.service'
@@ -34,30 +35,52 @@ const getStatusDisplayProperties = (statusValue: FinalReportStatusFE | undefined
 export default function FinalReportsPage() {
   const router = useRouter()
   const mockProfessorId = useDevStore((state) => state.mockProfessorId)
-  console.log('[FinalReportsPage] mockProfessorId:', mockProfessorId) // DEBUG
-
+  
+  // Estado para paginación y búsqueda
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(10)
+  const [searchQuery, setSearchQuery] = useState('')
   const [isGeneratingPdfId, setIsGeneratingPdfId] = useState<string | null>(null)
+  
+  // Debounce del lado del servidor para la búsqueda
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 500)
 
-  // Fetch final reports for the specific professor
+  // Resetear la página a 1 cuando cambia la búsqueda
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearchQuery])
+
+  // Fetch final reports with pagination and search
   const {
-    data: paginatedFinalReports, // This will be PaginatedResponse<FullFinalReport>
+    data: paginatedFinalReports,
     isLoading,
     error,
     refetch
   } = useFinalReportsByProfessor(
     mockProfessorId,
     {
-      include:
-        'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus'
+      include: 'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus',
+      page: currentPage,
+      limit: pageSize,
+      search: debouncedSearchQuery || undefined // Solo enviamos si tiene valor
     },
     { enabled: !!mockProfessorId }
   )
-
-  console.log('[FinalReportsPage] Raw paginatedFinalReports (should be object):', paginatedFinalReports) // DEBUG
-
-  const finalReportsData: FullFinalReport[] = paginatedFinalReports?.data || [] // This will now correctly access the array
-  console.log('[FinalReportsPage] Data for table (finalReportsData):', finalReportsData) // DEBUG
-
+ 
+  const finalReportsData = paginatedFinalReports?.data || []
+  
+  // Cálculo de páginas para la paginación
+  const totalItems = paginatedFinalReports?.meta?.total || 0
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+  
+  const handlePageChange = useCallback((newPage: number) => {
+    setCurrentPage(newPage)
+  }, [])
+  
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query)
+  }, [])
+  
   const deleteFinalReportMutation = useDeleteFinalReport()
 
   const handleEdit = (id: string) => {
@@ -67,27 +90,26 @@ export default function FinalReportsPage() {
   const handleDelete = async (id: string) => {
     try {
       await deleteFinalReportMutation.mutateAsync(id)
-      // toast.success('Informe final eliminado.'); // Handled by useDeleteFinalReport hook
     } catch (err) {
       console.error('Error deleting final report:', err)
-      // toast.error('Error al eliminar el informe.'); // Handled by useDeleteFinalReport hook
     }
   }
 
-  const handleDownloadPdf = async (reportToDownload: FullFinalReport | undefined) => {
-    if (!reportToDownload) {
+  const handleDownloadPdf = async (report: FullFinalReport) => {
+    if (!report) {
       toast.error('No se encontró el informe para generar el PDF.')
       return
     }
-    setIsGeneratingPdfId(reportToDownload.id)
-    toast.info(`Generando PDF para NRC ${reportToDownload.academicLoad?.nrc || ''}... Por favor espere.`)
+    
+    setIsGeneratingPdfId(report.id)
+    toast.info(`Generando PDF para NRC ${report.academicLoad?.nrc || ''}... Por favor espere.`)
 
     try {
-      const blob = await pdf(<FinalReportPDFDocument report={reportToDownload} />).toBlob()
+      const blob = await pdf(<FinalReportPDFDocument report={report} />).toBlob()
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      const fileName = `InformeFinal-${reportToDownload.academicLoad?.nrc || reportToDownload.id}.pdf`
+      const fileName = `InformeFinal-${report.academicLoad?.nrc || report.id}.pdf`
       link.setAttribute('download', fileName)
       document.body.appendChild(link)
       link.click()
@@ -220,7 +242,6 @@ export default function FinalReportsPage() {
         }
       }
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [deleteFinalReportMutation.isPending, deleteFinalReportMutation.variables, router, isGeneratingPdfId]
   )
 
@@ -231,6 +252,7 @@ export default function FinalReportsPage() {
       </Link>
     </Button>
   )
+
   if (!mockProfessorId && !isLoading) {
     return (
       <div className="container mx-auto py-8 text-center">
@@ -263,8 +285,15 @@ export default function FinalReportsPage() {
         columns={columns}
         data={finalReportsData}
         isLoading={isLoading}
-        searchPlaceholder="Buscar por NRC, curso..."
+        searchPlaceholder="Buscar por NRC, curso, nombre..."
         newButton={newReportButton}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        // Nuevas props para filtrado del lado del servidor
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        serverSideFiltering={true}
       />
     </div>
   )

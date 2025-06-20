@@ -173,4 +173,5 @@ export interface FinalReportFilters {
   professorId?: string
   academicLoadId?: string
   include?: string
+  search?: string // Optional search term
 }
