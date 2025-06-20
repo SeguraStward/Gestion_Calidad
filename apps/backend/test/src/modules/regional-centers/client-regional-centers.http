@@ -1,0 +1,44 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+
+###
+
+### Get all regional-centers
+GET http://localhost:3000/api/v1/regional-centers?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get regional-center by ID
+GET http://localhost:3000/api/v1/regional-centers/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new regional-center
+POST http://localhost:3000/api/v1/regional-centers HTTP/1.1
+Content-Type: application/json
+
+{
+  "code": "CR-001",
+  "name": "Centro Regional Pacífico",
+  "status": "ACTIVE"
+}
+
+###
+
+### Update an existing regional-center
+PUT http://localhost:3000/api/v1/regional-centers/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "code": "CR-001",
+  "name": "Centro Regional Pacífico Actualizado",
+  "status": "ACTIVE"
+}
+
+###
+
+### Delete a regional-center
+DELETE http://localhost:3000/api/v1/regional-centers/{{id}} HTTP/1.1
+Content-Type: application/json

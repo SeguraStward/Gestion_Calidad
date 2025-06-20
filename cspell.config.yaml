@@ -1,32 +1,46 @@
 version: "0.2"
 language: en
+
 ignorePaths:
-  # ----------------------------
-  # Remove these ones when ready
-  # ----------------------------
+  # Temporary paths
+  - "**/frontend"
+
+  # Files to remove later
   - "**/*.yml"
   - "**/*.md"
   - "**/*.mdx"
-  # ----------------------------
-  - node_modules
-  - dist
-  - build
-  - coverage
-  - .git
+  # - "*.ts"
+  # - "*.tsx"
+  # - "*.js"
+  # - "*.jsx"
+
+  # Common files and directories
   - "*.min.*"
-  - "**/*.js"
-  - "**/*.jsx"
-  - "**/*.ts"
-  - "**/*.tsx"
   - "**/*.svg"
   - "**/*.css"
-  - "**/*package.json"
-  - "package-lock.json"
+  - "**/docs/**"
+  - "*.prisma"
+
+  # Standard directories and files to ignore
+  - "**/node_modules"
+  - "**/test"
+  - "./project-words.txt"
+  - "./packages/database/prisma/generated"
+  - "*package.json"
+  - "/packages"
+  - "*.http"
+  - "*.bat"
+  - .git
+  - coverage
+  - build
+  - dist
   - "pnpm-workspace.yaml"
+  - "package-lock.json"
   - "pnpm-lock.yaml"
   - "yarn.lock"
-  - "./project-words.txt"
-  - "./packages/database/prisma/generated/*"
+  - "*.json"
+  - "*.csv"
+
 dictionaryDefinitions:
   - name: project-words
     path: ./project-words.txt

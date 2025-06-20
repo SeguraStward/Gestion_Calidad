@@ -1,0 +1,61 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+@reviewId=1
+@sessionId=1
+@professorId=1
+
+###
+
+### Get all observations
+GET http://localhost:3000/api/v1/observations?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get observation by ID
+GET http://localhost:3000/api/v1/observations/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new observation
+POST http://localhost:3000/api/v1/observations HTTP/1.1
+Content-Type: application/json
+
+{
+  "reviewId": "{{reviewId}}",
+  "sessionId": "{{sessionId}}",
+  "professorId": "{{professorId}}",
+  "observations": [
+    {
+      "observation": "Este es un texto de observación",
+      "date": "2025-05-24T10:00:00Z"
+    }
+  ],
+  "status": "ACTIVE"
+}
+
+###
+
+### Update an existing observation
+PUT http://localhost:3000/api/v1/observations/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "reviewId": "{{reviewId}}",
+  "sessionId": "{{sessionId}}",
+  "professorId": "{{professorId}}",
+  "observations": [
+    {
+      "observation": "Texto de observación actualizado",
+      "date": "2025-05-24T12:00:00Z"
+    }
+  ],
+  "status": "ACTIVE"
+}
+
+###
+
+### Delete a observation
+DELETE http://localhost:3000/api/v1/observations/{{id}} HTTP/1.1
+Content-Type: application/json

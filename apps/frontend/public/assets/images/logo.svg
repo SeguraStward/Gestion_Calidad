@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- Definiciones para efectos avanzados -->
+  <defs>
+    <!-- Sombra principal -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#00000088" />
+    </filter>
+    <!-- Gradiente para el fondo -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e41937" />
+      <stop offset="100%" stop-color="#a30e25" />
+    </linearGradient>
+    <!-- Resplandor para el texto -->
+    <filter id="textGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur" />
+      <feFlood flood-color="#ffffff" result="glow" />
+      <feComposite in="glow" in2="blur" operator="in" result="softGlow" />
+      <feComposite in="SourceGraphic" in2="softGlow" operator="over" />
+    </filter>
+    <!-- Patrón de puntos para el fondo -->
+    <pattern id="dotPattern" width="10" height="10" patternUnits="userSpaceOnUse"
+      patternTransform="rotate(45)">
+      <circle cx="5" cy="5" r="1" fill="#ffffff15" />
+    </pattern>
+  </defs>
+
+  <!-- Fondo principal mejorado con gradiente -->
+  <rect width="400" height="400" fill="url(#bgGradient)" rx="40" ry="40" filter="url(#shadow)" />
+
+  <!-- Patrón de puntos para textura de fondo -->
+  <rect width="400" height="400" fill="url(#dotPattern)" rx="40" ry="40" />
+
+  <!-- Círculo exterior decorativo -->
+  <circle cx="200" cy="190" r="140" fill="none" stroke="white" stroke-width="5"
+    stroke-dasharray="8,4" />
+
+  <!-- Círculo medio con efecto de brillo -->
+  <circle cx="200" cy="190" r="130" fill="none" stroke="#ffffff22" stroke-width="20"
+    filter="blur(8px)" />
+
+  <!-- Aura exterior sutil -->
+  <circle cx="200" cy="190" r="155" fill="none" stroke="#ffffff10" stroke-width="15" />
+
+  <!-- Diagrama de calidad - Ciclo PDCA estilizado y mejorado -->
+  <path
+    d="M200 100 A90 90 0 0 1 290 190 A90 90 0 0 1 200 280 A90 90 0 0 1 110 190 A90 90 0 0 1 200 100"
+    fill="none" stroke="white" stroke-width="6" />
+
+  <!-- Marcas de división internas del círculo -->
+  <path d="M200 100 L200 112 M290 190 L278 190 M200 280 L200 268 M110 190 L122 190"
+    stroke="white" stroke-width="6" stroke-linecap="round" />
+  <path d="M256 134 L248 142 M256 246 L248 238 M144 246 L152 238 M144 134 L152 142"
+    stroke="white" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Puntos de destaque en las intersecciones -->
+  <circle cx="200" cy="100" r="6" fill="white" />
+  <circle cx="290" cy="190" r="6" fill="white" />
+  <circle cx="200" cy="280" r="6" fill="white" />
+  <circle cx="110" cy="190" r="6" fill="white" />
+  <circle cx="256" cy="134" r="6" fill="white" />
+  <circle cx="256" cy="246" r="6" fill="white" />
+  <circle cx="144" cy="246" r="6" fill="white" />
+  <circle cx="144" cy="134" r="6" fill="white" />
+
+  <!-- Texto "GC" (Gestión de Calidad) como elemento principal con efectos avanzados -->
+  <text x="200" y="200" font-family="Arial, Helvetica, sans-serif" font-size="100"
+    font-weight="bold" text-anchor="middle" fill="white" filter="url(#textGlow)">GC</text>
+
+  <!-- Texto "UNA" como elemento secundario con estilo mejorado -->
+  <text x="200" y="260" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="bold"
+    text-anchor="middle" fill="white">UNA</text>
+
+  <!-- Separador elegante -->
+  <path d="M120 280 L280 280" stroke="white" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Detalles decorativos adicionales -->
+  <circle cx="120" cy="280" r="3" fill="white" />
+  <circle cx="280" cy="280" r="3" fill="white" />
+
+  <!-- Texto de descripción en la parte inferior -->
+  <text x="200" y="380" font-family="Arial, Helvetica, sans-serif" font-size="22"
+    text-anchor="middle" fill="white">GESTIÓN DE CALIDAD</text>
+</svg>

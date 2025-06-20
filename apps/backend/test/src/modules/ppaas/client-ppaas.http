@@ -1,0 +1,72 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code 
+
+@id=1
+@userId=1
+###
+
+### Get all ppaas
+GET http://localhost:3000/api/v1/ppaas?page=1&limit=10 HTTP/1.1 
+Content-Type: application/json 
+
+### Get ppaa by ID 
+GET http://localhost:3000/api/v1/ppaas/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+### Create a new ppaa
+POST http://localhost:3000/api/v1/ppaas HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "userId": "{{userId}}",
+  "activityName": "Taller sobre metodologías de enseñanza",
+  "activityType": "Desarrollo profesional",
+  "activityDate": "2025-06-15",
+  "location": "Campus Central, Aula 203",
+  "evidence": [
+    {
+      "fileId": "file_12345",
+      "name": "Agenda del taller",
+      "type": "pdf",
+      "uri": "/documentos/taller/agenda.pdf",
+      "link": "https://ejemplo.com/ver/agenda",
+      "download": "https://ejemplo.com/descargar/agenda.pdf"
+    },
+    {
+      "fileId": "file_67890",
+      "name": "Certificado de inscripción",
+      "type": "pdf",
+      "uri": "/documentos/taller/certificado.pdf",
+      "link": "https://ejemplo.com/ver/certificado",
+      "download": "https://ejemplo.com/descargar/certificado.pdf"
+    }
+  ],
+  "status": "ACTIVE"
+}
+
+### Update an existing ppaa
+PUT http://localhost:3000/api/v1/ppaas/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "userId": "{{userId}}",
+  "activityName": "Taller actualizado sobre metodologías avanzadas de enseñanza",
+  "activityType": "Desarrollo profesional",
+  "activityDate": "2025-07-20",
+  "location": "Reunión virtual",
+  "evidence": [
+    {
+      "fileId": "file_12345",
+      "name": "Agenda del taller",
+      "type": "pdf",
+      "uri": "/documentos/taller/agenda.pdf",
+      "link": "https://ejemplo.com/ver/agenda",
+      "download": "https://ejemplo.com/descargar/agenda.pdf"
+    }
+  ],
+  "status": "ACTIVE"
+}
+
+### Delete a ppaa
+DELETE http://localhost:3000/api/v1/ppaas/{{id}} HTTP/1.1 
+Content-Type: application/json
+

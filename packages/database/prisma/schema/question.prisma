@@ -1,19 +1,45 @@
+// #27
 model Question {
-   id             String           @id @default(auto()) @map("_id") @db.ObjectId
-   version        Int              @map("__v") @default(0)
-   status         String           
-   groupId        String           @db.ObjectId
-   module         String           
-   options        QuestionOption[]  
-   question       String            
-   responseType   String           
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
 
-   @@map("questions")
+  groupId String? @db.ObjectId
+
+  module String?
+
+  question String
+
+  options QuestionOption[]
+
+  responseType ResponseType
+
+  questionVersion String?
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  group QuestionGroup? @relation(fields: [groupId], references: [id])
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("questions")
+}
+
+enum ResponseType {
+  TEXT
+  NUMBER
+  DATE
+  BOOLEAN
+  SELECT
+  MULTISELECT
 }
 
 type QuestionOption {
-   category       String
-   label          String
-   value          String
+  category String
+  label    String
+  value    String
 }
-//NOTE: should group or questiongroup have multiple questions?

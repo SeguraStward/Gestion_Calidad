@@ -1,0 +1,20 @@
+// #3
+model AcademicLoadGroup {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  number String @unique
+
+  status Status @default(ACTIVE)
+
+  // Relations 
+  academicLoads AcademicLoad[]
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("academic_load_groups")
+}

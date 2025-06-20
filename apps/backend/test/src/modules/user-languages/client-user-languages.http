@@ -1,0 +1,74 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code 
+
+@id=1
+@userId=1
+###
+
+### Get all user languages
+GET http://localhost:3000/api/v1/user-languages?page=1&limit=10 HTTP/1.1 
+Content-Type: application/json 
+
+### Get user language by ID 
+GET http://localhost:3000/api/v1/user-languages/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+### Create a new user language
+POST http://localhost:3000/api/v1/user-languages HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "userId": "{{userId}}",
+  "language": "Español",
+  "type": "Foreign",
+  "speaking": 5,
+  "writing": 4,
+  "reading": 5,
+  "evidence": [
+    {
+      "download": "https://ejemplo.com/descargar/certificado.pdf",
+      "fileId": "file_123456",
+      "link": "https://ejemplo.com/ver/certificado",
+      "name": "Certificado TOEFL",
+      "type": "pdf",
+      "uri": "/documentos/certificados/toefl.pdf"
+    }
+  ],
+  "status": "ACTIVE"
+}
+
+### Update an existing user language
+PUT http://localhost:3000/api/v1/user-languages/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "userId": "{{userId}}",
+  "language": "Inglés",
+  "type": "Foreign",
+  "speaking": 3,
+  "writing": 3,
+  "reading": 4,
+  "evidence": [
+    {
+      "download": "https://ejemplo.com/descargar/dele.pdf",
+      "fileId": "file_789012",
+      "link": "https://ejemplo.com/ver/dele",
+      "name": "Certificado DELE",
+      "type": "pdf",
+      "uri": "/documentos/certificados/dele.pdf"
+    },
+    {
+      "download": "https://ejemplo.com/descargar/curso.pdf",
+      "fileId": "file_345678",
+      "link": "https://ejemplo.com/ver/curso",
+      "name": "Finalización Curso Español",
+      "type": "pdf",
+      "uri": "/documentos/certificados/curso_espanol.pdf"
+    }
+  ],
+  "status": "ACTIVE"
+}
+
+### Delete a user language
+DELETE http://localhost:3000/api/v1/user-languages/{{id}} HTTP/1.1 
+Content-Type: application/json
+

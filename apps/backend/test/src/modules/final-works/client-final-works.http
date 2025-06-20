@@ -1,0 +1,84 @@
+#var, use command >Rest Client: Switch Environment in search bar of vs code
+@id=1
+@userId=1
+
+###
+
+### Get all final-works
+GET http://localhost:3000/api/v1/final-works?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get final-work by ID
+GET http://localhost:3000/api/v1/final-works/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new final-work
+POST http://localhost:3000/api/v1/final-works HTTP/1.1
+Content-Type: application/json
+
+{
+  "title": "Análisis de algoritmos de aprendizaje automático para procesamiento de lenguaje natural",
+  "type": "TFG",
+  "evidence": [
+    {
+      "download": "/descargas/documento1.pdf",
+      "fileId": "archivo12345",
+      "link": "https://ejemplo.com/archivos/documento1.pdf",
+      "name": "Revisión de literatura",
+      "type": "document",
+      "uri": "/almacenamiento/documento1.pdf"
+    },
+    {
+      "fileId": "archivo67890",
+      "download": "/descargas/presentacion.pptx",
+      "link": "https://ejemplo.com/archivos/presentacion.pptx",
+      "name": "Propuesta inicial",
+      "type": "presentation",
+      "uri": "/almacenamiento/presentacion.pptx"
+    }
+  ],
+  "userId": "{{userId}}",
+  "date": "2025-04-15T10:00:00.000Z",
+  "status": "ACTIVE"
+}
+
+###
+
+### Update an existing final-work
+PUT http://localhost:3000/api/v1/final-works/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "title": "Análisis de algoritmos de aprendizaje automático para procesamiento de lenguaje natural",
+  "type": "thesis",
+  "evidence": [
+    {
+      "download": "/descargas/documento1.pdf",
+      "idFile": "archivo12345",
+      "link": "https://ejemplo.com/archivos/documento1.pdf",
+      "name": "Revisión de literatura",
+      "type": "document",
+      "uri": "/almacenamiento/documento1.pdf"
+    },
+    {
+      "download": "/descargas/presentacion.pptx",
+      "idFile": "archivo67890",
+      "name": "Propuesta inicial",
+      "type": "presentation",
+      "uri": "/almacenamiento/presentacion.pptx"
+    }
+  ],
+  "userId": "{{userId}}",
+  "date": "2025-04-15T10:00:00.000Z",
+  "status": "in_progress"
+}
+
+###
+
+### Delete a final-work
+DELETE http://localhost:3000/api/v1/final-works/{{id}} HTTP/1.1
+Content-Type: application/json

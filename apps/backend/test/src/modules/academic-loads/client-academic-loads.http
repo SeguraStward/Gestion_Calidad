@@ -1,0 +1,96 @@
+#var, use command >Rest Client: Switch Environment in search bar of vs code
+@id=1
+@academicCycleId=1
+@campusId=1
+@courseId=1
+@classroomId=1
+
+@groupId=1
+@scheduleId=1
+@professorId=6817035e6fde93aab0b56e60
+
+
+### Get all academic loads with nested includes (if supported by your DTOs and parser)
+GET http://localhost:3000/api/v1/academic-loads?page=1&limit=2&include=course,professor HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get all academic loads
+GET http://localhost:3000/api/v1/academic-loads?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get academic load by ID
+GET http://localhost:3000/api/v1/academic-loads/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new academic load
+POST http://localhost:3000/api/v1/academic-loads HTTP/1.1
+Content-Type: application/json
+
+{
+  "nrc": "12345",
+  "academicCycleId": "6836244ce5b3c3956494ca32",
+  "campusId": "683625b6e5b3c3956494ca35",
+  "courseId": "68362ef4e38c9f6ea38838e2",
+  "classroomId": "68362733e5b3c3956494ca3b",
+  "maximumCapacity": 30,
+  "enrolledCapacity": 20,
+  "availableSeats": 10,
+  "groupId": "5edfd80a21d6df1cb4eb1c6e",
+  "scheduleId": "68158152dcb8cfd70156e06e",
+  "professorId": "6817035e6fde93aab0b56e60",
+  "date": "2025-04-19T14:30:00Z",
+  "status": "ACTIVE"
+}
+
+### Update an existing academic load
+PUT http://localhost:3000/api/v1/academic-loads/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "nrc": "12345",
+  "maximumCapacity": 35,
+  "enrolledCapacity": 28,
+  "availableSeats": 7,
+  "date": "2025-04-20T14:30:00Z",
+  "status": "ACTIVE"
+}
+
+###
+
+### Delete an academic load
+DELETE http://localhost:3000/api/v1/academic-loads/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get all academic loads for a specific professor
+# Replace {{professorId}} with a direct ID if you don't set the variable above
+GET http://localhost:3000/api/v1/academic-loads/professor/{{professorId}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get all academic loads for a specific professor with pagination and includes
+# Replace {{professorId}} with a direct ID if you don't set the variable above
+GET http://localhost:3000/api/v1/academic-loads/professor/{{professorId}}?page=1&limit=5&include=group,course,campus,academicCycle&orderBy={"nrc":"asc"} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get all ACTIVE academic loads for a specific professor
+GET http://localhost:3000/api/v1/academic-loads/professor/{{professorId}}?status=ACTIVE HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get all INACTIVE academic loads for a specific professor with includes
+GET http://localhost:3000/api/v1/academic-loads/professor/{{professorId}}?status=INACTIVE&include=course,campus HTTP/1.1
+Content-Type: application/json
+
+###

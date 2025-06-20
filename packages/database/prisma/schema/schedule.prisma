@@ -1,13 +1,24 @@
+// #29
 model Schedule {
-  id             String         @id @default(auto()) @map("_id") @db.ObjectId
-  version        Int            @map("__v") @default(0) // Added version field
-  days           ScheduleDays[]
-  startTime      String          
-  endTime        String          
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  name      String       @unique
+  day       ScheduleDays
+  startTime String
+  endTime   String
+
+  // Relations
   academicLoads AcademicLoad[]
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
   @@map("schedules")
 }
-
 
 enum ScheduleDays {
   MONDAY
@@ -16,4 +27,5 @@ enum ScheduleDays {
   THURSDAY
   FRIDAY
   SATURDAY
+  SUNDAY
 }

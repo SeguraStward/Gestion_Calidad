@@ -1,0 +1,44 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+
+###
+
+### Get all question-groups
+GET http://localhost:3000/api/v1/question-groups HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get question-group by ID
+GET http://localhost:3000/api/v1/question-groups/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new question-group
+POST http://localhost:3000/api/v1/question-groups HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "mantenimiento-equipos",
+  "questionTitle": "Mantenimiento de equipos",
+  "description": "Grupo de preguntas sobre el mantenimiento preventivo y correctivo de equipos"
+}
+
+###
+
+### Update an existing question-group
+PUT http://localhost:3000/api/v1/question-groups/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "mantenimiento-equipos-medicos",
+  "Title": "Mantenimiento de equipos médicos",
+  "description": "Grupo de preguntas sobre el mantenimiento preventivo y correctivo de equipos médicos hospitalarios"
+}
+
+###
+
+### Delete a question-group
+DELETE http://localhost:3000/api/v1/question-groups/{{id}} HTTP/1.1
+Content-Type: application/json

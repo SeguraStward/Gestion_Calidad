@@ -1,0 +1,6 @@
+// general enums
+enum Status {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}

@@ -1,0 +1,92 @@
+#var, use command >Rest Client: Switch Environment in search bar of vs code
+@id=1
+@userId=1
+
+###
+
+### Get all user-work-experiences
+GET http://localhost:3000/api/v1/user-work-experiences?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get work-experience by ID
+GET http://localhost:3000/api/v1/user-work-experiences/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new work-experience
+POST http://localhost:3000/api/v1/user-work-experiences HTTP/1.1
+Content-Type: application/json
+
+{
+  "company": "Soluciones Tecnológicas S.A.",
+  "position": "Desarrollador Full Stack",
+  "responsibilities": [
+    "Desarrolló y mantuvo aplicaciones web",
+    "Implementó nuevas funcionalidades usando React y Node.js",
+    "Colaboró con equipos multidisciplinarios"
+  ],
+  "experienceType": "full-time",
+  "startDate": "2022-01-15T00:00:00.000Z",
+  "endDate": "2023-06-30T00:00:00.000Z",
+  "evidence": [
+    {
+      "download": "/descargas/certificado-soluciones-tecnologicas.pdf",
+      "fileId": "file123456",
+      "link": "https://ejemplo.com/certificado",
+      "name": "Certificado de Empleo",
+      "type": "application/pdf",
+      "uri": "/archivos/certificado-soluciones-tecnologicas.pdf"
+    }
+  ],
+  "userId": "{{userId}}",
+  "status": "ACTIVE"
+}
+
+###
+
+### Update an existing work-experience
+PUT http://localhost:3000/api/v1/user-work-experiences/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "company": "Soluciones Tecnológicas Internacional",
+  "position": "Desarrollador Full Stack Senior",
+  "responsibilities": [
+    "Desarrolló y mantuvo aplicaciones web",
+    "Implementó nuevas funcionalidades usando React y Node.js",
+    "Lideró un equipo de desarrolladores junior",
+    "Realizó revisiones de código y mentoría a miembros del equipo"
+  ],
+  "experienceType": "full-time",
+  "startDate": "2022-01-15T00:00:00.000Z",
+  "endDate": "2023-08-15T00:00:00.000Z",
+  "evidence": [
+    {
+      "download": "/descargas/certificado-soluciones-tecnologicas.pdf",
+      "fileId": "file123456",
+      "link": "https://ejemplo.com/certificado",
+      "name": "Certificado de Empleo",
+      "type": "application/pdf",
+      "uri": "/archivos/certificado-soluciones-tecnologicas.pdf"
+    },
+    {
+      "download": "/descargas/carta-recomendacion.pdf",
+      "fileId": "file789012",
+      "link": "https://ejemplo.com/recomendacion",
+      "name": "Carta de Recomendación",
+      "type": "application/pdf",
+      "uri": "/archivos/carta-recomendacion.pdf"
+    }
+  ],
+  "userId": "{{userId}}",
+  "status": "ACTIVE"
+}
+
+###
+
+### Delete a work-experience
+DELETE http://localhost:3000/api/v1/user-work-experiences/{{id}} HTTP/1.1
+Content-Type: application/json

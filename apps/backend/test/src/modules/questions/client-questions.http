@@ -1,0 +1,73 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+
+###
+
+### Get all questions
+GET http://localhost:3000/api/v1/questions HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get question by ID
+GET http://localhost:3000/api/v1/questions/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new question
+POST http://localhost:3000/api/v1/questions HTTP/1.1
+Content-Type: application/json
+
+{
+  "question": "¿Describe la participacion de los estudiantes ?",
+  "responseType": "TEXT",
+  "groupId": "65f784ecab0f5e4c84b1e312",
+  "module": "Mantenimiento",
+  "options" : [],
+  "questionVersion": "",
+  "status": "ACTIVE"
+}
+
+###
+
+### Update an existing question
+PUT http://localhost:3000/api/v1/questions/6835fb545e318d6e24bd2e8d HTTP/1.1
+Content-Type: application/json
+
+{
+  "question": "¿Con qué frecuencia se realiza el mantenimiento?",
+  "responseType": "SELECT",
+  "groupId": "02",
+  "module": "Mantenimiento Preventivo",
+  "options": [
+    {
+      "category": "frecuencia",
+      "label": "Mensual",
+      "value": "mensual"
+    },
+    {
+      "category": "frecuencia",
+      "label": "Trimestral",
+      "value": "trimestral"
+    },
+    {
+      "category": "frecuencia",
+      "label": "Semestral",
+      "value": "semestral"
+    },
+    {
+      "category": "frecuencia",
+      "label": "Anual",
+      "value": "anual"
+    }
+  ],
+  "questionVersion": "",
+  "status": "ACTIVE"
+}
+
+###
+
+### Delete a question
+DELETE http://localhost:3000/api/v1/questions/{{id}} HTTP/1.1
+Content-Type: application/json

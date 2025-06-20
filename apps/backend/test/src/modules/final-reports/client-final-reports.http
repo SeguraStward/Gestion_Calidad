@@ -1,0 +1,149 @@
+#var, use command >Rest Client: Switch Environment in search bar of vs code
+@id=1
+@academicLoadId=1
+@professorId=6817035e6fde93aab0b56e60  
+
+###
+
+### Get all final-reports
+GET http://localhost:3000/api/v1/final-reports?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get all final-reports with specific includes
+GET http://localhost:3000/api/v1/final-reports?page=1&limit=2&include=academicLoad,professor HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get all final-reports with nested includes (if supported by your DTOs and parser)
+GET http://localhost:3000/api/v1/final-reports?page=1&limit=2&include=academicLoad.course,academicLoad.campus,academicLoad.academicCycle,professor HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get final-report by ID
+GET http://localhost:3000/api/v1/final-reports/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get final-report by ID with specific includes
+# Make sure to set a valid ID for an existing final report
+@existingFinalReportId=68361dcf4a62983536bd4fad 
+GET http://localhost:3000/api/v1/final-reports/{{existingFinalReportId}}?include=academicLoad.course,academicLoad.academicCycle,academicLoad.professor HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new final-report
+POST http://localhost:3000/api/v1/final-reports HTTP/1.1
+Content-Type: application/json
+
+{
+  "academicLoadId": "683bd14b3e428d3ea411b53a",
+  "professorId": "6817035e6fde93aab0b56e60",
+  "statistics": {
+    "passed": 12,
+    "failed": 5,
+    "dropouts": 3,
+    "totalStudents": 20
+  },
+  "evaluation": [
+    {
+      "questionGroup": "Evaluación del Curso",
+      "questionId": "p1",
+      "options": [
+        {
+          "category": "calidad",
+          "label": "Excelente",
+          "value": "5"
+        },
+        {
+          "category": "calidad",
+          "label": "Bueno",
+          "value": "4"
+        }
+      ],
+      "otherResponse": "",
+      "question": "¿Cómo calificaría los materiales del curso?",
+      "response": "5",
+      "multipleResponse": [],
+      "responseType": "single"
+    },
+    {
+      "questionGroup": "Participación Estudiantil",
+      "questionId": "p2",
+      "options": [
+        {
+          "category": "participación",
+          "label": "Alta",
+          "value": "alta"
+        },
+        {
+          "category": "participación",
+          "label": "Media",
+          "value": "media"
+        }
+      ],
+      "otherResponse": "La mayoría de los estudiantes mostraron interés en las sesiones prácticas.",
+      "question": "¿Cómo describiría la participación estudiantil?",
+      "response": "alta",
+      "multipleResponse": ["alta", "media"],
+      "responseType": "multiple"
+    }
+  ],
+  "studentInformation": {
+    "adjustments": [
+      {
+        "support": "Tiempo extendido",
+        "idNumber": "12345",
+        "name": "Juan Pérez",
+        "grade": "A",
+        "observation": "El estudiante necesitó tiempo adicional para los exámenes"
+      }
+    ],
+    "safeguards": [
+      {
+        "idNumber": "67890",
+        "name": "María López",
+        "grade": "B",
+        "observation": "La estudiante necesitó materiales de apoyo adicionales"
+      }
+    ]
+  },
+  "status": "PENDING"
+}
+
+###
+
+### Delete a final-report
+DELETE http://localhost:3000/api/v1/final-reports/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get all final reports for a specific professor
+# Replace {{professorId}} with a direct ID if you don't set the variable above
+GET http://localhost:3000/api/v1/final-reports/professor/{{professorId}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get all final reports for a specific professor with pagination and includes
+# Replace {{professorId}} with a direct ID if you don't set the variable above
+GET http://localhost:3000/api/v1/final-reports/professor/{{professorId}}?page=1&limit=5&include=academicLoad.course,academicLoad.campus,academicLoad.academicCycle,academicLoad.professor&orderBy={"createdAt":"desc"} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get all ACTIVE final reports for a specific professor
+GET http://localhost:3000/api/v1/final-reports/professor/{{professorId}}?status=PENDING HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get all INACTIVE final reports for a specific professor with includes
+GET http://localhost:3000/api/v1/final-reports/professor/{{professorId}}?status=EVALUATED&include=academicLoad HTTP/1.1
+Content-Type: application/json

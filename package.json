@@ -7,6 +7,7 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
+    "lint:staged": "lint-staged",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "ui": "pnpm --filter @una-gc/ui ui",
     "prisma:generate": "pnpm --filter @una-gc/database db:generate",
@@ -14,20 +15,29 @@
     "prisma:pull": "pnpm --filter @una-gc/database db:pull",
     "prepare": "husky",
     "docs": "pnpm --filter @una-gc/docs start",
-    "spell": "cspell --config cspell.config.yaml \"**/*\""
+    "spell": "cspell --config cspell.config.yaml \"**/*\"",
+    "lint-staged": "lint-staged"
   },
   "devDependencies": {
+    "@eslint/js": "^9.26.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@typescript-eslint/typescript-estree": "^8.31.1",
+    "@typescript-eslint/utils": "^8.31.1",
     "@una-gc/eslint-config": "workspace:*",
     "@una-gc/typescript-config": "workspace:*",
-    "cspell": "^8.17.5",
+    "cspell": "^8.19.4",
+    "eslint": "^9.26.0",
     "husky": "^9.1.7",
-    "lint-staged": "^15.4.3",
-    "prettier": "^3.2.5",
-    "turbo": "^2.3.0",
-    "typescript": "5.5.4"
+    "lint-staged": "^15.5.1",
+    "prettier": "^3.5.3",
+    "turbo": "^2.5.2",
+    "typescript": "^5.8.3"
   },
-  "packageManager": "pnpm@9.12.3",
-  "engines": {
-    "node": ">=20"
-  }
+  "lint-staged": {
+    "**/*.{ts,tsx}": [
+      "eslint"
+    ]
+  },
+  "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39"
 }

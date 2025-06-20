@@ -1,25 +1,26 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
-import helmet from 'helmet';
-import { HttpResponseInterceptor } from '@core/http/interceptors/http-response.interceptor';
-import { ErrorResponseFilter } from '@core/http/filters/error-response.filter';
-
 import * as dotenv from 'dotenv';
 dotenv.config();
+
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+import cookieParser from 'cookie-parser';
+
+import { HttpResponseInterceptor } from '@core/http/interceptors/http-response.interceptor';
+import { ErrorResponseFilter } from '@core/http/filters/error-response.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useLogger(new Logger());
+  app.use(cookieParser());
 
   app.enableCors({
     origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     credentials: true,
   });
-
-  app.use(helmet());
 
   app.useGlobalInterceptors(new HttpResponseInterceptor());
   app.useGlobalFilters(new ErrorResponseFilter());
@@ -41,6 +42,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('swagger', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(3000);
 }
 bootstrap();

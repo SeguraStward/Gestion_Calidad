@@ -1,0 +1,73 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code 
+@id=1
+@userId=1
+###
+
+### Get all academic-backgrounds 
+GET http://localhost:3000/api/v1/academic-backgrounds?page=1&limit=10 HTTP/1.1 
+Content-Type: application/json 
+
+### Get academic-background by ID 
+GET http://localhost:3000/api/v1/academic-backgrounds/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+### Create a new academic-background 
+POST http://localhost:3000/api/v1/academic-backgrounds HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "userId": "{{userId}}",
+  "academicTitle": "Maestría en Ciencias de la Computación",
+  "evidence": [
+    {
+      "fileId": "file_12345",
+      "name": "Certificado de Título",
+      "type": "pdf",
+      "uri": "/documents/certificates/degree_cert.pdf",
+      "link": "https://example.com/view/degree_cert",
+      "download": "https://example.com/download/degree_cert.pdf"
+    },
+    {
+      "fileId": "file_67890",
+      "name": "Certificado Académico",
+      "type": "pdf",
+      "uri": "/documents/certificates/transcript.pdf",
+      "link": "https://example.com/view/transcript",
+      "download": "https://example.com/download/transcript.pdf"
+    }
+  ],
+  "observations": "Graduado con honores",
+  "date": "2023-05-15T00:00:00Z",
+  "institution": "Universidad Nacional",
+  "institutionType": "Universidad Pública",
+  "status": "ACTIVE"
+  
+}
+
+### Update an existing academic-background
+PUT http://localhost:3000/api/v1/academic-backgrounds/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "userId": "{{userId}}",
+  "academicTitle": "Doctorado en Ciencias de la Computación",
+  "evidence": [
+    {
+      "fileId": "file_24680",
+      "name": "Certificado de Doctorado",
+      "type": "pdf",
+      "uri": "/documents/certificates/phd_cert.pdf",
+      "link": "https://example.com/view/phd_cert",
+      "download": "https://example.com/download/phd_cert.pdf"
+    }
+  ],
+  "observations": "Disertación sobre ética en IA",
+  "date": "2023-12-10T00:00:00Z",
+  "institution": "Universidad Nacional",
+  "institutionType": "Universidad Pública",
+  "status": "ACTIVE"
+}
+
+### Delete an academic-background 
+DELETE http://localhost:3000/api/v1/academic-backgrounds/{{id}} HTTP/1.1 
+Content-Type: application/json

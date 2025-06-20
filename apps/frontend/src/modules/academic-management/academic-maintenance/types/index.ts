@@ -1,0 +1,7 @@
+export * from '@/shared/types/course'
+export * from './career'
+export * from './school'
+export * from './faculty'
+export * from '@/shared/types/classroom'
+export * from '@/shared/types/campus'
+export * from './regional-center'

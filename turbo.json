@@ -3,7 +3,8 @@
   "ui": "tui",
   "tasks": {
     "db:generate": {
-      "cache": false
+      "cache": true,
+      "outputs": ["./prisma/generated/**"]
     },
     "db:migrate": {
       "cache": false,
@@ -15,10 +16,23 @@
     "build": {
       "dependsOn": ["^build", "^db:generate"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**",
+        "build/**",
+        "public/build/**"
+      ]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "docs/**/*.md",
+        ".eslintrc*",
+        "package.json"
+      ]
     },
     "check-types": {
       "dependsOn": ["^check-types"]
@@ -29,7 +43,11 @@
       "persistent": true
     },
     "test": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build"],
+      "inputs": ["src/**/*", "tests/**/*", "package.json", "jest.config.*"]
+    },
+    "format": {
+      "outputs": []
     }
   }
 }

@@ -1,0 +1,13 @@
+calidad
+dtos
+Elipssis
+gestión
+nums
+Ppaa
+ppaas
+serviceworker
+shadcn
+Sonner
+Swal
+sweetalert
+Vercel

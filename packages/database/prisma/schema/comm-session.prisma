@@ -1,0 +1,58 @@
+// #10
+model CommSession {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  commissionId String @db.ObjectId
+
+  url String?
+
+  sessionNumber Int
+
+  closingDate DateTime @default(now())
+
+  projects     ProjectCommSession[]
+  observations Observation[]
+
+  stage  CommSessionStage @default(STARTED)
+  status Status           @default(ACTIVE)
+
+  // Relations
+  commission Commission @relation(fields: [commissionId], references: [id])
+
+  documents         Document[]
+  sessionAttendance CommSessionAttendance[]
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([commissionId, sessionNumber])
+  @@index([commissionId])
+  @@map("comm_sessions")
+}
+
+type ProjectCommSession {
+  review           String                   @db.ObjectId
+  status           ProjectCommSessionStatus @default(PENDING)
+  type             String? // no defined
+  agreement        String?
+  tutor            String?                  @db.ObjectId
+  internalReader   String?                  @db.ObjectId
+  externalReader   String?                  @db.ObjectId
+  notificationSent Boolean                  @default(false)
+}
+
+enum ProjectCommSessionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CommSessionStage {
+  STARTED
+  FINISHED
+  CLOSED
+}

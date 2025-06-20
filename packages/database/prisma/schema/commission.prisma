@@ -1,0 +1,33 @@
+// #11
+model Commission {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  type String // example  ACADEMIC ADMINISTRATIVE RESEARCH
+  name String
+
+  coordinatorId String? @db.ObjectId
+
+  regionalCenterId String @db.ObjectId
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  coordinator    User?          @relation("CommissionCoordinator", fields: [coordinatorId], references: [id])
+  regionalCenter RegionalCenter @relation(fields: [regionalCenterId], references: [id])
+
+  projects Project[]
+  reviews  ProjectReview[]
+  sessions CommSession[]
+  members  CommMember[]
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([regionalCenterId, name], name: "unique_commission")
+  @@index([coordinatorId])
+  @@map("commissions")
+}

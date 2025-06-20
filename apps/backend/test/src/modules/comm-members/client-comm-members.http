@@ -1,0 +1,48 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+@userId=1
+@commissionId=1
+
+###
+
+### Get all comm-members
+GET http://localhost:3000/api/v1/comm-members HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get comm-member by ID
+GET http://localhost:3000/api/v1/comm-members/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new comm-member
+POST http://localhost:3000/api/v1/comm-members HTTP/1.1
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "workload": "Tiempo completo",
+  "commissionId": "{{commissionId}}",
+  "status": "ACTIVE"
+}
+
+###
+
+### Update an existing comm-member
+PUT http://localhost:3000/api/v1/comm-members/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "workload": "Medio tiempo",
+  "commissionId": "{{commissionId}}",
+  "status": "ACTIVE"
+}
+
+###
+
+### Delete a comm-member
+DELETE http://localhost:3000/api/v1/comm-members/{{id}} HTTP/1.1
+Content-Type: application/json

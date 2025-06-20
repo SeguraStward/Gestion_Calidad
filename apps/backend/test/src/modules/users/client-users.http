@@ -1,0 +1,72 @@
+#var, use command >Rest Client: Switch Environment in search bar of vs code
+@id= 
+@schoolId=1
+
+###
+
+### Get all users
+GET http://localhost:3000/api/v1/users?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get user by ID
+GET http://localhost:3000/api/v1/users/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new user
+POST http://localhost:3000/api/v1/users HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "carlos.garcia@ejemplo.com",
+  "fullName": "Carlos",
+  "fullLastName": "García López",
+  "photoUrl": "https://ejemplo.com/fotos/carlosgarcia.jpg",
+  "nationalId": "987654321",
+  "birthDate": "1985-05-20T00:00:00.000Z",
+  "primaryPhone": "88887777",
+  "phoneNumbers": [
+    {
+      "number": "88887777",
+      "type": "mobile"
+    },
+    {
+      "number": "22223333",
+      "type": "home"
+    }
+  ],
+  "province": "SAN_JOSE",
+  "canton": "Desamparados",
+  "district": "San Miguel",
+  "address": "200m Sur del Supermercado Central",
+  "professionalTitle": "Profesor de Matemáticas",
+  "hireDate": "2018-08-15T00:00:00.000Z",
+  "condition": "Tiempo completo",
+  "roleIds": ["64f8ac9034b5b7f5159236bd", "64f8ac9034b5b7f5159236be"],
+  "profileTypes": ["academic", "research"],
+  "googleId": "g-987654321",
+  "studentProjectIds": [],
+  "status": "ACTIVE"
+}
+
+###
+
+### Update user profile
+PATCH http://localhost:3000/api/v1/users/{{id}}/profile HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "maria.lopez@est.una.ac.cr",
+  "fullName": "María Actualizada",
+  "fullLastName": "López Actualizada",
+  "primaryPhone": "+50689998888"
+}
+
+###
+
+### Delete a user
+DELETE http://localhost:3000/api/v1/users/{{id}} HTTP/1.1
+Content-Type: application/json

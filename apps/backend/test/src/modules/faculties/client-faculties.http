@@ -1,0 +1,46 @@
+#var, use command >Rest Client: Switch Environment in search bar of vs code
+@id=1
+
+###
+
+### Get all faculties
+GET http://localhost:3000/api/v1/faculties?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get faculties by ID
+GET http://localhost:3000/api/v1/faculties/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new faculties
+POST http://localhost:3000/api/v1/faculties HTTP/1.1
+Content-Type: application/json
+
+{
+  "code": "FCTEC",
+  "description": "Facultad dedicada a las ciencias exactas y naturales",
+  "name": "Facultad de Ciencias Exactas y Naturales",
+  "status": "ACTIVE"
+}
+
+###
+
+### Update an existing faculties
+PUT http://localhost:3000/api/v1/faculties/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "code": "FCTEC",
+  "description": "Facultad dedicada a las ciencias exactas y naturales - Actualizada",
+  "name": "Facultad de Ciencias Exactas y Naturales",
+  "status": "ACTIVE"
+}
+
+###
+
+### Delete a faculties
+DELETE http://localhost:3000/api/v1/faculties/{{id}} HTTP/1.1
+Content-Type: application/json

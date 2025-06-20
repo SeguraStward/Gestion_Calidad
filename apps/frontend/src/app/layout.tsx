@@ -1,30 +1,44 @@
 import '@una-gc/ui/globals.css'
 import { Inter } from 'next/font/google'
-import { ThemeProvider } from '@/providers/theme-provider'
-import { Toaster } from 'sonner'
-import { ModeToggle } from './(components)/mode-toggle'
-import ReactQueryProvider from '@/providers/react-query-provider'
+import { ReactNode } from 'react'
+
+import Providers from '@/providers/providers'
+import { ThemeToggle } from '@/components/toggles/theme.toggle'
+import { ContentLayout } from '@/components/layouts/content.layout'
 
 const inter = Inter({ subsets: ['latin'] })
 
-interface RootLayoutProps {
-  children: React.ReactNode
+export const metadata = {
+  title: 'Gestión de Calidad - UNA',
+  description: 'Sistema de Gestión de Calidad de la Universidad Nacional'
 }
 
-export default async function RootLayout({ children }: RootLayoutProps) {
+interface RootLayoutProps {
+  children: ReactNode
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <>
-      <html lang="en" suppressHydrationWarning>
-        <body className={inter.className}>
-          <ReactQueryProvider>
-            <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-              <main>{children}</main>
-              <Toaster />
-              <ModeToggle />
-            </ThemeProvider>
-          </ReactQueryProvider>
-        </body>
-      </html>
-    </>
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+        <title>Gestión de Calidad - UNA</title>
+        <meta name="description" content="Sistema de Gestión de Calidad de la Universidad Nacional" />
+      </head>
+      <body className={inter.className}>
+        <Providers>
+          {/* Layout configuration, is aplicated for all */}
+          <ContentLayout>
+            <div className="transition-opacity transition-transform duration-700 ease-in opacity-0 animate-fadeInComponent">
+              {children}
+            </div>
+          </ContentLayout>
+          {/* Theme button */}
+          <div className="fixed top-4 right-4 z-50">
+            <ThemeToggle />
+          </div>
+        </Providers>
+      </body>
+    </html>
   )
 }

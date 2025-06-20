@@ -1,0 +1,9 @@
+//general types
+type Evidence {
+  fileId   String
+  name     String
+  type     String
+  uri      String
+  link     String
+  download String
+}

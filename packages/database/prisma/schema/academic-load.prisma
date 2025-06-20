@@ -1,0 +1,52 @@
+// #4
+model AcademicLoad {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  nrc String
+
+  maximumCapacity  Int
+  enrolledCapacity Int
+  availableSeats   Int
+
+  date DateTime?
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  academicCycleId String        @db.ObjectId
+  academicCycle   AcademicCycle @relation(fields: [academicCycleId], references: [id])
+
+  campusId String @db.ObjectId
+  campus   Campus @relation(fields: [campusId], references: [id])
+
+  courseId String @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id])
+
+  classroomId String?    @db.ObjectId
+  classroom   Classroom? @relation(fields: [classroomId], references: [id])
+
+  groupId String            @db.ObjectId
+  group   AcademicLoadGroup @relation(fields: [groupId], references: [id])
+
+  scheduleId String?   @db.ObjectId
+  schedule   Schedule? @relation(fields: [scheduleId], references: [id])
+
+  professorId String @db.ObjectId
+  professor   User   @relation("ProfessorLoad", fields: [professorId], references: [id])
+
+  finalReports FinalReport[]
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@index([academicCycleId])
+  @@index([campusId])
+  @@index([courseId])
+  @@index([professorId])
+  @@index([academicCycleId, professorId])
+  @@map("academic_loads")
+}

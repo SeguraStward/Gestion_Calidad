@@ -10,7 +10,7 @@
         "./src/components/*"
       ],
       "@/hooks/*": [
-        "./src/hooks/*"
+        "./src/shared/hooks/*"
       ],
       "@/state/*": [
         "./src/state/*"
@@ -18,8 +18,8 @@
       "@/lib/*": [
         "./src/lib/*"
       ],
-      "@/services/*": [
-        "./src/services/*"
+      "@/modules/*": [
+        "src/modules/*"
       ],
       "@una-gc/ui/*": [
         "../../packages/ui/src/*"
@@ -29,7 +29,7 @@
       ],
       "@app/*": [
         "./src/app/*"
-      ],
+      ]
     },
     "plugins": [
       {

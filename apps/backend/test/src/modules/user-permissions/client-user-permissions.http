@@ -1,0 +1,46 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+
+###
+
+### Get all user-permissions
+GET http://localhost:3000/api/v1/user-permissions?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get user-permission by ID
+GET http://localhost:3000/api/v1/user-permissions/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new user-permission
+POST http://localhost:3000/api/v1/user-permissions HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Usuario",
+  "code": "USER",
+  "parentId": null,
+  "status": "ACTIVE"
+}
+
+###
+
+### Update an existing user-permission
+PUT http://localhost:3000/api/v1/user-permissions/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Usuario Actualizado",
+  "code": "USER_UPDATED",
+  "parentId": null,
+  "status": "ACTIVE"
+}
+
+###
+
+### Delete a user-permission
+DELETE http://localhost:3000/api/v1/user-permissions/{{id}} HTTP/1.1
+Content-Type: application/json

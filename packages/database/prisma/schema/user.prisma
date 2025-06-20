@@ -1,76 +1,95 @@
+// #34
 model User {
-  id         String    @id @default(auto()) @map("_id") @db.ObjectId
-  version    Int       @map("__v") @default(0) // Added version field
-  email      UserEmail @unique
-  nationalId String?
-  canton     String?
-  district   String?
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
 
-  firstName String?
-  lastName  String?
-  province  Province?
-  role      UserRole?
+  email String @unique
 
-  condition         String?
-  address           String?
-  status            UserStatus @default(ACTIVE)
-  hireDate          DateTime?
-  birthDate         DateTime?
-  photoUrl          String?    @default("")
-  profileType       String?
-  primaryPhone      String?
-  professionalTitle String?
+  fullName     String
+  fullLastName String?
+  photoUrl     String? @default("")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  permissions  UserPermission[]
+  nationalId   String?
+  birthDate    DateTime?
+  primaryPhone String?
   phoneNumbers UserPhone[]
 
-  professor               Professor?
-  generalConfiguration    GeneralConfiguration?
-  intellectualProductions IntellectualProduction[]
-  academicBackgrounds     AcademicBackground[]
-  enrollments             StudentEnrollment[]
-  workExperiences         WorkExperience[]
-  finalWorks              final_work[]
-  lenguage                Language[]
-  ppaas                   Ppaa[]
+  province Province?
+  canton   String?
+  district String?
+  address  String?
 
+  professionalTitle String?
+  hireDate          DateTime?
+  condition         String?
+
+  roleIds String[] @db.ObjectId
+
+  googleId String? @unique
+
+  status UserStatus @default(PRE_REGISTRATION)
+
+  // Relations
+  roles           UserRole[]           @relation("UserRoles", fields: [roleIds], references: [id])
+  userLanguages   UserLanguage[]       @relation("UserLanguage")
+  workExperiences UserWorkExperience[] @relation("UserWorkExperience")
+
+  // Relations with Academic Information
+  academicLoads       AcademicLoad[]       @relation("ProfessorLoad")
+  academicBackgrounds AcademicBackground[] @relation("UserAcademicBackground")
+
+  // Relations with Projects and Final Works
+  ppaas                   Ppaa[]                   @relation("UserPpaa")
+  finalWorks              FinalWork[]              @relation("UserFinalWork")
+  finalReports            FinalReport[]            @relation("ProfessorFinalReport")
+  intellectualProductions IntellectualProduction[] @relation("UserIntellectualProduction")
+
+  // Relations for TFG (Trabajo Final de Graduación)
+  studentProjectIds        String[]  @db.ObjectId
+  studentProjects          Project[] @relation("ProjectStudents", fields: [studentProjectIds], references: [id])
+  projectsAsTutor          Project[] @relation("ProjectTutor")
+  projectsAsInternalReader Project[] @relation("InternalReader")
+  projectsAsExternalReader Project[] @relation("ExternalReader")
+
+  // Relations with Commissions
+  coordinatedCommissions Commission[]  @relation("CommissionCoordinator")
+  observations           Observation[] @relation("ObservationProfessor")
+
+  // Relations with Reviews and Memberships
+  projectReviews ProjectReview[] @relation("professorReview")
+  commMember     CommMember[]
+
+  // Audit fields
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  createdBy    String?        @db.ObjectId
+  updatedBy    String?        @db.ObjectId
+  RefreshToken RefreshToken[]
 
   @@index([province, canton, district])
-  @@index([firstName, lastName])
-  @@index([role])
+  @@index([fullName, fullLastName])
+  @@index([nationalId])
   @@map("users")
 }
 
-type UserEmail {
-  email      String
-  isVerified Boolean @default(false)
-}
+model RefreshToken {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  tokenHash String    @unique // Store a hash of the token
+  userId    String    @db.ObjectId
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime // Should align with the JWT's own expiry
+  issuedAt  DateTime  @default(now())
+  usedAt    DateTime? // Timestamp when this token was used for rotation
+  revokedAt DateTime? // Timestamp if token was explicitly revoked (e.g., logout, security event)
 
-type UserPhone {
-  number    String?
-  isPrimary Boolean @default(false)
-}
-
-enum UserPermission {
-  EDIT
-  DELETE
-  ADD
-  VIEW
+  @@index([userId])
+  @@map("refresh_tokens")
 }
 
 enum UserStatus {
+  PRE_REGISTRATION
   ACTIVE
   INACTIVE
-}
-
-enum UserRole {
-  ADMIN
-  USER
-  STUDENT
-  PROFESSOR
 }
 
 enum Province {
@@ -81,4 +100,9 @@ enum Province {
   GUANACASTE
   PUNTARENAS
   LIMON
+}
+
+type UserPhone {
+  number String
+  type   String
 }

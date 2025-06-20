@@ -1,0 +1,41 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code 
+
+@id=1
+###
+
+### Get all schedules 
+GET http://localhost:3000/api/v1/schedules?page=1&limit=10 HTTP/1.1 
+Content-Type: application/json 
+
+### Get schedule by ID 
+GET http://localhost:3000/api/v1/schedules/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+### Create a new schedule 
+POST http://localhost:3000/api/v1/schedules HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "name": "Clase de la Mañana",
+  "day": "MONDAY",
+  "startTime": "08:00",
+  "endTime": "10:00" 
+}
+
+### Actualizar un horario existente 
+PUT http://localhost:3000/api/v1/schedules/{{id}} HTTP/1.1 
+Content-Type: application/json 
+
+{
+  "name": "Clase Actualizada",
+  "day": "THURSDAY",
+  "startTime": "13:00",
+  "endTime": "15:00",
+  "academicLoadIds": ["6073a5c4d5b5e40c8c234569"]
+}
+}
+
+### Delete a schedule 
+DELETE http://localhost:3000/api/v1/schedules/{{id}} HTTP/1.1 
+Content-Type: application/json
+

@@ -1,0 +1,60 @@
+// #24
+model Project {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  studentIds String[] @db.ObjectId
+
+  academicCycleId String @db.ObjectId
+
+  commissionId String @db.ObjectId
+
+  regionalCenterId String @db.ObjectId
+
+  careerId String @db.ObjectId
+
+  tutorId String @db.ObjectId
+
+  internalReaderId String @db.ObjectId
+
+  externalReaderId String @db.ObjectId
+
+  type     String
+  title    String
+  modality String
+  url      String
+
+  projectStatus ProjectStatus?
+  status        Status         @default(ACTIVE)
+
+  // Relations
+  students       User[]         @relation("ProjectStudents", fields: [studentIds], references: [id])
+  academicCycle  AcademicCycle  @relation(fields: [academicCycleId], references: [id])
+  commission     Commission     @relation(fields: [commissionId], references: [id])
+  regionalCenter RegionalCenter @relation(fields: [regionalCenterId], references: [id])
+  career         Career         @relation(fields: [careerId], references: [id])
+  tutor          User           @relation("ProjectTutor", fields: [tutorId], references: [id])
+  internalReader User           @relation("InternalReader", fields: [internalReaderId], references: [id])
+  externalReader User           @relation("ExternalReader", fields: [externalReaderId], references: [id])
+
+  documents Document[]
+  reviews   ProjectReview[]
+
+  projectLogs ProjectLog[] @relation("ProjectToLog")
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@index([status, academicCycleId])
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  APPROVED
+  APPROVED_WITH_MODIFICATIONS
+  REJECTED
+  REVIEW
+}

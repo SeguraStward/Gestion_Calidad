@@ -1,0 +1,63 @@
+#var, use "command >Rest Client: Switch Environment" in search bar of vs code
+@id=1
+@studentId1=1
+@studentId2=1
+@academicCycleId=1
+@commissionId=1
+@regionalCenterId=1
+@careerId=1
+@tutorId=1
+@internalReaderId=1
+@externalReaderId=1
+
+
+###
+
+### Get all projects
+GET http://localhost:3000/api/v1/projects?page=1&limit=10 HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Get project by ID
+GET http://localhost:3000/api/v1/projects/{{id}} HTTP/1.1
+Content-Type: application/json
+
+###
+
+### Create a new project
+POST http://localhost:3000/api/v1/projects HTTP/1.1
+Content-Type: application/json
+{
+  "studentIds": ["{{studentId1}}", "{{studentId2}}"],
+  "academicCycleId": "{{academicCycleId}}",
+  "commissionId": "{{commissionId}}",
+  "regionalCenterId": "{{regionalCenterId}}",
+  "careerId": "{{careerId}}",
+  "tutorId": "{{tutorId}}",
+  "internalReaderId": "{{internalReaderId}}",
+  "externalReaderId": "{{externalReaderId}}",
+  "type": "Proyecto de Graduación",
+  "title": "Desarrollo de un Sistema de Gestión de Calidad",
+  "modality": "Remoto",
+  "url": "https://github.com/ejemplo/repositorio-proyecto",
+  "projectStatus": "REVIEW"
+}
+
+###
+
+### Update an existing project
+PUT http://localhost:3000/api/v1/projects/{{id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "title": "Título Actualizado del Proyecto",
+  "url": "https://github.com/ejemplo/repositorio-actualizado",
+  "projectStatus": "APPROVED"
+}
+
+###
+
+### Delete a project
+DELETE http://localhost:3000/api/v1/projects/{{id}} HTTP/1.1
+Content-Type: application/json

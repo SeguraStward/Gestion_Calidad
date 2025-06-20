@@ -1,0 +1,33 @@
+// #16
+model FinalWork {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  title    String
+  type     WorkType
+  evidence Evidence[]
+
+  userId String @db.ObjectId
+
+  date DateTime?
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  user User @relation("UserFinalWork", fields: [userId], references: [id])
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([userId, title])
+  @@map("final_works")
+}
+
+enum WorkType {
+  PROPUESTA
+  TFG
+  DEFENSA
+}

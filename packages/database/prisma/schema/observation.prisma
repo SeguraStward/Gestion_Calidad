@@ -1,0 +1,31 @@
+// #18
+model Observation {
+  version Int    @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+
+  reviewId    String  @db.ObjectId
+  sessionId   String? @db.ObjectId
+  professorId String  @db.ObjectId
+
+  observations TypeObservation[]
+
+  status Status? @default(ACTIVE)
+
+  // Relations
+  review        ProjectReview @relation("ReviewObservations", fields: [reviewId], references: [id])
+  session       CommSession?  @relation(fields: [sessionId], references: [id])
+  professorUser User          @relation("ObservationProfessor", fields: [professorId], references: [id])
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("observations")
+}
+
+type TypeObservation {
+  observation String?
+  date        DateTime? @default(now())
+}
