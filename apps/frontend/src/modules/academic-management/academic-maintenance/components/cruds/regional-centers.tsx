@@ -170,18 +170,20 @@ export default function RegionalCentersCrud() {
               title: 'Datos básicos',
               description: 'Información principal del centro regional',
               icon: <Building className="h-5 w-5 text-primary mr-2" />,
-              fields: [                {
+              fields: [
+                {
                   type: 'text',
                   name: 'code',
                   label: 'Código',
-                  required: true,
+                  required: true, // igual que en campus
                   placeholder: 'Ej: CR-BRUNCA',
                   helperText: 'Código único del centro regional',
                   rules: {
                     required: { value: true, message: 'El código es requerido' },
                     minLength: { value: 2, message: 'El código debe tener al menos 2 caracteres' },
                     maxLength: { value: 20, message: 'El código no puede exceder 20 caracteres' },
-                    pattern: { value: /^[A-Za-z0-9\-_]+$/, message: 'Solo letras, números, guiones y guiones bajos' }
+                    pattern: { value: /^[A-Za-z0-9\-_]+$/, message: 'Solo letras, números, guiones y guiones bajos' },
+                    validate: (value: string) => value.trim().length > 0 || 'El código no puede estar vacío o solo espacios'
                   },
                   disabled: isUpdate
                 },
@@ -189,13 +191,14 @@ export default function RegionalCentersCrud() {
                   type: 'text',
                   name: 'name',
                   label: 'Nombre',
-                  required: true,
+                  required: true, // igual que en campus
                   placeholder: 'Ej: Centro Regional Brunca',
                   helperText: 'Nombre completo del centro regional',
                   rules: {
                     required: { value: true, message: 'El nombre es requerido' },
                     minLength: { value: 3, message: 'El nombre debe tener al menos 3 caracteres' },
-                    maxLength: { value: 100, message: 'El nombre no puede exceder 100 caracteres' }
+                    maxLength: { value: 100, message: 'El nombre no puede exceder 100 caracteres' },
+                    validate: (value: string) => value.trim().length > 0 || 'El nombre no puede estar vacío o solo espacios'
                   }
                 },
                 {

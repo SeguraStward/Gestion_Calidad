@@ -204,7 +204,7 @@ export default function CampusCrud() {
                   type: 'text',
                   name: 'name',
                   label: 'Nombre',
-                  required: false,
+                  required: true,
                   placeholder: 'Ej: Campus Central',
                   helperText: 'Nombre completo del campus (opcional)',
                   rules: {
