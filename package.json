@@ -16,7 +16,8 @@
     "prepare": "husky",
     "docs": "pnpm --filter @una-gc/docs start",
     "spell": "cspell --config cspell.config.yaml \"**/*\"",
-    "lint-staged": "lint-staged"
+    "lint-staged": "lint-staged",
+    "api:deploy": "pnpm --filter @una-gc/backend deploy"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",

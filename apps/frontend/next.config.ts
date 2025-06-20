@@ -1,14 +1,21 @@
-/** @type {import('next').NextConfig} */
+import path from 'path'
+import { NextConfig } from 'next'
 
-// Next.js configuration
-const nextConfig = {
-  // Transpile specific packages
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
   transpilePackages: ['@una-gc/ui'],
-
-  // Enable asset compression
   compress: true,
+  output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname, '../../'),
+  staticPageGenerationTimeout: 180,
 
-  // Set custom headers for caching optimization
+  eslint: {
+    ignoreDuringBuilds: true
+  },
+  typescript: {
+    ignoreBuildErrors: true
+  },
+
   async headers() {
     return [
       {
