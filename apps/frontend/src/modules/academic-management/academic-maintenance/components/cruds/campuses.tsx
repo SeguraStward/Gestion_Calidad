@@ -192,15 +192,26 @@ export default function CampusCrud() {
                   required: true,
                   placeholder: 'Ej: CAMP-001',
                   helperText: 'Código único del campus',
+                  rules: {
+                    required: { value: true, message: 'El código es requerido' },
+                    minLength: { value: 2, message: 'El código debe tener al menos 2 caracteres' },
+                    maxLength: { value: 20, message: 'El código no puede exceder 20 caracteres' },
+                    pattern: { value: /^[A-Za-z0-9\-_]+$/, message: 'Solo letras, números, guiones y guiones bajos' }
+                  },
                   disabled: isUpdate
                 },
                 {
                   type: 'text',
                   name: 'name',
                   label: 'Nombre',
-                  required: true,
+                  required: false,
                   placeholder: 'Ej: Campus Central',
-                  helperText: 'Nombre completo del campus'
+                  helperText: 'Nombre completo del campus (opcional)',
+                  rules: {
+                    required: { value: true, message: 'El nombre es requerido' },
+                    minLength: { value: 3, message: 'El nombre debe tener al menos 3 caracteres' },
+                    maxLength: { value: 100, message: 'El nombre no puede exceder 100 caracteres' }
+                  }
                 },
                 {
                   type: 'text',
@@ -208,7 +219,12 @@ export default function CampusCrud() {
                   label: 'Descripción',
                   required: true,
                   placeholder: 'Descripción del campus',
-                  helperText: 'Breve descripción del campus'
+                  helperText: 'Breve descripción del campus',
+                  rules: {
+                    required: { value: true, message: 'La descripción es requerida' },
+                    minLength: { value: 5, message: 'La descripción debe tener al menos 5 caracteres' },
+                    maxLength: { value: 500, message: 'La descripción no puede exceder 500 caracteres' }
+                  }
                 },
                 {
                   type: 'select',
@@ -224,6 +240,9 @@ export default function CampusCrud() {
                   isLoading: isLoadingRegionalCenters,
                   placeholder: isLoadingRegionalCenters ? 'Cargando sedes...' : 'Seleccionar sede regional',
                   helperText: 'Seleccione la sede regional a la que pertenece este campus',
+                  rules: {
+                    required: { value: true, message: 'La sede regional es requerida' }
+                  },
                   renderOption: (option: any) => (
                     <div className="flex items-center gap-2">
                       <span
@@ -243,6 +262,9 @@ export default function CampusCrud() {
                   required: true,
                   options: STATUS_OPTIONS,
                   helperText: 'Estado actual del campus',
+                  rules: {
+                    required: { value: true, message: 'El estado es requerido' }
+                  },
                   renderOption: (option: any) => (
                     <div className="flex items-center">
                       {option.icon}
@@ -272,7 +294,7 @@ export default function CampusCrud() {
       useOneQuery: (id: string, options?: any) => useOneCampus(id, undefined, options),
       defaultFormValues: {
         code: '',
-        name: '',
+        name: '', // Opcional, puede estar vacío
         description: '',
         regionalCenterId: '', // Cambiado a regionalCenterId
         status: Status.ACTIVE

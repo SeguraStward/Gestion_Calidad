@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, ValidateNested, IsNotEmpty } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsNotEmpty } from 'class-validator';
 import { Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
 import { Expose, Type } from 'class-transformer';
-import { CourseDto } from 'src/modules/courses/dtos/course.dto';
+import { CourseDto } from '@src/modules/courses/dtos/course.dto';
 import { SchoolDto } from '@src/modules/schools/dtos/school.dto';
 import { ProjectDto } from '@src/modules/projects/dtos/project.dto';
 
@@ -23,21 +23,20 @@ export class CareerDto extends BaseDto {
   @Expose()
   @IsString()
   name: string;
-
   @ApiProperty({ description: 'School ID' })
+  // @Expose() // No exponer el id de la escuela, solo la relación
   @IsNotEmpty()
   @IsString()
   schoolId: string;
-
+  
   @ApiPropertyOptional({ type: () => SchoolDto })
   @Expose()
   @Type(() => SchoolDto)
-  @ValidateNested()
   @IsOptional()
   school?: SchoolDto;
 
-  @Expose()
   @ApiPropertyOptional({ type: () => [ProjectDto] })
+  @Expose()
   @Type(() => ProjectDto)
   @IsOptional()
   projects?: ProjectDto[];
