@@ -48,8 +48,8 @@ RUN mkdir -p ./prisma/schema/ && \
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 
-RUN pnpm dlx prisma db push --schema=./prisma/schema/schema.prisma \
- && pnpm dlx prisma generate --schema=./prisma/schema/schema.prisma
+RUN pnpm exec prisma db push --schema=./prisma/schema/schema.prisma \
+  && pnpm exec prisma generate --schema=./prisma/schema/schema.prisma
 
 # Uncomment and use build args to enable remote caching
 # ARG TURBO_TEAM
