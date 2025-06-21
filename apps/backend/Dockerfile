@@ -49,9 +49,9 @@ ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 
 WORKDIR /app/apps/backend
-RUN pnpm exec prisma db push   --schema=../../prisma/schema/schema.prisma \
- && pnpm exec prisma generate --schema=../../prisma/schema/schema.prisma \
-    --allow-no-models
+RUN pnpm exec prisma db push \
+      --schema=../../prisma/schema/schema.prisma \
+      --skip-generate
 
 WORKDIR /app
 
