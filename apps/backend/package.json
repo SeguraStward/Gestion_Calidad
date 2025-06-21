@@ -18,7 +18,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.config.json",
-    "deploy": "prisma migrate deploy --schema=../../prisma/schema/schema.prisma && node dist/main.js"
+    "deploy": "prisma db push --schema=../../prisma/schema/schema.prisma && prisma generate --schema=../../prisma/schema/schema.prisma && node dist/main.js"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.0.1",
