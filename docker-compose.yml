@@ -78,6 +78,8 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
+      args:
+        DATABASE_URL: ${DATABASE_URL}
 
     env_file:
       - ./apps/backend/.env

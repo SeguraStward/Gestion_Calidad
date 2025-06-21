@@ -45,6 +45,12 @@ RUN mkdir -p ./prisma/schema/ && \
       echo "Migrations directory doesn't exist, skipping copy"; \
     fi
 
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
+RUN pnpm prisma db push   --schema=./prisma/schema/schema.prisma \
+ && pnpm prisma generate --schema=./prisma/schema/schema.prisma
+
 # Uncomment and use build args to enable remote caching
 # ARG TURBO_TEAM
 # ENV TURBO_TEAM=$TURBO_TEAM
@@ -52,7 +58,8 @@ RUN mkdir -p ./prisma/schema/ && \
 # ARG TURBO_TOKEN
 # ENV TURBO_TOKEN=$TURBO_TOKEN
 
-RUN pnpm turbo build --filter=@una-gc/backend...
+RUN pnpm turbo build --filter=@una-gc/backend --concurrency=1
+RUN pnpm prune --prod
 
 FROM base AS runner
 WORKDIR /app
@@ -60,10 +67,14 @@ WORKDIR /app
 # Don't run production as root
 RUN addgroup --system --gid 1001 nestjs
 RUN adduser --system --uid 1001 nestjs
-
-COPY --from=installer --chown=nestjs:nestjs /app .
-
 USER nestjs
+
+# COPY --from=installer --chown=nestjs:nestjs /app .
+COPY --from=installer --chown=nestjs:nestjs /app/node_modules/.prisma  ./node_modules/.prisma
+COPY --from=installer --chown=nestjs:nestjs /app/node_modules/@prisma  ./node_modules/@prisma
+COPY --from=installer --chown=nestjs:nestjs /app/node_modules          ./node_modules
+COPY --from=installer --chown=nestjs:nestjs /app/dist                  ./dist
+
 
 ENV NODE_ENV=production
 
