@@ -48,8 +48,8 @@ RUN mkdir -p ./prisma/schema/ && \
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 
-RUN pnpm prisma db push   --schema=./prisma/schema/schema.prisma \
- && pnpm prisma generate --schema=./prisma/schema/schema.prisma
+RUN pnpm dlx prisma db push --schema=./prisma/schema/schema.prisma \
+ && pnpm dlx prisma generate --schema=./prisma/schema/schema.prisma
 
 # Uncomment and use build args to enable remote caching
 # ARG TURBO_TEAM
@@ -75,9 +75,8 @@ COPY --from=installer --chown=nestjs:nestjs /app/node_modules/@prisma  ./node_mo
 COPY --from=installer --chown=nestjs:nestjs /app/node_modules          ./node_modules
 COPY --from=installer --chown=nestjs:nestjs /app/dist                  ./dist
 
-
 ENV NODE_ENV=production
 
 EXPOSE 3000
 
-CMD ["pnpm", "api:deploy"]
+CMD ["node", "dist/main.js"]
