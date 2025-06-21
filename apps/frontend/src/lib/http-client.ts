@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
-import { useUserContextStore } from '../store/authStore' // Para el usuario principal y encriptado
-import { useUserStore } from '../store/userStore' // Para el otro store de usuario
+
+import { useSessionStore } from '../store/sessionStore'
+import { Logger } from '@/utils'
 
 // --- INICIO: Lógica para manejar el proceso de refresh ---
 let isRefreshing = false
@@ -11,28 +12,29 @@ const processQueue = (error: any, token: string | null = null) => {
     if (error) {
       prom.reject(error)
     } else {
-      prom.resolve(token) // El token aquí es el accessToken, pero no lo usamos directamente si auth_token es HttpOnly
+      prom.resolve(token)
     }
   })
   failedQueue = []
-} 
+}
+// --- FIN: Lógica para manejar el proceso de refresh ---
+
 const triggerLogoutProcedures = () => {
-  console.log('Triggering logout procedures: clear user state, redirect, etc.')
-   useUserContextStore.getState().logoutUser()  
-  useUserStore.getState().clearUser()  
- 
+  Logger.log('Triggering logout procedures: clear user state, redirect, etc.')
+  useSessionStore.getState().clearSession()
+  // La redirección se hará después de intentar el logout en el servidor.
 }
 
 class HttpClientClass {
   private instance: AxiosInstance
   private readonly BASE_API_URL = process.env.NEXT_PUBLIC_API_URL
   private readonly REFRESH_TOKEN_URL = `${this.BASE_API_URL}/auth/refresh`
-  private readonly LOGOUT_URL = `${this.BASE_API_URL}/auth/logout` // URL para el endpoint de logout del backend
+  private readonly LOGOUT_URL = `${this.BASE_API_URL}/auth/logout`
 
   constructor() {
     this.instance = axios.create({
       baseURL: this.BASE_API_URL,
-      timeout: 10000,
+      timeout: 30000, // Increased from 10s to 30s for better UX
       headers: {
         'Content-Type': 'application/json'
       },
@@ -52,7 +54,8 @@ class HttpClientClass {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
         if (error.response?.status === 401 && originalRequest.url !== this.REFRESH_TOKEN_URL && !originalRequest._retry) {
-          
+          Logger.log(`[HTTP Client] Received 401 from ${originalRequest.url}. Attempting to use refresh token.`)
+
           if (isRefreshing) {
             return new Promise((resolve, reject) => {
               failedQueue.push({ resolve, reject })
@@ -68,32 +71,28 @@ class HttpClientClass {
           originalRequest._retry = true
           isRefreshing = true
 
-          // Este console.log ya existente también es útil
-          console.log('[HTTP Client] Attempting to refresh token by calling:', this.REFRESH_TOKEN_URL)
+          Logger.log('[HTTP Client] Attempting to refresh token by calling:', this.REFRESH_TOKEN_URL)
           try {
             const refreshResponse = await this.instance.post<{ accessToken: string }>(this.REFRESH_TOKEN_URL)
 
             if (refreshResponse.status === 200 || refreshResponse.status === 201) {
-              console.log('[HTTP Client] Token refreshed successfully.')
+              Logger.log('[HTTP Client] Token refreshed successfully.')
               processQueue(null, refreshResponse.data.accessToken)
               return this.instance(originalRequest)
             }
           } catch (refreshError: any) {
-            console.error('[HTTP Client] Failed to refresh token:', refreshError)
+            Logger.error('[HTTP Client] Failed to refresh token:', refreshError)
             processQueue(refreshError, null)
 
             await this.performServerLogout()
             triggerLogoutProcedures()
 
-            const loginUrl = process.env.NEXT_PUBLIC_LOGIN || 'http://localhost:3001' // Proporciona un fallback
+            const loginUrl = process.env.NEXT_PUBLIC_LOGIN || 'http://localhost:3001'
             if (typeof window !== 'undefined') {
               if (loginUrl) {
-                // Asegúrate de que loginUrl es truthy (no undefined, no null, no '')
                 window.location.href = loginUrl
               } else {
-                console.error('Login URL is not defined. Cannot redirect.')
-                // Opcionalmente, redirige a una página de error genérica o a la raíz
-                // window.location.href = '/auth-error';
+                Logger.error('Login URL is not defined. Cannot redirect.')
               }
             }
             return Promise.reject(refreshError)
@@ -108,34 +107,26 @@ class HttpClientClass {
 
   private async performServerLogout(): Promise<void> {
     try {
-      console.log('Attempting to logout from server...')
-      // El endpoint de logout es GET
+      Logger.log('Attempting to logout from server...')
       await this.instance.get(this.LOGOUT_URL)
-      console.log('Successfully logged out from server.')
+      Logger.log('Successfully logged out from server.')
     } catch (logoutError) {
-      console.error(
+      Logger.error(
         'Failed to logout from server. Cookies might still be cleared by backend on next request or already invalid:',
         logoutError
       )
-      // No es necesario rechazar la promesa aquí, ya que el objetivo principal es desloguear al cliente.
-      // El backend ya limpia las cookies en su respuesta de logout.
     }
   }
 
-  // Método público para que la UI pueda llamar al logout
   async logout(): Promise<void> {
     await this.performServerLogout()
-    triggerLogoutProcedures() // Limpia estado local
-    // Redirigir al login
-    const loginUrl = process.env.NEXT_PUBLIC_LOGIN || '/login' // Proporciona un fallback
+    triggerLogoutProcedures()
+    const loginUrl = process.env.NEXT_PUBLIC_LOGIN || '/login'
     if (typeof window !== 'undefined') {
       if (loginUrl) {
-        // Asegúrate de que loginUrl es truthy (no undefined, no null, no '')
         window.location.href = loginUrl
       } else {
-        console.error('Login URL is not defined for logout. Cannot redirect.')
-        // Opcionalmente, redirige a una página de error genérica o a la raíz
-        // window.location.href = '/auth-error';
+        Logger.error('Login URL is not defined for logout. Cannot redirect.')
       }
     }
   }

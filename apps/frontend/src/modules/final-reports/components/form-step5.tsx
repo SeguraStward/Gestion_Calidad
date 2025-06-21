@@ -65,9 +65,8 @@ export function Step5Form({
   }
 
   // Mensaje de error consolidado
-  const formError = formState.errors.respuestas?.root?.message || 
-                   formState.errors.respuestas?.message ||
-                   formState.errors.root?.message;
+  const formError =
+    formState.errors.respuestas?.root?.message || formState.errors.respuestas?.message || formState.errors.root?.message
 
   return (
     <div className="p-4 md:p-6 h-full flex flex-col">

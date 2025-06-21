@@ -145,8 +145,8 @@ export default function FacultyCrud() {
               title: 'Datos básicos',
               description: 'Información principal de la facultad',
               icon: <GraduationCap className="h-5 w-5 text-primary mr-2" />,
-              fields: [               
-                 {
+              fields: [
+                {
                   type: 'text',
                   name: 'code',
                   label: 'Código',
@@ -230,7 +230,8 @@ export default function FacultyCrud() {
       useCreateMutation: useCreateFaculty,
       useUpdateMutation: useUpdateFaculty,
       useDeleteMutation: useRemoveFaculty,
-      useOneQuery: useOneFacultyAdapter,      defaultFormValues: {
+      useOneQuery: useOneFacultyAdapter,
+      defaultFormValues: {
         code: '',
         name: '', // Opcional, puede estar vacío
         description: '', // Opcional, puede estar vacío

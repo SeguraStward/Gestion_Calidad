@@ -196,8 +196,8 @@ export default function CourseCrud() {
             {
               title: 'Datos del Curso',
               description: 'Información principal del curso',
-              fields: [           
-               { 
+              fields: [
+                {
                   type: 'text',
                   name: 'code',
                   label: 'Código',
@@ -299,7 +299,8 @@ export default function CourseCrud() {
                     min: { value: 0, message: 'Las horas independientes no pueden ser negativas' },
                     max: { value: 200, message: 'Las horas independientes no pueden exceder 200' }
                   }
-                },                {
+                },
+                {
                   type: 'select',
                   name: 'careerId',
                   label: 'Carrera',
@@ -309,7 +310,7 @@ export default function CourseCrud() {
                   placeholder: isLoadingCareers ? 'Cargando carreras...' : 'Seleccionar carrera',
                   helperText: 'Seleccione la carrera a la que pertenece este curso (opcional)',
                   rules: {
-                    required: { value: true, message: 'La carrera es requerida' },
+                    required: { value: true, message: 'La carrera es requerida' }
                   },
                   renderOption: (option: any) => (
                     <div className="flex items-center gap-2">
@@ -322,7 +323,6 @@ export default function CourseCrud() {
                       </span>
                     </div>
                   )
-                  
                 },
                 {
                   type: 'select',

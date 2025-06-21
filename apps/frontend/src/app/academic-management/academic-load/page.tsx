@@ -1,5 +1,5 @@
-import { AcademicLoadPage } from '@/modules/academic-management/academic-load/components/academic-load-page'
+import AcademicLoadClient from './AcademicLoadClient'
 
 export default function Page() {
-  return <AcademicLoadPage />
+  return <AcademicLoadClient />
 }

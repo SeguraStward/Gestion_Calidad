@@ -1,0 +1,10 @@
+/* Fix vendor order for button appearance */
+button {
+  border-radius: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+}

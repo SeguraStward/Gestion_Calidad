@@ -172,7 +172,8 @@ export default function SchoolCrud() {
             {
               title: 'Datos de la Escuela',
               description: 'Información principal de la escuela',
-              fields: [                {
+              fields: [
+                {
                   type: 'text',
                   name: 'code',
                   label: 'Código',
@@ -273,7 +274,8 @@ export default function SchoolCrud() {
       useCreateMutation: useCreateSchool,
       useUpdateMutation: useUpdateSchool,
       useDeleteMutation: useRemoveSchool,
-      useOneQuery: (id: string, options?: any) => useOneSchool(id, undefined, options),      defaultFormValues: {
+      useOneQuery: (id: string, options?: any) => useOneSchool(id, undefined, options),
+      defaultFormValues: {
         code: '',
         name: '',
         description: '', // Opcional, puede estar vacío

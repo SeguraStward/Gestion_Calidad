@@ -110,34 +110,34 @@ export function Step7EditForm({
           }
         })
       }
-       reset(formValuesForVisibleQuestions)
-    } else if (!isEditing) { 
+      reset(formValuesForVisibleQuestions)
+    } else if (!isEditing) {
       const defaultValues = {
         respuestasRadio: todasLasPreguntasFiltradas.map((p) => ({ idPregunta: p.questionId, respuesta: '' }))
       }
-       reset(defaultValues)
+      reset(defaultValues)
     }
   }, [initialData, reset, todasLasPreguntasFiltradas, reportType, isEditing]) // Añadir isEditing
- 
+
   const handleValidationErrors = (errors: any) => {
     toast.error('Por favor, corrija los errores en el formulario del Paso 7.')
   }
- 
-  const localSubmitAndFinalize = async (data: Step7FormData) => {  
+
+  const localSubmitAndFinalize = async (data: Step7FormData) => {
     onSaveAndNext(data)
 
     await onFinalSubmit() // Llama a handleSubmitAllSteps de la página padre
   }
 
   const handlePreviousClickInternal = () => {
-    const currentData = getValues()  
+    const currentData = getValues()
     if (onPrevious) {
-      onPrevious(currentData) 
+      onPrevious(currentData)
     }
   }
 
   return (
-    <div className="flex flex-col"> 
+    <div className="flex flex-col">
       <div className="mb-4">
         <h2 className="text-xl font-semibold flex items-center gap-3">
           <Activity className="w-5 h-5 text-foreground/70" />
@@ -153,7 +153,7 @@ export function Step7EditForm({
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
           <form onSubmit={handleSubmit(localSubmitAndFinalize, handleValidationErrors)} className="flex-1 flex flex-col min-h-0">
-             <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-2 sm:space-y-2.5 md:space-y-3">
+            <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-2 sm:space-y-2.5 md:space-y-3">
               {todasLasPreguntasFiltradas.length === 0 ? (
                 <div className="text-center py-4 sm:py-5 text-muted-foreground">
                   <Activity className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 mx-auto mb-1 sm:mb-1.5 md:mb-2 opacity-50" />
@@ -240,7 +240,7 @@ export function Step7EditForm({
               )}
             </div>
 
-             <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
+            <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
               {onPrevious && (
                 <Button
                   type="button"

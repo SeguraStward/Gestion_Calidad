@@ -47,36 +47,33 @@ const TOTAL_STEPS = 7
 const STEP_LABELS_SPANISH = ['Información', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
 
 function transformReportToStep7Data(report: FullFinalReport, currentReportType: ReportType): Step7FormData | null {
-   const filteredQuestions = step7QuestionsPageMock.filter((q) => {
+  const filteredQuestions = step7QuestionsPageMock.filter((q) => {
     if (Array.isArray(q.appliesTo)) {
       return q.appliesTo.includes(currentReportType) || q.appliesTo.includes('TODOS')
     }
     return false  
   })
- 
+
   const step7Responses = filteredQuestions.map((p, index) => {
     const existingEvaluation = report.evaluation?.find((e) => e.questionId === p.questionId)
     let formResponseValue = ''
 
-  
-
     if (existingEvaluation) {
-       
       const questionDetails = step7QuestionsPageMock.find((mockQuestion) => mockQuestion.questionId === p.questionId)
       if (questionDetails && questionDetails.options) {
         const matchedOption = questionDetails.options.find((opt) => opt.label === existingEvaluation.response)
         if (matchedOption) {
-          formResponseValue = matchedOption.value 
-        }  
+          formResponseValue = matchedOption.value
+        }
       }
-    }  
+    }
 
     return {
       idPregunta: p.questionId,
       respuesta: formResponseValue
     }
   })
-   return { respuestasRadio: step7Responses }
+  return { respuestasRadio: step7Responses }
 }
 
 export default function EditFinalReportPage() {
@@ -123,8 +120,6 @@ export default function EditFinalReportPage() {
 
   useEffect(() => {
     if (fetchedReport && reportType) {
-       console.warn('El reporte esta cambiandoooooo shit:', fetchedReport)
-
       const initialStep1 = transformReportToStep1Data(fetchedReport)
       if (initialStep1) {
         setStep1Data(initialStep1)
@@ -164,7 +159,7 @@ export default function EditFinalReportPage() {
       const initialStep7 = transformReportToStep7Data(fetchedReport, reportType)
       if (initialStep7) {
         setStep7Data(initialStep7)
-        formStep7Methods.reset(initialStep7) 
+        formStep7Methods.reset(initialStep7)
       }
     }
   }, [
@@ -198,12 +193,12 @@ export default function EditFinalReportPage() {
     if (step6Data) formStep6Methods.reset(step6Data)
   }, [step6Data, formStep6Methods])
   useEffect(() => {
-    if (step7Data) { 
+    if (step7Data) {
       formStep7Methods.reset(step7Data)
     }
   }, [step7Data, formStep7Methods])
 
-  const handleUpdateStepData = (step: number, data: any) => { 
+  const handleUpdateStepData = (step: number, data: any) => {
     switch (step) {
       case 1:
         setStep1Data(data)
@@ -225,7 +220,7 @@ export default function EditFinalReportPage() {
         break
       case 7:
         setStep7Data(data as Step7FormData)
-         return
+        return
     }
     if (step < TOTAL_STEPS) {
       setCurrentStep(step + 1)
@@ -236,16 +231,14 @@ export default function EditFinalReportPage() {
     setCurrentStep((prev) => Math.max(1, prev - 1))
   }
 
-  const handleSubmitAllSteps = async () => { 
+  const handleSubmitAllSteps = async () => {
     const currentStep7ValuesFromForm = formStep7Methods.getValues()
-    
 
     try {
       if (step7Schema) {
         step7Schema.parse(currentStep7ValuesFromForm)
-      } 
+      }
     } catch (validationError) {
-      
       toast.error('Hay errores de validación en el Paso 7. Por favor, revise las respuestas.')
       return
     }
@@ -262,54 +255,54 @@ export default function EditFinalReportPage() {
       currentStep7ValuesFromForm.respuestasRadio.some((r) => !r.idPregunta)
     ) {
       toast.error('Faltan datos de algunos pasos o hay IDs de pregunta faltantes en el paso 7.')
-       
+
       return
     }
 
     try {
-      const evaluationData: FinalReportEvaluationFE[] = [ 
+      const evaluationData: FinalReportEvaluationFE[] = [
         ...(step5Data?.respuestas.map((resp) => ({
           questionId: resp.idPregunta,
           response: resp.respuesta,
-          responseType: 'TEXT',  
+          responseType: 'TEXT',
           questionGroup: step5QuestionsMock.find((q) => q.questionId === resp.idPregunta)?.group || 'evaluacion_general_curso',
           question: step5QuestionsMock.find((q) => q.questionId === resp.idPregunta)?.question || resp.idPregunta,
-          options: [],  
+          options: [],
           multipleResponse: [],
           otherResponse: undefined
         })) || []),
-       ...(step6Data?.respuestasMultiples?.[0]?.respuestasSeleccionadas?.length
-  ? [
-      {
-        questionId: step6Data.respuestasMultiples[0].idPregunta,
-        question:
-          step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.question ||
-          step6Data.respuestasMultiples[0].idPregunta,
-        questionGroup:
-          step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.group ||
-          'herramientas',
-        responseType: 'SELECCION_MULTIPLE' as const,
-        response: null,
-        multipleResponse: step6Data.respuestasMultiples[0].respuestasSeleccionadas,
-        options: [],
-        otherResponse: undefined
-      }
-    ]
-  : []),
+        ...(step6Data?.respuestasMultiples?.[0]?.respuestasSeleccionadas?.length
+          ? [
+              {
+                questionId: step6Data.respuestasMultiples[0].idPregunta,
+                question:
+                  step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.question ||
+                  step6Data.respuestasMultiples[0].idPregunta,
+                questionGroup:
+                  step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.group ||
+                  'herramientas',
+                responseType: 'SELECCION_MULTIPLE' as const,
+                response: null,
+                multipleResponse: step6Data.respuestasMultiples[0].respuestasSeleccionadas,
+                options: [],
+                otherResponse: undefined
+              }
+            ]
+          : []),
         ...(step6Data?.otrasHerramientas && step6Data.otrasHerramientas.trim() !== ''
           ? [
               {
-            questionId: OTHER_TOOLS_QUESTION_ID,
-               question:
-               step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
-                'Otras herramientas utilizadas (opcional)',
-               questionGroup:
-               step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.group || 'herramientas',
-               responseType: 'TEXT' as const,
-               response: step6Data.otrasHerramientas,
-               multipleResponse: [],
-               options: [],
-               otherResponse: undefined
+                questionId: OTHER_TOOLS_QUESTION_ID,
+                question:
+                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
+                  'Otras herramientas utilizadas (opcional)',
+                questionGroup:
+                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.group || 'herramientas',
+                responseType: 'TEXT' as const,
+                response: step6Data.otrasHerramientas,
+                multipleResponse: [],
+                options: [],
+                otherResponse: undefined
               }
             ]
           : []),
@@ -322,9 +315,9 @@ export default function EditFinalReportPage() {
               const selectedOption = questionDetails.options.find((opt) => opt.value === resp.respuesta)
               if (selectedOption) {
                 responseLabelToSend = selectedOption.label
-              } 
+              }
             }
-          }  
+          }
           return {
             questionId: resp.idPregunta,
             response: responseLabelToSend,
@@ -334,19 +327,19 @@ export default function EditFinalReportPage() {
               questionDetails?.options?.map((opt) => ({
                 value: opt.value,
                 label: opt.label,
-                category: questionDetails?.group  
+                category: questionDetails?.group
               })) || [],
             question: questionDetails?.question || resp.idPregunta,
             multipleResponse: [],
-             otherResponse: undefined
+            otherResponse: undefined
           }
         })
       ].map((item) => ({
-       ...item,
+        ...item,
         response: item.response === undefined ? undefined : item.response,
         multipleResponse: item.multipleResponse || [],
         options: item.options || [],
-        questionGroup: item.questionGroup || 'general', 
+        questionGroup: item.questionGroup || 'general',
         otherResponse: item.otherResponse === undefined ? undefined : item.otherResponse
       })) as FinalReportEvaluationFE[]
 
@@ -374,17 +367,16 @@ export default function EditFinalReportPage() {
             // id: sg.id, // Descomentar si necesitas enviar el ID de la salvaguarda
           }))
         },
-        evaluation: evaluationData,
-       }
- 
+        evaluation: evaluationData
+      }
+
       await updateReportMutation({ id: reportId, data: updatePayload })
 
-      
       await queryClient.invalidateQueries({ queryKey: ['finalReports', reportId] })
       toast.success('Informe actualizado exitosamente!') // Mover toast aquí para mejor flujo
 
       router.push('/final-reports')
-    } catch (error: any) { 
+    } catch (error: any) {
       toast.error(`Error al actualizar el informe: ${error.message || 'Error desconocido'}`)
     }
   }
@@ -561,8 +553,8 @@ export default function EditFinalReportPage() {
       />
       <main className="flex-grow flex flex-col items-center overflow-hidden pt-2 pb-6 md:pt-4">
         <Card className="shadow-lg border-border/50 w-full max-w-5xl flex flex-col flex-grow overflow-hidden rounded-lg">
-          <CardContent className="flex-grow overflow-y-auto p-0"> 
-            <div className="p-4 md:p-6 lg:p-8 relative h-full"> 
+          <CardContent className="flex-grow overflow-y-auto p-0">
+            <div className="p-4 md:p-6 lg:p-8 relative h-full">
               {isUpdatingReport && (
                 <div className="absolute inset-0 bg-white/80 dark:bg-black/80 flex justify-center items-center z-50 rounded-lg">
                   <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -570,7 +562,7 @@ export default function EditFinalReportPage() {
                 </div>
               )}
               <div className={`${isUpdatingReport ? 'opacity-50 pointer-events-none' : ''} flex-l`}>
-                {' '} 
+                {' '}
                 {renderCurrentStepForm()}
               </div>
             </div>

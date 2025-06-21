@@ -2,8 +2,8 @@ import '@una-gc/ui/globals.css'
 import { ReactNode } from 'react'
 
 export const metadata = {
-  title: 'Google Login App',
-  description: 'Login with Google and redirect to profile'
+  title: 'Gestión de Calidad - UNA',
+  description: 'Sistema de Gestión de Calidad - Universidad Nacional'
 }
 
 function AuthLayout({ children }: { children: ReactNode }) {

@@ -158,7 +158,7 @@ export default function ClassroomCrud() {
             {
               title: 'Datos del Aula',
               description: 'Información principal del aula',
-              fields: [           
+              fields: [
                 {
                   type: 'text',
                   name: 'roomNumber',
@@ -269,7 +269,8 @@ export default function ClassroomCrud() {
       useCreateMutation: useCreateClassroom,
       useUpdateMutation: useUpdateClassroom,
       useDeleteMutation: useRemoveClassroom,
-      useOneQuery: useOneClassroomAdapter,      defaultFormValues: {
+      useOneQuery: useOneClassroomAdapter,
+      defaultFormValues: {
         roomNumber: '',
         capacity: 0 as number,
         description: '', // Opcional, puede estar vacío
