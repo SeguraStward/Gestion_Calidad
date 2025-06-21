@@ -73,11 +73,11 @@ RUN addgroup --system --gid 1001 nestjs
 RUN adduser --system --uid 1001 nestjs
 USER nestjs
 
-# COPY --from=installer --chown=nestjs:nestjs /app .
-COPY --from=installer --chown=nestjs:nestjs /app/node_modules/.prisma  ./node_modules/.prisma
-COPY --from=installer --chown=nestjs:nestjs /app/node_modules/@prisma  ./node_modules/@prisma
-COPY --from=installer --chown=nestjs:nestjs /app/node_modules          ./node_modules
-COPY --from=installer --chown=nestjs:nestjs /app/dist                  ./dist
+COPY --from=installer --chown=nestjs:nestjs /app .
+# COPY --from=installer --chown=nestjs:nestjs /app/node_modules/.prisma  ./node_modules/.prisma
+# COPY --from=installer --chown=nestjs:nestjs /app/node_modules/@prisma  ./node_modules/@prisma
+# COPY --from=installer --chown=nestjs:nestjs /app/node_modules          ./node_modules
+# COPY --from=installer --chown=nestjs:nestjs /app/dist                  ./dist
 
 ENV NODE_ENV=production
 
