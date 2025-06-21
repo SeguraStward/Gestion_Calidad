@@ -184,4 +184,74 @@ export class AuthService {
       this.log('warn', 'Logout request failed, but continuing with local cleanup:', error)
     }
   }
+
+  /**
+   * Set active role for the current user
+   */
+  static async setActiveRole(roleId: string): Promise<void> {
+    this.log('info', `Setting active role: ${roleId}`)
+
+    try {
+      const apiUrl = this.validateApiUrl()
+
+      const response = await axios.post(
+        `${apiUrl}/auth/set-active-role`,
+        { roleId },
+        {
+          withCredentials: true,
+          timeout: 5000,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+
+      this.log('info', `Active role set successfully: ${roleId}`)
+      return response.data
+    } catch (error) {
+      const axiosError = error as AxiosError
+      const statusCode = axiosError.response?.status
+      const responseData = axiosError.response?.data
+
+      this.log('error', 'Error setting active role:', {
+        status: statusCode,
+        statusText: axiosError.response?.statusText,
+        message: axiosError.message,
+        data: responseData,
+        code: axiosError.code
+      })
+
+      // Errores específicos
+      switch (statusCode) {
+        case 401:
+          throw new AuthNetworkError('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', statusCode, responseData)
+        case 400:
+          throw new AuthNetworkError('Rol inválido seleccionado.', statusCode, responseData)
+        case 403:
+          throw new AuthNetworkError('No tienes permisos para usar este rol.', statusCode, responseData)
+        default:
+          const defaultMessage = (responseData as any)?.message || axiosError.message || 'Error desconocido'
+          throw new AuthNetworkError(`Error al establecer rol activo: ${defaultMessage}`, statusCode, responseData)
+      }
+    }
+  }
+
+  /**
+   * Get current active role ID
+   */
+  static async getActiveRole(): Promise<{ activeRoleId: string | null }> {
+    try {
+      const apiUrl = this.validateApiUrl()
+
+      const response = await axios.get(`${apiUrl}/auth/active-role`, {
+        withCredentials: true,
+        timeout: 5000
+      })
+
+      return response.data
+    } catch (error) {
+      this.log('debug', 'Failed to get active role:', error)
+      return { activeRoleId: null }
+    }
+  }
 }

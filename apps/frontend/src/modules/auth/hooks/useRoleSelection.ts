@@ -141,9 +141,9 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     }
 
     await executeSubmit(async () => {
-      console.log('🔄 Setting active role locally:', selectedRole)
+      console.log('🔄 Setting active role via API:', selectedRole)
 
-      CookieManager.setActiveRole(selectedRole)
+      await CookieManager.setActiveRole(selectedRole)
 
       const roleData = {
         id: selectedRole.id,

@@ -1,4 +1,14 @@
-import { Controller, Get, Logger, Post, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Logger,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+  Body,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
@@ -8,6 +18,7 @@ import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { GoogleUser } from './interfaces';
+import { SetActiveRoleDto } from './dto/set-active-role.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -127,6 +138,48 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   getProfile(@Req() req: Request) {
     return req.user;
+  }
+
+  @ApiOperation({ summary: 'Set active role for current user' })
+  @ApiResponse({ status: 200, description: 'Active role set successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 400, description: 'Invalid role ID' })
+  @Post('set-active-role')
+  @UseGuards(JwtAuthGuard)
+  async setActiveRole(
+    @Body() setActiveRoleDto: SetActiveRoleDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const user = req.user as { id: string; email: string };
+
+    try {
+      await this.authService.setActiveRole(user.id, setActiveRoleDto.roleId);
+
+      res.cookie('active_role_id', setActiveRoleDto.roleId, {
+        domain: '.arayaroma.software',
+        httpOnly: true,
+        secure: this.configService.get('NODE_ENV') === 'production',
+        maxAge: this.getCookieMaxAge('JWT_EXPIRATION'),
+        sameSite: 'lax',
+        path: '/',
+      });
+
+      return { message: 'Active role set successfully', roleId: setActiveRoleDto.roleId };
+    } catch (error) {
+      this.logger.error(`Error setting active role for user ${user.id}: ${error}`);
+      throw error;
+    }
+  }
+
+  @ApiOperation({ summary: 'Get current active role' })
+  @ApiResponse({ status: 200, description: 'Return current active role ID' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @Get('active-role')
+  @UseGuards(JwtAuthGuard)
+  getActiveRole(@Req() req: Request) {
+    const activeRoleId = req.cookies.active_role_id;
+    return { activeRoleId: activeRoleId || null };
   }
 
   @ApiOperation({ summary: 'Logout current user' })

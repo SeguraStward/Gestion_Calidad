@@ -38,7 +38,7 @@ function getAccessToken(request: NextRequest): string | undefined {
 
 function getActiveRoleId(request: NextRequest): string | undefined {
   try {
-    const roleId = request.cookies.get('user_active_role_id')?.value
+    const roleId = request.cookies.get('active_role_id')?.value // Changed from 'user_active_role_id' to 'active_role_id'
     Logger.debug('Role ID retrieved', { hasRoleId: !!roleId, roleIdValue: roleId })
     return roleId
   } catch (error) {

@@ -16,7 +16,7 @@ import { SessionStorageManager, Logger, toSeconds } from '.'
  * - Intended for use in browser environments.
  */
 export class CookieManager {
-  private static readonly USER_ACTIVE_ROLE_ID_KEY = 'user_active_role_id'
+  private static readonly USER_ACTIVE_ROLE_ID_KEY = 'active_role_id' // Changed to match backend cookie name
   private static readonly AUTH_TOKEN_KEY = 'auth_token'
   private static readonly REFRESH_TOKEN_KEY = 'refresh_token'
 
@@ -27,24 +27,29 @@ export class CookieManager {
     sameSite: 'lax' as const
   }
 
-  // active rol id manage
-  static setActiveRole(role: Role): void {
+  // active rol id manage - NOW MANAGED BY BACKEND
+  static async setActiveRole(role: Role): Promise<void> {
     try {
-      Logger.log('🍪 CookieManager.setActiveRole - Guardando rol:', role)
+      Logger.log('🍪 CookieManager.setActiveRole - Setting role via API:', role)
       if (!role || !role.id || !role.name) {
-        Logger.error('❌ Rol inválido - falta id o name:', role)
-        throw new Error('Rol inválido: faltan propiedades requeridas')
+        Logger.error('❌ Invalid role - missing id or name:', role)
+        throw new Error('Invalid role: missing required properties')
       }
+
       const activeRole: Role = {
         id: String(role.id),
         name: role.name,
         description: role.description || '',
         permissions: role.permissions || []
       }
-      this.setCookie(this.USER_ACTIVE_ROLE_ID_KEY, String(activeRole.id))
-      Logger.log('✅ ID del rol guardado en cookie:', activeRole.id)
+
+      // Call the backend API to set the role (this will set the HTTP-only cookie)
+      const { AuthService } = await import('@/modules/auth/auth.service')
+      await AuthService.setActiveRole(activeRole.id)
+
+      // Store role data in session storage for frontend use
       SessionStorageManager.saveActiveRole(activeRole, this.COOKIE_OPTIONS.maxAge)
-      Logger.log('🔍 Rol almacenado:', {
+      Logger.log('🔍 Role stored in session:', {
         id: activeRole.id,
         name: activeRole.name,
         permissionsCount: activeRole.permissions?.length || 0
@@ -56,23 +61,30 @@ export class CookieManager {
   }
 
   static getActiveRoleId(): string | null {
-    return this.getCookie(this.USER_ACTIVE_ROLE_ID_KEY)
+    // The cookie is now HTTP-only and managed by the backend
+    // We rely on the middleware to check for the cookie
+    // Frontend should use SessionStorageManager.getActiveRole() for role data
+    return null // Always return null since we can't access HTTP-only cookies
   }
 
   static removeActiveRole(): void {
-    this.removeCookie(this.USER_ACTIVE_ROLE_ID_KEY)
+    // Don't manually remove the cookie since it's HTTP-only
+    // The backend will handle cookie removal on logout
     SessionStorageManager.removeActiveRole()
   }
 
   static hasActiveRole(): boolean {
-    const roleId = this.getCookie(this.USER_ACTIVE_ROLE_ID_KEY)
-    return !!roleId && SessionStorageManager.hasActiveRole()
+    // Check session storage instead of cookie since cookie is HTTP-only
+    return SessionStorageManager.hasActiveRole()
   }
 
   static refreshActiveRole(): void {
     const currentRole = SessionStorageManager.getActiveRole()
     if (currentRole) {
-      this.setActiveRole(currentRole)
+      // This will call the API to refresh the backend cookie
+      this.setActiveRole(currentRole).catch((error) => {
+        Logger.error('Failed to refresh active role:', error)
+      })
     }
   }
 

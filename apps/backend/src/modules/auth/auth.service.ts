@@ -206,4 +206,27 @@ export class AuthService {
       return null;
     }
   }
+
+  async setActiveRole(userId: string, roleId: string): Promise<void> {
+    // Verificar que el usuario tiene acceso a este rol
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        roles: {
+          where: {
+            id: roleId,
+            status: 'ACTIVE',
+          },
+        },
+      },
+    });
+
+    if (!user || user.roles.length === 0) {
+      this.logger.warn(`User ${userId} attempted to set invalid role ${roleId}`);
+      throw new UnauthorizedException('Invalid role selected or role not assigned to user');
+    }
+
+    const selectedRole = user.roles[0];
+    this.logger.log(`User ${userId} set active role to ${roleId} (${selectedRole.name})`);
+  }
 }
