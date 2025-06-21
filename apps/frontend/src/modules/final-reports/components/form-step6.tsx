@@ -6,15 +6,12 @@ import * as z from 'zod'
 import { Button } from '@una-gc/ui/components/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Textarea } from '@una-gc/ui/components/textarea'
-import { Card, CardHeader, CardTitle, CardContent } from '@una-gc/ui/components/card'
-import { MoveRight, MoveLeft, Settings2, AlertTriangle } from 'lucide-react'
-import { cn } from '@una-gc/ui/lib/utils'
+import { Card, CardHeader, CardContent } from '@una-gc/ui/components/card'
+import { MoveRight, MoveLeft, Settings2, AlertTriangle } from 'lucide-react' 
 
 // Import centralized mock data and types
 import {
-  step6QuestionsPageMock, // Was preguntasPaso6FormMock
-  Step6Question, // Was PreguntaStep6
-  OptionFE // Was Option
+  step6QuestionsPageMock,  
 } from '../mocks/questions' // Corrected path
 
 // Schema for a single multiple response item

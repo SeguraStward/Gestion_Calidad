@@ -32,14 +32,13 @@ import {
   step7QuestionsPageMock,
   Step7Question
 } from '@/modules/final-reports/mocks/questions' // Renamed mocks, Import step7QuestionsPageMock and Step7Question
+import { MAIN_TOOLS_QUESTION_ID, OTHER_TOOLS_QUESTION_ID } from '@/modules/final-reports/mocks/constants' // Import constants for question IDs
 
 const TOTAL_STEPS = 7
 // User-facing labels remain in Spanish
 const STEP_LABELS_SPANISH = ['Información', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
 
-const MAIN_TOOLS_QUESTION_ID = 'herramientas_utilizadas' // ID Canónico para la pregunta de herramientas
-const OTHER_TOOLS_QUESTION_ID = 'otras_herramientas_utilizadas' // ID para el campo de texto de otras herramientas
-
+ 
 export default function NewFinalReportPage() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
@@ -338,12 +337,7 @@ export default function NewFinalReportPage() {
   }
 
   const saveDataForCurrentStepBeforeNavigatingBack = (step: number, data: any) => {
-    // Guardado "parcial" sin validación estricta al retroceder.
-    // Es importante que 'data' aquí sea el objeto de datos del formulario,
-    // que debería ser serializable.
-    console.log(`[NewPage] Saving data for step ${step} before navigating back.`)
-    // Para evitar errores de JSON.stringify con estructuras circulares en el log:
-    // console.log(`[NewPage] Data:`, JSON.stringify(data, null, 2)); // Omitir si causa problemas
+
     switch (step) {
       case 2:
         setStep2Data(data as Step2FormData)

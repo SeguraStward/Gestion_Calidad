@@ -1,4 +1,6 @@
 import type { ReportType } from '../types/final-reports.types'
+import { MAIN_TOOLS_QUESTION_ID, OTHER_TOOLS_QUESTION_ID } from './constants'
+
 export { ReportType }
 
 // Tipos centralizados
@@ -94,9 +96,10 @@ export const step5QuestionsMock: Step5Question[] = [
   }
 ]
 
+
 export const step6QuestionsPageMock: Step6Question[] = [
   {
-    questionId: 'herramientas_utilizadas',
+    questionId: MAIN_TOOLS_QUESTION_ID, // Usar la constante importada
     question: 'Herramientas Tecnológicas Utilizadas',
     description: 'Seleccione todas las herramientas tecnológicas que utilizó durante el ciclo académico.',
     options: herramientasTecnologicas,
@@ -104,8 +107,9 @@ export const step6QuestionsPageMock: Step6Question[] = [
     responseType: 'SELECCION_MULTIPLE'
   },
   {
-    questionId: 'otras_herramientas',
-    question: 'Otras herramientas utilizadas (opcional)',
+    questionId: OTHER_TOOLS_QUESTION_ID, // Usar la constante importada
+    question: 'Otras herramientas o metodologías utilizadas (opcional)',
+    description: 'Si utilizó otras no listadas, descríbalas aquí.',
     group: 'herramientas',
     responseType: 'TEXT',
     options: []
@@ -190,54 +194,4 @@ export const step7QuestionsPageMock: Step7Question[] = [
     responseType: 'SELECCION_UNICA'
   }
 ]
-// Example of how this mock data would translate to FinalReportEvaluation items
-// This transformation would happen in your `handleSubmitAllSteps` function in page.tsx
 
-/*
-const exampleEvaluationItemFromStep5: FinalReportEvaluation = {
-  questionId: 'logros_alcanzados',
-  question: '¿Cuáles han sido los principales logros alcanzados durante el ciclo académico?',
-  response: 'Se logró que el 90% de los estudiantes comprendieran los conceptos clave.', // User's text input
-  responseType: 'TEXT',
-  options: [], // No options for text
-  multipleResponse: [],
-  // questionGroup: null, // Or based on some logic if Step 5 questions are grouped
-};
-
-const exampleEvaluationItemFromStep6Tools: FinalReportEvaluation = {
-  questionId: 'herramientas_utilizadas',
-  question: 'Herramientas Tecnológicas Utilizadas',
-  multipleResponse: ['moodle', 'teams'], // User's selected values
-  responseType: 'SELECCION_MULTIPLE',
-  options: [ // These would be the options defined in preguntasPaso6PageMock
-    { label: 'Plataforma Moodle', value: 'moodle' },
-    { label: 'Microsoft Teams', value: 'teams' },
-    // ... all other tool options
-  ],
-  // questionGroup: 'Tecnología', // Or however you define it
-};
-
-const exampleEvaluationItemFromStep6OtherTools: FinalReportEvaluation = {
-  questionId: 'otras_herramientas',
-  question: 'Otras herramientas utilizadas (opcional)',
-  response: 'Padlet y Mentimeter', // User's text input
-  responseType: 'TEXT',
-  options: [],
-  multipleResponse: [],
-};
-
-
-const exampleEvaluationItemFromStep7: FinalReportEvaluation = {
-  questionId: 'percepcion_contenido_relevante',
-  question: 'El contenido del curso fue relevante para mi aprendizaje.',
-  response: '5', // User's selected radio value
-  responseType: 'RADIO',
-  options: [ // These would be the options defined in preguntasPaso7PageMock for this question
-    { label: 'Totalmente de acuerdo', value: '5' },
-    { label: 'De acuerdo', value: '4' },
-    // ... other options
-  ],
-  questionGroup: 'Percepción del Estudiante sobre el Curso',
-  multipleResponse: [],
-};
-*/
