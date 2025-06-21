@@ -99,11 +99,7 @@ export default function FinalReportsPage() {
     if (!report) {
       toast.error('No se encontró el informe para generar el PDF.')
       return
-    }
-    
-    setIsGeneratingPdfId(report.id)
-    toast.info(`Generando PDF para NRC ${report.academicLoad?.nrc || ''}... Por favor espere.`)
-
+    } 
     try {
       const blob = await pdf(<FinalReportPDFDocument report={report} />).toBlob()
       const url = URL.createObjectURL(blob)

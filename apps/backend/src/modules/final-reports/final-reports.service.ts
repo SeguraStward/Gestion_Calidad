@@ -15,7 +15,7 @@ export class FinalReportsService extends GenericService<FinalReport, FinalReport
   protected readonly logger = new Logger(FinalReportsService.name);
 
   protected readonly relationCheckConfig = {
-    relationFields: [''],
+    relationFields: [],
     errorMessage: 'Cannot delete FinalReport because it has associated: none.',
   };
 

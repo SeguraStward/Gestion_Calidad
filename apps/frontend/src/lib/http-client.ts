@@ -15,19 +15,12 @@ const processQueue = (error: any, token: string | null = null) => {
     }
   })
   failedQueue = []
-}
-// --- FIN: Lógica para manejar el proceso de refresh ---
-
-// Define una función global o un emisor de eventos para el logout si es necesario
-// para que otros módulos (como tu store de estado) puedan reaccionar.
-// Ejemplo simple:
+} 
 const triggerLogoutProcedures = () => {
   console.log('Triggering logout procedures: clear user state, redirect, etc.')
-  // Limpiar el estado del usuario usando los stores
-  useUserContextStore.getState().logoutUser() // Limpia authStore (encriptado)
-  useUserStore.getState().clearUser() // Limpia userStore (no encriptado)
-
-  // La redirección se hará después de intentar el logout en el servidor.
+   useUserContextStore.getState().logoutUser()  
+  useUserStore.getState().clearUser()  
+ 
 }
 
 class HttpClientClass {
@@ -59,9 +52,7 @@ class HttpClientClass {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
         if (error.response?.status === 401 && originalRequest.url !== this.REFRESH_TOKEN_URL && !originalRequest._retry) {
-          // Puedes agregar tu console.log aquí
-          console.log(`[HTTP Client] Received 401 from ${originalRequest.url}. Attempting to use refresh token.`)
-
+          
           if (isRefreshing) {
             return new Promise((resolve, reject) => {
               failedQueue.push({ resolve, reject })

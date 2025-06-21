@@ -182,8 +182,7 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
       mutationFn: (id: string) => service.remove(id),
       onSuccess: () => {
         console.log('✅ Eliminación exitosa, invalidando queries...')
-
-        // Invalidar todas las queries relacionadas
+ 
         qc.invalidateQueries({
           queryKey: [queryKeyPrefix],
           exact: false

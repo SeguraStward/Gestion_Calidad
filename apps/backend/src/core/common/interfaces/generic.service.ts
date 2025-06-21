@@ -31,10 +31,7 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
       return entity as any as D;
     }
 
-    if (Array.isArray(entity)) {
-      // Ensure you have a consistent strategy for excludeExtraneousValues
-      // If your DTOs use @Expose(), then excludeExtraneousValues: true is appropriate.
-      // If not, you might want it to be false or omit it.
+    if (Array.isArray(entity)) { 
       return entity.map((e) => plainToClass(this.dtoClass!, e, { excludeExtraneousValues: true }));
     } else {
       return plainToClass(this.dtoClass!, entity, { excludeExtraneousValues: true });
