@@ -11,6 +11,7 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 
 import { PrismaService } from '@src/prisma/prisma.service';
 import { PaginatedResponse } from '@src/core/http/interfaces/paginated-response.interface';
+import { MeUpdateUserDto } from './dtos/me-user-update.dto';
 
 @Injectable()
 export class UsersService extends GenericService<User, UserDto, UserDto> {
@@ -220,6 +221,57 @@ export class UsersService extends GenericService<User, UserDto, UserDto> {
       } else {
         this.logger.error(`Error finding users by role and status:`, JSON.stringify(error));
       }
+      throw error;
+    }
+  }
+
+  // me methods for authenticated user profile management
+  async meGetUser(userId: string): Promise<UserDto> {
+    this.logger.log(`Getting profile for authenticated user: ${userId}`);
+
+    const user = await this.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    return user;
+  }
+
+  async meUpdateUser(userId: string, meUpdateUserDto: MeUpdateUserDto): Promise<UserDto> {
+    this.logger.log(`Updating profile for authenticated user: ${userId}`);
+
+    const existingUser = await this.findById(userId);
+
+    if (!existingUser) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // Only update the fields that are present in the DTO
+    const updateData: any = {};
+
+    // Check each field and only include if it's defined in the DTO
+    if (meUpdateUserDto.fullName !== undefined) updateData.fullName = meUpdateUserDto.fullName;
+    if (meUpdateUserDto.fullLastName !== undefined) updateData.fullLastName = meUpdateUserDto.fullLastName;
+    if (meUpdateUserDto.photoUrl !== undefined) updateData.photoUrl = meUpdateUserDto.photoUrl;
+    if (meUpdateUserDto.email !== undefined) updateData.email = meUpdateUserDto.email;
+    if (meUpdateUserDto.nationalId !== undefined) updateData.nationalId = meUpdateUserDto.nationalId;
+    if (meUpdateUserDto.birthDate !== undefined) updateData.birthDate = meUpdateUserDto.birthDate;
+    if (meUpdateUserDto.primaryPhone !== undefined) updateData.primaryPhone = meUpdateUserDto.primaryPhone;
+    if (meUpdateUserDto.phoneNumbers !== undefined) updateData.phoneNumbers = meUpdateUserDto.phoneNumbers;
+    if (meUpdateUserDto.province !== undefined) updateData.province = meUpdateUserDto.province;
+    if (meUpdateUserDto.canton !== undefined) updateData.canton = meUpdateUserDto.canton;
+    if (meUpdateUserDto.district !== undefined) updateData.district = meUpdateUserDto.district;
+    if (meUpdateUserDto.address !== undefined) updateData.address = meUpdateUserDto.address;
+
+    // Update version
+    updateData.version = existingUser.version ? existingUser.version + 1 : 1;
+
+    try {
+      const updatedUser = await this.update(userId, updateData);
+      return updatedUser;
+    } catch (error: any) {
+      this.logger.error(`Error updating user profile: ${error.message}`, error.stack);
       throw error;
     }
   }

@@ -8,25 +8,37 @@ import { SidebarProvider } from '@una-gc/ui/components/sidebar'
 export function ContentLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
 
-  //  pages whitout sidebar
-  const isLoginPage = pathname === '/auth/login'
-  const isAuthErrorPage = pathname === '/auth/error'
-  const isSelectRolePage = pathname === '/auth/select-role'
+  // Pages without sidebar
+  const isAuthPage = pathname.startsWith('/auth')
+  const isCallbackPage = pathname === '/auth/callback'
 
-  if (isLoginPage || isAuthErrorPage || isSelectRolePage) {
-    return <>{children}</>
+  // Pages that need scroll
+  const needsScroll = ['/final-reports', '/user-management', '/academic-management', '/academic-load', '/bulk-import'].some(
+    (path) => pathname.startsWith(path)
+  )
+
+  // HomePage doesn't need sidebar scroll
+  const isHomePage = pathname === '/'
+
+  if (isAuthPage || isCallbackPage) {
+    return <div className="h-screen overflow-auto">{children}</div>
   }
 
-  // general layout with sidebar. Center content
+  // General layout with sidebar
   return (
     <SidebarProvider>
       <AppSidebar />
-      <div
-        key={pathname}
-        className="flex flex-col justify-center items-center h-full w-full px-4 md:px-8 py-8 md:py-16 gap-12 transition-opacity transition-transform duration-700 ease-in opacity-0 animate-fadeInComponent"
-      >
-        {children}
-      </div>
+      <main className="flex-1 h-screen flex flex-col">
+        <div
+          className={`
+            flex-1 transition-opacity transition-transform duration-700 ease-in opacity-0 animate-fadeInComponent
+            ${needsScroll ? 'overflow-y-auto custom-scrollbar' : 'overflow-hidden'}
+            ${isHomePage ? 'p-0' : 'p-4 md:p-8'}
+          `}
+        >
+          {children}
+        </div>
+      </main>
     </SidebarProvider>
   )
 }

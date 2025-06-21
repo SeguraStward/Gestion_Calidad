@@ -14,6 +14,14 @@ export interface GoogleUser {
   email: string;
   firstName: string;
   familyName?: string;
+  picture?: string | null;
+}
+
+export interface UserBasicInfo {
+  id: string;
+  email: string;
+  fullName: string;
   fullLastName?: string;
-  picture?: string;
+  profilePicture?: string | null;
+  status: string;
 }

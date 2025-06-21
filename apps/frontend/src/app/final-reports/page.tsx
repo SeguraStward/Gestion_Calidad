@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState } from 'react' // Added useState
+import { useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { ColumnDef, Row } from '@tanstack/react-table'
 import { Button } from '@una-gc/ui/components/button'
@@ -9,12 +9,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { DataTable } from '@/app/(components)/ui/data-table'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { pdf } from '@react-pdf/renderer'
 
 import useDevStore from '@/store/devStore'
 import { useDeleteFinalReport, useFinalReportsByProfessor } from '@/modules/final-reports/service/final-reports.service'
 import type { FullFinalReport, FinalReportStatusFE } from '@/modules/final-reports/types/final-reports.types'
-import { FinalReportPDFDocument } from '@/modules/final-reports/components/final-report-pdf'
 
 // Helper to map status to display properties
 const getStatusDisplayProperties = (statusValue: FinalReportStatusFE | undefined) => {
@@ -36,8 +34,6 @@ export default function FinalReportsPage() {
   const mockProfessorId = useDevStore((state) => state.mockProfessorId)
   console.log('[FinalReportsPage] mockProfessorId:', mockProfessorId) // DEBUG
 
-  const [isGeneratingPdfId, setIsGeneratingPdfId] = useState<string | null>(null)
-
   // Fetch final reports for the specific professor
   const {
     data: paginatedFinalReports, // This will be PaginatedResponse<FullFinalReport>
@@ -46,10 +42,7 @@ export default function FinalReportsPage() {
     refetch
   } = useFinalReportsByProfessor(
     mockProfessorId,
-    {
-      include:
-        'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus'
-    },
+    { include: 'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group' },
     { enabled: !!mockProfessorId }
   )
 
@@ -67,42 +60,14 @@ export default function FinalReportsPage() {
   const handleDelete = async (id: string) => {
     try {
       await deleteFinalReportMutation.mutateAsync(id)
-      // toast.success('Informe final eliminado.'); // Handled by useDeleteFinalReport hook
     } catch (err) {
       console.error('Error deleting final report:', err)
-      // toast.error('Error al eliminar el informe.'); // Handled by useDeleteFinalReport hook
     }
   }
 
-  const handleDownloadPdf = async (reportToDownload: FullFinalReport | undefined) => {
-    if (!reportToDownload) {
-      toast.error('No se encontró el informe para generar el PDF.')
-      return
-    }
-    setIsGeneratingPdfId(reportToDownload.id)
-    toast.info(`Generando PDF para NRC ${reportToDownload.academicLoad?.nrc || ''}... Por favor espere.`)
-
-    try {
-      const blob = await pdf(<FinalReportPDFDocument report={reportToDownload} />).toBlob()
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      const fileName = `InformeFinal-${reportToDownload.academicLoad?.nrc || reportToDownload.id}.pdf`
-      link.setAttribute('download', fileName)
-      document.body.appendChild(link)
-      link.click()
-
-      // Clean up
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-
-      toast.success(`PDF "${fileName}" descargado.`)
-    } catch (pdfError) {
-      console.error('Error generating PDF:', pdfError)
-      toast.error('Error al generar el PDF. Revise la consola para más detalles.')
-    } finally {
-      setIsGeneratingPdfId(null)
-    }
+  const handleDownloadPdf = (id: string) => {
+    console.log('Download PDF for report ID:', id)
+    toast.info('Funcionalidad de descarga de PDF aún no implementada.')
   }
 
   const columns = useMemo<ColumnDef<FullFinalReport>[]>(
@@ -160,68 +125,57 @@ export default function FinalReportsPage() {
         id: 'actions',
         header: () => <div className="text-right">Acciones</div>,
         size: 100,
-        cell: ({ row }) => {
-          const report = row.original
-          const isCurrentPdfGenerating = isGeneratingPdfId === report.id
-          const isDeleting = deleteFinalReportMutation.isPending && deleteFinalReportMutation.variables === report.id
-
-          return (
-            <div className="text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0" disabled={isCurrentPdfGenerating || isDeleting}>
-                    {isCurrentPdfGenerating || isDeleting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <MoreHorizontal className="h-4 w-4" />
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleEdit(report.id)
-                    }}
-                    disabled={isCurrentPdfGenerating || isDeleting}
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDownloadPdf(report)
-                    }}
-                    disabled={isCurrentPdfGenerating || isDeleting}
-                  >
-                    {isCurrentPdfGenerating ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <FileDown className="mr-2 h-4 w-4" />
-                    )}
-                    Ver PDF
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDelete(report.id)
-                    }}
-                    className="text-red-600 hover:!text-red-600 hover:!bg-red-100 dark:hover:!bg-red-900/50"
-                    disabled={isDeleting || isCurrentPdfGenerating}
-                  >
-                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                    Eliminar
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )
-        }
+        cell: ({ row }) => (
+          <div className="text-right">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Abrir menú</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleEdit(row.original.id)
+                  }}
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDownloadPdf(row.original.id)
+                  }}
+                >
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Ver PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDelete(row.original.id)
+                  }}
+                  className="text-red-600 hover:!text-red-600 hover:!bg-red-100 dark:hover:!bg-red-900/50"
+                  disabled={deleteFinalReportMutation.isPending && deleteFinalReportMutation.variables === row.original.id}
+                >
+                  {deleteFinalReportMutation.isPending && deleteFinalReportMutation.variables === row.original.id ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="mr-2 h-4 w-4" />
+                  )}
+                  Eliminar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )
       }
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [deleteFinalReportMutation.isPending, deleteFinalReportMutation.variables, router, isGeneratingPdfId]
+    [deleteFinalReportMutation.isPending, deleteFinalReportMutation.variables, router]
   )
 
   const newReportButton = (

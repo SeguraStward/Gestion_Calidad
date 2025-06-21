@@ -1,0 +1,31 @@
+/* Accordion performance override: use transform instead of height for better performance */
+
+@keyframes accordion-down {
+  from {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  to {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+}
+
+/* Apply transform origin for smooth animation */
+[data-state='open'],
+[data-state='closed'] {
+  transform-origin: top;
+  will-change: transform, opacity;
+  transition: opacity 0.2s;
+}
