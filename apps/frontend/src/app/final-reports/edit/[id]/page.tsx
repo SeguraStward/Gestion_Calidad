@@ -274,40 +274,49 @@ export default function EditFinalReportPage() {
     }
 
     try {
-      const evaluationData: FinalReportEvaluationFE[] = [
-        // ... (tu lógica para construir evaluationData) ...
+      const evaluationData: FinalReportEvaluationFE[] = [ 
         ...(step5Data?.respuestas.map((resp) => ({
           questionId: resp.idPregunta,
           response: resp.respuesta,
-          responseType: 'TEXT', // Asumiendo que todas las del paso 5 son TEXT
+          responseType: 'TEXT',  
           questionGroup: step5QuestionsMock.find((q) => q.questionId === resp.idPregunta)?.group || 'evaluacion_general_curso',
           question: step5QuestionsMock.find((q) => q.questionId === resp.idPregunta)?.question || resp.idPregunta,
-          options: [], // Las preguntas de texto no tienen opciones predefinidas aquí
-          multipleResponse: []
+          options: [],  
+          multipleResponse: [],
+          otherResponse: undefined
         })) || []),
-        ...(step6Data?.respuestasMultiples.map((rm) => {
-          const questionDetails = step6QuestionsPageMock.find((q) => q.questionId === rm.idPregunta)
-          return {
-            questionId: rm.idPregunta, 
-            responseType: 'SELECCION_MULTIPLE',
-            questionGroup: questionDetails?.group || 'herramientas',
-            question: questionDetails?.question || rm.idPregunta,
-            options:  [],
-            multipleResponse: rm.respuestasSeleccionadas  
-          }
-        }) || []),
+       ...(step6Data?.respuestasMultiples?.[0]?.respuestasSeleccionadas?.length
+  ? [
+      {
+        questionId: step6Data.respuestasMultiples[0].idPregunta,
+        question:
+          step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.question ||
+          step6Data.respuestasMultiples[0].idPregunta,
+        questionGroup:
+          step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.group ||
+          'herramientas',
+        responseType: 'SELECCION_MULTIPLE' as const,
+        response: null,
+        multipleResponse: step6Data.respuestasMultiples[0].respuestasSeleccionadas,
+        options: [],
+        otherResponse: undefined
+      }
+    ]
+  : []),
         ...(step6Data?.otrasHerramientas && step6Data.otrasHerramientas.trim() !== ''
           ? [
               {
-                questionId: OTHER_TOOLS_QUESTION_ID,
-                response: step6Data.otrasHerramientas,
-                responseType: 'TEXT',
-                questionGroup: 'herramientas',  
-                question:
-                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
-                  'Descripción de otras herramientas utilizadas',
-                options: [],
-                multipleResponse: []
+            questionId: OTHER_TOOLS_QUESTION_ID,
+               question:
+               step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
+                'Otras herramientas utilizadas (opcional)',
+               questionGroup:
+               step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.group || 'herramientas',
+               responseType: 'TEXT' as const,
+               response: step6Data.otrasHerramientas,
+               multipleResponse: [],
+               options: [],
+               otherResponse: undefined
               }
             ]
           : []),
@@ -332,18 +341,20 @@ export default function EditFinalReportPage() {
               questionDetails?.options?.map((opt) => ({
                 value: opt.value,
                 label: opt.label,
-                category: questionDetails?.group // O opt.category si lo tienes
+                category: questionDetails?.group  
               })) || [],
             question: questionDetails?.question || resp.idPregunta,
-            multipleResponse: []
+            multipleResponse: [],
+             otherResponse: undefined
           }
         })
       ].map((item) => ({
-        ...item,
-        response: item.response,
+       ...item,
+        response: item.response === undefined ? undefined : item.response,
         multipleResponse: item.multipleResponse || [],
         options: item.options || [],
-        questionGroup: item.questionGroup || 'general'
+        questionGroup: item.questionGroup || 'general', 
+        otherResponse: item.otherResponse === undefined ? undefined : item.otherResponse
       })) as FinalReportEvaluationFE[]
 
       const updatePayload: UpdateFinalReportDto = {
@@ -371,21 +382,16 @@ export default function EditFinalReportPage() {
           }))
         },
         evaluation: evaluationData,
-        version: reportType === 'INFORME_FINAL_V1' ? 1 : 2 // Asegúrate que esto coincida con tu lógica de backend
-      }
-
-      console.log('[handleSubmitAllSteps] Payload FINAL para UpdateFinalReportDto:', JSON.stringify(updatePayload, null, 2))
+       }
+ 
       await updateReportMutation({ id: reportId, data: updatePayload })
 
-      // <<--- AÑADIDO: Invalidar la query para este informe específico
-      // La queryKey debe coincidir con la usada por useFinalReport (useOne)
-      // que es [queryKeyPrefix, id] -> ['finalReports', reportId]
+      
       await queryClient.invalidateQueries({ queryKey: ['finalReports', reportId] })
       toast.success('Informe actualizado exitosamente!') // Mover toast aquí para mejor flujo
 
       router.push('/final-reports')
-    } catch (error: any) {
-      console.error('Error en handleSubmitAllSteps:', error)
+    } catch (error: any) { 
       toast.error(`Error al actualizar el informe: ${error.message || 'Error desconocido'}`)
     }
   }

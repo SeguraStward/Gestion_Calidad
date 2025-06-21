@@ -80,16 +80,9 @@ export function Step6Form({
   }, [])
 
   useEffect(() => {
-    console.log(
-      `[Step6Form] useEffect triggered. initialData:`,
-      initialData ? JSON.stringify(initialData) : null,
-      `isEditing: ${isEditing}`
-    )
-    if (initialData) {
-      console.log('[Step6Form] Using initialData to reset form.')
-      // Asegurarse de que la estructura de initialData sea la esperada por el reset
-      // Si initialData.respuestasMultiples no existe o está mal formado, podría causar problemas.
-      // El reset espera un objeto que coincida con la estructura de Step6FormData.
+    
+    if (initialData) { 
+  
       const currentRespuestasMultiples =
         initialData.respuestasMultiples && initialData.respuestasMultiples.length > 0
           ? initialData.respuestasMultiples
@@ -105,7 +98,6 @@ export function Step6Form({
         otrasHerramientas: initialData.otrasHerramientas || '' // Asegurar que otrasHerramientas se cargue
       })
     } else if (!isEditing) {
-      console.log('[Step6Form] No initialData and !isEditing, resetting to defaults.')
       reset({
         respuestasMultiples: [
           {

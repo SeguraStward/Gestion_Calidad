@@ -25,11 +25,9 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean 
   currentPage?: number
   totalPages?: number
-  onPageChange?: (page: number) => void
-  // Nuevas props para filtrado del lado del servidor
+  onPageChange?: (page: number) => void 
   searchQuery?: string
-  onSearchChange?: (query: string) => void
-  // Flag para determinar si el filtrado es en cliente o servidor
+  onSearchChange?: (query: string) => void 
   serverSideFiltering?: boolean
 }
 

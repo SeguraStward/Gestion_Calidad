@@ -55,8 +55,8 @@ type FinalReportEvaluation {
 
 type FinalReportEvaluationOptions {
   category String?
-  label    String
-  value    String
+  label    String?
+  value    String?
 }
 
 type FinalReportStudentInformation {
@@ -69,12 +69,12 @@ type FinalReportStudentAdjustment {
   idNumber    String
   name        String
   grade       String
-  observation String
+  observation String?
 }
 
 type FinalReportStudentSafeguard {
   idNumber    String
   name        String
   grade       String
-  observation String
+  observation String?
 }

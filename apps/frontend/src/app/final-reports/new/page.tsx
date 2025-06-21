@@ -273,7 +273,7 @@ export default function NewFinalReportPage() {
             question: questionDetails?.question || r.idPregunta,
             questionGroup: questionDetails?.group || 'herramientas',
             responseType: 'SELECCION_MULTIPLE' as const,
-            response: undefined,
+            response: "undefined",
             multipleResponse: r.respuestasSeleccionadas || [],
             options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
             otherResponse: undefined
@@ -296,8 +296,7 @@ export default function NewFinalReportPage() {
               }
             ]
           : []),
-        ...currentStep7DataFromForm.respuestasRadio.map((r) => {
-          // Changed currentStep7Data to currentStep7DataFromForm
+        ...currentStep7DataFromForm.respuestasRadio.map((r) => { 
           const questionDetails = step7QuestionsPageMock.find((p) => p.questionId === r.idPregunta)
           const resolvedResponseType = questionDetails?.responseType || ('SELECCION_UNICA' as const)
 
@@ -320,18 +319,14 @@ export default function NewFinalReportPage() {
         response: item.response === undefined ? undefined : item.response,
         multipleResponse: item.multipleResponse || [],
         options: item.options || [],
-        questionGroup: item.questionGroup || 'general',
-        // Now item.otherResponse will exist, even if undefined
+        questionGroup: item.questionGroup || 'general', 
         otherResponse: item.otherResponse === undefined ? undefined : item.otherResponse
       })) as FinalReportEvaluationFE[]
-    }
-    console.log('Final Report Payload to Send:', JSON.stringify(finalReportPayload, null, 2))
+    } 
     try {
       await createFinalReportMutation.mutateAsync(finalReportPayload)
       router.push('/final-reports') // Navigate on success
-    } catch (error) {
-      // User-facing error message
-      console.error('Explicit error trying to create report in page.tsx:', error)
+    } catch (error) { 
       toast.error('Error al crear el informe. Intente nuevamente.')
     }
   }
