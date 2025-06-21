@@ -38,7 +38,12 @@ COPY --from=builder /app/out/full/ .
 COPY --from=builder /app/turbo.json turbo.json
 
 COPY --from=builder /app/packages/database/prisma/schema/schema.prisma ./prisma/schema/schema.prisma
-COPY --from=builder /app/packages/database/prisma/migrations ./prisma/schema/migrations
+RUN mkdir -p ./prisma/schema/ && \
+    if [ -d /app/packages/database/prisma/migrations ]; then \
+      cp -r /app/packages/database/prisma/migrations ./prisma/schema/migrations; \
+    else \
+      echo "Migrations directory doesn't exist, skipping copy"; \
+    fi
 
 # Uncomment and use build args to enable remote caching
 # ARG TURBO_TEAM
