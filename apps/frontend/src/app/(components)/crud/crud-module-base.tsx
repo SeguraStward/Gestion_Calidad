@@ -18,7 +18,9 @@ export const CrudModuleBase = <
   TCreateInput extends FieldValues,
   TUpdateInput extends FieldValues = TCreateInput
 >(
-  props: CrudConfig<TItem, TCreateInput, TUpdateInput>
+  props: CrudConfig<TItem, TCreateInput, TUpdateInput> & {
+    onBeforeCreate?: (formData: any) => void
+  }
 ) => {
   const {
     entityName,
@@ -112,6 +114,9 @@ export const CrudModuleBase = <
   const handleSubmitForm = handleSubmit(async (formData) => {
     setIsProcessing(true)
     try {
+      if (props.onBeforeCreate) {
+        props.onBeforeCreate(formData)
+      }
       // Sanitizar campos relacionales antes de enviar
       const sanitizedData: Record<string, any> = { ...formData }
       Object.keys(sanitizedData).forEach((key) => {
@@ -146,8 +151,18 @@ export const CrudModuleBase = <
       setEditingId(null)
       reset(defaultFormValues)
     } catch (error: any) {
-      console.error('Error al guardar:', error)
-      toast.error(error?.response?.data?.message || error?.message || `Error al guardar ${entityName.toLowerCase()}`)
+      // Mostrar detalles de error de validación si existen
+      if (error?.errors) {
+        console.error('Detalles de error de validación:', error.errors)
+        toast.error(
+          typeof error.errors === 'string'
+            ? error.errors
+            : JSON.stringify(error.errors, null, 2)
+        )
+      } else {
+        console.error('Error al guardar:', error)
+        toast.error(error?.response?.data?.message || error?.message || `Error al guardar ${entityName.toLowerCase()}`)
+      }
     } finally {
       setIsProcessing(false)
     }

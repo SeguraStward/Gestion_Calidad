@@ -158,14 +158,19 @@ export default function ClassroomCrud() {
             {
               title: 'Datos del Aula',
               description: 'Información principal del aula',
-              fields: [
+              fields: [           
                 {
                   type: 'text',
                   name: 'roomNumber',
                   label: 'Número de Aula',
                   required: true,
                   placeholder: 'Ej: A-101',
-                  helperText: 'Identificador único del aula'
+                  helperText: 'Identificador único del aula',
+                  rules: {
+                    required: { value: true, message: 'El número de aula es requerido' },
+                    minLength: { value: 1, message: 'El número de aula debe tener al menos 1 caracter' },
+                    maxLength: { value: 20, message: 'El número de aula no puede exceder 20 caracteres' }
+                  }
                 },
                 {
                   type: 'number',
@@ -176,7 +181,12 @@ export default function ClassroomCrud() {
                   helperText: 'Cantidad máxima de estudiantes',
                   min: 1,
                   step: 1,
-                  valueAsNumber: true // <-- Asegura que el valor sea número
+                  valueAsNumber: true,
+                  rules: {
+                    required: { value: true, message: 'La capacidad es requerida' },
+                    min: { value: 1, message: 'La capacidad debe ser al menos 1' },
+                    max: { value: 1000, message: 'La capacidad no puede exceder 1000' }
+                  }
                 },
                 {
                   type: 'text',
@@ -184,7 +194,11 @@ export default function ClassroomCrud() {
                   label: 'Descripción',
                   required: false,
                   placeholder: 'Descripción del aula',
-                  helperText: 'Breve descripción del aula'
+                  helperText: 'Breve descripción del aula (opcional)',
+                  rules: {
+                    minLength: { value: 3, message: 'La descripción debe tener al menos 3 caracteres' },
+                    maxLength: { value: 200, message: 'La descripción no puede exceder 200 caracteres' }
+                  }
                 },
                 {
                   type: 'select',
@@ -194,7 +208,10 @@ export default function ClassroomCrud() {
                   options: (campuses || []).map((c) => ({ id: c.id, name: c.name || '' })),
                   isLoading: isLoadingCampuses,
                   placeholder: isLoadingCampuses ? 'Cargando campus...' : 'Seleccionar campus',
-                  helperText: 'Seleccione el campus al que pertenece este aula'
+                  helperText: 'Seleccione el campus al que pertenece este aula',
+                  rules: {
+                    required: { value: true, message: 'El campus es requerido' }
+                  }
                 },
                 {
                   type: 'select',
@@ -203,6 +220,9 @@ export default function ClassroomCrud() {
                   required: true,
                   options: STATUS_OPTIONS,
                   helperText: 'Estado actual del aula',
+                  rules: {
+                    required: { value: true, message: 'El estado es requerido' }
+                  },
                   renderOption: (option: any) => (
                     <div className="flex items-center">
                       {option.icon}
@@ -249,11 +269,10 @@ export default function ClassroomCrud() {
       useCreateMutation: useCreateClassroom,
       useUpdateMutation: useUpdateClassroom,
       useDeleteMutation: useRemoveClassroom,
-      useOneQuery: useOneClassroomAdapter,
-      defaultFormValues: {
+      useOneQuery: useOneClassroomAdapter,      defaultFormValues: {
         roomNumber: '',
         capacity: 0 as number,
-        description: '',
+        description: '', // Opcional, puede estar vacío
         campusId: '',
         status: Status.ACTIVE
       },

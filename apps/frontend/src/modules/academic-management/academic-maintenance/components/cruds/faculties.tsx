@@ -145,8 +145,8 @@ export default function FacultyCrud() {
               title: 'Datos básicos',
               description: 'Información principal de la facultad',
               icon: <GraduationCap className="h-5 w-5 text-primary mr-2" />,
-              fields: [
-                {
+              fields: [               
+                 {
                   type: 'text',
                   name: 'code',
                   label: 'Código',
@@ -154,6 +154,7 @@ export default function FacultyCrud() {
                   placeholder: 'Ej: FCTEC',
                   helperText: 'Código único de la facultad',
                   rules: {
+                    required: { value: true, message: 'El código es requerido' },
                     minLength: { value: 2, message: 'El código debe tener al menos 2 caracteres' },
                     maxLength: { value: 20, message: 'El código no puede exceder 20 caracteres' },
                     pattern: { value: /^[A-Za-z0-9\-_]+$/, message: 'Solo letras, números, guiones y guiones bajos' }
@@ -164,10 +165,11 @@ export default function FacultyCrud() {
                   type: 'text',
                   name: 'name',
                   label: 'Nombre',
-                  required: true,
+                  required: false,
                   placeholder: 'Ej: Facultad de Ciencias',
-                  helperText: 'Nombre completo de la facultad',
+                  helperText: 'Nombre completo de la facultad (opcional)',
                   rules: {
+                    required: { value: true, message: 'El nombre es requerido' },
                     minLength: { value: 3, message: 'El nombre debe tener al menos 3 caracteres' },
                     maxLength: { value: 100, message: 'El nombre no puede exceder 100 caracteres' }
                   }
@@ -176,9 +178,9 @@ export default function FacultyCrud() {
                   type: 'text',
                   name: 'description',
                   label: 'Descripción',
-                  required: true,
+                  required: false,
                   placeholder: 'Descripción de la facultad',
-                  helperText: 'Breve descripción de la facultad',
+                  helperText: 'Breve descripción de la facultad (opcional)',
                   rules: {
                     minLength: { value: 3, message: 'La descripción debe tener al menos 3 caracteres' },
                     maxLength: { value: 200, message: 'La descripción no puede exceder 200 caracteres' }
@@ -194,6 +196,9 @@ export default function FacultyCrud() {
                     name: option.name
                   })),
                   helperText: 'Estado actual de la facultad',
+                  rules: {
+                    required: { value: true, message: 'El estado es requerido' }
+                  },
                   renderOption: (option: any) => (
                     <div className="flex items-center">
                       {STATUS_OPTIONS.find((opt) => opt.id === option.id)?.icon}
@@ -225,11 +230,10 @@ export default function FacultyCrud() {
       useCreateMutation: useCreateFaculty,
       useUpdateMutation: useUpdateFaculty,
       useDeleteMutation: useRemoveFaculty,
-      useOneQuery: useOneFacultyAdapter,
-      defaultFormValues: {
+      useOneQuery: useOneFacultyAdapter,      defaultFormValues: {
         code: '',
-        name: '',
-        description: '',
+        name: '', // Opcional, puede estar vacío
+        description: '', // Opcional, puede estar vacío
         status: Status.ACTIVE
       } as CreateFacultyInput,
       renderForm,

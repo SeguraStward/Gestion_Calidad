@@ -165,8 +165,7 @@ export default function CareerCrud() {
             {
               title: 'Datos de la Carrera',
               description: 'Información principal de la carrera',
-              fields: [
-                {
+              fields: [                {
                   type: 'text',
                   name: 'code',
                   label: 'Código',
@@ -174,8 +173,12 @@ export default function CareerCrud() {
                   placeholder: 'Ej: CAR-001',
                   helperText: 'Código único de la carrera',
                   disabled: isUpdate,
-                  error: errors?.code?.message || (errors?.code && 'El código es requerido'),
-                  rules: { required: 'El código es requerido' }
+                  rules: {
+                    required: { value: true, message: 'El código es requerido' },
+                    minLength: { value: 2, message: 'El código debe tener al menos 2 caracteres' },
+                    maxLength: { value: 20, message: 'El código no puede exceder 20 caracteres' },
+                    pattern: { value: /^[A-Za-z0-9\-_]+$/, message: 'Solo letras, números, guiones y guiones bajos' }
+                  }
                 },
                 {
                   type: 'text',
@@ -184,8 +187,11 @@ export default function CareerCrud() {
                   required: true,
                   placeholder: 'Ej: Ingeniería en Sistemas',
                   helperText: 'Nombre completo de la carrera',
-                  error: errors?.name?.message || (errors?.name && 'El nombre es requerido'),
-                  rules: { required: 'El nombre es requerido' }
+                  rules: {
+                    required: { value: true, message: 'El nombre es requerido' },
+                    minLength: { value: 3, message: 'El nombre debe tener al menos 3 caracteres' },
+                    maxLength: { value: 100, message: 'El nombre no puede exceder 100 caracteres' }
+                  }
                 },
                 {
                   type: 'select',
@@ -196,6 +202,9 @@ export default function CareerCrud() {
                   isLoading: isLoadingSchools,
                   placeholder: isLoadingSchools ? 'Cargando escuelas...' : 'Seleccionar escuela',
                   helperText: 'Seleccione la escuela a la que pertenece esta carrera',
+                  rules: {
+                    required: { value: true, message: 'La escuela es requerida' }
+                  },
                   renderOption: (option: any) => (
                     <div className="flex items-center gap-2">
                       <span
@@ -206,9 +215,7 @@ export default function CareerCrud() {
                         {option.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
                       </span>
                     </div>
-                  ),
-                  error: errors?.schoolId?.message || (errors?.schoolId && 'La escuela es requerida'),
-                  rules: { required: 'La escuela es requerida' }
+                  )
                 },
                 {
                   type: 'select',
@@ -217,14 +224,15 @@ export default function CareerCrud() {
                   required: true,
                   options: STATUS_OPTIONS,
                   helperText: 'Estado actual de la carrera',
+                  rules: {
+                    required: { value: true, message: 'El estado es requerido' }
+                  },
                   renderOption: (option: any) => (
                     <div className="flex items-center">
                       {option.icon}
                       <span>{option.name}</span>
                     </div>
-                  ),
-                  error: errors?.status?.message || (errors?.status && 'El estado es requerido'),
-                  rules: { required: 'El estado es requerido' }
+                  )
                 }
               ]
             }

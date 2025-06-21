@@ -172,15 +172,20 @@ export default function SchoolCrud() {
             {
               title: 'Datos de la Escuela',
               description: 'Información principal de la escuela',
-              fields: [
-                {
+              fields: [                {
                   type: 'text',
                   name: 'code',
                   label: 'Código',
                   required: true,
                   placeholder: 'Ej: ESC-001',
                   helperText: 'Código único de la escuela',
-                  disabled: isUpdate
+                  disabled: isUpdate,
+                  rules: {
+                    required: { value: true, message: 'El código es requerido' },
+                    minLength: { value: 2, message: 'El código debe tener al menos 2 caracteres' },
+                    maxLength: { value: 20, message: 'El código no puede exceder 20 caracteres' },
+                    pattern: { value: /^[A-Za-z0-9\-_]+$/, message: 'Solo letras, números, guiones y guiones bajos' }
+                  }
                 },
                 {
                   type: 'text',
@@ -188,7 +193,12 @@ export default function SchoolCrud() {
                   label: 'Nombre',
                   required: true,
                   placeholder: 'Ej: Escuela de Informática',
-                  helperText: 'Nombre completo de la escuela'
+                  helperText: 'Nombre completo de la escuela',
+                  rules: {
+                    required: { value: true, message: 'El nombre es requerido' },
+                    minLength: { value: 3, message: 'El nombre debe tener al menos 3 caracteres' },
+                    maxLength: { value: 100, message: 'El nombre no puede exceder 100 caracteres' }
+                  }
                 },
                 {
                   type: 'text',
@@ -196,7 +206,11 @@ export default function SchoolCrud() {
                   label: 'Descripción',
                   required: false,
                   placeholder: 'Descripción de la escuela',
-                  helperText: 'Breve descripción de la escuela'
+                  helperText: 'Breve descripción de la escuela (opcional)',
+                  rules: {
+                    minLength: { value: 3, message: 'La descripción debe tener al menos 3 caracteres' },
+                    maxLength: { value: 200, message: 'La descripción no puede exceder 200 caracteres' }
+                  }
                 },
                 {
                   type: 'select',
@@ -208,6 +222,9 @@ export default function SchoolCrud() {
                   isLoading: isLoadingFaculties,
                   placeholder: isLoadingFaculties ? 'Cargando facultades...' : 'Seleccionar facultad',
                   helperText: 'Seleccione la facultad a la que pertenece esta escuela',
+                  rules: {
+                    required: { value: true, message: 'La facultad es requerida' }
+                  },
                   renderOption: (option: any) => (
                     <div className="flex items-center gap-2">
                       <span
@@ -227,6 +244,9 @@ export default function SchoolCrud() {
                   required: true,
                   options: STATUS_OPTIONS,
                   helperText: 'Estado actual de la escuela',
+                  rules: {
+                    required: { value: true, message: 'El estado es requerido' }
+                  },
                   renderOption: (option: any) => (
                     <div className="flex items-center">
                       {option.icon}
@@ -253,11 +273,10 @@ export default function SchoolCrud() {
       useCreateMutation: useCreateSchool,
       useUpdateMutation: useUpdateSchool,
       useDeleteMutation: useRemoveSchool,
-      useOneQuery: (id: string, options?: any) => useOneSchool(id, undefined, options),
-      defaultFormValues: {
+      useOneQuery: (id: string, options?: any) => useOneSchool(id, undefined, options),      defaultFormValues: {
         code: '',
         name: '',
-        description: '',
+        description: '', // Opcional, puede estar vacío
         facultyId: '',
         status: Status.ACTIVE
       } as unknown as CreateSchoolInput,

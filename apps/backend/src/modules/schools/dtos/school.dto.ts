@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsNotEmpty, ValidateNested } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsNotEmpty } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
 import { Status } from '@una-gc/database/prisma/generated/client';
 import { BaseDto } from '@src/modules/generalDto';
@@ -38,7 +38,6 @@ export class SchoolDto extends BaseDto {
   @ApiPropertyOptional({ type: () => FacultyDto, description: 'Facultad a la que pertenece la escuela' })
   @Expose()
   @Type(() => FacultyDto)
-  @ValidateNested()
   @IsOptional()
   faculty?: FacultyDto;
 
