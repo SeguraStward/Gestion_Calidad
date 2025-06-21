@@ -71,6 +71,7 @@ export class AuthController {
       this.logger.debug(`User ${result.user.email} authenticated successfully via Google.`);
 
       res.cookie('auth_token', result.token, {
+        domain: '.arayaroma.software',
         httpOnly: true,
         secure: this.configService.get('NODE_ENV') === 'production',
         maxAge: this.getCookieMaxAge('JWT_EXPIRATION'),
@@ -79,6 +80,7 @@ export class AuthController {
       });
 
       res.cookie('refresh_token', result.refreshToken, {
+        domain: '.arayaroma.software',
         httpOnly: true,
         secure: this.configService.get('NODE_ENV') === 'production',
         maxAge: this.getCookieMaxAge('JWT_REFRESH_EXPIRATION'),
@@ -143,18 +145,21 @@ export class AuthController {
     }
 
     res.clearCookie('auth_token', {
+      domain: '.arayaroma.software',
       httpOnly: true,
       secure: this.configService.get('NODE_ENV') === 'production',
       sameSite: 'lax',
       path: '/',
     });
     res.clearCookie('refresh_token', {
+      domain: '.arayaroma.software',
       httpOnly: true,
       secure: this.configService.get('NODE_ENV') === 'production',
       sameSite: 'lax',
       path: '/',
     });
     res.clearCookie('active_role_id', {
+      domain: '.arayaroma.software',
       httpOnly: true,
       secure: this.configService.get('NODE_ENV') === 'production',
       sameSite: 'lax',
@@ -188,6 +193,7 @@ export class AuthController {
         await this.authService.refreshToken(userFromStrategy);
 
       res.cookie('auth_token', newAccessToken, {
+        domain: '.arayaroma.software',
         httpOnly: true,
         secure: this.configService.get('NODE_ENV') === 'production',
         maxAge: this.getCookieMaxAge('JWT_EXPIRATION'),
@@ -196,6 +202,7 @@ export class AuthController {
       });
 
       res.cookie('refresh_token', newRawRefreshToken, {
+        domain: '.arayaroma.software',
         httpOnly: true,
         secure: this.configService.get('NODE_ENV') === 'production',
         maxAge: this.getCookieMaxAge('JWT_REFRESH_EXPIRATION'),
@@ -208,17 +215,16 @@ export class AuthController {
       this.logger.error(
         `Refresh token rotation error: ${error instanceof Error ? error.message : String(error)}`,
       );
-      // If authService.refreshToken throws (e.g., due to failure marking old token as used),
-      // or if JwtRefreshStrategy threw (e.g. family invalidation), cookies should be cleared.
-      // The strategy itself handles family invalidation if a used token is presented.
-      // If an error occurs during rotation after validation, clear cookies.
+    
       res.clearCookie('auth_token', {
+        domain: '.arayaroma.software',
         httpOnly: true,
         secure: this.configService.get('NODE_ENV') === 'production',
         sameSite: 'lax',
         path: '/',
       });
       res.clearCookie('refresh_token', {
+        domain: '.arayaroma.software',
         httpOnly: true,
         secure: this.configService.get('NODE_ENV') === 'production',
         sameSite: 'lax',
