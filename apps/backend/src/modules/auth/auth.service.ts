@@ -48,55 +48,134 @@ export class AuthService {
   }
 
   async googleLogin(googleUser: GoogleUser) {
+    this.logger.log(`Google login attempt for: ${googleUser.email}`);
+
+    // Validar datos mínimos requeridos
+    if (!googleUser.email || !googleUser.googleId) {
+      this.logger.error('Google user missing required fields:', {
+        hasEmail: !!googleUser.email,
+        hasGoogleId: !!googleUser.googleId,
+      });
+      throw new UnauthorizedException({
+        message: 'Datos de Google incompletos. Intenta nuevamente.',
+        code: 'INVALID_GOOGLE_DATA',
+      });
+    }
+
     let user = await this.prisma.user.findFirst({
       where: {
         OR: [{ googleId: googleUser.googleId }, { email: googleUser.email }],
       },
     });
 
+    // If user doesn't exist, create with PRE_REGISTRATION status
     if (!user) {
-      this.logger.warn(`Login attempt with non-existent user: ${googleUser.email}`);
-      throw new UnauthorizedException({
-        message:
-          'There is no account associated with this email address. Please contact the system administrator.',
-        code: 'USER_NOT_FOUND',
-      });
-    }
+      this.logger.log(`Creating new user with PRE_REGISTRATION status: ${googleUser.email}`);
 
-    if (user.status === 'INACTIVE') {
-      this.logger.warn(`Login attempt from user with inactive status: ${user.email}`);
-      throw new UnauthorizedException({
-        message: 'Your account has been deactivated. Please contact the system administrator.',
-        code: 'ACCOUNT_INACTIVE',
-      });
-    }
+      // Procesar nombre desde Google
+      const fullName = googleUser.firstName || googleUser.email.split('@')[0];
+      const fullLastName = googleUser.familyName || '';
 
-    if (!user.googleId && googleUser.googleId) {
-      user = await this.prisma.user.update({
-        where: { id: user.id },
+      user = await this.prisma.user.create({
         data: {
+          email: googleUser.email,
           googleId: googleUser.googleId,
-          ...(user.photoUrl ? {} : { photoUrl: googleUser.picture }),
+          photoUrl: googleUser.picture || '',
+          fullName: fullName,
+          fullLastName: fullLastName,
+          status: 'PRE_REGISTRATION', // Needs to complete profile
+          roleIds: [],
         },
       });
+
+      this.logger.log(`User created with PRE_REGISTRATION status: ${user.email}`);
     }
 
-    this.logger.log(`User ${user.email} authenticated successfully with status: ${user.status}.`);
+    // Check user status and handle accordingly
+    switch (user.status) {
+      case 'PRE_REGISTRATION':
+        // User linked Google but needs to complete profile
+        const accessToken = this.generateAccessToken(user.id, user.email);
+        const { rawRefreshToken } = await this.generateAndStoreRefreshToken(user.id);
 
-    const accessToken = this.generateAccessToken(user.id, user.email);
-    const { rawRefreshToken } = await this.generateAndStoreRefreshToken(user.id);
+        return {
+          user: {
+            id: user.id,
+            email: user.email,
+            fullName: user.fullName,
+            fullLastName: user.fullLastName,
+            profilePicture: user.photoUrl,
+            status: user.status,
+          },
+          token: accessToken,
+          refreshToken: rawRefreshToken,
+          needsProfileCompletion: true,
+        };
 
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        fullLastName: user.fullLastName,
-        profilePicture: user.photoUrl,
-      },
-      token: accessToken,
-      refreshToken: rawRefreshToken,
-    };
+      case 'INACTIVE':
+        throw new UnauthorizedException({
+          message: 'Your account has been deactivated. Please contact the administrator.',
+          code: 'ACCOUNT_INACTIVE',
+        });
+
+      case 'ACTIVE':
+        // Update Google data if needed (mantener datos actualizados)
+        let shouldUpdate = false;
+        const updateData: any = {};
+
+        if (!user.googleId) {
+          updateData.googleId = googleUser.googleId;
+          shouldUpdate = true;
+        }
+
+        if (googleUser.picture && user.photoUrl !== googleUser.picture) {
+          updateData.photoUrl = googleUser.picture;
+          shouldUpdate = true;
+        }
+
+        // Actualizar nombre si está vacío o si viene de Google y es diferente
+        if (!user.fullName || (googleUser.firstName && user.fullName !== googleUser.firstName)) {
+          updateData.fullName = googleUser.firstName || user.fullName || googleUser.email.split('@')[0];
+          shouldUpdate = true;
+        }
+
+        if (googleUser.familyName && user.fullLastName !== googleUser.familyName) {
+          updateData.fullLastName = googleUser.familyName;
+          shouldUpdate = true;
+        }
+
+        if (shouldUpdate) {
+          user = await this.prisma.user.update({
+            where: { id: user.id },
+            data: updateData,
+          });
+          this.logger.log(`Updated user data for ${user.email}`);
+        }
+
+        // Generate tokens for active users
+        const activeAccessToken = this.generateAccessToken(user.id, user.email);
+        const { rawRefreshToken: activeRefreshToken } = await this.generateAndStoreRefreshToken(user.id);
+
+        return {
+          user: {
+            id: user.id,
+            email: user.email,
+            fullName: user.fullName,
+            fullLastName: user.fullLastName,
+            profilePicture: user.photoUrl,
+            status: user.status,
+          },
+          token: activeAccessToken,
+          refreshToken: activeRefreshToken,
+          needsProfileCompletion: false,
+        };
+
+      default:
+        throw new UnauthorizedException({
+          message: 'Account status invalid. Please contact administrator.',
+          code: 'INVALID_STATUS',
+        });
+    }
   }
 
   generateAccessToken(userId: string, email: string): string {
@@ -204,6 +283,141 @@ export class AuthService {
       });
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * Get user by ID
+   * @param userId - The ID of the user
+   * @returns User data
+   */
+  async getUserById(userId: string) {
+    this.logger.log(`Getting user by ID: ${userId}`);
+
+    // Validar que el userId sea válido
+    if (!userId || typeof userId !== 'string') {
+      this.logger.error(`Invalid userId provided: ${userId}`);
+      throw new UnauthorizedException('Invalid user ID');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        fullLastName: true,
+        photoUrl: true,
+        status: true,
+      },
+    });
+
+    if (!user) {
+      this.logger.error(`User not found with ID: ${userId}`);
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (user.status === 'INACTIVE') {
+      this.logger.warn(`Attempt to access inactive user: ${userId}`);
+      throw new UnauthorizedException('User account is inactive');
+    }
+
+    // Validar que tengamos datos básicos
+    if (!user.email) {
+      this.logger.error(`User ${userId} has incomplete data - missing email`);
+      throw new UnauthorizedException('User data is incomplete');
+    }
+
+    // Asegurar que tenemos un nombre, usar email como fallback
+    if (!user.fullName) {
+      this.logger.warn(`User ${userId} has no fullName, using email prefix as fallback`);
+    }
+
+    return {
+      ...user,
+      fullName: user.fullName || user.email.split('@')[0],
+    };
+  }
+
+  /**
+   * Authenticate existing user (now removed as it's replaced by googleLogin)
+   * @deprecated Use googleLogin instead
+   */
+
+  // Remove activate user and pending users methods as they're not needed
+  // in the simplified flow where PRE_REGISTRATION means incomplete profile
+
+  /**
+   * Complete user profile (for PRE_REGISTRATION users)
+   * @param userId - ID of the user completing profile
+   * @param profileData - Profile completion data
+   * @returns Updated user information
+   */
+  async completeUserProfile(
+    userId: string,
+    profileData: {
+      fullName: string;
+      fullLastName: string;
+      phoneNumber?: string;
+    },
+  ) {
+    this.logger.log(`Completing profile for user ${userId}`);
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        status: true,
+        fullName: true,
+        fullLastName: true,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException({
+        message: 'User not found.',
+        code: 'USER_NOT_FOUND',
+      });
+    }
+
+    if (user.status !== 'PRE_REGISTRATION') {
+      throw new UnauthorizedException({
+        message: 'Profile completion is only available for users in PRE_REGISTRATION status.',
+        code: 'INVALID_USER_STATUS',
+      });
+    }
+
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          fullName: profileData.fullName,
+          fullLastName: profileData.fullLastName,
+          status: 'ACTIVE', // User becomes active after completing profile
+          updatedAt: new Date(),
+        },
+      });
+
+      this.logger.log(`Profile completed for user ${updatedUser.email}, status changed to ACTIVE`);
+
+      return {
+        user: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          fullName: updatedUser.fullName,
+          fullLastName: updatedUser.fullLastName,
+          profilePicture: updatedUser.photoUrl,
+          status: updatedUser.status,
+        },
+        message: 'Profile completed successfully. You can now access the system.',
+      };
+    } catch (error) {
+      this.logger.error(`Error completing profile for user ${userId}:`, error);
+      throw new UnauthorizedException({
+        message: 'Failed to complete profile. Please try again.',
+        code: 'PROFILE_COMPLETION_FAILED',
+      });
     }
   }
 }

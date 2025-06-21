@@ -12,6 +12,8 @@ import { Separator } from '@una-gc/ui/components/separator'
 import { cn } from '@una-gc/ui/lib/utils'
 import { useRoleSelection } from '@/modules/auth/hooks'
 import { AuthLayout, RoleCard, RoleLoadingSkeleton, EmptyRoleState } from '@/modules/auth/components'
+import RoleTransition from '@/modules/auth/components/RoleTransition'
+import { useRouter } from 'next/navigation'
 
 export default function SelectRolePage() {
   const {
@@ -22,11 +24,33 @@ export default function SelectRolePage() {
     error,
     canSkip,
     hasActiveRole,
+    showTransition,
     setSelectedRole,
     handleSubmit,
     handleSkip,
-    fetchRoles
+    fetchRoles,
+    onTransitionComplete
   } = useRoleSelection()
+
+  const router = useRouter()
+
+  const handleTransitionComplete = () => {
+    onTransitionComplete()
+    // Usar router.replace para evitar recarga completa y parpadeo
+    router.replace('/')
+  }
+
+  if (showTransition && selectedRole) {
+    // Evitar que la página de selección de rol se renderice de nuevo tras la transición
+    return (
+      <RoleTransition
+        roleName={selectedRole.name}
+        onComplete={function (): void {
+          throw new Error('Function not implemented.')
+        }}
+      />
+    )
+  }
 
   return (
     <AuthLayout

@@ -6,6 +6,7 @@ import axios, { AxiosError } from 'axios'
 import { AuthService } from '@/modules/auth/auth.service'
 import { useAsyncOperation } from '@/hooks/useAsyncOperation'
 import { CookieManager } from '@/utils'
+import { useSessionStore } from '@/store/sessionStore'
 import { Role } from '../types'
 
 export interface UseRoleSelectionReturn {
@@ -19,6 +20,7 @@ export interface UseRoleSelectionReturn {
   hasActiveRole: boolean
   retryCount: number
   canRetry: boolean
+  showTransition: boolean
 
   // Actions
   setSelectedRole: (role: Role | null) => void
@@ -27,10 +29,10 @@ export interface UseRoleSelectionReturn {
   fetchRoles: () => Promise<void>
   retryFetchRoles: () => void
   resetError: () => void
+  onTransitionComplete: () => void
 }
 
-const MAX_RETRY_ATTEMPTS = 3
-const RETRY_DELAY = 2000
+const MAX_RETRY_ATTEMPTS = 4
 
 export function useRoleSelection(): UseRoleSelectionReturn {
   const [roles, setRoles] = useState<Role[]>([])
@@ -38,13 +40,19 @@ export function useRoleSelection(): UseRoleSelectionReturn {
   const [canSkip, setCanSkip] = useState(false)
   const [hasActiveRole, setHasActiveRole] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
+  const [showTransition, setShowTransition] = useState(false)
 
   const router = useRouter()
+  const { setRole } = useSessionStore()
   const { loading, error, execute: executeAsync } = useAsyncOperation<Role[]>()
   const { loading: submitting, execute: executeSubmit } = useAsyncOperation<void>()
 
   const resetError = useCallback(() => {
     setRetryCount(0)
+  }, [])
+
+  const onTransitionComplete = useCallback(() => {
+    setShowTransition(false)
   }, [])
 
   const getErrorMessage = useCallback((error: unknown): string => {
@@ -79,56 +87,66 @@ export function useRoleSelection(): UseRoleSelectionReturn {
 
     return 'Ha ocurrido un error inesperado.'
   }, [])
+  const fetchRoles = useCallback(async () => {
+    console.log('🏁 Iniciando carga de roles (petición única)...')
 
-  const handleRolesResult = useCallback(
-    (result: Role[] | null) => {
+    try {
+      const result = await executeAsync(async () => {
+        console.log('🔄 Cargando roles...')
+
+        // Dar tiempo mínimo para que las cookies se establezcan
+        await new Promise((resolve) => setTimeout(resolve, 500))
+
+        const userRoles = await AuthService.getUserActiveRoles()
+        console.log('✅ Roles cargados exitosamente:', userRoles)
+
+        if (!Array.isArray(userRoles)) {
+          throw new Error('Formato de respuesta inválido del servidor.')
+        }
+
+        if (userRoles.length === 0) {
+          throw new Error('No tienes roles asignados. Contacta al administrador.')
+        }
+
+        return userRoles.map((role: any) => ({
+          id: role.id,
+          name: role.name,
+          description: role.description ?? '',
+          permissions: role.permissions ?? []
+        }))
+      })
+
+      // Manejar resultado exitoso
       if (result) {
         setRoles(result)
         setRetryCount(0)
+        console.log('✅ Roles procesados exitosamente:', result)
 
         if (result.length === 1 && result[0]) {
           setSelectedRole(result[0])
         }
-      } else if (error) {
-        setRetryCount((prev) => prev + 1)
-
-        if (error.includes('Token expirado') || error.includes('sesión ha expirado') || error.includes('401')) {
-          toast.error(error)
-          router.push('/auth/login')
-          return
-        }
-
-        toast.error(error)
       }
-    },
-    [error, router]
-  )
+    } catch (err) {
+      // Manejar error
+      const errorMessage = getErrorMessage(err)
+      setRetryCount((prev) => prev + 1)
 
-  const fetchRoles = useCallback(async () => {
-    console.log('🏁 Manual fetch user roles...')
+      console.error('❌ Error al cargar roles:', errorMessage)
 
-    const result = await executeAsync(async () => {
-      const userRoles = await AuthService.getUserActiveRoles()
-      console.log('📊 User roles received:', userRoles)
-
-      if (!Array.isArray(userRoles)) {
-        throw new Error('Formato de respuesta inválido del servidor.')
+      if (
+        errorMessage.includes('Token expirado') ||
+        errorMessage.includes('sesión ha expirado') ||
+        errorMessage.includes('401') ||
+        errorMessage.includes('403')
+      ) {
+        toast.error('Sesión expirada. Redirigiendo al login...')
+        router.push('/auth/login')
+        return
       }
 
-      if (userRoles.length === 0) {
-        throw new Error('No tienes roles asignados. Contacta al administrador.')
-      }
-
-      return userRoles.map((role: any) => ({
-        id: role.id,
-        name: role.name,
-        description: role.description ?? '',
-        permissions: role.permissions ?? []
-      }))
-    })
-
-    handleRolesResult(result)
-  }, [executeAsync, handleRolesResult])
+      toast.error(`Error: ${errorMessage}`)
+    }
+  }, [executeAsync, getErrorMessage, router])
 
   const retryFetchRoles = useCallback(() => {
     fetchRoles()
@@ -141,77 +159,64 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     }
 
     await executeSubmit(async () => {
-      console.log('🔄 Setting active role locally:', selectedRole)
+      console.log('🔄 Seleccionando rol localmente (sin API):', selectedRole)
 
-      CookieManager.setActiveRole(selectedRole)
+      try {
+        // Mostrar transición
+        setShowTransition(true)
 
-      const roleData = {
-        id: selectedRole.id,
-        name: selectedRole.name,
-        permissions: selectedRole.permissions || []
+        // Solo guardar el rol localmente sin comunicarse con la API
+        // Actualizar el store con el rol seleccionado
+        setRole(selectedRole)
+
+        // Guardar el rol en cookies y localStorage
+        CookieManager.setActiveRole(selectedRole)
+
+        console.log('✅ Rol guardado exitosamente:', {
+          id: selectedRole.id,
+          name: selectedRole.name,
+          cookieSet: CookieManager.hasActiveRole()
+        })
+
+        toast.success(`Rol seleccionado: ${selectedRole.name}`)
+
+        // Delay para asegurar que la cookie se guarde completamente
+        await new Promise((resolve) => setTimeout(resolve, 1500))
+
+        // Verificar que la cookie se guardó correctamente
+        const cookieCheck = CookieManager.hasActiveRole()
+        console.log('🔍 Verificación de cookie después de guardar:', cookieCheck)
+
+        if (!cookieCheck) {
+          throw new Error('Error al verificar la cookie del rol')
+        }
+
+        console.log('🔄 Preparando redirección a la página principal...')
+        // La redirección será manejada por el componente de transición
+      } catch (error) {
+        console.error('❌ Error al guardar el rol:', error)
+        setShowTransition(false)
+        throw new Error('Error al guardar la selección de rol')
       }
-      localStorage.setItem('selected_role', JSON.stringify(roleData))
-
-      toast.success(`Rol seleccionado exitosamente: ${selectedRole.name}`)
-      router.push('/')
     })
-  }, [selectedRole, executeSubmit, router])
+  }, [selectedRole, executeSubmit, setRole])
 
   const handleSkip = useCallback(() => {
     if (canSkip) {
       router.push('/')
     }
   }, [canSkip, router])
-
   useEffect(() => {
     const hasRole = CookieManager.hasActiveRole()
     setHasActiveRole(hasRole)
     setCanSkip(hasRole)
-  }, [])
 
-  useEffect(() => {
-    let mounted = true
-
-    const loadRoles = async () => {
-      try {
-        console.log('🏁 Starting to fetch user roles...')
-
-        const result = await executeAsync(async () => {
-          const userRoles = await AuthService.getUserActiveRoles()
-          console.log('📊 User roles received:', userRoles)
-
-          if (!Array.isArray(userRoles)) {
-            throw new Error('Formato de respuesta inválido del servidor.')
-          }
-
-          if (userRoles.length === 0) {
-            throw new Error('No tienes roles asignados. Contacta al administrador.')
-          }
-
-          return userRoles.map((role: any) => ({
-            id: role.id,
-            name: role.name,
-            description: role.description ?? '',
-            permissions: role.permissions ?? []
-          }))
-        })
-
-        if (mounted) {
-          handleRolesResult(result)
-        }
-      } catch (err) {
-        if (mounted) {
-          console.error('Error loading roles:', err)
-        }
-      }
+    // Solo cargar roles si no hay roles ya cargados
+    if (roles.length === 0) {
+      console.log('🚀 Cargando roles por primera vez...')
+      fetchRoles()
     }
-
-    loadRoles()
-
-    return () => {
-      mounted = false
-    }
-  }, [executeAsync, handleRolesResult])
+  }, [fetchRoles, roles.length])
 
   return {
     roles,
@@ -223,11 +228,13 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     hasActiveRole,
     retryCount,
     canRetry: retryCount < MAX_RETRY_ATTEMPTS,
+    showTransition,
     setSelectedRole,
     handleSubmit,
     handleSkip,
     fetchRoles,
     retryFetchRoles,
-    resetError
+    resetError,
+    onTransitionComplete
   }
 }

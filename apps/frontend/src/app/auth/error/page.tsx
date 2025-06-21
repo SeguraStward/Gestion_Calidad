@@ -12,9 +12,11 @@ function ErrorContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const errorCode = searchParams.get('code')
+  const action = searchParams.get('action')
 
   const errorInfo = getAuthErrorInfo(errorCode || undefined)
   const showContactAdmin = errorCode?.startsWith('AUTH_01') || errorCode === 'AUTH_003' || errorCode === 'AUTH_004'
+  const showRegisterOption = action === 'register' && errorCode === 'AUTH_010'
 
   const contactEmail = process.env.NEXT_PUBLIC_ADMIN_CONTACT_EMAIL || 'admin@una.ac.cr'
 
@@ -25,6 +27,15 @@ function ErrorContent() {
       <ErrorCard title={errorInfo.title} message={errorInfo.message} severity={errorInfo.severity} />
 
       <div className="mt-6 space-y-4 flex flex-col items-center">
+        {showRegisterOption && (
+          <div className="text-center space-y-3 mb-4">
+            <p className="text-sm text-muted-foreground">¿Es tu primera vez en el sistema? Puedes solicitar acceso:</p>
+            <Button onClick={() => router.push('/auth/register')} className="bg-primary hover:bg-primary/90">
+              Solicitar registro
+            </Button>
+          </div>
+        )}
+
         {showContactAdmin && (
           <a
             href={`mailto:${contactEmail}?subject=Solicitud de acceso - Sistema GC&body=Hola, solicito verificar mi acceso al sistema. Mi correo electrónico es: `}
@@ -39,10 +50,6 @@ function ErrorContent() {
           <Button onClick={() => router.push('/auth/login')} variant="outline" className="border-white border-2 text-lg">
             Intentar de nuevo
           </Button>
-          {/* <Button onClick={() => router.push('/')} className="bg-primary">
-            <Shield className="mr-2 h-4 w-4" />
-            Volver al inicio
-          </Button> */}
         </div>
       </div>
     </div>

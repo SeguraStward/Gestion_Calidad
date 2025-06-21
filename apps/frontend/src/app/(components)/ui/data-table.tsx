@@ -22,12 +22,12 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
   searchPlaceholder?: string
   newButton?: React.ReactNode
-  isLoading?: boolean 
+  isLoading?: boolean
   currentPage?: number
   totalPages?: number
-  onPageChange?: (page: number) => void 
+  onPageChange?: (page: number) => void
   searchQuery?: string
-  onSearchChange?: (query: string) => void 
+  onSearchChange?: (query: string) => void
   serverSideFiltering?: boolean
 }
 
@@ -46,24 +46,24 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   // Estado para filtrado del lado del cliente
   const [clientFilter, setClientFilter] = React.useState('')
-  
+
   // Aplicamos debounce a la búsqueda para evitar muchas solicitudes
   const debouncedClientFilter = useDebounce(clientFilter, 300)
-  
+
   // Manejar cambios en la búsqueda
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    
+    const value = e.target.value
+
     if (serverSideFiltering && onSearchChange) {
       // Para filtrado del lado del servidor, propagamos el cambio hacia arriba
       setClientFilter(value) // Actualizamos el input localmente
-      onSearchChange(value)  // Enviamos el valor al componente padre
+      onSearchChange(value) // Enviamos el valor al componente padre
     } else {
       // Para filtrado del lado del cliente
       setClientFilter(value)
     }
   }
-  
+
   // Tabla con filtrado del lado del cliente
   const table: TanstackTable<TData> = useReactTable({
     data,
@@ -73,7 +73,7 @@ export function DataTable<TData, TValue>({
     },
     onGlobalFilterChange: serverSideFiltering ? undefined : setClientFilter,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: serverSideFiltering ? undefined : getFilteredRowModel(),
+    getFilteredRowModel: serverSideFiltering ? undefined : getFilteredRowModel()
     // No necesitamos filtrado en la tabla si lo hacemos en el servidor
   })
 
