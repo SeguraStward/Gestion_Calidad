@@ -107,9 +107,7 @@ export function Step6Form({
         ],
         otrasHerramientas: ''
       })
-    } else {
-      console.log('[Step6Form] useEffect: No action taken (isEditing true or no relevant condition).')
-    }
+    } 
   }, [initialData, isEditing, reset, toolsQuestion])
 
   const toolOptions = useMemo(() => {

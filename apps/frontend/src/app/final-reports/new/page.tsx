@@ -310,7 +310,7 @@ export default function NewFinalReportPage() {
             responseType: resolvedResponseType,
             response: resolvedResponseType === 'SELECCION_MULTIPLE' ? undefined : responseValueToSend,
             multipleResponse: resolvedResponseType === 'SELECCION_MULTIPLE' ? (r.respuesta ? [responseValueToSend] : []) : [],
-            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
+            options: [],
             otherResponse: undefined
           }
         })
@@ -318,7 +318,7 @@ export default function NewFinalReportPage() {
         ...item,
         response: item.response === undefined ? undefined : item.response,
         multipleResponse: item.multipleResponse || [],
-        options: item.options || [],
+        options: [],
         questionGroup: item.questionGroup || 'general', 
         otherResponse: item.otherResponse === undefined ? undefined : item.otherResponse
       })) as FinalReportEvaluationFE[]
@@ -352,8 +352,7 @@ export default function NewFinalReportPage() {
       case 7:
         setStep7Data(data as Step7FormData)
         break
-      default:
-        console.warn(`[NewPage] Attempted to save data for unknown step: ${step}`)
+      default: 
     }
   }
 

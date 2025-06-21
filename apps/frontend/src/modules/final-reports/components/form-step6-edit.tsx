@@ -74,14 +74,9 @@ export function Step6EditForm({
   }, [])
 
   useEffect(() => {
-    console.log(
-      `[Step6EditForm] useEffect triggered. initialData:`,
-      initialData ? JSON.stringify(initialData) : null,
-      `isEditing: ${isEditing}`
-    )
+     
     if (initialData) {
-      console.log('[Step6EditForm] Using initialData to reset form.')
-      const currentRespuestasMultiples =
+       const currentRespuestasMultiples =
         initialData.respuestasMultiples && initialData.respuestasMultiples.length > 0
           ? initialData.respuestasMultiples
           : [
@@ -96,8 +91,7 @@ export function Step6EditForm({
         otrasHerramientas: initialData.otrasHerramientas || ''
       })
     } else if (!isEditing) {
-      console.log('[Step6EditForm] No initialData and !isEditing, resetting to defaults.')
-      reset({
+       reset({
         respuestasMultiples: [
           {
             idPregunta: toolsQuestion?.questionId || MAIN_TOOLS_QUESTION_ID_INTERNAL,
@@ -106,9 +100,7 @@ export function Step6EditForm({
         ],
         otrasHerramientas: ''
       })
-    } else {
-      console.log('[Step6EditForm] useEffect: No action taken (isEditing true or no relevant condition).')
-    }
+    }  
   }, [initialData, isEditing, reset, toolsQuestion])
 
   const toolOptions = useMemo(() => {

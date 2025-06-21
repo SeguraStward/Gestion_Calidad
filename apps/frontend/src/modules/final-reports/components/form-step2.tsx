@@ -100,12 +100,9 @@ export function Step2Form({
   const { control, handleSubmit, reset, watch, formState, getValues, setValue } = formMethods
 
   useEffect(() => {
-    if (initialData) {
-      // initialData está presente (modo edición con datos cargados)
+    if (initialData) { 
       const dataToReset = { ...initialData } // Crear una copia para modificarla de forma segura
-
-      // Si enrolledCapacity (del Paso 1) está disponible y es diferente
-      // al totalEnrolled en initialData, debe tener precedencia.
+ 
       if (typeof enrolledCapacity === 'number' && initialData.totalEnrolled !== enrolledCapacity) {
         dataToReset.totalEnrolled = enrolledCapacity
       }

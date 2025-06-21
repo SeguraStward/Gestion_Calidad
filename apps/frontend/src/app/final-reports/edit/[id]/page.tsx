@@ -8,14 +8,11 @@ import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { Button } from '@una-gc/ui/components/button'
-// Card y sus subcomponentes ya estaban, pero asegúrate de que se usan consistentemente
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card'
-import { Loader2, FileText, AlertTriangle, CheckCircle, Save } from 'lucide-react'
-
-// Importa ReportPageHeader
-import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header' // <<--- AÑADIDO
-
-// Schemas, Types, and Components for each step
+import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components/card'
+import { Loader2 } from 'lucide-react'
+ 
+import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header'  
+ 
 import { Step1FormData, step1Schema, Step1Form, transformReportToStep1Data } from '@/modules/final-reports/components/form-step1'
 import { Step2FormData, step2Schema, Step2Form, transformReportToStep2Data } from '@/modules/final-reports/components/form-step2'
 import { Step3FormData, step3Schema, Step3Form, transformReportToStep3Data } from '@/modules/final-reports/components/form-step3'
@@ -34,11 +31,9 @@ import {
   OTHER_TOOLS_QUESTION_ID
 } from '@/modules/final-reports/components/form-step6-edit'
 import { Step7FormData, step7Schema, Step7EditForm } from '@/modules/final-reports/components/form-step7-edit'
-
-// Mocks and services
+ 
 import { step5QuestionsMock, step6QuestionsPageMock, step7QuestionsPageMock } from '@/modules/final-reports/mocks/questions'
-
-// Service hooks
+ 
 import { useFinalReport, useUpdateFinalReport } from '@/modules/final-reports/service/final-reports.service'
 import {
   FullFinalReport,
@@ -49,7 +44,6 @@ import {
 
 const TOTAL_STEPS = 7
 
-// Mantén los mismos labels que en new/page.tsx si quieres consistencia
 const STEP_LABELS_SPANISH = ['Información', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
 
 function transformReportToStep7Data(report: FullFinalReport, currentReportType: ReportType): Step7FormData | null {
@@ -57,7 +51,7 @@ function transformReportToStep7Data(report: FullFinalReport, currentReportType: 
     if (Array.isArray(q.appliesTo)) {
       return q.appliesTo.includes(currentReportType) || q.appliesTo.includes('TODOS')
     }
-    return false // O true si las preguntas sin 'appliesTo' deben incluirse siempre
+    return false  
   })
  
   const step7Responses = filteredQuestions.map((p, index) => {
@@ -114,8 +108,7 @@ export default function EditFinalReportPage() {
       enabled: !!reportId,
       retry: 1
     }
-  )
-
+  ) 
   const updateReportHook = useUpdateFinalReport()
   const { mutateAsync: updateReportMutation } = updateReportHook
   const isUpdatingReport = updateReportHook.status === 'pending'
@@ -130,7 +123,7 @@ export default function EditFinalReportPage() {
 
   useEffect(() => {
     if (fetchedReport && reportType) {
-      
+       console.warn('El reporte esta cambiandoooooo shit:', fetchedReport)
 
       const initialStep1 = transformReportToStep1Data(fetchedReport)
       if (initialStep1) {

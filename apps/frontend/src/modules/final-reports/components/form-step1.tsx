@@ -30,15 +30,10 @@ export type Step1FormData = z.infer<typeof step1Schema>
 
 export function transformReportToStep1Data(report: FullFinalReport): Step1FormData | null {
   if (!report.academicLoad) {
-    console.warn('[transformReportToStep1Data] Reporte no tiene academicLoad, no se pueden transformar datos para Step 1.')
-    return null
+     return null
   }
-  // Asegúrate de que academicLoad.id exista también
-  if (!report.academicLoad.id) {
-    console.warn('[transformReportToStep1Data] Reporte tiene academicLoad pero academicLoad.id es undefined.')
-    // Decide cómo manejar esto, ¿quizás retornar null o un valor por defecto si es permisible?
-    // Por ahora, para que coincida con la lógica anterior de que academicLoadId podría ser undefined:
-    return {
+   if (!report.academicLoad.id) {
+     return {
       academicLoadId: '',
       nrc: report.academicLoad.nrc || '',
       courseName: report.academicLoad.course?.name || '',
@@ -94,11 +89,7 @@ export function Step1Form({
   const { control, watch, setValue, handleSubmit, formState, reset } = formMethods
   const currentProfessorId = useDevStore((state) => state.mockProfessorId)
 
-  console.log('[Step1Form] initialData received:', initialData)
-  if (initialData) {
-    console.log('[Step1Form] initialData.academicLoadId:', initialData.academicLoadId)
-  }
-
+   
   const {
     data: paginatedAcademicLoads,
     isLoading: isLoadingAcademicLoads,
@@ -151,34 +142,21 @@ export function Step1Form({
   const selectedAcademicLoadId = watch('academicLoadId')
 
   useEffect(() => {
-    console.log('[Step1Form] selectedAcademicLoadId changed:', selectedAcademicLoadId)
-  }, [selectedAcademicLoadId])
+   }, [selectedAcademicLoadId])
 
   // Efecto para poblar el formulario con initialData
   useEffect(() => {
-    console.log(
-      '[Step1Form InitialDataEffect] Running. isEditing:',
-      isEditing,
-      'has initialData:',
-      !!initialData,
-      'isDirty:',
-      formState.isDirty,
-      'selectedAcademicLoadId:',
-      selectedAcademicLoadId
-    )
+    
     if (isEditing && initialData && formState.isDirty === false && !selectedAcademicLoadId) {
-      console.log('[Step1Form InitialDataEffect] Resetting form with initialData:', initialData)
-      reset(initialData)
+       reset(initialData)
     }
   }, [isEditing, initialData, reset, formState.isDirty, selectedAcademicLoadId])
 
   // Efecto para actualizar campos cuando selectedNrc cambia
   useEffect(() => {
-    console.log('[Step1Form NrcEffect] Running. selectedNrc:', selectedNrc, 'availableCourses count:', availableCourses.length)
-    const courseData = availableCourses.find((course) => course.nrc === selectedNrc)
+     const courseData = availableCourses.find((course) => course.nrc === selectedNrc)
     if (courseData) {
-      console.log('[Step1Form NrcEffect] Found courseData:', courseData, 'Setting academicLoadId to:', courseData.id)
-      setValue('academicLoadId', courseData.id, { shouldValidate: true, shouldDirty: true })
+       setValue('academicLoadId', courseData.id, { shouldValidate: true, shouldDirty: true })
       setValue('courseName', courseData.courseName, { shouldValidate: true, shouldDirty: true })
       setValue('groupNumber', courseData.groupNumber, { shouldValidate: true, shouldDirty: true })
       setValue('professorName', courseData.professorName, { shouldValidate: true, shouldDirty: true })
@@ -186,24 +164,20 @@ export function Step1Form({
       setValue('groupLevel', courseData.groupLevel, { shouldValidate: true, shouldDirty: true })
       setValue('enrolledCapacity', courseData.enrolledCapacity, { shouldValidate: true, shouldDirty: true })
     } else if (!selectedNrc) {
-      console.log('[Step1Form NrcEffect] NRC is empty, clearing academicLoadId.')
-      setValue('academicLoadId', '')
+       setValue('academicLoadId', '')
       setValue('courseName', '')
       setValue('groupNumber', '')
       setValue('professorName', '')
       setValue('courseCode', '')
       setValue('groupLevel', '')
       setValue('enrolledCapacity', undefined)
-    } else {
-      console.log('[Step1Form NrcEffect] NRC has value but no courseData found. academicLoadId not changed by this effect.')
-    }
+    }  
   }, [selectedNrc, availableCourses, setValue])
 
   const onSubmitHandler = (data: Step1FormData) => {
     // El academicLoadId y nrc ya deberían estar correctos por la selección y el useEffect.
     // Los demás campos también.
-    console.log('Step 1 Data to Save:', data)
-    onSaveAndNext(data)
+     onSaveAndNext(data)
   }
 
   if (isLoadingAcademicLoads && availableCourses.length === 0) {

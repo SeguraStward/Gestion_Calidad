@@ -62,14 +62,13 @@ export default function FinalReportsPage() {
       include: 'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus',
       page: currentPage,
       limit: pageSize,
-      search: debouncedSearchQuery || undefined // Solo enviamos si tiene valor
+      search: debouncedSearchQuery || undefined  
     },
     { enabled: !!mockProfessorId }
   )
  
   const finalReportsData = paginatedFinalReports?.data || []
-  
-  // Cálculo de páginas para la paginación
+   
   const totalItems = paginatedFinalReports?.meta?.total || 0
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
   
