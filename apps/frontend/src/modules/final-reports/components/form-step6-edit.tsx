@@ -293,7 +293,7 @@ export function Step6EditForm({
                 Anterior
               </Button>
               <Button type="submit" className="px-8 shadow-sm">
-                 Siguiente
+                Siguiente
               </Button>
             </div>
           </form>

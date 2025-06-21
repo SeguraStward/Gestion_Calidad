@@ -254,9 +254,7 @@ export function Step6Form({
                       </div>
                     </div>
                     <div className="flex-1 space-y-1.5">
-                      <FormLabel className="block font-medium text-sm">
-                        Usadas ({(selectedResponsesRaw || []).length})
-                      </FormLabel>
+                      <FormLabel className="block font-medium text-sm">Usadas ({(selectedResponsesRaw || []).length})</FormLabel>
                       <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
                         {usedOptionsMapped.map(
                           (

@@ -602,8 +602,8 @@ export default function EditFinalReportPage() {
       />
       <main className="flex-grow flex flex-col items-center overflow-hidden pt-2 pb-6 md:pt-4">
         <Card className="shadow-lg border-border/50 w-full max-w-5xl flex flex-col flex-grow overflow-hidden rounded-lg">
-          <CardContent className="flex-grow overflow-y-auto p-0"> 
-            <div className="p-4 md:p-6 lg:p-8 relative h-full"> 
+          <CardContent className="flex-grow overflow-y-auto p-0">
+            <div className="p-4 md:p-6 lg:p-8 relative h-full">
               {isUpdatingReport && (
                 <div className="absolute inset-0 bg-white/80 dark:bg-black/80 flex justify-center items-center z-50 rounded-lg">
                   <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -611,7 +611,7 @@ export default function EditFinalReportPage() {
                 </div>
               )}
               <div className={`${isUpdatingReport ? 'opacity-50 pointer-events-none' : ''} flex-l`}>
-                {' '} 
+                {' '}
                 {renderCurrentStepForm()}
               </div>
             </div>

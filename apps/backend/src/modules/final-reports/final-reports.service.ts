@@ -8,8 +8,6 @@ import { FinalReport, Prisma, FinalReportStatus } from '@una-gc/database/prisma/
 import { FinalReportDto } from './dtos/final-report.dto';
 import { FinalReportsRepository } from './final-reports.repository';
 
-
-
 @Injectable()
 export class FinalReportsService extends GenericService<FinalReport, FinalReportDto, FinalReportDto> {
   protected readonly logger = new Logger(FinalReportsService.name);
@@ -21,9 +19,9 @@ export class FinalReportsService extends GenericService<FinalReport, FinalReport
 
   constructor(
     protected readonly finalReportsRepository: FinalReportsRepository,
-    protected readonly dtoValidator: DtoValidator,  
+    protected readonly dtoValidator: DtoValidator,
   ) {
-    super(finalReportsRepository, FinalReportDto);  
+    super(finalReportsRepository, FinalReportDto);
   }
 
   async findAllByProfessorId(
@@ -48,19 +46,19 @@ export class FinalReportsService extends GenericService<FinalReport, FinalReport
     // Call the generic findAll method from the base GenericService
     return super.findAll(page, limit, where, orderBy, include);
   }
- 
-   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async evaluatePendingFinalReports() {
     this.logger.log('Executing daily evaluation of pending final reports...');
     const today = new Date();
- 
+
     const pendingReports = await this.finalReportsRepository.findPendingWithEndedCycle(today);
 
     if (pendingReports.length === 0) {
       this.logger.log('There is no reports to update.');
       return;
     }
- 
+
     for (const report of pendingReports) {
       await this.update(report.id, { status: 'EVALUATED' }); // update viene del GenericService
       this.logger.log(`Report ${report.id} updated to EVALUATED.`);

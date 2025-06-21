@@ -28,7 +28,7 @@ export class CareerDto extends BaseDto {
   @IsNotEmpty()
   @IsString()
   schoolId: string;
-  
+
   @ApiPropertyOptional({ type: () => SchoolDto })
   @Expose()
   @Type(() => SchoolDto)

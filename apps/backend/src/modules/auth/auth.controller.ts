@@ -215,7 +215,7 @@ export class AuthController {
       this.logger.error(
         `Refresh token rotation error: ${error instanceof Error ? error.message : String(error)}`,
       );
-    
+
       res.clearCookie('auth_token', {
         domain: '.arayaroma.software',
         httpOnly: true,
