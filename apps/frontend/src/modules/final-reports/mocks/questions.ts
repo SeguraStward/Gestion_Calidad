@@ -96,7 +96,6 @@ export const step5QuestionsMock: Step5Question[] = [
   }
 ]
 
-
 export const step6QuestionsPageMock: Step6Question[] = [
   {
     questionId: MAIN_TOOLS_QUESTION_ID, // Usar la constante importada
@@ -194,4 +193,3 @@ export const step7QuestionsPageMock: Step7Question[] = [
     responseType: 'SELECCION_UNICA'
   }
 ]
-

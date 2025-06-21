@@ -1,24 +1,8 @@
 'use client'
 
 import { ReactNode, useMemo } from 'react'
-import {
-  FieldValues,
-  UseFormReturn,
-  Controller,
-  Path,
-  FieldError,
-  RegisterOptions
-} from 'react-hook-form'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-  Button,
-  Separator
-} from '@una-gc/ui/components'
+import { FieldValues, UseFormReturn, Controller, Path, FieldError, RegisterOptions } from 'react-hook-form'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, Button, Separator } from '@una-gc/ui/components'
 import { FormField } from '@/app/(components)/form/field'
 import { FormSelect, ComboboxOption } from '@/app/(components)/form/select'
 import { Loader2, Save, X } from 'lucide-react'
@@ -122,16 +106,7 @@ export function CrudForm<T extends FieldValues>({
     if (field.hidden) return null
 
     // Extraer propiedades comunes
-    const {
-      name,
-      label,
-      required,
-      disabled,
-      placeholder,
-      helperText,
-      className,
-      rules
-    } = field as any
+    const { name, label, required, disabled, placeholder, helperText, className, rules } = field as any
 
     // Si es un campo personalizado, usar la función de renderizado proporcionada
     if (field.type === 'custom' && 'render' in field) {
@@ -140,9 +115,7 @@ export function CrudForm<T extends FieldValues>({
           <Controller
             name={name}
             control={control}
-            rules={
-              rules || { required: required ? `${label} es requerido` : false }
-            }
+            rules={rules || { required: required ? `${label} es requerido` : false }}
             render={({ field: { value, onChange } }) => (
               <>
                 {field.render({
@@ -167,9 +140,7 @@ export function CrudForm<T extends FieldValues>({
           <Controller
             name={name}
             control={control}
-            rules={
-              rules || { required: required ? `${label} es requerido` : false }
-            }
+            rules={rules || { required: required ? `${label} es requerido` : false }}
             render={({ field: { value, onChange } }) => (
               <FormSelect
                 id={String(name)}
@@ -195,10 +166,8 @@ export function CrudForm<T extends FieldValues>({
     }
 
     // Renderizar campos de texto y numéricos
-    const fieldRules =
-      rules || { required: required ? `${label} es requerido` : false }
-    const registerOpts =
-      field.type === 'number' ? { valueAsNumber: true, ...fieldRules } : fieldRules
+    const fieldRules = rules || { required: required ? `${label} es requerido` : false }
+    const registerOpts = field.type === 'number' ? { valueAsNumber: true, ...fieldRules } : fieldRules
 
     return (
       <div key={String(name)} className={`space-y-1 ${className || ''}`}>
@@ -209,21 +178,15 @@ export function CrudForm<T extends FieldValues>({
           id={String(name)}
           type={field.type}
           placeholder={placeholder}
-          error={
-            errors[name]
-              ? ({ message: errors[name]?.message as string } as FieldError)
-              : undefined
-          }
+          error={errors[name] ? ({ message: errors[name]?.message as string } as FieldError) : undefined}
           required={required}
           disabled={disabled || isSubmitting}
-          min={field.type === 'number' ? field.min ?? 1 : undefined}
+          min={field.type === 'number' ? (field.min ?? 1) : undefined}
           max={field.type === 'number' ? field.max : undefined}
           step={field.type === 'number' ? field.step : undefined}
           registerOptions={registerOpts}
         />
-        {helperText && (
-          <p className="text-xs text-muted-foreground mt-1">{helperText}</p>
-        )}
+        {helperText && <p className="text-xs text-muted-foreground mt-1">{helperText}</p>}
       </div>
     )
   }

@@ -165,7 +165,8 @@ export default function CareerCrud() {
             {
               title: 'Datos de la Carrera',
               description: 'Información principal de la carrera',
-              fields: [                {
+              fields: [
+                {
                   type: 'text',
                   name: 'code',
                   label: 'Código',

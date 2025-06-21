@@ -21,12 +21,7 @@ const ajusteEstudianteSchema = z.object({
     .min(9, 'La cédula debe tener al menos 9 dígitos'),
   nombre: z.string().min(1, 'El nombre es requerido.'),
   apoyo: z.string().min(1, 'El tipo de apoyo es requerido.'),
-  nota: z.coerce
-    .number()
-    .min(0, 'La nota debe ser 0 o más.')
-    .max(100, 'La nota no puede ser mayor a 100.')
-    .optional()
-    .nullable(), // Match step 2 schema
+  nota: z.coerce.number().min(0, 'La nota debe ser 0 o más.').max(100, 'La nota no puede ser mayor a 100.').optional().nullable(), // Match step 2 schema
   observacion: z.string().optional()
 })
 

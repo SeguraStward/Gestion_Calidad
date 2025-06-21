@@ -108,7 +108,6 @@ export function Step7Form({
   }, [reportType])
 
   useEffect(() => {
-   
     const defaultFormValuesBasedOnCurrentQuestions = {
       respuestasRadio: flatDisplayedQuestionList.map((q) => ({
         idPregunta: q.questionId,
@@ -145,15 +144,14 @@ export function Step7Form({
 
   return (
     <div className="flex flex-col">
-      
       <div className="mb-4">
         <h2 className="text-xl font-semibold flex items-center gap-3">
           <Activity className="w-5 h-5 text-foreground/70" />
           Paso {totalSteps > 0 ? `7 de ${totalSteps}: ` : ''} Percepción General y Desempeño
         </h2>
         <p className="text-muted-foreground text-sm mt-1">
-          Evalúe su percepción sobre los aspectos del curso y desempeño estudiantil. ({flatDisplayedQuestionList.length}{' '}
-          pregunta{flatDisplayedQuestionList.length !== 1 ? 's' : ''})
+          Evalúe su percepción sobre los aspectos del curso y desempeño estudiantil. ({flatDisplayedQuestionList.length} pregunta
+          {flatDisplayedQuestionList.length !== 1 ? 's' : ''})
         </p>
       </div>
 

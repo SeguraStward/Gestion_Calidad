@@ -1,7 +1,7 @@
-import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Font, Image } from '@react-pdf/renderer';
-import type { FullFinalReport, FinalReportEvaluationFE } from '../types/final-reports.types';
- 
+import React from 'react'
+import { Page, Text, View, Document, StyleSheet, Font, Image } from '@react-pdf/renderer'
+import type { FullFinalReport, FinalReportEvaluationFE } from '../types/final-reports.types'
+
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     border: '0.5px solid #E0E0E0',
     marginTop: 5
   },
-   
+
   footerContainer: {
     position: 'absolute',
     bottom: 20,
@@ -531,7 +531,6 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
           )}
         </View>
 
-         
         <View style={styles.footerContainer} fixed>
           <Text
             style={styles.footerText}
@@ -548,7 +547,7 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
               if (pageNumber === totalPages) {
                 return `Fecha de Creación del Informe: ${formatDate(report.createdAt)}`
               }
-              return '';  
+              return ''
             }}
           />
           <Text style={styles.footerText} render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />

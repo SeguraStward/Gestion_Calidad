@@ -7,12 +7,10 @@ import { Button } from '@una-gc/ui/components/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Card, CardHeader, CardContent } from '@una-gc/ui/components/card'
-import { MoveRight, MoveLeft, Settings2, AlertTriangle } from 'lucide-react' 
+import { MoveRight, MoveLeft, Settings2, AlertTriangle } from 'lucide-react'
 
 // Import centralized mock data and types
-import {
-  step6QuestionsPageMock,  
-} from '../mocks/questions' // Corrected path
+import { step6QuestionsPageMock } from '../mocks/questions' // Corrected path
 
 // Schema for a single multiple response item
 const multipleResponseSchema = z.object({
@@ -80,9 +78,7 @@ export function Step6Form({
   }, [])
 
   useEffect(() => {
-    
-    if (initialData) { 
-  
+    if (initialData) {
       const currentRespuestasMultiples =
         initialData.respuestasMultiples && initialData.respuestasMultiples.length > 0
           ? initialData.respuestasMultiples
@@ -243,9 +239,7 @@ export function Step6Form({
                       </div>
                     </div>
                     <div className="flex-1 space-y-1.5">
-                      <FormLabel className="block font-medium text-sm">
-                        Usadas ({(selectedResponsesRaw || []).length})
-                      </FormLabel>
+                      <FormLabel className="block font-medium text-sm">Usadas ({(selectedResponsesRaw || []).length})</FormLabel>
                       <div className="border rounded-md h-[200px] overflow-y-auto p-1.5 space-y-1 bg-muted/20">
                         {usedOptionsMapped.map(
                           (

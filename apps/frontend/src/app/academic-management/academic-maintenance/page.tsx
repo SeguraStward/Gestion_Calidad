@@ -1,5 +1,5 @@
-import { AcademicMaintenancePage } from '@/modules/academic-management/academic-maintenance/components/academic-maintenance-page'
+import AcademicMaintenanceClient from './AcademicMaintenanceClient'
 
 export default function Page() {
-  return <AcademicMaintenancePage />
+  return <AcademicMaintenanceClient />
 }
