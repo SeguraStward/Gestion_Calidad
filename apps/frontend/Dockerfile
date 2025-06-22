@@ -58,13 +58,17 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Create public directory before switching users
+RUN mkdir -p ./apps/frontend/public && \
+    echo '{"name": "frontend", "short_name": "FE", "start_url": "/", "display": "standalone"}' > ./apps/frontend/public/manifest.json && \
+    echo 'User-agent: *\nDisallow:' > ./apps/frontend/public/robots.txt
+
 USER nextjs
 
 COPY --from=prod-deps /app/ .
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/standalone/apps/frontend ./apps/frontend
 COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/static        ./apps/frontend/.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/public              ./apps/frontend/public
 
 ENV PORT=80
 ENV HOSTNAME="0.0.0.0"
