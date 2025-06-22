@@ -27,8 +27,9 @@ export default function GestionAcademicaPage() {
   ]
 
   return (
-    <div className="h-full min-h-screen w-full animated-bg">
-      <div className="h-full min-h-screen w-full flex flex-col items-center justify-start overflow-y-auto custom-scrollbar px-4 py-8">
+    <>
+      <div className="fixed inset-0 -z-10 animated-bg" />
+      <div className="h-full w-full flex flex-col items-center justify-start overflow-y-auto custom-scrollbar px-4 py-8">
         <div className="w-full max-w-3xl">
           {/* Header Section */}
           <div className="text-center mb-10">
@@ -80,6 +81,6 @@ export default function GestionAcademicaPage() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
