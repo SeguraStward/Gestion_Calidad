@@ -47,11 +47,34 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
   // Override save to handle relations properly
   async save(payload: AcademicLoadDto): Promise<AcademicLoadDto> {
     this.logger.debug(`Saving academic load with payload: ${JSON.stringify(payload)}`);
+    
     // Calculate available seats
     const availableSeats = payload.maximumCapacity - payload.enrolledCapacity;
+    
+    // Process date - ensure it's a proper Date object
+    let processedDate: Date | undefined;
+    if (payload.date) {
+      if (typeof payload.date === 'string') {
+        // If it's a string, parse it and ensure it has time component
+        processedDate = new Date(payload.date + 'T00:00:00.000Z');
+      } else if (payload.date instanceof Date) {
+        processedDate = payload.date;
+      } else {
+        // If it's already processed, use it as is
+        processedDate = new Date(payload.date);
+      }
+    }
+    
+    // Create clean data object without relation IDs (they will be handled by connect)
     const data: Prisma.AcademicLoadCreateInput = {
-      ...payload,
+      nrc: payload.nrc,
+      maximumCapacity: payload.maximumCapacity,
+      enrolledCapacity: payload.enrolledCapacity,
       availableSeats,
+      status: payload.status,
+      ...(processedDate && { date: processedDate }),
+      
+      // Handle relations with connect
       academicCycle: { connect: { id: payload.academicCycleId } },
       campus: { connect: { id: payload.campusId } },
       course: { connect: { id: payload.courseId } },
@@ -60,12 +83,14 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
       ...(payload.classroomId && { classroom: { connect: { id: payload.classroomId } } }),
       ...(payload.scheduleId && { schedule: { connect: { id: payload.scheduleId } } }),
     };
+    
     return super.save(data as any);
   }
 
   // Override update to handle relations properly
   async update(id: string, payload: Partial<AcademicLoadDto>): Promise<AcademicLoadDto> {
     this.logger.debug(`Updating academic load ${id} with payload: ${JSON.stringify(payload)}`);
+    
     // Calculate available seats if capacity fields are being updated
     let availableSeats: number | undefined;
     if (payload.maximumCapacity !== undefined || payload.enrolledCapacity !== undefined) {
@@ -74,9 +99,31 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
       const enrolled = payload.enrolledCapacity ?? current?.enrolledCapacity ?? 0;
       availableSeats = maxCapacity - enrolled;
     }
+    
+    // Process date - ensure it's a proper Date object
+    let processedDate: Date | undefined;
+    if (payload.date !== undefined) {
+      if (payload.date === null) {
+        processedDate = undefined;
+      } else if (typeof payload.date === 'string') {
+        processedDate = new Date(payload.date + 'T00:00:00.000Z');
+      } else if (payload.date instanceof Date) {
+        processedDate = payload.date;
+      } else {
+        processedDate = new Date(payload.date);
+      }
+    }
+    
+    // Create clean data object
     const data: Prisma.AcademicLoadUpdateInput = {
-      ...payload,
+      ...(payload.nrc !== undefined && { nrc: payload.nrc }),
+      ...(payload.maximumCapacity !== undefined && { maximumCapacity: payload.maximumCapacity }),
+      ...(payload.enrolledCapacity !== undefined && { enrolledCapacity: payload.enrolledCapacity }),
+      ...(payload.status !== undefined && { status: payload.status }),
       ...(availableSeats !== undefined && { availableSeats }),
+      ...(processedDate !== undefined && { date: processedDate }),
+      
+      // Handle relations with connect
       ...(payload.academicCycleId && { academicCycle: { connect: { id: payload.academicCycleId } } }),
       ...(payload.campusId && { campus: { connect: { id: payload.campusId } } }),
       ...(payload.courseId && { course: { connect: { id: payload.courseId } } }),
@@ -85,6 +132,7 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
       ...(payload.classroomId && { classroom: { connect: { id: payload.classroomId } } }),
       ...(payload.scheduleId && { schedule: { connect: { id: payload.scheduleId } } }),
     };
+    
     return super.update(id, data as any);
   }
 

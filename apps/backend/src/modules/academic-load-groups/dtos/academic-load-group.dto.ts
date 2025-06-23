@@ -9,6 +9,7 @@ export class AcademicLoadGroupDto extends BaseDto {
   @ApiPropertyOptional({ description: 'AcademicLoadGroup ID' })
   @IsString()
   @IsOptional()
+  @Expose()
   id?: string;
 
   @ApiProperty({ description: 'Group number' })

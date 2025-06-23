@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsEnum, IsInt, IsDate, ValidateNested } from 'class-validator';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Type, Transform } from 'class-transformer';
 import { Status } from '@una-gc/database/prisma/generated/client'; // Assuming Status is correctly generated
 import { BaseDto } from '@src/modules/generalDto';
 
@@ -73,7 +73,19 @@ export class AcademicLoadDto extends BaseDto {
   @Expose()
   @IsDate()
   @IsOptional()
-  @Type(() => Date) // Ensure date is transformed correctly
+  @Type(() => Date)
+  @Transform(({ value }) => {
+    if (!value) return undefined;
+    if (value instanceof Date) return value;
+    if (typeof value === 'string') {
+      // If it's just a date string (YYYY-MM-DD), add time component
+      if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return new Date(value + 'T00:00:00.000Z');
+      }
+      return new Date(value);
+    }
+    return new Date(value);
+  })
   date?: Date;
 
   @ApiProperty({ description: 'Status of the academic load', enum: Status })
