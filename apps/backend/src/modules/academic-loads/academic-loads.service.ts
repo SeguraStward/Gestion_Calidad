@@ -32,9 +32,10 @@ const FULL_INCLUDE: Prisma.AcademicLoadInclude = {
 export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicLoadDto, AcademicLoadDto> {
   protected readonly logger = new Logger(AcademicLoadsService.name);
 
+  // No relation checks needed for Academic Load deletion
   protected readonly relationCheckConfig = {
-    relationFields: [''],
-    errorMessage: 'Cannot delete AcademicLoad because it has associated: none.',
+    relationFields: [],
+    errorMessage: '',
   };
 
   constructor(
@@ -164,5 +165,19 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
       ...(status && { status }),
     };
     return super.findAll(page, limit, where, orderBy, FULL_INCLUDE);
+  }
+
+  // Override delete method to handle any specific logic if needed
+  async delete(id: string): Promise<boolean> {
+    this.logger.debug(`Deleting academic load with id: ${id}`);
+    
+    // First, check if the record exists
+    const existingItem = await this.findById(id);
+    if (!existingItem) {
+      throw new Error(`Academic Load with id ${id} not found`);
+    }
+    
+    // Perform the deletion
+    return super.delete(id);
   }
 }
