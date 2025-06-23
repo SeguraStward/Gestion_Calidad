@@ -94,7 +94,10 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
       ...(payload.scheduleId && { schedule: { connect: { id: payload.scheduleId } } }),
     };
     
-    return super.save(data as any);
+    // Create the entity and then fetch it with includes to ensure all relations are loaded
+    const created = await this.academicLoadsRepository.save(data as any) as AcademicLoad;
+    // Fetch the created item with full includes
+    return await this.findById(created.id) as AcademicLoadDto;
   }
 
   // Override update to handle relations properly
@@ -143,7 +146,10 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
       ...(payload.scheduleId && { schedule: { connect: { id: payload.scheduleId } } }),
     };
     
-    return super.update(id, data as any);
+    // Update the entity and then fetch it with includes to ensure all relations are loaded
+    await this.academicLoadsRepository.update(id, data as any);
+    // Fetch the updated item with full includes
+    return await this.findById(id) as AcademicLoadDto;
   }
 
   // Override findById to include all relations

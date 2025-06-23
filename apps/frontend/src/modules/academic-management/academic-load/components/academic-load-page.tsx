@@ -403,9 +403,25 @@ const AcademicLoadPage = () => {
       renderColumns,
       // Procesar los items para la edición, asegurando que las fechas y relaciones estén correctas
       processItemForEditing: (item: AcademicLoadItem) => {
+        console.log('Processing item for editing:', item); // Debug log
+        
+        let processedDate = new Date();
+        if (item.date) {
+          try {
+            processedDate = typeof item.date === 'string' ? new Date(item.date) : item.date;
+            // Verificar si la fecha es válida
+            if (isNaN(processedDate.getTime())) {
+              processedDate = new Date();
+            }
+          } catch (error) {
+            console.warn('Error processing date:', error);
+            processedDate = new Date();
+          }
+        }
+        
         return {
           ...item,
-          date: item.date ? new Date(item.date) : new Date(),
+          date: processedDate,
           academicCycleId: item.academicCycleId || item.academicCycle?.id || '',
           campusId: item.campusId || item.campus?.id || '',
           courseId: item.courseId || item.course?.id || '',
@@ -424,12 +440,16 @@ const AcademicLoadPage = () => {
       },
       // Validación pre-eliminación
       preDeleteCheck: (item: AcademicLoadItem) => {
-        // Si hay estudiantes matriculados, mostrar advertencia
-        if (item.enrolledCapacity > 0) {
-          return 'No se puede eliminar la carga académica porque tiene estudiantes matriculados.'
-        }
-        // Si no hay problemas, retornar null (sin error)
-        return null
+        // Por ahora, permitir eliminar todas las cargas académicas
+        // En el futuro, aquí podrías verificar si hay estudiantes realmente matriculados
+        // consultando una tabla de matrículas o inscripciones
+        
+        // Ejemplo de validaciones que podrías implementar:
+        // - Verificar si la carga tiene calificaciones registradas
+        // - Verificar si hay reportes finales
+        // - Verificar fechas (no eliminar cargas del periodo actual, etc.)
+        
+        return null // Permitir eliminación
       }
     }),
     [renderForm, renderColumns]

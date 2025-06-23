@@ -98,7 +98,14 @@ export class AcademicLoadDto extends BaseDto {
     
     const date = new Date(value);
     return isNaN(date.getTime()) ? undefined : date;
-  })
+  }, { toClassOnly: true })
+  @Transform(({ value }) => {
+    // Transform when serializing to plain object (toPlainOnly)
+    if (value instanceof Date && !isNaN(value.getTime())) {
+      return value.toISOString();
+    }
+    return value;
+  }, { toPlainOnly: true })
   date?: Date;
 
   @ApiProperty({ description: 'Status of the academic load', enum: Status })

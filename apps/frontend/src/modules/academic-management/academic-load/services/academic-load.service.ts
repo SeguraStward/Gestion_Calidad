@@ -41,8 +41,12 @@ export class AcademicLoadService extends GenericService<
       })
     }
 
+    console.log('Creating academic load with payload:', processedPayload) // Debug log
+
     const response = await HttpClient.post(`/${this.resource}`, processedPayload)
-    return response.data?.data || response.data
+    const result = response.data?.data || response.data
+    console.log('Academic Load create response:', result) // Debug log
+    return result
   }
 
   // Override update to handle relations
@@ -67,8 +71,12 @@ export class AcademicLoadService extends GenericService<
       }
     }
 
+    console.log('Updating academic load with payload:', data) // Debug log
+
     const response = await HttpClient.put(`/${this.resource}/${id}`, data)
-    return response.data?.data || response.data
+    const result = response.data?.data || response.data
+    console.log('Academic Load update response:', result) // Debug log
+    return result
   }
 
   // Override get to include all relations
@@ -76,7 +84,9 @@ export class AcademicLoadService extends GenericService<
     const response = await HttpClient.get(`/${this.resource}/${id}`, {
       params: { include: JSON.stringify(FULL_INCLUDE) }
     })
-    return response.data?.data || response.data
+    const result = response.data?.data || response.data
+    console.log('Academic Load get response:', result) // Debug log
+    return result
   }
 
   // Custom method for finding by professor
