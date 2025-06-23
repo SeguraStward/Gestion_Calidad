@@ -26,16 +26,11 @@ import {
   DoorOpen,
   Pencil,
   Trash2,
-  MoreHorizontal,
   Loader2,
   GraduationCap
 } from 'lucide-react'
 import {
   Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
   Badge,
   Calendar,
   Card,
@@ -207,49 +202,31 @@ const AcademicLoadPage = () => {
         {
           id: 'actions',
           header: () => <div className="text-right">Acciones</div>,
-          size: 80,
+          size: 90,
           cell: ({ row }) => (
-            <div className="text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Abrir menú</span>
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {' '}
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      utils.onEdit(row.original.id)
-                    }}
-                    disabled={utils.isProcessing}
-                  >
-                    {utils.isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pencil className="mr-2 h-4 w-4" />}
-                    Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      utils.onDelete(row.original.id)
-                    }}
-                    className="text-red-600 hover:!text-red-600 hover:!bg-red-100 dark:hover:!bg-red-900/50"
-                    disabled={
-                      utils.isProcessing ||
-                      (utils.deleteOperation.isPending && utils.deleteOperation.variables === row.original.id)
-                    }
-                  >
-                    {utils.isProcessing ||
-                    (utils.deleteOperation.isPending && utils.deleteOperation.variables === row.original.id) ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="mr-2 h-4 w-4" />
-                    )}
-                    Eliminar
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="text-right flex gap-1 justify-end min-w-[80px]">
+              <Button 
+                variant="ghost" 
+                className="h-8 w-8 p-0" 
+                onClick={() => utils.onEdit(row.original.id)} 
+                title="Editar"
+                disabled={utils.isProcessing}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50"
+                title="Eliminar"
+                disabled={utils.isProcessing || (utils.deleteOperation.isPending && utils.deleteOperation.variables === row.original.id)}
+                onClick={() => utils.onDelete(row.original.id)}
+              >
+                {utils.isProcessing || (utils.deleteOperation.isPending && utils.deleteOperation.variables === row.original.id) ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </Button>
             </div>
           )
         }
