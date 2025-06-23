@@ -1,4 +1,5 @@
 // src/modules/academic-loads/academic-loads.service.ts
+
 import { GenericService } from '@core/common/interfaces/generic.service';
 import { DtoValidator } from '@core/common/dto-validator';
 import { Injectable, Logger } from '@nestjs/common';
@@ -49,28 +50,36 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
   async save(payload: AcademicLoadDto): Promise<AcademicLoadDto> {
     this.logger.debug(`Saving academic load with payload: ${JSON.stringify(payload)}`);
     
-    // Calculate available seats
-    const availableSeats = payload.maximumCapacity - payload.enrolledCapacity;
+    // Ensure numeric fields are properly converted
+    const maximumCapacity = Number(payload.maximumCapacity);
+    const enrolledCapacity = Number(payload.enrolledCapacity);
     
-    // Process date - ensure it's a proper Date object
+    // Calculate available seats
+    const availableSeats = maximumCapacity - enrolledCapacity;
+    
+    // Process date - ensure it's a proper Date object or undefined
     let processedDate: Date | undefined;
-    if (payload.date) {
+    if (payload.date !== undefined && payload.date !== null) {
       if (typeof payload.date === 'string') {
         // If it's a string, parse it and ensure it has time component
-        processedDate = new Date(payload.date + 'T00:00:00.000Z');
+        const dateStr = (payload.date as string).match(/^\d{4}-\d{2}-\d{2}$/) 
+          ? payload.date + 'T00:00:00.000Z' 
+          : payload.date;
+        const tempDate = new Date(dateStr);
+        processedDate = isNaN(tempDate.getTime()) ? undefined : tempDate;
       } else if (payload.date instanceof Date) {
-        processedDate = payload.date;
+        processedDate = isNaN(payload.date.getTime()) ? undefined : payload.date;
       } else {
-        // If it's already processed, use it as is
-        processedDate = new Date(payload.date);
+        const tempDate = new Date(payload.date as any);
+        processedDate = isNaN(tempDate.getTime()) ? undefined : tempDate;
       }
     }
     
     // Create clean data object without relation IDs (they will be handled by connect)
     const data: Prisma.AcademicLoadCreateInput = {
       nrc: payload.nrc,
-      maximumCapacity: payload.maximumCapacity,
-      enrolledCapacity: payload.enrolledCapacity,
+      maximumCapacity,
+      enrolledCapacity,
       availableSeats,
       status: payload.status,
       ...(processedDate && { date: processedDate }),
@@ -96,8 +105,8 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
     let availableSeats: number | undefined;
     if (payload.maximumCapacity !== undefined || payload.enrolledCapacity !== undefined) {
       const current = await this.findById(id);
-      const maxCapacity = payload.maximumCapacity ?? current?.maximumCapacity ?? 0;
-      const enrolled = payload.enrolledCapacity ?? current?.enrolledCapacity ?? 0;
+      const maxCapacity = Number(payload.maximumCapacity ?? current?.maximumCapacity ?? 0);
+      const enrolled = Number(payload.enrolledCapacity ?? current?.enrolledCapacity ?? 0);
       availableSeats = maxCapacity - enrolled;
     }
     
@@ -118,8 +127,8 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
     // Create clean data object
     const data: Prisma.AcademicLoadUpdateInput = {
       ...(payload.nrc !== undefined && { nrc: payload.nrc }),
-      ...(payload.maximumCapacity !== undefined && { maximumCapacity: payload.maximumCapacity }),
-      ...(payload.enrolledCapacity !== undefined && { enrolledCapacity: payload.enrolledCapacity }),
+      ...(payload.maximumCapacity !== undefined && { maximumCapacity: Number(payload.maximumCapacity) }),
+      ...(payload.enrolledCapacity !== undefined && { enrolledCapacity: Number(payload.enrolledCapacity) }),
       ...(payload.status !== undefined && { status: payload.status }),
       ...(availableSeats !== undefined && { availableSeats }),
       ...(processedDate !== undefined && { date: processedDate }),

@@ -43,16 +43,19 @@ export class AcademicLoadDto extends BaseDto {
   @ApiProperty({ description: 'Maximum capacity' })
   @Expose()
   @IsInt()
+  @Type(() => Number)
   maximumCapacity: number;
 
   @ApiProperty({ description: 'Enrolled capacity' })
   @Expose()
   @IsInt()
+  @Type(() => Number)
   enrolledCapacity: number;
 
   @ApiProperty({ description: 'Available seats' })
   @Expose()
   @IsInt()
+  @Type(() => Number)
   availableSeats: number;
 
   @ApiProperty({ description: 'Group ID' })
@@ -75,16 +78,26 @@ export class AcademicLoadDto extends BaseDto {
   @IsOptional()
   @Type(() => Date)
   @Transform(({ value }) => {
-    if (!value) return undefined;
-    if (value instanceof Date) return value;
+    if (!value || value === null || value === undefined || value === '') {
+      return undefined;
+    }
+    
+    if (value instanceof Date) {
+      return isNaN(value.getTime()) ? undefined : value;
+    }
+    
     if (typeof value === 'string') {
       // If it's just a date string (YYYY-MM-DD), add time component
       if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        return new Date(value + 'T00:00:00.000Z');
+        const date = new Date(value + 'T00:00:00.000Z');
+        return isNaN(date.getTime()) ? undefined : date;
       }
-      return new Date(value);
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? undefined : date;
     }
-    return new Date(value);
+    
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? undefined : date;
   })
   date?: Date;
 
