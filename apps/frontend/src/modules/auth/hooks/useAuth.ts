@@ -5,14 +5,14 @@ import { toast } from 'sonner'
 import { AuthService } from '../services'
 import { CookieDetectionService } from '../services/cookie-detection.service'
 import { useSessionStore } from '../sessionStore'
-import { Role, UserProfile } from '../types'
+import { Role, UserBasicInfo } from '../types'
 
 export interface UseAuthReturn {
   setAuthTokens(authToken: string, refreshToken: string): unknown
   checkAuthStatus(): unknown
   activeRole: any
   fullyAuthenticated: any
-  user: UserProfile | null
+  user: UserBasicInfo | null
   role: Role | null
   isLoading: boolean
   isAuthenticated: boolean
@@ -65,8 +65,8 @@ export function useAuth(): UseAuthReturn {
 
       // Get fresh user data if authenticated but no stored user
       if (!hasStoredUser()) {
-        const userProfile = await AuthService.getUserProfile()
-        setUser(userProfile)
+        const UserBasicInfo = await AuthService.getUserBasicInfo()
+        setUser(UserBasicInfo)
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Authentication check failed'

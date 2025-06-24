@@ -3,7 +3,7 @@ import { Logger } from '@/utils'
 import { Permission } from '@/modules/auth/types'
 
 import { UserActiveRole } from '@/modules/auth/sessionStore'
-import { UserProfile } from '@/modules/auth/types'
+import { UserBasicInfo } from '@/modules/auth/types'
 
 interface StorageItemWithExpiry<T> {
   value: T
@@ -84,25 +84,31 @@ export class SessionStorageManager {
     }
   }
   // Gestión de datos de usuario simplificada
-  static saveUserProfile(UserProfile: UserProfile, ttlSeconds?: number): void {
+  static saveUserBasicInfo(UserBasicInfo: UserBasicInfo, ttlSeconds?: number): void {
     try {
       // Log de entrada con timestamp
       const timestamp = new Date().toISOString()
       if (typeof window !== 'undefined' && window.console) {
-        window.console.log(`[${timestamp}][SessionStorageManager.saveUserProfile] 🚀 Iniciando guardado de usuario:`, UserProfile)
-        window.console.log(`[${timestamp}][SessionStorageManager.saveUserProfile] 🔍 Tipo de UserProfile:`, typeof UserProfile)
         window.console.log(
-          `[${timestamp}][SessionStorageManager.saveUserProfile] 🔍 Claves recibidas:`,
-          UserProfile ? Object.keys(UserProfile) : 'null/undefined'
+          `[${timestamp}][SessionStorageManager.saveUserBasicInfo] 🚀 Iniciando guardado de usuario:`,
+          UserBasicInfo
+        )
+        window.console.log(
+          `[${timestamp}][SessionStorageManager.saveUserBasicInfo] 🔍 Tipo de UserBasicInfo:`,
+          typeof UserBasicInfo
+        )
+        window.console.log(
+          `[${timestamp}][SessionStorageManager.saveUserBasicInfo] 🔍 Claves recibidas:`,
+          UserBasicInfo ? Object.keys(UserBasicInfo) : 'null/undefined'
         )
       }
 
-      // Validar que UserProfile no sea null/undefined
-      if (!UserProfile || typeof UserProfile !== 'object') {
-        const error = `Datos de usuario inválidos: ${UserProfile} (tipo: ${typeof UserProfile})`
-        Logger.error('Error: datos de usuario inválidos', { UserProfile, type: typeof UserProfile })
+      // Validar que UserBasicInfo no sea null/undefined
+      if (!UserBasicInfo || typeof UserBasicInfo !== 'object') {
+        const error = `Datos de usuario inválidos: ${UserBasicInfo} (tipo: ${typeof UserBasicInfo})`
+        Logger.error('Error: datos de usuario inválidos', { UserBasicInfo, type: typeof UserBasicInfo })
         if (typeof window !== 'undefined' && window.console) {
-          window.console.error(`[${timestamp}][SessionStorageManager.saveUserProfile] ❌ Error:`, error)
+          window.console.error(`[${timestamp}][SessionStorageManager.saveUserBasicInfo] ❌ Error:`, error)
         }
         throw new Error(error)
       }
@@ -112,7 +118,7 @@ export class SessionStorageManager {
       const requiredFields = ['id', 'email', 'name']
 
       requiredFields.forEach((field) => {
-        const value = UserProfile[field as keyof UserProfile]
+        const value = UserBasicInfo[field as keyof UserBasicInfo]
         const isEmpty = !value || (typeof value === 'string' && value.trim() === '')
 
         if (isEmpty) {
@@ -121,26 +127,26 @@ export class SessionStorageManager {
 
         if (typeof window !== 'undefined' && window.console) {
           window.console.log(
-            `[${timestamp}][SessionStorageManager.saveUserProfile] 🔍 Campo ${field}: valor="${value}", tipo="${typeof value}", vacío=${isEmpty}`
+            `[${timestamp}][SessionStorageManager.saveUserBasicInfo] 🔍 Campo ${field}: valor="${value}", tipo="${typeof value}", vacío=${isEmpty}`
           )
         }
       })
 
       if (validationErrors.length > 0) {
         const error = `Datos de usuario incompletos. Faltan: ${validationErrors.join(', ')}`
-        Logger.error('Error: datos de usuario incompletos', { UserProfile, validationErrors })
+        Logger.error('Error: datos de usuario incompletos', { UserBasicInfo, validationErrors })
         if (typeof window !== 'undefined' && window.console) {
-          window.console.error(`[${timestamp}][SessionStorageManager.saveUserProfile] ❌ Error:`, error, {
-            UserProfile,
+          window.console.error(`[${timestamp}][SessionStorageManager.saveUserBasicInfo] ❌ Error:`, error, {
+            UserBasicInfo,
             validationErrors,
             detailedAnalysis: requiredFields.map((field) => ({
               field,
-              value: UserProfile[field as keyof UserProfile],
-              type: typeof UserProfile[field as keyof UserProfile],
+              value: UserBasicInfo[field as keyof UserBasicInfo],
+              type: typeof UserBasicInfo[field as keyof UserBasicInfo],
               isEmpty:
-                !UserProfile[field as keyof UserProfile] ||
-                (typeof UserProfile[field as keyof UserProfile] === 'string' &&
-                  (UserProfile[field as keyof UserProfile] as string).trim() === '')
+                !UserBasicInfo[field as keyof UserBasicInfo] ||
+                (typeof UserBasicInfo[field as keyof UserBasicInfo] === 'string' &&
+                  (UserBasicInfo[field as keyof UserBasicInfo] as string).trim() === '')
             }))
           })
         }
@@ -148,39 +154,39 @@ export class SessionStorageManager {
       }
 
       // Procesar datos con valores seguros
-      const processedUserProfile = {
-        id: UserProfile.id,
-        email: UserProfile.email,
+      const processedUserBasicInfo = {
+        id: UserBasicInfo.id,
+        email: UserBasicInfo.email,
         photoUrl:
-          typeof UserProfile.photoUrl === null ? null : UserProfile.photoUrl || '/assets/images/default-profile-image.png',
-        fullName: UserProfile.fullName || undefined,
-        fullLastName: UserProfile.fullLastName || undefined,
-        status: UserProfile.status || undefined
+          typeof UserBasicInfo.photoUrl === null ? null : UserBasicInfo.photoUrl || '/assets/images/default-profile-image.png',
+        fullName: UserBasicInfo.fullName || undefined,
+        fullLastName: UserBasicInfo.fullLastName || undefined,
+        status: UserBasicInfo.status || undefined
       }
 
       // Log de los datos procesados
       if (typeof window !== 'undefined' && window.console) {
-        window.console.log(`[${timestamp}][SessionStorageManager.saveUserProfile] 📦 Datos procesados:`, processedUserProfile)
+        window.console.log(`[${timestamp}][SessionStorageManager.saveUserBasicInfo] 📦 Datos procesados:`, processedUserBasicInfo)
       }
 
       // Guardar en sessionStorage con manejo de errores
       try {
         if (ttlSeconds) {
-          this.saveWithExpiry(this.USER_DATA_KEY, processedUserProfile, ttlSeconds)
+          this.saveWithExpiry(this.USER_DATA_KEY, processedUserBasicInfo, ttlSeconds)
           if (typeof window !== 'undefined' && window.console) {
-            window.console.log(`[${timestamp}][SessionStorageManager.saveUserProfile] 💾 Guardado con TTL de ${ttlSeconds}s`)
+            window.console.log(`[${timestamp}][SessionStorageManager.saveUserBasicInfo] 💾 Guardado con TTL de ${ttlSeconds}s`)
           }
         } else {
-          sessionStorage.setItem(this.USER_DATA_KEY, JSON.stringify(processedUserProfile))
+          sessionStorage.setItem(this.USER_DATA_KEY, JSON.stringify(processedUserBasicInfo))
           if (typeof window !== 'undefined' && window.console) {
-            window.console.log(`[${timestamp}][SessionStorageManager.saveUserProfile] 💾 Guardado permanente`)
+            window.console.log(`[${timestamp}][SessionStorageManager.saveUserBasicInfo] 💾 Guardado permanente`)
           }
         }
       } catch (storageError) {
         const errorMsg = storageError instanceof Error ? storageError.message : String(storageError)
         Logger.error('Error escribiendo en sessionStorage:', storageError)
         if (typeof window !== 'undefined' && window.console) {
-          window.console.error(`[${timestamp}][SessionStorageManager.saveUserProfile] ❌ Error de storage:`, errorMsg)
+          window.console.error(`[${timestamp}][SessionStorageManager.saveUserBasicInfo] ❌ Error de storage:`, errorMsg)
         }
         throw new Error(`Error guardando en sessionStorage: ${errorMsg}`)
       }
@@ -201,30 +207,30 @@ export class SessionStorageManager {
             }
           }
 
-          const saved = this.getUserProfile()
+          const saved = this.getUserBasicInfo()
           if (
             saved &&
-            saved.id === processedUserProfile.id &&
-            saved.email === processedUserProfile.email &&
-            saved.fullName === processedUserProfile.fullName
+            saved.id === processedUserBasicInfo.id &&
+            saved.email === processedUserBasicInfo.email &&
+            saved.fullName === processedUserBasicInfo.fullName
           ) {
             verificationSuccess = true
             if (typeof window !== 'undefined' && window.console) {
               window.console.log(
-                `[${timestamp}][SessionStorageManager.saveUserProfile] ✅ Verificación exitosa (intento ${attempt})`
+                `[${timestamp}][SessionStorageManager.saveUserBasicInfo] ✅ Verificación exitosa (intento ${attempt})`
               )
             }
             break
           } else {
             if (typeof window !== 'undefined' && window.console) {
               window.console.warn(
-                `[${timestamp}][SessionStorageManager.saveUserProfile] ⚠️ Verificación fallida (intento ${attempt}):`,
+                `[${timestamp}][SessionStorageManager.saveUserBasicInfo] ⚠️ Verificación fallida (intento ${attempt}):`,
                 {
                   saved,
-                  expected: processedUserProfile,
-                  idsMatch: saved?.id === processedUserProfile.id,
-                  emailsMatch: saved?.email === processedUserProfile.email,
-                  namesMatch: saved?.fullName === processedUserProfile.fullName
+                  expected: processedUserBasicInfo,
+                  idsMatch: saved?.id === processedUserBasicInfo.id,
+                  emailsMatch: saved?.email === processedUserBasicInfo.email,
+                  namesMatch: saved?.fullName === processedUserBasicInfo.fullName
                 }
               )
             }
@@ -232,7 +238,7 @@ export class SessionStorageManager {
         } catch (verificationError) {
           if (typeof window !== 'undefined' && window.console) {
             window.console.warn(
-              `[${timestamp}][SessionStorageManager.saveUserProfile] ⚠️ Error en verificación (intento ${attempt}):`,
+              `[${timestamp}][SessionStorageManager.saveUserBasicInfo] ⚠️ Error en verificación (intento ${attempt}):`,
               verificationError
             )
           }
@@ -241,38 +247,43 @@ export class SessionStorageManager {
 
       if (!verificationSuccess) {
         const error = 'Falló la verificación de guardado después de múltiples intentos'
-        Logger.error('Error de verificación:', { processedUserProfile })
+        Logger.error('Error de verificación:', { processedUserBasicInfo })
         if (typeof window !== 'undefined' && window.console) {
-          window.console.error(`[${timestamp}][SessionStorageManager.saveUserProfile] ❌ ${error}`)
+          window.console.error(`[${timestamp}][SessionStorageManager.saveUserBasicInfo] ❌ ${error}`)
         }
         throw new Error(error)
       }
 
       // Log de éxito final
       if (typeof window !== 'undefined' && window.console) {
-        window.console.log(`[${timestamp}][SessionStorageManager.saveUserProfile] 🎉 Usuario guardado y verificado exitosamente`)
+        window.console.log(
+          `[${timestamp}][SessionStorageManager.saveUserBasicInfo] 🎉 Usuario guardado y verificado exitosamente`
+        )
       }
     } catch (error) {
       const timestamp = new Date().toISOString()
       if (typeof window !== 'undefined' && window.console) {
-        window.console.error(`[${timestamp}][SessionStorageManager.saveUserProfile] 💥 Error crítico en guardado:`, error)
+        window.console.error(`[${timestamp}][SessionStorageManager.saveUserBasicInfo] 💥 Error crítico en guardado:`, error)
       }
       Logger.error('Error saving user data:', error)
       throw error
     }
   }
-  static getUserProfile<T = UserProfile>(): T | null {
+  static getUserBasicInfo<T = UserBasicInfo>(): T | null {
     const timestamp = new Date().toISOString()
     try {
       if (typeof window !== 'undefined' && window.console) {
-        window.console.log(`[${timestamp}][SessionStorageManager.getUserProfile] 🔍 Obteniendo datos de usuario...`)
+        window.console.log(`[${timestamp}][SessionStorageManager.getUserBasicInfo] 🔍 Obteniendo datos de usuario...`)
       }
 
       // Intentar obtener con TTL primero
       const userWithExpiry = this.getWithExpiry<T>(this.USER_DATA_KEY)
       if (userWithExpiry) {
         if (typeof window !== 'undefined' && window.console) {
-          window.console.log(`[${timestamp}][SessionStorageManager.getUserProfile] ✅ Datos con TTL encontrados:`, userWithExpiry)
+          window.console.log(
+            `[${timestamp}][SessionStorageManager.getUserBasicInfo] ✅ Datos con TTL encontrados:`,
+            userWithExpiry
+          )
         }
         return userWithExpiry
       }
@@ -281,32 +292,34 @@ export class SessionStorageManager {
       const data = sessionStorage.getItem(this.USER_DATA_KEY)
       if (!data) {
         if (typeof window !== 'undefined' && window.console) {
-          window.console.warn(`[${timestamp}][SessionStorageManager.getUserProfile] ⚠️ No se encontraron datos en sessionStorage`)
+          window.console.warn(
+            `[${timestamp}][SessionStorageManager.getUserBasicInfo] ⚠️ No se encontraron datos en sessionStorage`
+          )
         }
         return null
       }
 
       const parsedData = JSON.parse(data) as T
       if (typeof window !== 'undefined' && window.console) {
-        window.console.log(`[${timestamp}][SessionStorageManager.getUserProfile] ✅ Datos encontrados:`, parsedData)
+        window.console.log(`[${timestamp}][SessionStorageManager.getUserBasicInfo] ✅ Datos encontrados:`, parsedData)
       }
 
       return parsedData
     } catch (error) {
       Logger.error('Error getting user data:', error)
       if (typeof window !== 'undefined' && window.console) {
-        window.console.error(`[${timestamp}][SessionStorageManager.getUserProfile] ❌ Error:`, error)
+        window.console.error(`[${timestamp}][SessionStorageManager.getUserBasicInfo] ❌ Error:`, error)
       }
       return null
     }
   }
 
-  static removeUserProfile(): void {
+  static removeUserBasicInfo(): void {
     sessionStorage.removeItem(this.USER_DATA_KEY)
   } // Limpia todos los datos de sesión
   static clearAllData(): void {
     this.removeActiveRole()
-    this.removeUserProfile()
+    this.removeUserBasicInfo()
   }
 
   // Métodos de expiración

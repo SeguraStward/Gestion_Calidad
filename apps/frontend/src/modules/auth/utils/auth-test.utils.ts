@@ -21,8 +21,8 @@ export class AuthTestUtils {
 
       // 2. If authenticated, get user profile
       if (cookiePresence.isAuthenticated) {
-        const userProfile = await AuthService.getUserProfile()
-        console.log('User profile:', userProfile)
+        const UserBasicInfo = await AuthService.getUserBasicInfo()
+        console.log('User profile:', UserBasicInfo)
 
         // 3. Get user roles
         const roles = await AuthService.getUserRoles()
@@ -114,7 +114,7 @@ export class AuthTestUtils {
 
     try {
       // Test getting current user
-      const currentUser = await AuthService.getUserProfile()
+      const currentUser = await AuthService.getUserBasicInfo()
       console.log('Current user:', currentUser)
 
       // Test getting current user roles

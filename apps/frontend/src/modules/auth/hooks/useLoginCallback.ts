@@ -1,9 +1,9 @@
-import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
-import { useSessionStore } from '@/modules/auth/sessionStore'
 import { AuthService } from '@/modules/auth/services/auth.service'
+import { useSessionStore } from '@/modules/auth/sessionStore'
 
 export interface UseLoginCallbackReturn {
   isLoading: boolean
@@ -41,18 +41,18 @@ export function useLoginCallback(): UseLoginCallbackReturn {
       setError(null)
 
       console.log('[LoginCallback] Obteniendo perfil de usuario...')
-      const userProfile = await AuthService.getUserProfile()
+      const UserBasicInfo = await AuthService.getUserBasicInfo()
 
       // Validar datos del usuario
-      if (!userProfile?.id || !userProfile?.email || !userProfile?.fullName) {
-        console.error('[LoginCallback] Datos inválidos recibidos:', userProfile)
+      if (!UserBasicInfo?.id || !UserBasicInfo?.email || !UserBasicInfo?.fullName) {
+        console.error('[LoginCallback] Datos inválidos recibidos:', UserBasicInfo)
         throw new Error('Datos de usuario incompletos')
       }
 
-      console.log('[LoginCallback] Usuario autenticado:', userProfile.email)
+      console.log('[LoginCallback] Usuario autenticado:', UserBasicInfo.email)
 
       // Guardar en sesión
-      setUser(userProfile)
+      setUser(UserBasicInfo)
       setIsLoading(false)
 
       // Mostrar éxito y redirigir

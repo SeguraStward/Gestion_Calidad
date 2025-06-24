@@ -59,8 +59,4 @@ export class ErrorResponseFilter implements ExceptionFilter {
     };
     return errorCodeMap[status] || 'unknown_error';
   }
-
-  private logError(exception: unknown, context: { status: number; message: string; code: string }) {
-    console.error(`Error occurred:`, { exception, context });
-  }
 }

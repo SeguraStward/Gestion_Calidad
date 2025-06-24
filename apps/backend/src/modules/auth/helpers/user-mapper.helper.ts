@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { UserResponseDto } from '../dtos/user-response.dto';
-import { DatabaseUser } from '../types';
+import { UserBasicInfo } from '../types';
 
 const logger = new Logger('UserMapper');
 
@@ -8,7 +8,7 @@ const logger = new Logger('UserMapper');
  * Helper function to consistently map user data to response format
  * Ensures all user responses have the same structure and required fields
  */
-export function mapUserToResponse(user: DatabaseUser): UserResponseDto {
+export function mapUserToResponse(user: UserBasicInfo): UserResponseDto {
   // Validar datos obligatorios
   if (!user.id) {
     logger.error('User ID is required');
@@ -35,7 +35,7 @@ export function mapUserToResponse(user: DatabaseUser): UserResponseDto {
 /**
  * Validates that user data contains all required fields
  */
-export function validateUserData(user: DatabaseUser): void {
+export function validateUserData(user: UserBasicInfo): void {
   if (!user) {
     throw new Error('User data is null or undefined');
   }

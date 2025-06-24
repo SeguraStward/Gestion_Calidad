@@ -1,4 +1,4 @@
-import { UserProfile, UserRolesResponse, CompleteProfileData } from '../types'
+import { CompleteProfileData, UserBasicInfo, UserRolesResponse } from '../types'
 
 /**
  * Auth Service - Centralized authentication service for frontend
@@ -11,7 +11,7 @@ export class AuthService {
   /**
    * Get current user profile
    */
-  static async getUserProfile(): Promise<UserProfile> {
+  static async getUserBasicInfo(): Promise<UserBasicInfo> {
     const response = await fetch(`${this.API_URL}/auth/me`, {
       method: 'GET',
       credentials: 'include',
@@ -33,10 +33,10 @@ export class AuthService {
     // El backend puede enviar: {data: {...}} o directamente {...}
     // Verificar ambas estructuras
     if (data.data) {
-      return data.data as UserProfile
+      return data.data as UserBasicInfo
     }
 
-    return data as UserProfile
+    return data as UserBasicInfo
   }
 
   /**
@@ -64,7 +64,7 @@ export class AuthService {
   /**
    * Complete user profile
    */
-  static async completeProfile(profileData: CompleteProfileData): Promise<UserProfile> {
+  static async completeProfile(profileData: CompleteProfileData): Promise<UserBasicInfo> {
     const response = await fetch(`${this.API_URL}/auth/complete-profile`, {
       method: 'POST',
       credentials: 'include',

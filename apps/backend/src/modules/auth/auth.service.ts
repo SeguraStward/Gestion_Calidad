@@ -3,13 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 
-import { PrismaService } from '@src/prisma/prisma.service'; 
+import { PrismaService } from '@src/prisma/prisma.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import {
   GoogleUser,
   AuthResult,
   UserFromRefreshToken,
-  DatabaseUser,
+  UserBasicInfo,
   ProfileCompletionData,
   JwtPayload,
   RefreshTokenPayload,
@@ -81,24 +81,18 @@ export class AuthService {
 
     // Check user status and handle accordingly
     switch (user.status) {
-      case 'PRE_REGISTRATION':
+      case 'PRE_REGISTRATION': {
         // User linked Google but needs to complete profile
         const accessToken = this.generateAccessToken(user.id, user.email);
         const { rawRefreshToken } = await this.generateAndStoreRefreshToken(user.id);
 
         return {
-          user: {
-            id: user.id,
-            email: user.email,
-            fullName: user.fullName,
-            fullLastName: user.fullLastName,
-            profilePicture: user.photoUrl,
-            status: user.status,
-          },
+          user: user,
           token: accessToken,
           refreshToken: rawRefreshToken,
           needsProfileCompletion: true,
         };
+      }
 
       case 'INACTIVE':
         throw new UnauthorizedException({
@@ -106,7 +100,7 @@ export class AuthService {
           code: 'ACCOUNT_INACTIVE',
         });
 
-      case 'ACTIVE':
+      case 'ACTIVE': {
         // Update Google data if needed (mantener datos actualizados)
         let shouldUpdate = false;
         const updateData: any = {};
@@ -145,18 +139,12 @@ export class AuthService {
         const { rawRefreshToken: activeRefreshToken } = await this.generateAndStoreRefreshToken(user.id);
 
         return {
-          user: {
-            id: user.id,
-            email: user.email,
-            fullName: user.fullName,
-            fullLastName: user.fullLastName,
-            profilePicture: user.photoUrl,
-            status: user.status,
-          },
+          user: user,
           token: activeAccessToken,
           refreshToken: activeRefreshToken,
           needsProfileCompletion: false,
         };
+      }
 
       default:
         throw new UnauthorizedException({
@@ -274,7 +262,7 @@ export class AuthService {
    * @param userId - The ID of the user
    * @returns User data
    */
-  async getUserById(userId: string): Promise<DatabaseUser> {
+  async getUserById(userId: string): Promise<UserBasicInfo> {
     this.logger.log(`Getting user by ID: ${userId}`);
 
     // Validar que el userId sea válido
@@ -370,7 +358,7 @@ export class AuthService {
         data: {
           fullName: profileData.fullName,
           fullLastName: profileData.fullLastName,
-          status: 'ACTIVE',  
+          status: 'ACTIVE',
           updatedAt: new Date(),
         },
       });
@@ -397,7 +385,7 @@ export class AuthService {
     }
   }
 
-//has not been tested yet
+  //has not been tested yet
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async cleanUpExpiredRefreshTokens() {
     this.logger.log('Running daily cleanup of expired refresh tokens...');
@@ -421,14 +409,14 @@ export class AuthService {
     const deleteCount = await this.prisma.refreshToken.deleteMany({
       where: {
         id: {
-          in: expiredTokens.map(token => token.id),
+          in: expiredTokens.map((token) => token.id),
         },
       },
     });
 
     this.logger.log(`Deleted ${deleteCount.count} expired refresh tokens.`);
   }
-  
+
   async setActiveRole(userId: string, roleId: string): Promise<void> {
     // Verificar que el usuario tiene acceso a este rol
     const user = await this.prisma.user.findUnique({
