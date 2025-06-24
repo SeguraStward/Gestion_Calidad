@@ -1,12 +1,6 @@
 import { HttpClient } from '@/lib/http-client'
-import type { PaginatedResponse, ErrorResponse } from '../interfaces'
+import type { ErrorResponse, PaginatedResponse } from '../interfaces'
 
-// Tipo para respuestas del backend que están envueltas
-interface BackendResponse<T> {
-  data: T
-  message?: string
-  status?: string
-}
 export class GenericService<T, CreateDTO, UpdateDTO = Partial<T>, Filters = unknown> {
   constructor(protected readonly resource: string) {}
 

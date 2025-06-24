@@ -1,11 +1,11 @@
 'use client'
 
-import { useRouter, useParams } from 'next/navigation'
-import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { useForm, UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
+import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 import { Button } from '@una-gc/ui/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components/card'
@@ -13,33 +13,33 @@ import { Loader2 } from 'lucide-react'
 
 import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header'
 
-import { Step1FormData, step1Schema, Step1Form, transformReportToStep1Data } from '@/modules/final-reports/components/form-step1'
-import { Step2FormData, step2Schema, Step2Form, transformReportToStep2Data } from '@/modules/final-reports/components/form-step2'
-import { Step3FormData, step3Schema, Step3Form, transformReportToStep3Data } from '@/modules/final-reports/components/form-step3'
-import { Step4FormData, step4Schema, Step4Form, transformReportToStep4Data } from '@/modules/final-reports/components/form-step4'
+import { Step1Form, Step1FormData, step1Schema, transformReportToStep1Data } from '@/modules/final-reports/components/form-step1'
+import { Step2Form, Step2FormData, step2Schema, transformReportToStep2Data } from '@/modules/final-reports/components/form-step2'
+import { Step3Form, Step3FormData, step3Schema, transformReportToStep3Data } from '@/modules/final-reports/components/form-step3'
+import { Step4Form, Step4FormData, step4Schema, transformReportToStep4Data } from '@/modules/final-reports/components/form-step4'
 import {
+  Step5EditForm,
   Step5FormData,
   step5Schema,
-  Step5EditForm,
   transformReportToStep5Data
 } from '@/modules/final-reports/components/form-step5-edit'
 import {
+  OTHER_TOOLS_QUESTION_ID,
+  Step6EditForm,
   Step6FormData,
   step6Schema,
-  Step6EditForm,
-  transformReportToStep6Data,
-  OTHER_TOOLS_QUESTION_ID
+  transformReportToStep6Data
 } from '@/modules/final-reports/components/form-step6-edit'
-import { Step7FormData, step7Schema, Step7EditForm } from '@/modules/final-reports/components/form-step7-edit'
+import { Step7EditForm, Step7FormData, step7Schema } from '@/modules/final-reports/components/form-step7-edit'
 
 import { step5QuestionsMock, step6QuestionsPageMock, step7QuestionsPageMock } from '@/modules/final-reports/mocks/questions'
 
 import { useFinalReport, useUpdateFinalReport } from '@/modules/final-reports/service/final-reports.service'
 import {
-  FullFinalReport,
-  UpdateFinalReportDto,
   FinalReportEvaluationFE,
-  ReportType
+  FullFinalReport,
+  ReportType,
+  UpdateFinalReportDto
 } from '@/modules/final-reports/types/final-reports.types'
 
 const TOTAL_STEPS = 7
@@ -54,7 +54,7 @@ function transformReportToStep7Data(report: FullFinalReport, currentReportType: 
     return false
   })
 
-  const step7Responses = filteredQuestions.map((p, index) => {
+  const step7Responses = filteredQuestions.map((p) => {
     const existingEvaluation = report.evaluation?.find((e) => e.questionId === p.questionId)
     let formResponseValue = ''
 
@@ -84,7 +84,7 @@ export default function EditFinalReportPage() {
   const queryClient = useQueryClient()
 
   const [currentStep, setCurrentStep] = useState(1)
-  const [reportType, setReportType] = useState<ReportType>('INFORME_FINAL_V1')
+  const [reportType] = useState<ReportType>('INFORME_FINAL_V1')
 
   const [step1Data, setStep1Data] = useState<Step1FormData | null>(null)
   const [step2Data, setStep2Data] = useState<Step2FormData | null>(null)
@@ -116,7 +116,7 @@ export default function EditFinalReportPage() {
   const formStep4Methods = useForm<Step4FormData>({ resolver: zodResolver(step4Schema) })
   const formStep5Methods = useForm<Step5FormData>({ resolver: zodResolver(step5Schema) })
   const formStep6Methods = useForm<Step6FormData>({ resolver: zodResolver(step6Schema) })
-  const formStep7Methods = useForm<Step7FormData>({ resolver: step7Schema ? zodResolver(step7Schema) : undefined })
+  const formStep7Methods = step7Schema ? useForm<Step7FormData>({ resolver: zodResolver(step7Schema) }) : useForm<Step7FormData>()
 
   useEffect(() => {
     if (fetchedReport && reportType) {
@@ -341,7 +341,7 @@ export default function EditFinalReportPage() {
         options: item.options || [],
         questionGroup: item.questionGroup || 'general',
         otherResponse: item.otherResponse === undefined ? undefined : item.otherResponse
-      })) as FinalReportEvaluationFE[]
+      })) as unknown as FinalReportEvaluationFE[]
 
       const updatePayload: UpdateFinalReportDto = {
         statistics: {

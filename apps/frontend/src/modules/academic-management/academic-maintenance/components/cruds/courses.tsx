@@ -1,21 +1,21 @@
 'use client'
 
-import { useMemo } from 'react'
-import { ColumnDef } from '@tanstack/react-table'
-import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
 import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
+import { ColumnUtilities, CrudModuleBase } from '@/app/(components)/crud/crud-module-base'
+import { useListCareersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useCareer'
 import {
   useCreateCourse,
-  useUpdateCourse,
-  useRemoveCourse,
+  useListCoursesPaginated,
   useOneCourse,
-  useListCoursesPaginated
+  useRemoveCourse,
+  useUpdateCourse
 } from '@/shared/hooks/useCourses'
-import { useListCareersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useCareer'
-import { CourseWithRelations, CreateCourseInput, StrictCreateCourseInput, StrictCreateCourseOutput } from '@/shared/types/course'
+import { CourseWithRelations, CreateCourseInput } from '@/shared/types/course'
 import { Status } from '@/shared/types/status'
+import { ColumnDef } from '@tanstack/react-table'
 import { Badge, Button } from '@una-gc/ui/components'
-import { Hash, BookUser, GraduationCap, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { BookUser, CheckCircle2, GraduationCap, Hash, Loader2, Pencil, Trash2, XCircle } from 'lucide-react'
+import { useMemo } from 'react'
 
 interface CourseItem extends CourseWithRelations {}
 
@@ -41,7 +41,7 @@ export default function CourseCrud() {
   // Table columns
   const renderColumns = useMemo(
     () =>
-      (utils: ColumnUtilities<CourseItem>): ColumnDef<CourseItem>[] => [
+      (utils: ColumnUtilities): ColumnDef<CourseItem>[] => [
         {
           accessorKey: 'code',
           header: 'Código',
@@ -393,7 +393,12 @@ export default function CourseCrud() {
           credits: Number(values.credits),
           level: Number(values.level),
           contactHours: Number(values.contactHours),
-          independentHours: values.independentHours ? Number(values.independentHours) : undefined
+          independentHours:
+            values.independentHours !== undefined &&
+            values.independentHours !== null &&
+            !(typeof values.independentHours === 'string' && values.independentHours === '')
+              ? Number(values.independentHours)
+              : null
         }
         // Log para depuración
         console.log('🟢 processFormValues (course) salida:', processed, {

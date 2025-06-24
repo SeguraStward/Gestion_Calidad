@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Loader2, CheckCircle, XCircle, RefreshCw, AlertTriangle, Sparkles, Shield } from 'lucide-react'
+import { Loader2, CheckCircle, XCircle, RefreshCw, AlertTriangle, Sparkles } from 'lucide-react'
 
 import { Alert, AlertDescription, Button, Card, CardContent, CardHeader, CardTitle, Progress, Badge } from '@una-gc/ui/components'
 
@@ -20,13 +20,13 @@ export default function AuthCallbackPage() {
     if (isLoading) {
       const handleBeforeUnload = (e: BeforeUnloadEvent) => {
         e.preventDefault()
-        e.returnValue = 'El proceso de autenticación está en curso. ¿Estás seguro de que quieres salir?'
-        return e.returnValue
       }
 
       window.addEventListener('beforeunload', handleBeforeUnload)
       return () => window.removeEventListener('beforeunload', handleBeforeUnload)
     }
+    // Always return undefined if not loading
+    return undefined
   }, [isLoading])
 
   // Mostrar loading inicial

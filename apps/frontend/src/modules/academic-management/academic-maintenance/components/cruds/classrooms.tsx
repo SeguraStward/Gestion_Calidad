@@ -1,21 +1,21 @@
 'use client'
 
-import { useListCampusesFlat } from '@/shared/hooks/useCampus'
-import { useMemo } from 'react'
-import { ColumnDef } from '@tanstack/react-table'
-import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
 import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
+import { ColumnUtilities, CrudModuleBase } from '@/app/(components)/crud/crud-module-base'
+import { useListCampusesFlat } from '@/shared/hooks/useCampus'
 import {
+  useCreateClassroom,
   useListClassroomsPaginated,
   useOneClassroom,
-  useCreateClassroom,
-  useUpdateClassroom,
-  useRemoveClassroom
+  useRemoveClassroom,
+  useUpdateClassroom
 } from '@/shared/hooks/useClassroom'
 import { ClassroomWithRelations, CreateClassroomInput } from '@/shared/types/classroom'
 import { Status } from '@/shared/types/status'
+import { ColumnDef } from '@tanstack/react-table'
 import { Badge, Button } from '@una-gc/ui/components'
-import { Hash, Building2, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { Building2, CheckCircle2, Hash, Loader2, Pencil, Trash2, XCircle } from 'lucide-react'
+import { useMemo } from 'react'
 
 interface ClassroomItem extends ClassroomWithRelations {}
 
@@ -41,7 +41,7 @@ export default function ClassroomCrud() {
   // Columnas de la tabla
   const renderColumns = useMemo(
     () =>
-      (utils: ColumnUtilities<ClassroomItem>): ColumnDef<ClassroomItem>[] => [
+      (utils: ColumnUtilities): ColumnDef<ClassroomItem>[] => [
         {
           accessorKey: 'roomNumber',
           header: 'Aula',

@@ -1,20 +1,20 @@
 'use client'
 
-import { useMemo } from 'react'
-import { ColumnDef } from '@tanstack/react-table'
-import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
 import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
+import { ColumnUtilities, CrudModuleBase } from '@/app/(components)/crud/crud-module-base'
 import {
   useCreateFaculty,
-  useUpdateFaculty,
-  useRemoveFaculty,
+  useListFacultiesPaginated,
   useOneFaculty,
-  useListFacultiesPaginated
+  useRemoveFaculty,
+  useUpdateFaculty
 } from '@/modules/academic-management/academic-maintenance/hooks/useFaculty'
-import { FacultyWithRelations, CreateFacultyInput } from '@/modules/academic-management/academic-maintenance/types/faculty'
+import { CreateFacultyInput, FacultyWithRelations } from '@/modules/academic-management/academic-maintenance/types/faculty'
 import { Status } from '@/shared/types/status'
+import { ColumnDef } from '@tanstack/react-table'
 import { Badge, Button } from '@una-gc/ui/components'
-import { GraduationCap, Hash, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { CheckCircle2, GraduationCap, Hash, Loader2, Pencil, Trash2, XCircle } from 'lucide-react'
+import { useMemo } from 'react'
 
 // Define the item type for CrudModuleBase
 interface FacultyItem extends FacultyWithRelations {}
@@ -39,7 +39,7 @@ export default function FacultyCrud() {
   // Definición de columnas para la tabla de facultades
   const renderColumns = useMemo(
     () =>
-      (utils: ColumnUtilities<FacultyItem>): ColumnDef<FacultyItem>[] => [
+      (utils: ColumnUtilities): ColumnDef<FacultyItem>[] => [
         {
           accessorKey: 'code',
           header: 'Código',

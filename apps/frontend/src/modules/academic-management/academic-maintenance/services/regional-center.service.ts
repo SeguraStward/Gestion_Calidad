@@ -1,11 +1,8 @@
 import { HttpClient } from '@/lib/http-client'
 import { GenericService } from '@/services/base/generic.service'
-import type { RegionalCenterWithRelations, CreateRegionalCenterInput, UpdateRegionalCenterInput } from '../types/regional-center'
+import type { CreateRegionalCenterInput, RegionalCenterWithRelations, UpdateRegionalCenterInput } from '../types/regional-center'
 
 // Define the include parameter for relations
-const FULL_INCLUDE = {
-  campuses: true
-}
 
 export class RegionalCenterService extends GenericService<
   RegionalCenterWithRelations,
@@ -17,7 +14,7 @@ export class RegionalCenterService extends GenericService<
   }
 
   // Override get to include all relations
-  async get(id: string): Promise<RegionalCenterWithRelations> {
+  override async get(id: string): Promise<RegionalCenterWithRelations> {
     const response = await HttpClient.get(`/${this.resource}/${id}`, {
       params: { include: 'campuses' }
     })
@@ -25,7 +22,7 @@ export class RegionalCenterService extends GenericService<
   }
 
   // Override list to include all relations
-  async list(filters?: any): Promise<{ data: RegionalCenterWithRelations[]; meta: any }> {
+  override async list(filters?: any): Promise<{ data: RegionalCenterWithRelations[]; meta: any }> {
     let page = 1
     let limit = 10
     let rest = { ...filters }

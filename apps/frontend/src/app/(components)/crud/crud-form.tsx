@@ -1,11 +1,11 @@
 'use client'
 
-import { ReactNode, useMemo } from 'react'
-import { FieldValues, UseFormReturn, Controller, Path, FieldError, RegisterOptions } from 'react-hook-form'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter, Button, Separator } from '@una-gc/ui/components'
 import { FormField } from '@/app/(components)/form/field'
-import { FormSelect, ComboboxOption } from '@/app/(components)/form/select'
+import { ComboboxOption, FormSelect } from '@/app/(components)/form/select'
+import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Separator } from '@una-gc/ui/components'
 import { Loader2, Save, X } from 'lucide-react'
+import { ReactNode, useMemo } from 'react'
+import { Controller, FieldError, FieldValues, Path, RegisterOptions, UseFormReturn } from 'react-hook-form'
 
 // Tipos de campos soportados
 export type FieldType = 'text' | 'number' | 'email' | 'password' | 'textarea' | 'select' | 'date' | 'checkbox' | 'custom'
@@ -169,23 +169,28 @@ export function CrudForm<T extends FieldValues>({
     const fieldRules = rules || { required: required ? `${label} es requerido` : false }
     const registerOpts = field.type === 'number' ? { valueAsNumber: true, ...fieldRules } : fieldRules
 
+    // Build props object for FormField, only including min/max/step if defined
+    const formFieldProps: any = {
+      control,
+      name,
+      label,
+      id: String(name),
+      type: field.type,
+      placeholder,
+      ...(errors[name] && { error: { message: errors[name]?.message as string } as FieldError }),
+      required,
+      disabled: disabled || isSubmitting,
+      registerOptions: registerOpts
+    }
+    if (field.type === 'number') {
+      if (typeof field.min === 'number') formFieldProps.min = field.min
+      if (typeof field.max === 'number') formFieldProps.max = field.max
+      if (typeof field.step === 'number') formFieldProps.step = field.step
+    }
+
     return (
       <div key={String(name)} className={`space-y-1 ${className || ''}`}>
-        <FormField
-          control={control}
-          name={name}
-          label={label}
-          id={String(name)}
-          type={field.type}
-          placeholder={placeholder}
-          error={errors[name] ? ({ message: errors[name]?.message as string } as FieldError) : undefined}
-          required={required}
-          disabled={disabled || isSubmitting}
-          min={field.type === 'number' ? (field.min ?? 1) : undefined}
-          max={field.type === 'number' ? field.max : undefined}
-          step={field.type === 'number' ? field.step : undefined}
-          registerOptions={registerOpts}
-        />
+        <FormField {...formFieldProps} />
         {helperText && <p className="text-xs text-muted-foreground mt-1">{helperText}</p>}
       </div>
     )

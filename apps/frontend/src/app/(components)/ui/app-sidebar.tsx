@@ -45,7 +45,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <span className="text-lg font-bold tracking-tight text-primary">Gestión de la Calidad</span>
           </div>
           <Link href="/" className="w-full">
-            <Button variant="outline" className="w-full shadow-sm hover:bg-primary/10 transition-colors">Menú principal</Button>
+            <Button variant="outline" className="w-full shadow-sm hover:bg-primary/10 transition-colors">
+              Menú principal
+            </Button>
           </Link>
         </div>
       </SidebarHeader>

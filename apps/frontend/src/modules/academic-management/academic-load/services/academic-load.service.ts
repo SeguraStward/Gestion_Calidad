@@ -25,7 +25,7 @@ export class AcademicLoadService extends GenericService<
   }
 
   // Override create to handle relations
-  async create(payload: CreateAcademicLoadInput): Promise<AcademicLoadWithRelations> {
+  override async create(payload: CreateAcademicLoadInput): Promise<AcademicLoadWithRelations> {
     // Calculate available seats
     const availableSeats = payload.maximumCapacity - payload.enrolledCapacity
 
@@ -35,9 +35,7 @@ export class AcademicLoadService extends GenericService<
       availableSeats,
       // Ensure date is properly formatted if it exists
       ...(payload.date && {
-        date: payload.date instanceof Date 
-          ? payload.date.toISOString() 
-          : new Date(payload.date).toISOString()
+        date: payload.date instanceof Date ? payload.date.toISOString() : new Date(payload.date).toISOString()
       })
     }
 
@@ -50,7 +48,7 @@ export class AcademicLoadService extends GenericService<
   }
 
   // Override update to handle relations
-  async update(id: string, payload: UpdateAcademicLoadInput): Promise<AcademicLoadWithRelations> {
+  override async update(id: string, payload: UpdateAcademicLoadInput): Promise<AcademicLoadWithRelations> {
     // If capacity fields are being updated, calculate available seats
     let data = { ...payload }
     if (payload.maximumCapacity !== undefined || payload.enrolledCapacity !== undefined) {
@@ -65,9 +63,7 @@ export class AcademicLoadService extends GenericService<
       if (payload.date === null) {
         data.date = null
       } else {
-        data.date = payload.date instanceof Date 
-          ? payload.date.toISOString() 
-          : new Date(payload.date).toISOString()
+        data.date = payload.date instanceof Date ? payload.date.toISOString() : new Date(payload.date).toISOString()
       }
     }
 
@@ -80,7 +76,7 @@ export class AcademicLoadService extends GenericService<
   }
 
   // Override get to include all relations
-  async get(id: string): Promise<AcademicLoadWithRelations> {
+  override async get(id: string): Promise<AcademicLoadWithRelations> {
     const response = await HttpClient.get(`/${this.resource}/${id}`, {
       params: { include: JSON.stringify(FULL_INCLUDE) }
     })

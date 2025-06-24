@@ -1,13 +1,17 @@
-import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-import { useSessionStore } from '../sessionStore'
 import { AuthService } from '../services'
 import { CookieDetectionService } from '../services/cookie-detection.service'
-import { UserProfile, Role } from '../types'
+import { useSessionStore } from '../sessionStore'
+import { Role, UserProfile } from '../types'
 
 export interface UseAuthReturn {
+  setAuthTokens(authToken: string, refreshToken: string): unknown
+  checkAuthStatus(): unknown
+  activeRole: any
+  fullyAuthenticated: any
   user: UserProfile | null
   role: Role | null
   isLoading: boolean
@@ -133,7 +137,26 @@ export function useAuth(): UseAuthReturn {
     refreshAuth()
   }, [refreshAuth])
 
+  // Placeholder implementations for missing properties
+  const setAuthTokens = (_authToken: string, _refreshToken: string) => {
+    // todo Esta logica solo se maneja en el backend, no es necesario en el frontend
+    return undefined
+  }
+
+  const checkAuthStatus = () => {
+    // Implement status check logic if needed
+    // For now, just a placeholder
+    return undefined
+  }
+
+  const activeRole = role // or derive from user if needed
+  const fullyAuthenticated = !!user // or implement more robust logic
+
   return {
+    setAuthTokens,
+    checkAuthStatus,
+    activeRole,
+    fullyAuthenticated,
     user,
     role,
     isLoading,

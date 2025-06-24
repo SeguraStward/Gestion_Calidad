@@ -1,11 +1,5 @@
 import Swal from 'sweetalert2'
 
-interface alertProps {
-  title: string
-  text: string
-  callback?: Function
-}
-
 export const showInfoAlert = (title: string, text: string, timer: number) =>
   Swal.fire({
     icon: 'info',

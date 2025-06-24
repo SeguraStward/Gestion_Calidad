@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import serviceWorkerManager from '@/lib/service-worker'
+import { useEffect, useState } from 'react'
 
 export function ServiceWorkerInitializer() {
   const [hasRegistered, setHasRegistered] = useState(false)
@@ -17,6 +17,7 @@ export function ServiceWorkerInitializer() {
 
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [hasRegistered])
 
   // Este componente no renderiza nada
