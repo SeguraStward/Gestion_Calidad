@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 
 import { PrismaService } from '@src/prisma/prisma.service';
 import { GoogleUser } from './interfaces';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class AuthService {
@@ -394,7 +395,7 @@ export class AuthService {
         data: {
           fullName: profileData.fullName,
           fullLastName: profileData.fullLastName,
-          status: 'ACTIVE', // User becomes active after completing profile
+          status: 'ACTIVE',  
           updatedAt: new Date(),
         },
       });
@@ -419,5 +420,37 @@ export class AuthService {
         code: 'PROFILE_COMPLETION_FAILED',
       });
     }
+  }
+
+//has not been tested yet
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async cleanUpExpiredRefreshTokens() {
+    this.logger.log('Running daily cleanup of expired refresh tokens...');
+
+    const now = new Date();
+    const expiredTokens = await this.prisma.refreshToken.findMany({
+      where: {
+        expiresAt: {
+          lt: now,
+        },
+        revokedAt: null,
+        usedAt: null,
+      },
+    });
+
+    if (expiredTokens.length === 0) {
+      this.logger.log('No expired refresh tokens found.');
+      return;
+    }
+
+    const deleteCount = await this.prisma.refreshToken.deleteMany({
+      where: {
+        id: {
+          in: expiredTokens.map(token => token.id),
+        },
+      },
+    });
+
+    this.logger.log(`Deleted ${deleteCount.count} expired refresh tokens.`);
   }
 }
