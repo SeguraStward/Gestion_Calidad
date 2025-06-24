@@ -82,13 +82,14 @@ export class LoggerMiddleware implements NestMiddleware {
       statusCode: res.statusCode,
       // ip: this.getClientIp(req),
       // userAgent: req.get('user-agent') || 'Unknown',
-      // contentLength: `${res.get('content-length') || 0}b`,
-      contentLength: '', // null
+      contentLength: `${res.get('content-length') || 0}b`,
       responseTimeMs: responseTime,
       timestamp: new Date().toISOString(),
     };
 
-    this.logger.debug('Request Details:', logData);
+    this.logger.debug(
+      `Request: ${logData.method} ${logData.originalUrl} - Status: ${logData.statusCode} - Size: ${logData.contentLength} - Time: ${logData.responseTimeMs}ms - At: ${logData.timestamp}`,
+    );
   }
 
   private getClientIp(req: Request): string {
