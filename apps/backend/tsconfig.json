@@ -6,30 +6,45 @@
     "outDir": "./dist",
     "removeComments": true,
     "sourceMap": true,
-
     // NestJS
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-
     // TypeScript
     "strictNullChecks": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-
     // support Jest y Node
-    "types": ["node", "jest"],
-
+    "types": [
+      "node",
+      "jest"
+    ],
     // Path aliases
     "paths": {
-      "@src/*": ["src/*"],
-      "@modules/*": ["src/modules/*"],
-      "@core/*": ["src/core/*"],
-      "@shared/*": ["src/shared/*"],
-      "@common/*": ["src/core/common/*"]
+      "@src/*": [
+        "src/*"
+      ],
+      "@modules/*": [
+        "src/modules/*"
+      ],
+      "@core/*": [
+        "src/core/*"
+      ],
+      "@shared/*": [
+        "src/shared/*"
+      ],
+      "@common/*": [
+        "src/core/common/*"
+      ]
     }
   },
-  "include": ["src/**/*.ts", "/jest.setup.ts", "test/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "src/**/*.ts",
+    "/jest.setup.ts",
+    "test/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

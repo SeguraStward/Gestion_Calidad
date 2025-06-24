@@ -32,9 +32,8 @@ export default [
         },
       ],
       '@typescript-eslint/no-empty-function': 'warn',
-      '@typescript-eslint/prefer-const': 'error',
-      'no-console': 'warn',
       'prefer-const': 'error',
+      'no-console': 'warn',
     },
   },
   {
