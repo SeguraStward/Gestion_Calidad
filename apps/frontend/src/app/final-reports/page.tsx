@@ -35,8 +35,8 @@ const getStatusDisplayProperties = (statusValue: FinalReportStatusFE | undefined
 export default function FinalReportsPage() {
   const router = useRouter()
   const mockProfessorId = useDevStore((state) => state.mockProfessorId)
-
-  // Estado para paginación y búsqueda
+  
+   
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
@@ -59,7 +59,7 @@ export default function FinalReportsPage() {
   } = useFinalReportsByProfessor(
     mockProfessorId,
     {
-      include:
+      include: 
         'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus',
       page: currentPage,
       limit: pageSize,

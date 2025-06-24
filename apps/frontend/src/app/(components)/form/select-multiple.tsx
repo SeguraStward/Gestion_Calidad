@@ -49,8 +49,8 @@ export function FormSelectMultiple({
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {options.map((opt) => (
-            <SelectItem key={opt.id} value={opt.id}>
+          {options.map((opt, index) => (
+            <SelectItem key={`${opt.id}-${index}`} value={opt.id}>
               <div className="flex justify-between w-full items-center">
                 <span>{opt.name}</span>
                 {value.includes(opt.id) && <span className="text-xs text-green-500">✓</span>}
@@ -61,8 +61,8 @@ export function FormSelectMultiple({
       </Select>
 
       <div className="flex flex-wrap gap-2">
-        {selectedOptions.map((opt) => (
-          <Badge key={opt.id} className="flex items-center gap-1">
+        {selectedOptions.map((opt, index) => (
+          <Badge key={`selected-${opt.id}-${index}`} className="flex items-center gap-1">
             {opt.name}
             <Button type="button" size="icon" variant="ghost" className="h-4 w-4 p-0" onClick={() => handleRemove(opt.id)}>
               <X className="h-3 w-3" />

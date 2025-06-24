@@ -94,8 +94,8 @@ export const RelationFieldComponent = ({
         <SelectValue placeholder="Seleccionar..." />
       </SelectTrigger>
       <SelectContent>
-        {options.map((opt) => (
-          <SelectItem key={opt[field.valueField || 'id']} value={opt[field.valueField || 'id']}>
+        {options.map((opt, index) => (
+          <SelectItem key={`${opt[field.valueField || 'id']}-${index}`} value={opt[field.valueField || 'id']}>
             {opt[field.displayField]}
           </SelectItem>
         ))}

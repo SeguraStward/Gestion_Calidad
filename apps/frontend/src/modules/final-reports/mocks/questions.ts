@@ -76,21 +76,21 @@ export const step5QuestionsMock: Step5Question[] = [
   {
     questionId: 'logros_alcanzados',
     question: 'Principales logros alcanzados en el desarrollo de la asignatura.',
-    group: 'evaluacion_general_curso',
+    group: 'Evaluacion_general_curso',
     responseType: 'TEXT',
     options: []
   },
   {
     questionId: 'dificultades_presentadas',
     question: 'Principales dificultades que se presentaron en el desarrollo de la asignatura.',
-    group: 'evaluacion_general_curso',
+    group: 'Evaluacion_general_curso',
     responseType: 'TEXT',
     options: []
   },
   {
     questionId: 'recomendaciones_mejora',
     question: 'Recomendaciones para la mejora de la asignatura.',
-    group: 'evaluacion_general_curso',
+    group: 'Evaluacion_general_curso',
     responseType: 'TEXT',
     options: []
   }
@@ -102,14 +102,14 @@ export const step6QuestionsPageMock: Step6Question[] = [
     question: 'Herramientas Tecnológicas Utilizadas',
     description: 'Seleccione todas las herramientas tecnológicas que utilizó durante el ciclo académico.',
     options: herramientasTecnologicas,
-    group: 'herramientas',
+    group: 'Herramientas',
     responseType: 'SELECCION_MULTIPLE'
   },
   {
     questionId: OTHER_TOOLS_QUESTION_ID, // Usar la constante importada
     question: 'Otras herramientas o metodologías utilizadas (opcional)',
     description: 'Si utilizó otras no listadas, descríbalas aquí.',
-    group: 'herramientas',
+    group: 'Herramientas',
     responseType: 'TEXT',
     options: []
   }
