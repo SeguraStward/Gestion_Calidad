@@ -15,10 +15,23 @@ function ErrorContent() {
   const action = searchParams.get('action')
 
   const errorInfo = getAuthErrorInfo(errorCode || undefined)
+
+  // Ensure errorInfo is properly structured
+  const safeErrorInfo = {
+    title: typeof errorInfo?.title === 'string' ? errorInfo.title : 'Error de autenticación',
+    message: typeof errorInfo?.message === 'string' ? errorInfo.message : 'Ha ocurrido un error durante la autenticación.',
+    severity:
+      errorInfo?.severity === 'error' || errorInfo?.severity === 'warning' || errorInfo?.severity === 'info'
+        ? errorInfo.severity
+        : ('error' as const)
+  }
   const showContactAdmin = errorCode?.startsWith('AUTH_01') || errorCode === 'AUTH_003' || errorCode === 'AUTH_004'
   const showRegisterOption = action === 'register' && errorCode === 'AUTH_010'
 
   const contactEmail = process.env.NEXT_PUBLIC_ADMIN_CONTACT_EMAIL || 'admin@una.ac.cr'
+
+  // Ensure contactEmail is a string for SSR
+  const safeContactEmail = typeof contactEmail === 'string' ? contactEmail : 'admin@una.ac.cr'
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted/20 px-4">
@@ -32,7 +45,7 @@ function ErrorContent() {
       )}
 
       <div className="w-full max-w-md space-y-8">
-        <ErrorCard title={errorInfo.title} message={errorInfo.message} severity={errorInfo.severity} />
+        <ErrorCard title={safeErrorInfo.title} message={safeErrorInfo.message} severity={safeErrorInfo.severity} />
 
         <Card className="shadow-2xl border-0 bg-gradient-to-br from-white to-gray-50/80 dark:from-zinc-900 dark:to-zinc-800/80 overflow-hidden">
           <CardHeader className="text-center bg-gradient-to-r from-muted/10 to-muted/20 pb-6">
@@ -66,7 +79,7 @@ function ErrorContent() {
             {showContactAdmin && (
               <>
                 <a
-                  href={`mailto:${contactEmail}?subject=Solicitud de acceso - Sistema GC&body=Hola, solicito verificar mi acceso al sistema. Mi correo electrónico es: `}
+                  href={`mailto:${safeContactEmail}?subject=Solicitud de acceso - Sistema GC&body=Hola, solicito verificar mi acceso al sistema. Mi correo electrónico es: `}
                   className="block w-full"
                 >
                   <Button
@@ -107,7 +120,20 @@ function ErrorContent() {
 
 export default function AuthErrorClient() {
   return (
-    <Suspense fallback={<div>Cargando...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted/20 px-4">
+          <div className="w-full max-w-md space-y-8">
+            <Card className="shadow-2xl border-0 bg-gradient-to-br from-white to-gray-50/80 dark:from-zinc-900 dark:to-zinc-800/80 overflow-hidden">
+              <CardContent className="p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Cargando...</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      }
+    >
       <ErrorContent />
     </Suspense>
   )
