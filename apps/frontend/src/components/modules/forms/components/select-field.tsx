@@ -75,8 +75,8 @@ export const SelectField = ({ field, onChange, value, errorMessage }: SelectFiel
         <SelectValue placeholder={field.placeholder || 'Seleccionar...'} />
       </SelectTrigger>
       <SelectContent>
-        {field.options?.map((opt: any) => (
-          <SelectItem key={opt.id} value={opt.id.toString()}>
+        {field.options?.map((opt: any, index: number) => (
+          <SelectItem key={`${opt.id}-${index}`} value={opt.id.toString()}>
             {opt.name}
           </SelectItem>
         ))}
