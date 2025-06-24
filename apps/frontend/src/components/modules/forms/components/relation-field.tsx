@@ -1,6 +1,6 @@
 import { Checkbox } from '@una-gc/ui/components/checkbox'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@una-gc/ui/components/select'
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RelationFieldProps } from '../types'
 
 // Component to handle relation fields
@@ -89,7 +89,7 @@ export const RelationFieldComponent = ({
   }
 
   return (
-    <Select defaultValue={singleValue} onValueChange={handleValueChange} disabled={field.disabled}>
+    <Select defaultValue={singleValue} onValueChange={handleValueChange} disabled={!!field.disabled}>
       <SelectTrigger id={field.name} aria-invalid={!!error} aria-describedby={error ? `${field.name}-error` : undefined}>
         <SelectValue placeholder="Seleccionar..." />
       </SelectTrigger>
