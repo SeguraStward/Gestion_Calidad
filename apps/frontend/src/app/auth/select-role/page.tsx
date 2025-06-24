@@ -25,7 +25,6 @@ export default function SelectRolePage() {
     canSkip,
     hasActiveRole,
     showTransition,
-    shouldShowError,
     setSelectedRole,
     handleSubmit,
     handleSkip,
@@ -33,15 +32,7 @@ export default function SelectRolePage() {
   } = useRoleSelection()
 
   if (showTransition && selectedRole) {
-    // Evitar que la página de selección de rol se renderice de nuevo tras la transición
-    return (
-      <RoleTransition
-        roleName={selectedRole.name}
-        onComplete={function (): void {
-          throw new Error('Function not implemented.')
-        }}
-      />
-    )
+    return <RoleTransition roleName={selectedRole.name} onComplete={() => {}} />
   }
 
   return (
@@ -92,10 +83,9 @@ export default function SelectRolePage() {
                   ? 'Tienes 1 rol disponible.'
                   : 'Cargando roles disponibles...'}
           </CardDescription>
-        </CardHeader>
-
+        </CardHeader>{' '}
         <CardContent className="space-y-6 py-8 px-8">
-          {error && shouldShowError && (
+          {error && (
             <Alert
               variant="destructive"
               className="border-red-200 bg-red-50 dark:bg-red-900/30 animate-in fade-in slide-in-from-top-2 duration-300"
@@ -116,10 +106,9 @@ export default function SelectRolePage() {
                 <p className="text-xs text-muted-foreground/60 mt-2">Por favor espera, esto puede tomar unos segundos</p>
               </div>
             </div>
-          ) : roles.length === 0 && shouldShowError ? (
+          ) : roles.length === 0 && error ? (
             <EmptyRoleState onRetry={fetchRoles} />
-          ) : roles.length === 0 && !shouldShowError ? (
-            // Estado de espera: aún no se ha cumplido el tiempo mínimo para mostrar error
+          ) : roles.length === 0 ? (
             <div className="space-y-4">
               <RoleLoadingSkeleton />
               <div className="text-center">
@@ -166,7 +155,6 @@ export default function SelectRolePage() {
             </div>
           ) : null}
         </CardContent>
-
         <CardFooter
           className={cn(
             'flex pt-6 bg-gradient-to-r from-muted/20 to-muted/40 px-8 pb-8',
