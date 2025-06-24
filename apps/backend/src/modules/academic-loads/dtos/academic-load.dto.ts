@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsEnum, IsInt, IsDate, ValidateNested } from 'class-validator';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Type, Transform } from 'class-transformer';
 import { Status } from '@una-gc/database/prisma/generated/client'; // Assuming Status is correctly generated
 import { BaseDto } from '@src/modules/generalDto';
 
@@ -43,16 +43,19 @@ export class AcademicLoadDto extends BaseDto {
   @ApiProperty({ description: 'Maximum capacity' })
   @Expose()
   @IsInt()
+  @Type(() => Number)
   maximumCapacity: number;
 
   @ApiProperty({ description: 'Enrolled capacity' })
   @Expose()
   @IsInt()
+  @Type(() => Number)
   enrolledCapacity: number;
 
   @ApiProperty({ description: 'Available seats' })
   @Expose()
   @IsInt()
+  @Type(() => Number)
   availableSeats: number;
 
   @ApiProperty({ description: 'Group ID' })
@@ -73,7 +76,36 @@ export class AcademicLoadDto extends BaseDto {
   @Expose()
   @IsDate()
   @IsOptional()
-  @Type(() => Date) // Ensure date is transformed correctly
+  @Type(() => Date)
+  @Transform(({ value }) => {
+    if (!value || value === null || value === undefined || value === '') {
+      return undefined;
+    }
+    
+    if (value instanceof Date) {
+      return isNaN(value.getTime()) ? undefined : value;
+    }
+    
+    if (typeof value === 'string') {
+      // If it's just a date string (YYYY-MM-DD), add time component
+      if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        const date = new Date(value + 'T00:00:00.000Z');
+        return isNaN(date.getTime()) ? undefined : date;
+      }
+      const date = new Date(value);
+      return isNaN(date.getTime()) ? undefined : date;
+    }
+    
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? undefined : date;
+  }, { toClassOnly: true })
+  @Transform(({ value }) => {
+    // Transform when serializing to plain object (toPlainOnly)
+    if (value instanceof Date && !isNaN(value.getTime())) {
+      return value.toISOString();
+    }
+    return value;
+  }, { toPlainOnly: true })
   date?: Date;
 
   @ApiProperty({ description: 'Status of the academic load', enum: Status })

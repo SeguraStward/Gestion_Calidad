@@ -3,19 +3,19 @@
 import { Button } from '@una-gc/ui/components/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card'
 import { Badge } from '@una-gc/ui/components/badge'
-import { BookOpen, Users, FileText, ChevronRight, Sparkles, Target, Award, Bell } from 'lucide-react'
+import { BookOpen, Users, FileText, ChevronRight, Sparkles, Target, Award, Bell, LockKeyholeOpen } from 'lucide-react'
 import Link from 'next/link'
 
 export default function HomePage() {
   const quickActions = [
-    // {
-    //   title: 'Gestión Académica',
-    //   description: 'Administrar cargas académicas y mantenimiento general',
-    //   icon: BookOpen,
-    //   href: '/academic-management',
-    //   color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-    //   iconColor: 'text-blue-600 dark:text-blue-400'
-    // },
+    {
+      title: 'Gestión Académica',
+      description: 'Administrar cargas académicas y mantenimiento general',
+      icon: BookOpen,
+      href: '/academic-management',
+      color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+      iconColor: 'text-blue-600 dark:text-blue-400'
+    },
     {
       title: 'Gestión de Usuarios',
       description: 'Administrar usuarios y permisos del sistema',
@@ -31,15 +31,15 @@ export default function HomePage() {
       href: '/final-reports',
       color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
       iconColor: 'text-purple-600 dark:text-purple-400'
-    }
-    // {
-    //   title: 'Perfil de Usuario',
-    //   description: 'Gestionar información personal y configuración',
-    //   icon: Users,
-    //   href: '/profile',
-    //   color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
-    //   iconColor: 'text-orange-600 dark:text-orange-400'
-    // },
+    },
+    {
+      title: 'Cambio de Rol',
+      description: 'Seleccionar rol de usuario para acceder a diferentes funcionalidades',
+      icon: LockKeyholeOpen,
+      href: '/auth/select-role',
+      color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+      iconColor: 'text-orange-600 dark:text-orange-400'
+    },
     // {
     //   title: 'Configuración',
     //   description: 'Ajustes y configuración del sistema',

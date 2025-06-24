@@ -26,17 +26,19 @@ import {
   DoorOpen,
   Pencil,
   Trash2,
-  MoreHorizontal,
-  Loader2
+  Loader2,
+  GraduationCap
 } from 'lucide-react'
 import {
   Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
   Badge,
-  Calendar
+  Calendar,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Progress
 } from '@una-gc/ui/components'
 import { UseFormReturn } from 'react-hook-form'
 
@@ -127,24 +129,27 @@ const AcademicLoadPage = () => {
             const available = max - enrolled
             const fillPercentage = max > 0 ? (enrolled / max) * 100 : 0
             let textColorClass = 'text-emerald-600 dark:text-emerald-400'
+            let progressColorClass = ''
+            
             if (fillPercentage >= 90) {
               textColorClass = 'text-red-600 dark:text-red-400'
+              progressColorClass = 'bg-red-500'
             } else if (fillPercentage >= 75) {
               textColorClass = 'text-amber-600 dark:text-amber-400'
+              progressColorClass = 'bg-amber-500'
+            } else {
+              progressColorClass = 'bg-emerald-500'
             }
+            
             return (
               <div className="flex flex-col">
                 <span className={textColorClass}>
                   {enrolled}/{max} <span className="text-xs">({available} disp.)</span>
                 </span>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 mt-1 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${
-                      fillPercentage >= 90 ? 'bg-red-500' : fillPercentage >= 75 ? 'bg-amber-500' : 'bg-emerald-500'
-                    }`}
-                    style={{ width: `${Math.min(fillPercentage, 100)}%` }}
-                  />
-                </div>
+                <Progress 
+                  value={fillPercentage} 
+                  className={`h-1.5 mt-1 ${progressColorClass}`}
+                />
               </div>
             )
           }
@@ -197,49 +202,31 @@ const AcademicLoadPage = () => {
         {
           id: 'actions',
           header: () => <div className="text-right">Acciones</div>,
-          size: 80,
+          size: 90,
           cell: ({ row }) => (
-            <div className="text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Abrir menú</span>
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {' '}
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      utils.onEdit(row.original.id)
-                    }}
-                    disabled={utils.isProcessing}
-                  >
-                    {utils.isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Pencil className="mr-2 h-4 w-4" />}
-                    Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      utils.onDelete(row.original.id)
-                    }}
-                    className="text-red-600 hover:!text-red-600 hover:!bg-red-100 dark:hover:!bg-red-900/50"
-                    disabled={
-                      utils.isProcessing ||
-                      (utils.deleteOperation.isPending && utils.deleteOperation.variables === row.original.id)
-                    }
-                  >
-                    {utils.isProcessing ||
-                    (utils.deleteOperation.isPending && utils.deleteOperation.variables === row.original.id) ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="mr-2 h-4 w-4" />
-                    )}
-                    Eliminar
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="text-right flex gap-1 justify-end min-w-[80px]">
+              <Button 
+                variant="ghost" 
+                className="h-8 w-8 p-0" 
+                onClick={() => utils.onEdit(row.original.id)} 
+                title="Editar"
+                disabled={utils.isProcessing}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50"
+                title="Eliminar"
+                disabled={utils.isProcessing || (utils.deleteOperation.isPending && utils.deleteOperation.variables === row.original.id)}
+                onClick={() => utils.onDelete(row.original.id)}
+              >
+                {utils.isProcessing || (utils.deleteOperation.isPending && utils.deleteOperation.variables === row.original.id) ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </Button>
             </div>
           )
         }
@@ -416,9 +403,25 @@ const AcademicLoadPage = () => {
       renderColumns,
       // Procesar los items para la edición, asegurando que las fechas y relaciones estén correctas
       processItemForEditing: (item: AcademicLoadItem) => {
+        console.log('Processing item for editing:', item); // Debug log
+        
+        let processedDate = new Date();
+        if (item.date) {
+          try {
+            processedDate = typeof item.date === 'string' ? new Date(item.date) : item.date;
+            // Verificar si la fecha es válida
+            if (isNaN(processedDate.getTime())) {
+              processedDate = new Date();
+            }
+          } catch (error) {
+            console.warn('Error processing date:', error);
+            processedDate = new Date();
+          }
+        }
+        
         return {
           ...item,
-          date: item.date ? new Date(item.date) : new Date(),
+          date: processedDate,
           academicCycleId: item.academicCycleId || item.academicCycle?.id || '',
           campusId: item.campusId || item.campus?.id || '',
           courseId: item.courseId || item.course?.id || '',
@@ -437,18 +440,53 @@ const AcademicLoadPage = () => {
       },
       // Validación pre-eliminación
       preDeleteCheck: (item: AcademicLoadItem) => {
-        // Si hay estudiantes matriculados, mostrar advertencia
-        if (item.enrolledCapacity > 0) {
-          return 'No se puede eliminar la carga académica porque tiene estudiantes matriculados.'
-        }
-        // Si no hay problemas, retornar null (sin error)
-        return null
+        // Por ahora, permitir eliminar todas las cargas académicas
+        // En el futuro, aquí podrías verificar si hay estudiantes realmente matriculados
+        // consultando una tabla de matrículas o inscripciones
+        
+        // Ejemplo de validaciones que podrías implementar:
+        // - Verificar si la carga tiene calificaciones registradas
+        // - Verificar si hay reportes finales
+        // - Verificar fechas (no eliminar cargas del periodo actual, etc.)
+        
+        return null // Permitir eliminación
       }
     }),
     [renderForm, renderColumns]
   )
 
-  return <CrudModuleBase {...crudConfig} />
+  return (
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center mb-4">
+          <div className="p-3 rounded-full bg-primary/10 mr-4 icon-bounce">
+            <GraduationCap className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Gestión de Cargas Académicas
+            </h1>
+            <div className="flex items-center justify-center mt-2">
+              <Badge variant="secondary" className="text-xs">
+                Administrar Asignaciones
+              </Badge>
+            </div>
+          </div>
+        </div>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Administre y configure las cargas académicas, asignaciones de profesores, cursos y horarios.
+        </p>
+      </div>
+
+      {/* Content Card */}
+      <Card className="border-0 shadow-sm glass-effect">
+        <CardContent className="p-6">
+          <CrudModuleBase {...crudConfig} />
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
 
 export { AcademicLoadPage }

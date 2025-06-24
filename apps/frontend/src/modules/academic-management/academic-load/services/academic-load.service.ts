@@ -29,13 +29,24 @@ export class AcademicLoadService extends GenericService<
     // Calculate available seats
     const availableSeats = payload.maximumCapacity - payload.enrolledCapacity
 
-    const data = {
+    // Process the date to ensure it's in ISO format
+    const processedPayload = {
       ...payload,
-      availableSeats
+      availableSeats,
+      // Ensure date is properly formatted if it exists
+      ...(payload.date && {
+        date: payload.date instanceof Date 
+          ? payload.date.toISOString() 
+          : new Date(payload.date).toISOString()
+      })
     }
 
-    const response = await HttpClient.post(`/${this.resource}`, data)
-    return response.data?.data || response.data
+    console.log('Creating academic load with payload:', processedPayload) // Debug log
+
+    const response = await HttpClient.post(`/${this.resource}`, processedPayload)
+    const result = response.data?.data || response.data
+    console.log('Academic Load create response:', result) // Debug log
+    return result
   }
 
   // Override update to handle relations
@@ -49,8 +60,23 @@ export class AcademicLoadService extends GenericService<
       data.availableSeats = maxCapacity - enrolled
     }
 
+    // Process the date to ensure it's in ISO format if present
+    if (payload.date !== undefined) {
+      if (payload.date === null) {
+        data.date = null
+      } else {
+        data.date = payload.date instanceof Date 
+          ? payload.date.toISOString() 
+          : new Date(payload.date).toISOString()
+      }
+    }
+
+    console.log('Updating academic load with payload:', data) // Debug log
+
     const response = await HttpClient.put(`/${this.resource}/${id}`, data)
-    return response.data?.data || response.data
+    const result = response.data?.data || response.data
+    console.log('Academic Load update response:', result) // Debug log
+    return result
   }
 
   // Override get to include all relations
@@ -58,7 +84,9 @@ export class AcademicLoadService extends GenericService<
     const response = await HttpClient.get(`/${this.resource}/${id}`, {
       params: { include: JSON.stringify(FULL_INCLUDE) }
     })
-    return response.data?.data || response.data
+    const result = response.data?.data || response.data
+    console.log('Academic Load get response:', result) // Debug log
+    return result
   }
 
   // Custom method for finding by professor
