@@ -6,7 +6,7 @@
  * - Log messages use `console.log` in production and `console.debug` otherwise.
  */
 export class Logger {
-  private static readonly IS_PRODUCTION = process.env.NODE_ENV === 'production'
+  private static readonly IS_PRODUCTION = process.env.NODE_ENV == 'production'
 
   static debug(message: string, ...args: any[]): void {
     if (!this.IS_PRODUCTION) {

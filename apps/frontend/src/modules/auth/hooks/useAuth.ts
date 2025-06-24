@@ -1,220 +1,147 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
-import { useSessionStore, UserActiveRole } from '@/store/sessionStore'
-import { CookieManager } from '@/utils/cookie.manager'
-import { AuthService } from '../auth.service'
-import { Role } from '../types'
-import { useHttpOnlyAuth } from './useHttpOnlyAuth'
+import { useSessionStore } from '../sessionStore'
+import { AuthService } from '../services'
+import { CookieDetectionService } from '../services/cookie-detection.service'
+import { UserProfile, Role } from '../types'
 
-interface AuthState {
-  isAuthenticated: boolean
-  activeRole: UserActiveRole | null
-  roles: Role[]
+export interface UseAuthReturn {
+  user: UserProfile | null
+  role: Role | null
   isLoading: boolean
+  isAuthenticated: boolean
   error: string | null
-  retryCount: number
+  login: () => void
+  logout: () => Promise<void>
+  setActiveRole: (roleId: string) => Promise<boolean>
+  refreshAuth: () => Promise<void>
 }
 
-export interface UseAuthReturn extends AuthState {
-  logout: () => void
-  clearRole: () => void
-  refreshRole: () => void
-  loadUserRoles: () => Promise<void>
-  retryLoadRoles: () => void
-  resetError: () => void
-  canRetry: boolean
-  // HTTP-only auth methods
-  hasAuthToken: boolean
-  hasRefreshToken: boolean
-  tokenLoading: boolean
-  tokenError: string | null
-  checkAuthStatus: () => Promise<boolean>
-  setAuthTokens: (authToken: string, refreshToken: string) => Promise<boolean>
-  fullyAuthenticated: boolean
-}
-
-const MAX_RETRY_ATTEMPTS = 3
-
+/**
+ * Unified Authentication Hook
+ * Provides centralized auth state management and operations
+ * Uses HttpOnly cookie detection and session storage for user data
+ */
 export function useAuth(): UseAuthReturn {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const router = useRouter()
-  const { user, role, setUser, setRole, clearSession } = useSessionStore()
-  const {
-    isAuthenticated: httpOnlyAuthenticated,
-    hasAuthToken,
-    hasRefreshToken,
-    loading: tokenLoading,
-    error: tokenError,
-    setAuthTokens,
-    logout: httpOnlyLogout,
-    checkAuthStatus
-  } = useHttpOnlyAuth()
+  //  'setRole' is declared but its value is never read.ts(6133)
+  const { user, role, setUser, clearSession, isAuthenticated: hasStoredUser } = useSessionStore() //
 
-  const [state, setState] = useState<
-    Omit<AuthState, 'activeRole' | 'isAuthenticated'> & {
-      activeRole: UserActiveRole | null
-      isAuthenticated: boolean
-    }
-  >({
-    isAuthenticated: !!role,
-    activeRole: role,
-    roles: [],
-    isLoading: true,
-    error: null,
-    retryCount: 0
-  })
-
-  const resetError = useCallback(() => {
-    setState((prev) => ({ ...prev, error: null, retryCount: 0 }))
-  }, [])
-
-  const handleError = useCallback((error: any, operation: string) => {
-    console.error(`Auth Error in ${operation}:`, error)
-    const errorMessage = error?.response?.data?.message || error?.message || `Error en ${operation}`
-    setState((prev) => ({
-      ...prev,
-      error: errorMessage,
-      isLoading: false,
-      retryCount: prev.retryCount + 1
-    }))
-  }, [])
-
-  const loadUserRoles = useCallback(async () => {
-    if (state.isLoading) return
+  /**
+   * Check if user is authenticated via API (validates HttpOnly cookies)
+   */
+  const checkAuthentication = useCallback(async (): Promise<boolean> => {
     try {
-      setState((prev) => ({ ...prev, isLoading: true, error: null }))
-      const userRolesResponse = await AuthService.getUserActiveRoles()
-      if (!userRolesResponse || userRolesResponse.length === 0) {
-        setState((prev) => ({
-          ...prev,
-          roles: [],
-          isLoading: false,
-          error: 'No se encontraron roles disponibles para el usuario'
-        }))
-        return
-      }
+      return await CookieDetectionService.isAuthenticated()
+    } catch {
+      return false
+    }
+  }, [])
 
-      const roles: Role[] = userRolesResponse.map((role: any) => ({
-        id: role.id,
-        name: role.name,
-        description: role.description,
-        permissions: role.permissions
-      }))
+  /**
+   * Refresh authentication state from API
+   */
+  const refreshAuth = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
 
-      setState((prev) => ({
-        ...prev,
-        roles,
-        isLoading: false,
-        error: null,
-        retryCount: 0
-      }))
-    } catch (error: any) {
-      if (error?.response?.status === 401 || error?.response?.status === 403) {
+    try {
+      const apiAuthStatus = await checkAuthentication()
+
+      if (!apiAuthStatus) {
+        // No valid cookies - clear session
         clearSession()
-        setState((prev) => ({
-          ...prev,
-          isAuthenticated: false,
-          activeRole: null,
-          roles: [],
-          isLoading: false,
-          error: 'Sesión expirada. Por favor, inicia sesión nuevamente.'
-        }))
         return
       }
 
-      handleError(error, 'cargar roles')
-    }
-  }, [state.isLoading, handleError, clearSession])
-  const logout = useCallback(async () => {
-    try {
-      // Usar el logout del servicio que maneja todo
-      await AuthService.logout()
-
-      // También limpiar cookies HTTP-only
-      await httpOnlyLogout()
+      // Get fresh user data if authenticated but no stored user
+      if (!hasStoredUser()) {
+        const userProfile = await AuthService.getUserProfile()
+        setUser(userProfile)
+      }
     } catch (error) {
-      console.warn('Error during logout, but continuing with local cleanup:', error)
-    } finally {
-      // Limpiar estado local siempre
-      CookieManager.clearAllAuthData()
+      const errorMessage = error instanceof Error ? error.message : 'Authentication check failed'
+      setError(errorMessage)
       clearSession()
-      setState({
-        isAuthenticated: false,
-        activeRole: null,
-        roles: [],
-        isLoading: false,
-        error: null,
-        retryCount: 0
-      })
-      window.location.href = '/auth/login'
+    } finally {
+      setIsLoading(false)
     }
-  }, [clearSession, httpOnlyLogout])
+  }, [checkAuthentication, hasStoredUser, setUser, clearSession])
 
-  const clearRole = useCallback(() => {
-    CookieManager.removeActiveRole()
-    setRole(undefined as unknown as UserActiveRole)
-    setState((prev) => ({
-      ...prev,
-      activeRole: null,
-      error: null
-    }))
-  }, [setRole])
-
-  const refreshRole = useCallback(() => {
-    const currentRole = useSessionStore.getState().role
-    if (currentRole) {
-      CookieManager.setActiveRole(currentRole)
-    }
-    setState((prev) => ({
-      ...prev,
-      activeRole: currentRole,
-      isAuthenticated: !!currentRole
-    }))
+  /**
+   * Initiate Google OAuth login
+   */
+  const login = useCallback(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
+    window.location.href = `${apiUrl}/auth/google/login`
   }, [])
 
-  const retryLoadRoles = useCallback(() => {
-    loadUserRoles()
-  }, [loadUserRoles])
+  /**
+   * Logout user and clear all session data
+   */
+  const logout = useCallback(async () => {
+    setIsLoading(true)
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        setState((prev) => ({
-          ...prev,
-          activeRole: role,
-          isAuthenticated: !!role,
-          isLoading: false
-        }))
-        if (role) {
-          await loadUserRoles()
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error)
-        setState((prev) => ({
-          ...prev,
-          isAuthenticated: false,
-          isLoading: false
-        }))
-      }
+    try {
+      // Call backend logout to clear HttpOnly cookies
+      await AuthService.logout()
+    } catch (error) {
+      console.warn('Backend logout failed:', error)
+    } finally {
+      // Always clear local session regardless of API response
+      clearSession()
+      setIsLoading(false)
+
+      // Redirect to login
+      router.push('/auth/login')
+      toast.success('Sesión cerrada correctamente')
     }
-    initializeAuth()
-  }, [role, loadUserRoles])
+  }, [clearSession, router])
+
+  /**
+   * Set active role for current user
+   */
+  const setActiveRole = useCallback(
+    async (roleId: string): Promise<boolean> => {
+      try {
+        const success = await AuthService.setActiveRole(roleId)
+
+        if (success) {
+          // Refresh user data to get updated role info
+          await refreshAuth()
+          toast.success('Rol activo actualizado')
+        }
+
+        return success
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to set active role'
+        setError(errorMessage)
+        toast.error('Error al cambiar el rol activo')
+        return false
+      }
+    },
+    [refreshAuth]
+  )
+
+  // Initialize auth state on mount
+  useEffect(() => {
+    refreshAuth()
+  }, [refreshAuth])
+
   return {
-    ...state,
+    user,
+    role,
+    isLoading,
+    isAuthenticated: hasStoredUser(),
+    error,
+    login,
     logout,
-    clearRole,
-    refreshRole,
-    loadUserRoles,
-    retryLoadRoles,
-    resetError,
-    canRetry: state.retryCount < MAX_RETRY_ATTEMPTS,
-    // HTTP-only auth properties
-    hasAuthToken,
-    hasRefreshToken,
-    tokenLoading,
-    tokenError,
-    checkAuthStatus,
-    setAuthTokens,
-    fullyAuthenticated: httpOnlyAuthenticated && !!state.activeRole
+    setActiveRole,
+    refreshAuth
   }
 }

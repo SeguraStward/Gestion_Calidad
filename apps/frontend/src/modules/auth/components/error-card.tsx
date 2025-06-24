@@ -33,12 +33,19 @@ export const ErrorCard: React.FC<ErrorCardProps> = ({
     info: 'text-blue-600'
   }
 
+  // Ensure title and message are strings
+  const safeTitle = typeof title === 'string' ? title : String(title || '¡Ups! Algo salió mal')
+  const safeMessage =
+    typeof message === 'string'
+      ? message
+      : String(message || 'No pudimos procesar tu solicitud. Intentá más tarde o volvé al inicio.')
+
   return (
     <Card className={cn('w-full max-w-md text-center', borderColorMap[severity])}>
       <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
         {iconMap[severity]}
-        <h2 className={cn('text-xl font-semibold', titleColorMap[severity])}>{title}</h2>
-        <p className="text-sm text-muted-foreground">{message}</p>
+        <h2 className={cn('text-xl font-semibold', titleColorMap[severity])}>{safeTitle}</h2>
+        <p className="text-sm text-muted-foreground">{safeMessage}</p>
       </CardContent>
     </Card>
   )

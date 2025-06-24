@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 
-import { useSessionStore } from '../store/sessionStore'
+import { useSessionStore } from '../modules/auth/sessionStore'
 import { Logger } from '@/utils'
 
 // --- INICIO: Lógica para manejar el proceso de refresh ---

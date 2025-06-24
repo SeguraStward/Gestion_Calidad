@@ -3,6 +3,8 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@una-gc/ui/components/sidebar'
 import { NavMain } from './nav-main'
 import { NavUser } from './nav-user'
+import Link from 'next/link'
+import { Button } from '@una-gc/ui/components'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navMain = [
@@ -38,13 +40,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <div className="flex items-center h-12 px-4 text-lg font-bold tracking-tight">Gestión de la Calidad</div>
+        <div className="flex flex-col items-center gap-2 py-4">
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold tracking-tight text-primary">Gestión de la Calidad</span>
+          </div>
+          <Link href="/" className="w-full">
+            <Button variant="outline" className="w-full shadow-sm hover:bg-primary/10 transition-colors">Menú principal</Button>
+          </Link>
+        </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMain} />
+        <div className="px-2 py-2">
+          <NavMain items={navMain} />
+        </div>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser />
+        <div className="px-2 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30">
+          <NavUser />
+        </div>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -8,12 +8,6 @@ export class UserResponseDto {
   id: string;
 
   @ApiProperty({
-    description: 'Nombre para mostrar (derivado de fullName o email)',
-    example: 'Juan Carlos',
-  })
-  name: string;
-
-  @ApiProperty({
     description: 'Correo electrónico del usuario',
     example: 'juan.perez@est.una.ac.cr',
   })

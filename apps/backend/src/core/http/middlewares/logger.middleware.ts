@@ -23,6 +23,30 @@ export class LoggerMiddleware implements NestMiddleware {
 
     this.logRequestStart(method, originalUrl);
 
+    // Interceptar res.send para loguear el contenido de la respuesta
+    const originalSend = res.send;
+    res.send = (body?: any): Response => {
+      let responseBodyToLog;
+      if (body instanceof Buffer) {
+        responseBodyToLog = '[Buffer]';
+      } else if (typeof body === 'string') {
+        try {
+          const parsedBody = JSON.parse(body);
+          responseBodyToLog = JSON.stringify(parsedBody, null, 2);
+        } catch {
+          responseBodyToLog = body;
+        }
+      } else if (typeof body === 'object') {
+        responseBodyToLog = JSON.stringify(body, null, 2);
+      } else {
+        responseBodyToLog = String(body);
+      }
+      if (responseBodyToLog && responseBodyToLog !== '{}') {
+        this.logger.debug(`[HTTP] Response Body: ${responseBodyToLog}`);
+      }
+      return originalSend.call(res, body);
+    };
+
     res.on('finish', () => {
       this.logRequestFinish(req, res, startTime);
     });
@@ -58,7 +82,8 @@ export class LoggerMiddleware implements NestMiddleware {
       statusCode: res.statusCode,
       // ip: this.getClientIp(req),
       // userAgent: req.get('user-agent') || 'Unknown',
-      contentLength: `${res.get('content-length') || 0}b`,
+      // contentLength: `${res.get('content-length') || 0}b`,
+      contentLength: '', // null
       responseTimeMs: responseTime,
       timestamp: new Date().toISOString(),
     };

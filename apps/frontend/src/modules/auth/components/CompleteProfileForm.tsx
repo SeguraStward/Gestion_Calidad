@@ -65,31 +65,38 @@ export function CompleteProfileForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <User className="w-6 h-6 text-blue-600" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted/20 p-4">
+      <Card className="w-full max-w-md shadow-2xl border-0 bg-gradient-to-br from-white to-gray-50/80 dark:from-zinc-900 dark:to-zinc-800/80 overflow-hidden backdrop-blur-sm">
+        <CardHeader className="text-center bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 pb-8">
+          <div className="mx-auto w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center ring-4 ring-primary/10 mb-4">
+            <User className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">Completa tu Perfil</CardTitle>
-          <CardDescription className="text-gray-600">
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+            Completa tu Perfil
+          </CardTitle>
+          <CardDescription className="text-muted-foreground text-base">
             Para finalizar tu registro, necesitamos algunos datos adicionales.
           </CardDescription>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="py-8 px-8">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nombres</FormLabel>
+                    <FormLabel className="flex items-center gap-2 font-medium">
+                      <User className="w-4 h-4 text-primary" />
+                      Nombres
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: Juan Carlos" {...field} disabled={isSubmitting} />
+                      <Input placeholder="Ej: Juan Carlos" {...field} disabled={isSubmitting} className="h-12" />
                     </FormControl>
-                    <FormDescription>Tu nombre completo tal como aparece en documentos oficiales</FormDescription>
+                    <FormDescription className="text-sm text-muted-foreground">
+                      Tu nombre completo tal como aparece en documentos oficiales
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -100,11 +107,14 @@ export function CompleteProfileForm() {
                 name="fullLastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Apellidos</FormLabel>
+                    <FormLabel className="flex items-center gap-2 font-medium">
+                      <User className="w-4 h-4 text-primary" />
+                      Apellidos
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: Pérez González" {...field} disabled={isSubmitting} />
+                      <Input placeholder="Ej: Pérez González" {...field} disabled={isSubmitting} className="h-12" />
                     </FormControl>
-                    <FormDescription>Tus apellidos completos</FormDescription>
+                    <FormDescription className="text-sm text-muted-foreground">Tus apellidos completos</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -115,26 +125,36 @@ export function CompleteProfileForm() {
                 name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Número de Teléfono (Opcional)</FormLabel>
+                    <FormLabel className="flex items-center gap-2 font-medium">
+                      <span className="w-4 h-4 text-center text-xs">📞</span>
+                      Número de Teléfono (Opcional)
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Ej: +506 8888-8888" {...field} disabled={isSubmitting} />
+                      <Input placeholder="Ej: +506 8888-8888" {...field} disabled={isSubmitting} className="h-12" />
                     </FormControl>
-                    <FormDescription>Número de contacto (opcional)</FormDescription>
+                    <FormDescription className="text-sm text-muted-foreground">Número de contacto (opcional)</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                className="w-full h-12 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary group"
+                size="lg"
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                     Completando perfil...
                   </>
                 ) : (
                   <>
-                    Completar Perfil
-                    <ArrowRight className="h-4 w-4 ml-2" />
+                    <div className="flex items-center gap-2">
+                      <span>Completar Perfil</span>
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
+                    </div>
                   </>
                 )}
               </Button>
