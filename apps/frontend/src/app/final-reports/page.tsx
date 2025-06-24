@@ -36,7 +36,7 @@ export default function FinalReportsPage() {
   const router = useRouter()
   const mockProfessorId = useDevStore((state) => state.mockProfessorId)
   
-  // Estado para paginación y búsqueda
+   
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')

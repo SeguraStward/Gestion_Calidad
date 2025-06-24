@@ -15,7 +15,12 @@ export function HydrationGuard({ children, fallback }: HydrationGuardProps) {
   const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
-    setIsMounted(true)
+    // Usar setTimeout para asegurar que la hidratación esté completa
+    const timer = setTimeout(() => {
+      setIsMounted(true)
+    }, 0)
+
+    return () => clearTimeout(timer)
   }, [])
 
   if (!isMounted) {

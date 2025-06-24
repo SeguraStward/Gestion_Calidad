@@ -6,95 +6,70 @@ const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 35,
-    paddingTop: 25,
-    paddingBottom: 50, // Espacio para el footer
+    paddingHorizontal: 30,
+    paddingTop: 20,
+    paddingBottom: 35,  
     fontFamily: 'Helvetica'
   },
   headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start', // Alinea el logo textual y el bloque de título
+    flexDirection: 'column',
+    alignItems: 'center',  
     marginBottom: 20,
     width: '100%'
-  },
-  // --- Estilos para el Logo Textual ---
-  logoTextContainer: {
-    width: 120,
-    marginRight: 20,
-    flexDirection: 'column',
+  }, 
+  logoContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 95,
     alignItems: 'flex-start'
   },
-  logoTextUNA: {
-    fontFamily: 'Times-Roman',
-    fontSize: 48,
-    color: '#C00000',
-    lineHeight: 0.9,
-    marginBottom: 2
+  logoImage: {
+    width: 95,
+    height: 80,
+    objectFit: 'contain',
+    objectPosition: 'center'
   },
-  logoTextSubLine: {
-    fontFamily: 'Times-Roman',
-    fontSize: 11,
-    color: '#C00000',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: 1
-  },
-  logoTextCostaRica: {
-    fontFamily: 'Times-Roman',
-    fontSize: 9,
-    color: '#C00000',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginBottom: 2
-  },
-  logoHorizontalLine: {
-    height: 2,
-    width: '100%',
-    backgroundColor: '#C00000',
-    marginBottom: 3,
-    marginTop: 1
-  },
-  logoHorizontalLineSmall: {
-    height: 1,
-    width: '100%',
-    backgroundColor: '#C00000',
-    marginBottom: 2,
-    marginTop: 1
-  },
-  // --- Fin Estilos Logo Textual ---
   titleBlock: {
-    flexGrow: 1,
+    width: '100%',
     textAlign: 'center',
+    alignItems: 'center',
     marginTop: 10
   },
   mainTitle: {
-    fontSize: 14,
+    fontSize: 9,
     fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 3
+    color: '#666666',
+    marginTop: 2,
+    textAlign: 'center',
+    width: '100%'
   },
   subTitle: {
-    fontSize: 10,
-    color: '#333333',
-    marginBottom: 2
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#666666',
+    marginBottom: 3,
+    textAlign: 'center',
+    width: '100%'
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 'bold',
-    color: '#2C2C2C',
-    marginBottom: 8,
-    marginTop: 12,
-    paddingBottom: 3,
-    borderBottomWidth: 0.75,
-    borderBottomColor: '#B0B0B0'
+    color: '#000000',
+    marginBottom: 12,
+    marginTop: 16,
+    paddingBottom: 5,
+    textAlign: 'center',
+    width: '100%'
   },
   subSectionTitle: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 5,
-    marginTop: 8
+    color: '#000000',
+    marginBottom: 8,
+    marginTop: 12,
+    textAlign: 'center',
+    lineHeight: 1.3
   },
   labelText: {
     fontSize: 9,
@@ -104,97 +79,107 @@ const styles = StyleSheet.create({
   table: {
     width: '100%',
     borderStyle: 'solid',
-    borderWidth: 0.5,
-    borderColor: '#D1D1D1',
-    marginBottom: 10
+    borderWidth: 1,
+    borderColor: '#000000',
+    marginBottom: 12
   },
   tableRow: {
     flexDirection: 'row',
-    borderBottomColor: '#E0E0E0',
-    borderBottomWidth: 0.5
+    borderBottomColor: '#000000',
+    borderBottomWidth: 1
   },
   tableColHeader: {
-    backgroundColor: '#F5F5F5',
-    paddingVertical: 4,
-    paddingHorizontal: 5,
-    borderRightColor: '#E0E0E0',
-    borderRightWidth: 0.5,
+    backgroundColor: '#E8E8E8',
+    paddingVertical: 5,
+    paddingHorizontal: 6,
+    borderRightColor: '#000000',
+    borderRightWidth: 1,
     flexGrow: 1
   },
   tableCol: {
-    paddingVertical: 4,
-    paddingHorizontal: 5,
-    borderRightColor: '#E0E0E0',
-    borderRightWidth: 0.5,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 5,
+    paddingHorizontal: 6,
+    borderRightColor: '#000000',
+    borderRightWidth: 1,
     flexGrow: 1
   },
   tableCellHeader: {
     fontSize: 9,
     fontWeight: 'bold',
-    color: '#2C2C2C',
-    textAlign: 'left'
+    color: '#000000',
+    textAlign: 'center'
   },
   tableCell: {
-    fontSize: 9,
-    color: '#404040',
-    textAlign: 'left',
+    fontSize: 8,
+    color: '#333333',
+    textAlign: 'center',
     lineHeight: 1.3
   },
   tableCellCentered: {
-    fontSize: 9,
-    color: '#404040',
+    fontSize: 8,
+    color: '#333333',
     textAlign: 'center'
   },
   infoTableLabelCol: { width: '30%' },
   infoTableValueCol: { width: '70%', borderRightWidth: 0 },
-  statsTableMetricCol: { width: '50%' },
-  statsTableCountCol: { width: '25%' },
-  statsTablePercentCol: { width: '25%', borderRightWidth: 0 },
   evalGroupTable: {
     width: '100%',
     borderStyle: 'solid',
-    borderWidth: 0.5,
-    borderColor: '#C0C0C0',
+    borderWidth: 1,
+    borderColor: '#000000',
     marginBottom: 15
   },
   evalGroupHeaderRow: {
-    backgroundColor: '#EAEAEA',
+    backgroundColor: '#E8E8E8',
     padding: 6,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#B0B0B0'
+    borderBottomWidth: 1,
+    borderBottomColor: '#000000'
   },
   evalGroupHeaderText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#000000',
+    textAlign: 'center'
+  },
+  studentSectionHeaderRow: {
+    backgroundColor: '#E8E8E8',
+    padding: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#000000'
+  },
+  studentSectionHeaderText: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#202020',
+    color: '#000000',
     textAlign: 'center'
   },
   evalQuestionRow: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 4,
+    backgroundColor: '#E8E8E8',
+    paddingVertical: 5,
     paddingHorizontal: 6,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#E0E0E0'
+    borderBottomWidth: 1,
+    borderBottomColor: '#000000'
   },
   evalAnswerRow: {
     flexDirection: 'row',
-    backgroundColor: '#F9F9F9',
-    paddingVertical: 4,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 5,
     paddingHorizontal: 6,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#E0E0E0'
+    borderBottomWidth: 1,
+    borderBottomColor: '#000000'
   },
   evalQuestionTextCell: {
     fontSize: 9,
-    color: '#333333',
+    color: '#000000',
     fontWeight: 'bold',
     flex: 1
   },
   evalAnswerTextCell: {
-    fontSize: 9,
-    color: '#454545',
-    paddingLeft: 10,
+    fontSize: 8,
+    color: '#333333',
+    paddingLeft: 8,
     flex: 1
   },
   evalListItem: {
@@ -209,7 +194,8 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     padding: 8,
-    border: '0.5px solid #E0E0E0',
+    border: '1px solid #000000',
+    backgroundColor: '#F8F8F8',
     marginTop: 5
   },
 
@@ -219,13 +205,41 @@ const styles = StyleSheet.create({
     left: 35,
     right: 35,
     textAlign: 'center',
-    flexDirection: 'column', // Para apilar los textos en el footer
-    alignItems: 'center' // Centrar los textos dentro del footer
+    alignItems: 'center'
   },
   footerText: {
     fontSize: 8,
-    color: '#555555',
-    marginBottom: 2 // Pequeño espacio entre líneas del footer
+    color: '#888888'
+  },
+  creationDateContainer: {
+    width: '100%',
+    marginTop: 20,
+    marginBottom: 20
+  },
+  creationDateRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  creationDateLabel: {
+    backgroundColor: '#E8E8E8',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#000000',
+    borderRightWidth: 0,
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#000000'
+  },
+  creationDateValue: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#000000',
+    fontSize: 10,
+    color: '#333333'
   }
 })
 
@@ -234,14 +248,29 @@ interface FinalReportPDFDocumentProps {
   report: FullFinalReport
 }
 
+const getLogoUrl = (): string => {
+  // Opción 1: En el navegador, usar la URL actual (100% confiable)
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/assets/images/una-logo.png`
+  }
+  
+  // Opción 2: En el servidor, usar VERCEL_URL (Vercel automáticamente la provee)
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}/assets/images/una-logo.png`
+  }
+  
+  // Opción 3: Fallback para desarrollo local
+  return 'http://localhost:3001/assets/images/una-logo.png'
+}
+
 const formatDate = (dateString?: string | null): string => {
   if (!dateString) return 'N/A'
   try {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
+    const date = new Date(dateString)
+    const day = date.getDate().toString().padStart(2, '0')
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const year = date.getFullYear()
+    return `${day}-${month}-${year}`
   } catch (e) {
     return dateString
   }
@@ -267,6 +296,11 @@ const calculatePercentage = (value: number | undefined | null, total: number | u
   return ((value / total) * 100).toFixed(1) + '%'
 }
 
+const capitalizeFirstLetter = (text: string): string => {
+  if (!text) return text
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
 export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ report }) => {
   const stats = report.statistics
   const studentInfo = report.studentInformation
@@ -288,36 +322,42 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
   const cycleName = report.academicLoad?.academicCycle?.name || '[No especificado]'
   const reportYear = getYearFromDate(report.academicLoad?.academicCycle?.startDate || report.createdAt)
 
+  // URL del logo de la UNA
+  const logoUrl = getLogoUrl()
+  
+  // Función para renderizar el logo si está disponible
+  const renderLogo = () => {
+    return (
+      <Image 
+        style={styles.logoImage} 
+        src={logoUrl}
+      />
+    )
+  }
+
   return (
     <Document title={`Informe Final - ${report.academicLoad?.nrc || 'N/A'}`} author="Universidad Nacional de Costa Rica">
       <Page size="A4" style={styles.page}>
         {/* Header: Logo y Bloque de Título - Solo en la primera página */}
         <View style={styles.headerContainer}>
-          <View style={styles.logoTextContainer}>
-            <Text style={styles.logoTextUNA}>UNA</Text>
-            <View style={styles.logoHorizontalLine} />
-            <Text style={styles.logoTextSubLine}>UNIVERSIDAD</Text>
-            <Text style={styles.logoTextSubLine}>NACIONAL</Text>
-            <View style={styles.logoHorizontalLineSmall} />
-            <Text style={styles.logoTextCostaRica}>COSTA RICA</Text>
-            <View style={styles.logoHorizontalLine} />
+          <View style={styles.logoContainer}>
+            {renderLogo()}
           </View>
           <View style={styles.titleBlock}>
-            <Text style={styles.mainTitle}>Informe Final de Curso</Text>
+            <Text style={styles.mainTitle}>INFORME FINAL DE CURSO</Text>
             <Text style={styles.subTitle}>Campus: {campusName}</Text>
             <Text style={styles.subTitle}>Ciclo: {cycleName}</Text>
             <Text style={styles.subTitle}>Año: {reportYear}</Text>
           </View>
         </View>
 
-        {/* Sección 1: Información del Curso y Profesor */}
-        <Text style={styles.sectionTitle}>1. Información del Curso y Profesor</Text>
+        {/* Sección: Información del Curso */}
+        <Text style={styles.sectionTitle}>Información del Curso y Profesor</Text>
         <View style={styles.table}>
           {[
-            { label: 'NRC', value: report.academicLoad?.nrc || 'N/A' },
             { label: 'Curso', value: report.academicLoad?.course?.name || 'N/A' },
-            { label: 'Código Curso', value: report.academicLoad?.course?.code || 'N/A' },
-            { label: 'Ciclo Académico', value: report.academicLoad?.academicCycle?.name || 'N/A' },
+            { label: 'Código', value: report.academicLoad?.course?.code || 'N/A' },
+            { label: 'NRC', value: report.academicLoad?.nrc || 'N/A' },
             { label: 'Profesor', value: report.professor?.fullName || report.academicLoad?.professor?.fullName || 'N/A' }
           ].map((item, index, arr) => (
             <View
@@ -325,62 +365,36 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
               key={item.label}
               wrap={false}
             >
-              <View style={[styles.tableCol, styles.infoTableLabelCol]}>
-                <Text style={styles.labelText}>{item.label}</Text>
+              <View style={[styles.tableColHeader, { width: '30%' }]}>
+                <Text style={styles.tableCellHeader}>{item.label}</Text>
               </View>
-              <View style={[styles.tableCol, styles.infoTableValueCol]}>
+              <View style={[styles.tableCol, { width: '70%', borderRightWidth: 0 }]}>
                 <Text style={styles.tableCell}>{item.value}</Text>
               </View>
             </View>
           ))}
         </View>
 
-        {/* Sección 2: Estadísticas */}
-        <Text style={styles.sectionTitle}>2. Estadísticas del Curso</Text>
+        {/* Sección: Estadísticas */}
+        <Text style={styles.sectionTitle}>Estadísticas del Curso</Text>
         {stats ? (
           <View style={styles.table}>
-            <View style={styles.tableRow} fixed>
-              <View style={[styles.tableColHeader, styles.statsTableMetricCol]}>
-                <Text style={styles.tableCellHeader}>Métrica</Text>
-              </View>
-              <View style={[styles.tableColHeader, styles.statsTableCountCol]}>
-                <Text style={[styles.tableCellHeader, { textAlign: 'center' }]}>Cantidad</Text>
-              </View>
-              <View style={[styles.tableColHeader, styles.statsTablePercentCol, { borderRightWidth: 0 }]}>
-                <Text style={[styles.tableCellHeader, { textAlign: 'center' }]}>Porcentaje</Text>
-              </View>
-            </View>
             {[
-              { label: 'Total Estudiantes Inscritos', value: stats.totalStudents, percentage: '-' },
-              {
-                label: 'Estudiantes Aprobados',
-                value: stats.passed,
-                percentage: calculatePercentage(stats.passed, stats.totalStudents)
-              },
-              {
-                label: 'Estudiantes Reprobados',
-                value: stats.failed,
-                percentage: calculatePercentage(stats.failed, stats.totalStudents)
-              },
-              {
-                label: 'Estudiantes Desertores (Retirados)',
-                value: stats.dropouts,
-                percentage: calculatePercentage(stats.dropouts, stats.totalStudents)
-              }
+              { label: 'Total Estudiantes Inscritos', value: stats.totalStudents },
+              { label: 'Estudiantes Aprobados', value: `${stats.passed} (${calculatePercentage(stats.passed, stats.totalStudents)})` },
+              { label: 'Estudiantes Reprobados', value: `${stats.failed} (${calculatePercentage(stats.failed, stats.totalStudents)})` },
+              { label: 'Estudiantes Desertores (Retirados)', value: `${stats.dropouts} (${calculatePercentage(stats.dropouts, stats.totalStudents)})` }
             ].map((item, index, arr) => (
               <View
                 style={[styles.tableRow, index === arr.length - 1 ? { borderBottomWidth: 0 } : {}]}
                 key={item.label}
                 wrap={false}
               >
-                <View style={[styles.tableCol, styles.statsTableMetricCol]}>
-                  <Text style={styles.tableCell}>{item.label}</Text>
+                <View style={[styles.tableColHeader, { width: '60%' }]}>
+                  <Text style={styles.tableCellHeader}>{item.label}</Text>
                 </View>
-                <View style={[styles.tableCol, styles.statsTableCountCol]}>
-                  <Text style={styles.tableCellCentered}>{item.value ?? 'N/A'}</Text>
-                </View>
-                <View style={[styles.tableCol, styles.statsTablePercentCol, { borderRightWidth: 0 }]}>
-                  <Text style={styles.tableCellCentered}>{item.percentage}</Text>
+                <View style={[styles.tableCol, { width: '40%', borderRightWidth: 0 }]}>
+                  <Text style={styles.tableCell}>{item.value ?? 'N/A'}</Text>
                 </View>
               </View>
             ))}
@@ -389,11 +403,13 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
           <Text style={styles.noDataText}>No hay datos estadísticos disponibles para este informe.</Text>
         )}
 
-        {/* Sección 3: Información de Estudiantes */}
-        <Text style={styles.sectionTitle}>3. Información de Estudiantes</Text>
-        <Text style={styles.subSectionTitle}>3.1 Adecuaciones Curriculares</Text>
+        {/* Sección: Información de Estudiantes */}
+        <Text style={styles.sectionTitle}>Información Específica sobre Estudiantes</Text>
         {studentInfo?.adjustments && studentInfo.adjustments.length > 0 ? (
           <View style={styles.table}>
+            <View style={styles.studentSectionHeaderRow}>
+              <Text style={styles.studentSectionHeaderText}>Ajustes Metodológicos y de Evaluación (estudiantes que requirieron algún tipo de adecuación o apoyo pedagógico)</Text>
+            </View>
             <View style={styles.tableRow} fixed>
               <View style={[styles.tableColHeader, { width: '20%' }]}>
                 <Text style={styles.tableCellHeader}>Cédula</Text>
@@ -436,12 +452,23 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
             ))}
           </View>
         ) : (
-          <Text style={styles.noDataText}>No se registraron adecuaciones curriculares.</Text>
+          <View style={styles.table}>
+            <View style={styles.studentSectionHeaderRow}>
+              <Text style={styles.studentSectionHeaderText}>Ajustes Metodológicos y de Evaluación (estudiantes que requirieron algún tipo de adecuación o apoyo pedagógico)</Text>
+            </View>
+            <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
+              <View style={[styles.tableCol, { borderRightWidth: 0 }]}>
+                <Text style={styles.noDataText}>No se registraron adecuaciones curriculares.</Text>
+              </View>
+            </View>
+          </View>
         )}
 
-        <Text style={styles.subSectionTitle}>3.2 Estudiantes en Salvaguarda</Text>
         {studentInfo?.safeguards && studentInfo.safeguards.length > 0 ? (
           <View style={styles.table}>
+            <View style={styles.studentSectionHeaderRow}>
+              <Text style={styles.studentSectionHeaderText}>Plan para Poblaciones Indígenas (grupos de interés institucional, estudiantes provenientes de territorios indígenas)</Text>
+            </View>
             <View style={styles.tableRow} fixed>
               <View style={[styles.tableColHeader, { width: '25%' }]}>
                 <Text style={styles.tableCellHeader}>Cédula</Text>
@@ -478,12 +505,21 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
             ))}
           </View>
         ) : (
-          <Text style={styles.noDataText}>No se registraron estudiantes en salvaguarda.</Text>
+          <View style={styles.table}>
+            <View style={styles.studentSectionHeaderRow}>
+              <Text style={styles.studentSectionHeaderText}>Plan para Poblaciones Indígenas (grupos de interés institucional, estudiantes provenientes de territorios indígenas)</Text>
+            </View>
+            <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
+              <View style={[styles.tableCol, { borderRightWidth: 0 }]}>
+                <Text style={styles.noDataText}>No se registraron estudiantes en salvaguarda.</Text>
+              </View>
+            </View>
+          </View>
         )}
 
         {/* Sección 4: Evaluación - Comienza en una nueva página */}
         <View break>
-          <Text style={styles.sectionTitle}>4. Evaluación y Percepción del Curso</Text>
+          <Text style={styles.sectionTitle}>Evaluación y Percepción del Curso</Text>
           {Object.entries(groupedEvaluations).length > 0 ? (
             Object.entries(groupedEvaluations).map(([groupName, questions], groupIndex) => (
               <View style={styles.evalGroupTable} key={groupName} wrap={false}>
@@ -493,11 +529,11 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
                 {questions.map((q, qIndex, arr) => (
                   <React.Fragment key={`${groupName}-${q.questionId}-${qIndex}`}>
                     <View style={styles.evalQuestionRow} wrap={false}>
-                      <Text style={styles.evalQuestionTextCell}>{q.question}</Text>
+                      <Text style={styles.evalQuestionTextCell}>{qIndex + 1}. {q.question}</Text>
                     </View>
                     <View style={[styles.evalAnswerRow, qIndex === arr.length - 1 ? { borderBottomWidth: 0 } : {}]} wrap={false}>
                       <View style={styles.evalAnswerTextCell}>
-                        {q.responseType === 'TEXT' && <Text>{q.response || q.otherResponse || 'N/R'}</Text>}
+                        {q.responseType === 'TEXT' && <Text>{capitalizeFirstLetter(q.response || q.otherResponse || 'N/R')}</Text>}
                         {q.responseType === 'SELECCION_UNICA' && (
                           <Text>{getOptionLabel(q.options, q.response || '') || 'N/R'}</Text>
                         )}
@@ -514,7 +550,7 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
                             <Text>N/R</Text>
                           ))}
                         {q.questionId === 'otras_herramientas' && q.response && q.responseType !== 'TEXT' && (
-                          <Text>{q.response}</Text>
+                          <Text>{capitalizeFirstLetter(q.response)}</Text>
                         )}
                         {!q.response &&
                           !q.otherResponse &&
@@ -531,26 +567,16 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
           )}
         </View>
 
+        {/* Sección de Fecha de Creación */}
+        <View style={styles.creationDateContainer}>
+          <View style={styles.creationDateRow}>
+            <Text style={styles.creationDateLabel}>Fecha de Creación:</Text>
+            <Text style={styles.creationDateValue}>{formatDate(report.createdAt)}</Text>
+          </View>
+        </View>
+
         <View style={styles.footerContainer} fixed>
-          <Text
-            style={styles.footerText}
-            render={({ pageNumber, totalPages }) => {
-              if (pageNumber === totalPages) {
-                return `Informe creado por la Universidad nacional de Costa rica.`
-              }
-              return '' // No mostrar en otras páginas
-            }}
-          />
-          <Text
-            style={styles.footerText}
-            render={({ pageNumber, totalPages }) => {
-              if (pageNumber === totalPages) {
-                return `Fecha de Creación del Informe: ${formatDate(report.createdAt)}`
-              }
-              return ''
-            }}
-          />
-          <Text style={styles.footerText} render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
+          <Text style={styles.footerText} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
         </View>
       </Page>
     </Document>
