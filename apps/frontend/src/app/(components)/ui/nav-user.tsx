@@ -1,6 +1,6 @@
 'use client'
 
-import { useSessionStore } from '@/store/sessionStore'
+import { useSessionStore } from '@/modules/auth/sessionStore'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@una-gc/ui/components/sidebar'
 import { Avatar, AvatarFallback, AvatarImage } from '@una-gc/ui/components/avatar'
 import {
@@ -23,9 +23,9 @@ export function NavUser() {
 
   const renderAvatar = () => (
     <Avatar className="h-8 w-8 rounded-lg">
-      <AvatarImage src={user.photoUrl || `/assets/images/default-profile-image.png`} alt={user.name} />
+      <AvatarImage src={user.photoUrl || `/assets/images/default-profile-image.png`} alt={user.fullName} />
       <AvatarFallback className="rounded-lg">
-        {user.name
+        {user.fullName
           .split(' ')
           .map((n) => n[0])
           .join('')
@@ -36,7 +36,7 @@ export function NavUser() {
 
   const renderUserInfo = () => (
     <div className="grid flex-1 text-left text-sm leading-tight">
-      <span className="truncate font-semibold">{user.name}</span>
+      <span className="truncate font-semibold">{user.fullName}</span>
       <span className="truncate text-xs">{user.email}</span>
       {role && <span className="truncate text-xs text-muted-foreground">{role.name}</span>}
     </div>
@@ -44,8 +44,8 @@ export function NavUser() {
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
-      import('@/utils/cookie.manager').then(({ CookieManager }) => {
-        CookieManager.clearAllAuthData()
+      import('@/modules/auth/utils/cookie.manager').then(({ CookieManager }) => {
+        CookieManager.clearAll()
       })
     }
   }
