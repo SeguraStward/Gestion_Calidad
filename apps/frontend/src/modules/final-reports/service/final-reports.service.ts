@@ -1,4 +1,5 @@
 import { GenericService, createGenericHooks } from '@/services/base' // Assuming base is directly in services
+import { HttpClient } from '@/lib/http-client'
 import { useQuery } from '@tanstack/react-query'
 import type { PaginatedResponse } from '@/services/interfaces'
 import type {
@@ -18,10 +19,12 @@ class FinalReportService extends GenericService<FullFinalReport, CreateFinalRepo
     professorId: string,
     filters?: Omit<FinalReportFilters, 'professorId'>
   ): Promise<PaginatedResponse<FullFinalReport>> {
-    // Changed return type
-    // The list method from GenericService now returns the actual PaginatedResponse<FullFinalReport>
-    const response = await this.list({ ...filters, professorId } as FinalReportFilters)
-    return response // Return the full PaginatedResponse object
+    // Use the specific professor endpoint to get the search functionality
+    const response = await HttpClient.get<PaginatedResponse<FullFinalReport>>(
+      `/${this.resource}/professor/${professorId}`,
+      { params: filters }
+    )
+    return response.data
   }
 
   /**

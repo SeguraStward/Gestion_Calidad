@@ -38,12 +38,12 @@ export default function FinalReportsPage() {
   
    
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize] = useState(10)
+  const [pageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
   const [isGeneratingPdfId, setIsGeneratingPdfId] = useState<string | null>(null)
 
   // Debounce del lado del servidor para la búsqueda
-  const [debouncedSearchQuery] = useDebounce(searchQuery, 500)
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 300)
 
   // Resetear la página a 1 cuando cambia la búsqueda
   useEffect(() => {
@@ -291,6 +291,8 @@ export default function FinalReportsPage() {
         newButton={newReportButton}
         currentPage={currentPage}
         totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
         onPageChange={handlePageChange}
         // Nuevas props para filtrado del lado del servidor
         searchQuery={searchQuery}
