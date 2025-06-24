@@ -1,7 +1,7 @@
 // Test temporal para debugging
 // Este archivo será eliminado una vez que se resuelva el problema
 
-import { AuthService } from '@/modules/auth/auth.service'
+import { AuthService } from '@/modules/auth/services/auth.service'
 
 export const testBackendResponse = async () => {
   try {

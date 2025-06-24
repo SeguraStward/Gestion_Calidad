@@ -1,8 +1,8 @@
-import { Logger } from '.'
+import { Logger } from '@/utils'
 
 import { Permission } from '@/modules/auth/types'
 
-import { UserActiveRole, UserData } from '@/store/sessionStore'
+import { UserActiveRole, UserData } from '@/modules/auth/sessionStore'
 
 interface StorageItemWithExpiry<T> {
   value: T

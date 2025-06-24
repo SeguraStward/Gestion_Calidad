@@ -1,14 +1,14 @@
 import {
+  Body,
   Controller,
   Get,
+  Header,
   Logger,
   Post,
   Req,
   Res,
   UnauthorizedException,
   UseGuards,
-  Body,
-  Header,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
@@ -18,39 +18,84 @@ import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
-import { GoogleUser } from './interfaces';
-import { LoginUserDto, CompleteProfileDto, UserResponseDto } from './dtos';
-import { mapUserToResponse, validateUserData, logUserResponse } from './helpers/user-mapper.helper';
+import { GoogleUser } from './types';
+import { LoginUserDto, CompleteProfileDto, UserResponseDto, SetActiveRoleDto } from './dtos';
+import { mapUserToResponse, validateUserData } from './helpers/user-mapper.helper';
+import { CookieUtil } from './utils/cookie.util';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   private readonly logger: Logger;
+  private readonly cookieUtil: CookieUtil;
+
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
   ) {
     this.logger = new Logger(AuthController.name);
+    this.cookieUtil = new CookieUtil(configService);
   }
 
-  private getCookieMaxAge(key: 'JWT_EXPIRATION' | 'JWT_REFRESH_EXPIRATION'): number {
-    const expiryString = this.configService.get<string>(key);
-    const unit = expiryString.slice(-1);
-    const value = parseInt(expiryString.slice(0, -1), 10);
-    if (isNaN(value)) return 0; // Default or throw error
+  /**
+   * Helper method to handle authentication errors with centralized error mapping
+   */
+  private handleAuthError(error: any, res: Response) {
+    const frontendUrl = this.configService.get('FRONTEND_URL');
+    let errorCode = 'AUTH_007'; // Default error code
 
-    switch (unit) {
-      case 's':
-        return value * 1000;
-      case 'm':
-        return value * 60 * 1000;
-      case 'h':
-        return value * 60 * 60 * 1000;
-      case 'd':
-        return value * 24 * 60 * 60 * 1000;
-      default:
-        return 0; // Default or throw error
+    if (error instanceof UnauthorizedException) {
+      const errorResponse = error.getResponse() as any;
+      const responseCode = errorResponse?.code;
+      const errorMessage = error.message || '';
+
+      // Map specific error codes and patterns to frontend error codes
+      const errorMap = {
+        USER_NOT_FOUND: 'AUTH_010&action=register',
+        ACCOUNT_INACTIVE: 'AUTH_011',
+        ACCOUNT_PENDING: 'AUTH_012',
+      };
+
+      if (responseCode && errorMap[responseCode]) {
+        errorCode = errorMap[responseCode];
+      } else if (errorMessage.includes('pending activation') || errorMessage.includes('PRE_REGISTRATION')) {
+        errorCode = 'AUTH_003';
+      } else if (errorMessage.includes('deactivated') || errorMessage.includes('INACTIVE')) {
+        errorCode = 'AUTH_004';
+      } else if (errorMessage.includes('no access')) {
+        errorCode = 'AUTH_005';
+      } else {
+        errorCode = 'AUTH_006';
+      }
     }
+
+    this.logger.error(`Authentication error handled: ${errorCode}`, error);
+    return res.redirect(`${frontendUrl}/auth/error?code=${errorCode}`);
+  }
+
+  /**
+   * Helper method to set authentication cookies
+   */
+  private setAuthCookies(res: Response, token: string, refreshToken: string) {
+    const authTokenConfig = this.cookieUtil.getAuthTokenConfig();
+    const refreshTokenConfig = this.cookieUtil.getRefreshTokenConfig();
+
+    res.cookie('auth_token', token, authTokenConfig);
+    res.cookie('refresh_token', refreshToken, refreshTokenConfig);
+
+    this.logger.debug('Authentication cookies set successfully');
+  }
+
+  /**
+   * Helper method to clear all authentication cookies
+   */
+  private clearAuthCookies(res: Response) {
+    const clearCookieConfig = this.cookieUtil.getBaseCookieConfig();
+    res.clearCookie('auth_token', clearCookieConfig);
+    res.clearCookie('refresh_token', clearCookieConfig);
+    res.clearCookie('active_role_id', clearCookieConfig);
+
+    this.logger.debug('All authentication cookies cleared');
   }
 
   @ApiOperation({ summary: 'Initiate Google OAuth flow' })
@@ -64,106 +109,49 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
-    this.logger.debug('Google auth callback initiated');
-
     try {
-      if (!req.user) {
-        this.logger.error('User not found in request after Google OAuth callback');
-        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_001`);
-      }
+      const result = await this.processGoogleCallback(req);
+      this.setAuthCookies(res, result.token, result.refreshToken);
 
-      // Log detailed user information for debugging
-      this.logger.debug('Google OAuth user data:', JSON.stringify(req.user, null, 2));
+      const redirectPath = result.needsProfileCompletion ? '/auth/complete-profile' : '/auth/callback';
+      this.logger.log(`Redirecting user ${result.user.email} to ${redirectPath}`);
 
-      // Assuming req.user from GoogleStrategy has an 'email' property
-      const googleUser = req.user as { email: string; [key: string]: any };
-      const allowedDomain = '@est.una.ac.cr';
-
-      if (!googleUser.email || !googleUser.email.endsWith(allowedDomain)) {
-        this.logger.warn(`Login attempt from disallowed domain: ${googleUser.email || 'No email provided'}`);
-        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_002`);
-      }
-
-      // Validar que tengamos los datos mínimos necesarios
-      if (!googleUser.email) {
-        this.logger.error('Google user missing required email field');
-        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_008`);
-      }
-
-      this.logger.log(`Processing Google login for user: ${googleUser.email}`);
-      const result = await this.authService.googleLogin(req.user as GoogleUser);
-      this.logger.debug(`Google login result:`, JSON.stringify(result, null, 2));
-
-      // Validar que el resultado contenga los datos básicos del usuario
-      if (!result.user || !result.user.id || !result.user.email) {
-        this.logger.error('Invalid user data returned from authentication service', result);
-        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_009`);
-      }
-
-      // Set cookies with detailed logging
-      this.logger.debug('Setting auth cookies...');
-      res.cookie('auth_token', result.token, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_EXPIRATION'),
-        sameSite: 'lax',
-        path: '/',
-      });
-
-      res.cookie('refresh_token', result.refreshToken, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_REFRESH_EXPIRATION'),
-        sameSite: 'lax',
-        path: '/',
-      });
-      this.logger.debug('Auth cookies set successfully');
-
-      // Redirect based on user status
-      if (result.needsProfileCompletion) {
-        this.logger.log(`Redirecting user ${result.user.email} to complete profile`);
-        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/complete-profile`);
-      } else {
-        this.logger.log(`Redirecting user ${result.user.email} to role selection`);
-        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/callback`);
-      }
+      return res.redirect(`${this.configService.get('FRONTEND_URL')}${redirectPath}`);
     } catch (error) {
-      this.logger.error(
-        `Google authentication callback error: ${error instanceof Error ? error.message : String(error)}`,
-      );
-
-      // Handle specific authentication errors with standardized error codes
-      if (error instanceof UnauthorizedException) {
-        const errorResponse = error.getResponse() as any;
-        const errorCode = errorResponse?.code;
-
-        switch (errorCode) {
-          case 'USER_NOT_FOUND':
-            return res.redirect(
-              `${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_010&action=register`,
-            );
-          case 'ACCOUNT_INACTIVE':
-            return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_011`);
-          case 'ACCOUNT_PENDING':
-            return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_012`);
-          default:
-            // Fallback to checking error message for backward compatibility
-            const errorMessage = error.message;
-            if (errorMessage.includes('pending activation') || errorMessage.includes('PRE_REGISTRATION')) {
-              return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_003`);
-            } else if (errorMessage.includes('deactivated') || errorMessage.includes('INACTIVE')) {
-              return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_004`);
-            } else if (errorMessage.includes('no access')) {
-              return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_005`);
-            }
-            // Generic unauthorized error
-            return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_006`);
-        }
-      }
-
-      // If it's not an UnauthorizedException, redirect to generic error
-      return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_007`);
+      this.logger.error('Google authentication callback error:', error);
+      return this.handleAuthError(error, res);
     }
+  }
+
+  /**
+   * Process Google OAuth callback with validation
+   */
+  private async processGoogleCallback(req: Request) {
+    if (!req.user) {
+      this.logger.error('User not found in request after Google OAuth callback');
+      throw new Error('Authentication data missing');
+    }
+
+    const googleUser = req.user as { email: string; [key: string]: any };
+    const allowedDomain = '@est.una.ac.cr';
+
+    // Validate domain
+    if (!googleUser.email?.endsWith(allowedDomain)) {
+      this.logger.warn(`Login attempt from disallowed domain: ${googleUser.email || 'No email'}`);
+      throw new Error('Domain not allowed');
+    }
+
+    // Process login
+    this.logger.log(`Processing Google login for user: ${googleUser.email}`);
+    const result = await this.authService.googleLogin(req.user as GoogleUser);
+
+    // Validate result
+    if (!result.user?.id || !result.user?.email) {
+      this.logger.error('Invalid user data returned from authentication service');
+      throw new Error('Invalid user response');
+    }
+
+    return result;
   }
 
   @ApiOperation({ summary: 'Get current user profile' })
@@ -173,6 +161,42 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   getProfile(@Req() req: Request) {
     return req.user;
+  }
+
+  @ApiOperation({ summary: 'Set active role for current user' })
+  @ApiResponse({ status: 200, description: 'Active role set successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 400, description: 'Invalid role ID' })
+  @Post('set-active-role')
+  @UseGuards(JwtAuthGuard)
+  async setActiveRole(
+    @Body() setActiveRoleDto: SetActiveRoleDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const user = req.user as { id: string; email: string };
+
+    try {
+      await this.authService.setActiveRole(user.id, setActiveRoleDto.roleId);
+
+      const activeRoleConfig = this.cookieUtil.getActiveRoleConfig();
+      res.cookie('active_role_id', setActiveRoleDto.roleId, activeRoleConfig);
+
+      return { message: 'Active role set successfully', roleId: setActiveRoleDto.roleId };
+    } catch (error) {
+      this.logger.error(`Error setting active role for user ${user.id}: ${error}`);
+      throw error;
+    }
+  }
+
+  @ApiOperation({ summary: 'Get current active role' })
+  @ApiResponse({ status: 200, description: 'Return current active role ID' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @Get('active-role')
+  @UseGuards(JwtAuthGuard)
+  getActiveRole(@Req() req: Request) {
+    const activeRoleId = req.cookies.active_role_id;
+    return { activeRoleId: activeRoleId || null };
   }
 
   @ApiOperation({ summary: 'Logout current user' })
@@ -190,25 +214,8 @@ export class AuthController {
       }
     }
 
-    res.clearCookie('auth_token', {
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'lax',
-      path: '/',
-    });
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'lax',
-      path: '/',
-    });
-    res.clearCookie('user_active_role_id', {
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'lax',
-      path: '/',
-    });
-
+    // Clear all authentication cookies
+    this.clearAuthCookies(res);
     return { message: 'Logged out successfully' };
   }
 
@@ -218,7 +225,6 @@ export class AuthController {
   @Post('refresh')
   @UseGuards(JwtRefreshGuard)
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    // JwtRefreshStrategy populates req.user with { id, email, refreshTokenFromCookie, refreshTokenDbId }
     const userFromStrategy = req.user as {
       id: string;
       email: string;
@@ -226,8 +232,8 @@ export class AuthController {
       refreshTokenFromCookie: string;
     };
 
-    if (!userFromStrategy || !userFromStrategy.refreshTokenDbId) {
-      this.logger.error('User object or refreshTokenDbId not found in request after JwtRefreshGuard.');
+    if (!userFromStrategy?.refreshTokenDbId) {
+      this.logger.error('Authentication data missing for refresh token');
       throw new UnauthorizedException('Authentication data missing for refresh.');
     }
 
@@ -235,43 +241,11 @@ export class AuthController {
       const { token: newAccessToken, refreshToken: newRawRefreshToken } =
         await this.authService.refreshToken(userFromStrategy);
 
-      res.cookie('auth_token', newAccessToken, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_EXPIRATION'),
-        sameSite: 'lax',
-        path: '/',
-      });
-
-      res.cookie('refresh_token', newRawRefreshToken, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_REFRESH_EXPIRATION'),
-        sameSite: 'lax',
-        path: '/',
-      });
-
+      this.setAuthCookies(res, newAccessToken, newRawRefreshToken);
       return { accessToken: newAccessToken };
     } catch (error) {
-      this.logger.error(
-        `Refresh token rotation error: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      // If authService.refreshToken throws (e.g., due to failure marking old token as used),
-      // or if JwtRefreshStrategy threw (e.g. family invalidation), cookies should be cleared.
-      // The strategy itself handles family invalidation if a used token is presented.
-      // If an error occurs during rotation after validation, clear cookies.
-      res.clearCookie('auth_token', {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        sameSite: 'lax',
-        path: '/',
-      });
-      res.clearCookie('refresh_token', {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        sameSite: 'lax',
-        path: '/',
-      });
+      this.logger.error('Refresh token rotation error:', error);
+      this.clearAuthCookies(res);
 
       if (error instanceof UnauthorizedException) {
         throw error;
@@ -296,20 +270,10 @@ export class AuthController {
       this.logger.debug(`[${timestamp}] 🔍 Obteniendo datos de usuario desde base de datos...`);
       const user = await this.authService.getUserById(jwtUser.id);
 
-      this.logger.debug(`[${timestamp}] 📊 Datos obtenidos de BD:`, {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        fullLastName: user.fullLastName,
-        photoUrl: user.photoUrl,
-        status: user.status,
-      });
-
       validateUserData(user);
       const response = mapUserToResponse(user);
 
       this.logger.log(`[${timestamp}] ✅ Respuesta de perfil preparada para: ${user.email}`);
-      logUserResponse(response, 'GET /auth/me');
 
       return response;
     } catch (error) {
@@ -332,23 +296,7 @@ export class AuthController {
       });
 
       this.logger.log(`User authentication successful: ${loginDto.email}`);
-
-      // Set cookies
-      res.cookie('auth_token', result.token, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_EXPIRATION'),
-        sameSite: 'lax',
-        path: '/',
-      });
-
-      res.cookie('refresh_token', result.refreshToken, {
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_REFRESH_EXPIRATION'),
-        sameSite: 'lax',
-        path: '/',
-      });
+      this.setAuthCookies(res, result.token, result.refreshToken);
 
       return {
         message: 'Authentication successful',
@@ -400,7 +348,6 @@ export class AuthController {
       const userInfo = await this.authService.getUserById(user.id);
       validateUserData(userInfo);
       const userResponse = mapUserToResponse(userInfo);
-      logUserResponse(userResponse, 'GET /auth/callback/status');
       return {
         authenticated: true,
         user: userResponse,

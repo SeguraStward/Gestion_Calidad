@@ -10,7 +10,7 @@ import {
   RESOURCE_NAME_TOKEN,
 } from '../decorators/require-permissions.decorator';
 import { RESOURCE_NAME_KEY } from '../decorators/resource-name.decorator';
-import { Permission } from '../interfaces';
+import { Permission } from '../types';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {

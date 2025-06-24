@@ -3,10 +3,10 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import axios, { AxiosError } from 'axios'
 
-import { AuthService } from '@/modules/auth/auth.service'
+import { AuthService } from '@/modules/auth/services/auth.service'
 import { useAsyncOperation } from '@/hooks/useAsyncOperation'
-import { CookieManager } from '@/utils'
-import { useSessionStore } from '@/store/sessionStore'
+import { CookieManager } from '../utils/cookie.manager'
+import { useSessionStore } from '@/modules/auth/sessionStore'
 import { Role } from '../types'
 
 export interface UseRoleSelectionReturn {
@@ -21,6 +21,7 @@ export interface UseRoleSelectionReturn {
   retryCount: number
   canRetry: boolean
   showTransition: boolean
+  shouldShowError: boolean
 
   // Actions
   setSelectedRole: (role: Role | null) => void
@@ -41,6 +42,8 @@ export function useRoleSelection(): UseRoleSelectionReturn {
   const [hasActiveRole, setHasActiveRole] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
   const [showTransition, setShowTransition] = useState(false)
+  const [loadingStartTime, setLoadingStartTime] = useState<number | null>(null)
+  const [shouldShowError, setShouldShowError] = useState(false)
 
   const router = useRouter()
   const { setRole } = useSessionStore()
@@ -49,6 +52,7 @@ export function useRoleSelection(): UseRoleSelectionReturn {
 
   const resetError = useCallback(() => {
     setRetryCount(0)
+    setShouldShowError(false)
   }, [])
 
   const onTransitionComplete = useCallback(() => {
@@ -90,6 +94,9 @@ export function useRoleSelection(): UseRoleSelectionReturn {
   const fetchRoles = useCallback(async () => {
     console.log('🏁 Iniciando carga de roles (petición única)...')
 
+    // Marcar el tiempo de inicio de carga
+    setLoadingStartTime(Date.now())
+
     try {
       const result = await executeAsync(async () => {
         console.log('🔄 Cargando roles...')
@@ -97,7 +104,7 @@ export function useRoleSelection(): UseRoleSelectionReturn {
         // Dar tiempo mínimo para que las cookies se establezcan
         await new Promise((resolve) => setTimeout(resolve, 500))
 
-        const userRoles = await AuthService.getUserActiveRoles()
+        const userRoles = await AuthService.getUserRoles()
         console.log('✅ Roles cargados exitosamente:', userRoles)
 
         if (!Array.isArray(userRoles)) {
@@ -116,10 +123,23 @@ export function useRoleSelection(): UseRoleSelectionReturn {
         }))
       })
 
+      // Calcular tiempo transcurrido
+      const elapsedTime = loadingStartTime ? Date.now() - loadingStartTime : 0
+      const minLoadingTime = 5000 // 5 segundos mínimo
+
+      // Si no han pasado 5 segundos, esperar el tiempo restante
+      if (elapsedTime < minLoadingTime) {
+        const remainingTime = minLoadingTime - elapsedTime
+        console.log(`⏰ Esperando ${remainingTime}ms adicionales para cumplir tiempo mínimo de carga...`)
+        await new Promise((resolve) => setTimeout(resolve, remainingTime))
+      }
+
       // Manejar resultado exitoso
       if (result) {
         setRoles(result)
         setRetryCount(0)
+        setLoadingStartTime(null)
+        setShouldShowError(false)
         console.log('✅ Roles procesados exitosamente:', result)
 
         if (result.length === 1 && result[0]) {
@@ -127,9 +147,22 @@ export function useRoleSelection(): UseRoleSelectionReturn {
         }
       }
     } catch (err) {
+      // Calcular tiempo transcurrido antes de mostrar error
+      const elapsedTime = loadingStartTime ? Date.now() - loadingStartTime : 0
+      const minLoadingTime = 5000 // 5 segundos mínimo
+
+      // Si no han pasado 5 segundos, esperar el tiempo restante antes de mostrar el error
+      if (elapsedTime < minLoadingTime) {
+        const remainingTime = minLoadingTime - elapsedTime
+        console.log(`⏰ Error detectado, pero esperando ${remainingTime}ms adicionales antes de mostrar...`)
+        await new Promise((resolve) => setTimeout(resolve, remainingTime))
+      }
+
       // Manejar error
       const errorMessage = getErrorMessage(err)
       setRetryCount((prev) => prev + 1)
+      setLoadingStartTime(null)
+      setShouldShowError(true)
 
       console.error('❌ Error al cargar roles:', errorMessage)
 
@@ -146,7 +179,7 @@ export function useRoleSelection(): UseRoleSelectionReturn {
 
       toast.error(`Error: ${errorMessage}`)
     }
-  }, [executeAsync, getErrorMessage, router])
+  }, [executeAsync, getErrorMessage, router, loadingStartTime])
 
   const retryFetchRoles = useCallback(() => {
     fetchRoles()
@@ -159,44 +192,43 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     }
 
     await executeSubmit(async () => {
-      console.log('🔄 Seleccionando rol localmente (sin API):', selectedRole)
+      console.log('🔄 Configurando rol activo via API:', selectedRole)
 
       try {
         // Mostrar transición
         setShowTransition(true)
 
-        // Solo guardar el rol localmente sin comunicarse con la API
-        // Actualizar el store con el rol seleccionado
+        // PASO 1: Configurar rol activo en el backend (HttpOnly cookie)
+        const success = await AuthService.setActiveRole(selectedRole.id)
+
+        if (!success) {
+          throw new Error('Failed to set active role on server')
+        }
+
+        // PASO 2: Actualizar el store de sesión
         setRole(selectedRole)
 
-        // Guardar el rol en cookies y localStorage
+        // PASO 3: Guardar preferencia en sessionStorage (solo para UI)
         CookieManager.setActiveRole(selectedRole)
 
-        console.log('✅ Rol guardado exitosamente:', {
+        console.log('✅ Rol configurado exitosamente:', {
           id: selectedRole.id,
           name: selectedRole.name,
-          cookieSet: CookieManager.hasActiveRole()
+          backendSet: success,
+          sessionStored: true
         })
 
-        toast.success(`Rol seleccionado: ${selectedRole.name}`)
+        toast.success(`Rol activo: ${selectedRole.name}`)
 
-        // Delay para asegurar que la cookie se guarde completamente
+        // Pequeño delay para la UX
         await new Promise((resolve) => setTimeout(resolve, 1500))
-
-        // Verificar que la cookie se guardó correctamente
-        const cookieCheck = CookieManager.hasActiveRole()
-        console.log('🔍 Verificación de cookie después de guardar:', cookieCheck)
-
-        if (!cookieCheck) {
-          throw new Error('Error al verificar la cookie del rol')
-        }
 
         console.log('🔄 Preparando redirección a la página principal...')
         // La redirección será manejada por el componente de transición
       } catch (error) {
-        console.error('❌ Error al guardar el rol:', error)
+        console.error('❌ Error al configurar rol activo:', error)
         setShowTransition(false)
-        throw new Error('Error al guardar la selección de rol')
+        throw new Error('Error al configurar el rol activo')
       }
     })
   }, [selectedRole, executeSubmit, setRole])
@@ -207,15 +239,34 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     }
   }, [canSkip, router])
   useEffect(() => {
-    const hasRole = CookieManager.hasActiveRole()
-    setHasActiveRole(hasRole)
-    setCanSkip(hasRole)
+    const initializeRoleSelection = async () => {
+      // PASO 1: Verificar si hay rol activo via API (HttpOnly cookie)
+      try {
+        const activeRoleId = await AuthService.getActiveRole()
+        const hasServerRole = activeRoleId !== null
 
-    // Solo cargar roles si no hay roles ya cargados
-    if (roles.length === 0) {
-      console.log('🚀 Cargando roles por primera vez...')
-      fetchRoles()
+        setHasActiveRole(hasServerRole)
+        setCanSkip(hasServerRole)
+
+        console.log('🔍 Estado inicial de rol activo:', {
+          serverRoleId: activeRoleId,
+          hasActiveRole: hasServerRole,
+          canSkip: hasServerRole
+        })
+      } catch (error) {
+        console.warn('Error checking active role:', error)
+        setHasActiveRole(false)
+        setCanSkip(false)
+      }
+
+      // PASO 2: Cargar roles si no están cargados
+      if (roles.length === 0) {
+        console.log('🚀 Cargando roles por primera vez...')
+        fetchRoles()
+      }
     }
+
+    initializeRoleSelection()
   }, [fetchRoles, roles.length])
 
   return {
@@ -229,6 +280,7 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     retryCount,
     canRetry: retryCount < MAX_RETRY_ATTEMPTS,
     showTransition,
+    shouldShowError,
     setSelectedRole,
     handleSubmit,
     handleSkip,

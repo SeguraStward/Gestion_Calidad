@@ -1,28 +1,35 @@
 import { PermissionType, PermissionScope } from '@una-gc/database/prisma/generated/client'
 
-// User status enum para manejar el estado del usuario
-export const UserStatus = {
-  PRE_REGISTRATION: 'PRE_REGISTRATION',
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE'
-} as const
+// User status enum matching backend
+export type UserStatus = 'PRE_REGISTRATION' | 'ACTIVE' | 'INACTIVE'
 
-export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus]
-
-// Tipo para el perfil básico del usuario
-export type UserProfile = {
+// User profile matching backend UserResponseDto
+export interface UserProfile {
   id: string
-  name: string
   email: string
-  fullName?: string
-  fullLastName?: string
-  photoUrl: string | null
+  fullName: string
+  fullLastName?: string | null
+  photoUrl?: string | null
   status: UserStatus
-  needsProfileCompletion?: boolean
 }
 
-// special tytpe (modifiqueted)
-export type Permission = {
+// Cookie presence detection (since cookies are HttpOnly)
+export interface CookiePresence {
+  hasAuthToken: boolean
+  hasRefreshToken: boolean
+  hasActiveRole: boolean
+  isAuthenticated: boolean
+}
+
+// Complete profile data
+export interface CompleteProfileData {
+  fullName: string
+  fullLastName: string
+  phoneNumber?: string
+}
+
+// Role and permission types
+export interface Permission {
   id: string
   name: string
   code: string
@@ -32,13 +39,18 @@ export type Permission = {
   scope: PermissionScope
 }
 
-// especial Role type (modifiqueted)
-export type Role = {
+export interface Role {
   id: string
   name: string
   description: string
   permissions: Permission[]
 }
 
-// response expected from the API
 export type UserRolesResponse = Role[]
+
+// Auth error types
+export interface AuthError {
+  code: string
+  message: string
+  action?: string
+}

@@ -4,7 +4,16 @@ import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 
 import { PrismaService } from '@src/prisma/prisma.service';
-import { GoogleUser } from './interfaces';
+import {
+  GoogleUser,
+  AuthResult,
+  UserFromRefreshToken,
+  DatabaseUser,
+  ProfileCompletionData,
+  JwtPayload,
+  RefreshTokenPayload,
+} from './types';
+import { parseExpiryToMilliseconds } from './utils/expiry-parser.util';
 
 @Injectable()
 export class AuthService {
@@ -25,29 +34,7 @@ export class AuthService {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
-  private parseExpiryToMilliseconds(expiryString: string): number {
-    const unit = expiryString.slice(-1);
-    const value = parseInt(expiryString.slice(0, -1), 10);
-    if (isNaN(value)) {
-      this.logger.error(`Invalid expiry string format: ${expiryString}`);
-      throw new Error('Invalid expiry string format');
-    }
-    switch (unit) {
-      case 's':
-        return value * 1000;
-      case 'm':
-        return value * 60 * 1000;
-      case 'h':
-        return value * 60 * 60 * 1000;
-      case 'd':
-        return value * 24 * 60 * 60 * 1000;
-      default:
-        this.logger.error(`Invalid expiry unit: ${unit} in ${expiryString}`);
-        throw new Error('Invalid expiry unit');
-    }
-  }
-
-  async googleLogin(googleUser: GoogleUser) {
+  async googleLogin(googleUser: GoogleUser): Promise<AuthResult> {
     this.logger.log(`Google login attempt for: ${googleUser.email}`);
 
     // Validar datos mínimos requeridos
@@ -179,9 +166,9 @@ export class AuthService {
   }
 
   generateAccessToken(userId: string, email: string): string {
-    const payload = { sub: userId, email };
+    const payload: JwtPayload = { sub: userId, email };
     const accessTokenExpirationString = this.configService.get<string>('JWT_EXPIRATION') || '1m';
-    const expiresIn = this.parseExpiryToMilliseconds(accessTokenExpirationString);
+    const expiresIn = parseExpiryToMilliseconds(accessTokenExpirationString);
     this.logger.debug(`Generating access token with expiresIn: ${accessTokenExpirationString}`);
     const token = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
@@ -192,10 +179,10 @@ export class AuthService {
 
   async generateAndStoreRefreshToken(userId: string): Promise<{ rawRefreshToken: string; expiresAt: Date }> {
     const refreshTokenExpirationString = this.configService.get<string>('JWT_REFRESH_EXPIRATION');
-    const expiresInMilliseconds = this.parseExpiryToMilliseconds(refreshTokenExpirationString);
+    const expiresInMilliseconds = parseExpiryToMilliseconds(refreshTokenExpirationString);
     const expiresAt = new Date(Date.now() + expiresInMilliseconds);
 
-    const payload = { sub: userId };
+    const payload: RefreshTokenPayload = { sub: userId };
     const rawRefreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       expiresIn: refreshTokenExpirationString,
@@ -215,12 +202,7 @@ export class AuthService {
   }
 
   // userFromGuard is the object returned by JwtRefreshStrategy.validate
-  async refreshToken(userFromGuard: {
-    id: string;
-    email: string;
-    refreshTokenDbId: string;
-    refreshTokenFromCookie: string;
-  }): Promise<{ token: string; refreshToken: string }> {
+  async refreshToken(userFromGuard: UserFromRefreshToken): Promise<{ token: string; refreshToken: string }> {
     const { id: userId, email, refreshTokenDbId } = userFromGuard;
 
     try {
@@ -291,7 +273,7 @@ export class AuthService {
    * @param userId - The ID of the user
    * @returns User data
    */
-  async getUserById(userId: string) {
+  async getUserById(userId: string): Promise<DatabaseUser> {
     this.logger.log(`Getting user by ID: ${userId}`);
 
     // Validar que el userId sea válido
@@ -353,14 +335,7 @@ export class AuthService {
    * @param profileData - Profile completion data
    * @returns Updated user information
    */
-  async completeUserProfile(
-    userId: string,
-    profileData: {
-      fullName: string;
-      fullLastName: string;
-      phoneNumber?: string;
-    },
-  ) {
+  async completeUserProfile(userId: string, profileData: ProfileCompletionData) {
     this.logger.log(`Completing profile for user ${userId}`);
 
     const user = await this.prisma.user.findUnique({
@@ -419,5 +394,28 @@ export class AuthService {
         code: 'PROFILE_COMPLETION_FAILED',
       });
     }
+  }
+
+  async setActiveRole(userId: string, roleId: string): Promise<void> {
+    // Verificar que el usuario tiene acceso a este rol
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        roles: {
+          where: {
+            id: roleId,
+            status: 'ACTIVE',
+          },
+        },
+      },
+    });
+
+    if (!user || user.roles.length === 0) {
+      this.logger.warn(`User ${userId} attempted to set invalid role ${roleId}`);
+      throw new UnauthorizedException('Invalid role selected or role not assigned to user');
+    }
+
+    const selectedRole = user.roles[0];
+    this.logger.log(`User ${userId} set active role to ${roleId} (${selectedRole.name})`);
   }
 }
