@@ -100,9 +100,9 @@ export function Step2Form({
   const { control, handleSubmit, reset, watch, formState, getValues, setValue } = formMethods
 
   useEffect(() => {
-    if (initialData) { 
+    if (initialData) {
       const dataToReset = { ...initialData } // Crear una copia para modificarla de forma segura
- 
+
       if (typeof enrolledCapacity === 'number' && initialData.totalEnrolled !== enrolledCapacity) {
         dataToReset.totalEnrolled = enrolledCapacity
       }

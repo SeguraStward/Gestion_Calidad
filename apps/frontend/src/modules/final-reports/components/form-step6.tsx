@@ -103,7 +103,7 @@ export function Step6Form({
         ],
         otrasHerramientas: ''
       })
-    } 
+    }
   }, [initialData, isEditing, reset, toolsQuestion])
 
   const toolOptions = useMemo(() => {

@@ -10,9 +10,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@una-gc/ui/components/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components/card'
 import { Loader2 } from 'lucide-react'
- 
-import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header'  
- 
+
+import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header'
+
 import { Step1FormData, step1Schema, Step1Form, transformReportToStep1Data } from '@/modules/final-reports/components/form-step1'
 import { Step2FormData, step2Schema, Step2Form, transformReportToStep2Data } from '@/modules/final-reports/components/form-step2'
 import { Step3FormData, step3Schema, Step3Form, transformReportToStep3Data } from '@/modules/final-reports/components/form-step3'
@@ -31,9 +31,9 @@ import {
   OTHER_TOOLS_QUESTION_ID
 } from '@/modules/final-reports/components/form-step6-edit'
 import { Step7FormData, step7Schema, Step7EditForm } from '@/modules/final-reports/components/form-step7-edit'
- 
+
 import { step5QuestionsMock, step6QuestionsPageMock, step7QuestionsPageMock } from '@/modules/final-reports/mocks/questions'
- 
+
 import { useFinalReport, useUpdateFinalReport } from '@/modules/final-reports/service/final-reports.service'
 import {
   FullFinalReport,
@@ -51,7 +51,7 @@ function transformReportToStep7Data(report: FullFinalReport, currentReportType: 
     if (Array.isArray(q.appliesTo)) {
       return q.appliesTo.includes(currentReportType) || q.appliesTo.includes('TODOS')
     }
-    return false  
+    return false
   })
 
   const step7Responses = filteredQuestions.map((p, index) => {
@@ -105,7 +105,7 @@ export default function EditFinalReportPage() {
       enabled: !!reportId,
       retry: 1
     }
-  ) 
+  )
   const updateReportHook = useUpdateFinalReport()
   const { mutateAsync: updateReportMutation } = updateReportHook
   const isUpdatingReport = updateReportHook.status === 'pending'

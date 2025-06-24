@@ -318,7 +318,7 @@ export default function NewFinalReportPage() {
         response: item.response === undefined ? undefined : item.response,
         multipleResponse: item.multipleResponse || [],
         options: [],
-        questionGroup: item.questionGroup || 'general', 
+        questionGroup: item.questionGroup || 'general',
         otherResponse: item.otherResponse === undefined ? undefined : item.otherResponse
       })) as FinalReportEvaluationFE[]
     }
@@ -350,7 +350,7 @@ export default function NewFinalReportPage() {
       case 7:
         setStep7Data(data as Step7FormData)
         break
-      default: 
+      default:
     }
   }
 

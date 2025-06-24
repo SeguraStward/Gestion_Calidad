@@ -30,10 +30,10 @@ export type Step1FormData = z.infer<typeof step1Schema>
 
 export function transformReportToStep1Data(report: FullFinalReport): Step1FormData | null {
   if (!report.academicLoad) {
-     return null
+    return null
   }
-   if (!report.academicLoad.id) {
-     return {
+  if (!report.academicLoad.id) {
+    return {
       academicLoadId: '',
       nrc: report.academicLoad.nrc || '',
       courseName: report.academicLoad.course?.name || '',
@@ -89,7 +89,6 @@ export function Step1Form({
   const { control, watch, setValue, handleSubmit, formState, reset } = formMethods
   const currentProfessorId = useDevStore((state) => state.mockProfessorId)
 
-   
   const {
     data: paginatedAcademicLoads,
     isLoading: isLoadingAcademicLoads,
@@ -141,22 +140,20 @@ export function Step1Form({
   const selectedNrc = watch('nrc')
   const selectedAcademicLoadId = watch('academicLoadId')
 
-  useEffect(() => {
-   }, [selectedAcademicLoadId])
+  useEffect(() => {}, [selectedAcademicLoadId])
 
   // Efecto para poblar el formulario con initialData
   useEffect(() => {
-    
     if (isEditing && initialData && formState.isDirty === false && !selectedAcademicLoadId) {
-       reset(initialData)
+      reset(initialData)
     }
   }, [isEditing, initialData, reset, formState.isDirty, selectedAcademicLoadId])
 
   // Efecto para actualizar campos cuando selectedNrc cambia
   useEffect(() => {
-     const courseData = availableCourses.find((course) => course.nrc === selectedNrc)
+    const courseData = availableCourses.find((course) => course.nrc === selectedNrc)
     if (courseData) {
-       setValue('academicLoadId', courseData.id, { shouldValidate: true, shouldDirty: true })
+      setValue('academicLoadId', courseData.id, { shouldValidate: true, shouldDirty: true })
       setValue('courseName', courseData.courseName, { shouldValidate: true, shouldDirty: true })
       setValue('groupNumber', courseData.groupNumber, { shouldValidate: true, shouldDirty: true })
       setValue('professorName', courseData.professorName, { shouldValidate: true, shouldDirty: true })
@@ -164,20 +161,20 @@ export function Step1Form({
       setValue('groupLevel', courseData.groupLevel, { shouldValidate: true, shouldDirty: true })
       setValue('enrolledCapacity', courseData.enrolledCapacity, { shouldValidate: true, shouldDirty: true })
     } else if (!selectedNrc) {
-       setValue('academicLoadId', '')
+      setValue('academicLoadId', '')
       setValue('courseName', '')
       setValue('groupNumber', '')
       setValue('professorName', '')
       setValue('courseCode', '')
       setValue('groupLevel', '')
       setValue('enrolledCapacity', undefined)
-    }  
+    }
   }, [selectedNrc, availableCourses, setValue])
 
   const onSubmitHandler = (data: Step1FormData) => {
     // El academicLoadId y nrc ya deberían estar correctos por la selección y el useEffect.
     // Los demás campos también.
-     onSaveAndNext(data)
+    onSaveAndNext(data)
   }
 
   if (isLoadingAcademicLoads && availableCourses.length === 0) {

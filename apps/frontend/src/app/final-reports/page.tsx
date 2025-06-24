@@ -35,13 +35,13 @@ const getStatusDisplayProperties = (statusValue: FinalReportStatusFE | undefined
 export default function FinalReportsPage() {
   const router = useRouter()
   const mockProfessorId = useDevStore((state) => state.mockProfessorId)
-  
+
   // Estado para paginación y búsqueda
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState('')
   const [isGeneratingPdfId, setIsGeneratingPdfId] = useState<string | null>(null)
-  
+
   // Debounce del lado del servidor para la búsqueda
   const [debouncedSearchQuery] = useDebounce(searchQuery, 500)
 
@@ -59,46 +59,53 @@ export default function FinalReportsPage() {
   } = useFinalReportsByProfessor(
     mockProfessorId,
     {
-      include: 'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus',
+      include:
+        'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus',
       page: currentPage,
       limit: pageSize,
-      search: debouncedSearchQuery || undefined  
+      search: debouncedSearchQuery || undefined
     },
     { enabled: !!mockProfessorId }
   )
- 
+
   const finalReportsData = paginatedFinalReports?.data || []
-   
+
   const totalItems = paginatedFinalReports?.meta?.total || 0
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
-  
+
   const handlePageChange = useCallback((newPage: number) => {
     setCurrentPage(newPage)
   }, [])
-  
+
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query)
   }, [])
-  
+
   const deleteFinalReportMutation = useDeleteFinalReport()
 
-  const handleEdit = (id: string) => {
-    router.push(`/final-reports/edit/${id}`)
-  }
+  const handleEdit = useCallback(
+    (id: string) => {
+      router.push(`/final-reports/edit/${id}`)
+    },
+    [router]
+  )
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteFinalReportMutation.mutateAsync(id)
-    } catch (err) {
-      console.error('Error deleting final report:', err)
-    }
-  }
+  const handleDelete = useCallback(
+    async (id: string) => {
+      try {
+        await deleteFinalReportMutation.mutateAsync(id)
+      } catch (err) {
+        console.error('Error deleting final report:', err)
+      }
+    },
+    [deleteFinalReportMutation]
+  )
 
   const handleDownloadPdf = async (report: FullFinalReport) => {
     if (!report) {
       toast.error('No se encontró el informe para generar el PDF.')
       return
-    } 
+    }
     try {
       const blob = await pdf(<FinalReportPDFDocument report={report} />).toBlob()
       const url = URL.createObjectURL(blob)
@@ -237,7 +244,7 @@ export default function FinalReportsPage() {
         }
       }
     ],
-    [deleteFinalReportMutation.isPending, deleteFinalReportMutation.variables, router, isGeneratingPdfId]
+    [deleteFinalReportMutation.isPending, deleteFinalReportMutation.variables, isGeneratingPdfId, handleDelete, handleEdit]
   )
 
   const newReportButton = (

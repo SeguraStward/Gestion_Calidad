@@ -70,9 +70,8 @@ export function Step6EditForm({
   }, [])
 
   useEffect(() => {
-     
     if (initialData) {
-       const currentRespuestasMultiples =
+      const currentRespuestasMultiples =
         initialData.respuestasMultiples && initialData.respuestasMultiples.length > 0
           ? initialData.respuestasMultiples
           : [
@@ -87,7 +86,7 @@ export function Step6EditForm({
         otrasHerramientas: initialData.otrasHerramientas || ''
       })
     } else if (!isEditing) {
-       reset({
+      reset({
         respuestasMultiples: [
           {
             idPregunta: toolsQuestion?.questionId || MAIN_TOOLS_QUESTION_ID_INTERNAL,
@@ -96,7 +95,7 @@ export function Step6EditForm({
         ],
         otrasHerramientas: ''
       })
-    }  
+    }
   }, [initialData, isEditing, reset, toolsQuestion])
 
   const toolOptions = useMemo(() => {
