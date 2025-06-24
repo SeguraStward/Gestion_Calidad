@@ -49,21 +49,21 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
   // Override save to handle relations properly
   async save(payload: AcademicLoadDto): Promise<AcademicLoadDto> {
     this.logger.debug(`Saving academic load with payload: ${JSON.stringify(payload)}`);
-    
+
     // Ensure numeric fields are properly converted
     const maximumCapacity = Number(payload.maximumCapacity);
     const enrolledCapacity = Number(payload.enrolledCapacity);
-    
+
     // Calculate available seats
     const availableSeats = maximumCapacity - enrolledCapacity;
-    
+
     // Process date - ensure it's a proper Date object or undefined
     let processedDate: Date | undefined;
     if (payload.date !== undefined && payload.date !== null) {
       if (typeof payload.date === 'string') {
         // If it's a string, parse it and ensure it has time component
-        const dateStr = (payload.date as string).match(/^\d{4}-\d{2}-\d{2}$/) 
-          ? payload.date + 'T00:00:00.000Z' 
+        const dateStr = (payload.date as string).match(/^\d{4}-\d{2}-\d{2}$/)
+          ? payload.date + 'T00:00:00.000Z'
           : payload.date;
         const tempDate = new Date(dateStr);
         processedDate = isNaN(tempDate.getTime()) ? undefined : tempDate;
@@ -74,7 +74,7 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
         processedDate = isNaN(tempDate.getTime()) ? undefined : tempDate;
       }
     }
-    
+
     // Create clean data object without relation IDs (they will be handled by connect)
     const data: Prisma.AcademicLoadCreateInput = {
       nrc: payload.nrc,
@@ -83,7 +83,7 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
       availableSeats,
       status: payload.status,
       ...(processedDate && { date: processedDate }),
-      
+
       // Handle relations with connect
       academicCycle: { connect: { id: payload.academicCycleId } },
       campus: { connect: { id: payload.campusId } },
@@ -93,17 +93,17 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
       ...(payload.classroomId && { classroom: { connect: { id: payload.classroomId } } }),
       ...(payload.scheduleId && { schedule: { connect: { id: payload.scheduleId } } }),
     };
-    
+
     // Create the entity and then fetch it with includes to ensure all relations are loaded
-    const created = await this.academicLoadsRepository.save(data as any) as AcademicLoad;
+    const created = (await this.academicLoadsRepository.save(data as any)) as AcademicLoad;
     // Fetch the created item with full includes
-    return await this.findById(created.id) as AcademicLoadDto;
+    return (await this.findById(created.id)) as AcademicLoadDto;
   }
 
   // Override update to handle relations properly
   async update(id: string, payload: Partial<AcademicLoadDto>): Promise<AcademicLoadDto> {
     this.logger.debug(`Updating academic load ${id} with payload: ${JSON.stringify(payload)}`);
-    
+
     // Calculate available seats if capacity fields are being updated
     let availableSeats: number | undefined;
     if (payload.maximumCapacity !== undefined || payload.enrolledCapacity !== undefined) {
@@ -112,7 +112,7 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
       const enrolled = Number(payload.enrolledCapacity ?? current?.enrolledCapacity ?? 0);
       availableSeats = maxCapacity - enrolled;
     }
-    
+
     // Process date - ensure it's a proper Date object
     let processedDate: Date | undefined;
     if (payload.date !== undefined) {
@@ -126,7 +126,7 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
         processedDate = new Date(payload.date);
       }
     }
-    
+
     // Create clean data object
     const data: Prisma.AcademicLoadUpdateInput = {
       ...(payload.nrc !== undefined && { nrc: payload.nrc }),
@@ -135,7 +135,7 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
       ...(payload.status !== undefined && { status: payload.status }),
       ...(availableSeats !== undefined && { availableSeats }),
       ...(processedDate !== undefined && { date: processedDate }),
-      
+
       // Handle relations with connect
       ...(payload.academicCycleId && { academicCycle: { connect: { id: payload.academicCycleId } } }),
       ...(payload.campusId && { campus: { connect: { id: payload.campusId } } }),
@@ -145,11 +145,11 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
       ...(payload.classroomId && { classroom: { connect: { id: payload.classroomId } } }),
       ...(payload.scheduleId && { schedule: { connect: { id: payload.scheduleId } } }),
     };
-    
+
     // Update the entity and then fetch it with includes to ensure all relations are loaded
     await this.academicLoadsRepository.update(id, data as any);
     // Fetch the updated item with full includes
-    return await this.findById(id) as AcademicLoadDto;
+    return (await this.findById(id)) as AcademicLoadDto;
   }
 
   // Override findById to include all relations
@@ -185,13 +185,13 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
   // Override delete method to handle any specific logic if needed
   async delete(id: string): Promise<boolean> {
     this.logger.debug(`Deleting academic load with id: ${id}`);
-    
+
     // First, check if the record exists
     const existingItem = await this.findById(id);
     if (!existingItem) {
       throw new Error(`Academic Load with id ${id} not found`);
     }
-    
+
     // Perform the deletion
     return super.delete(id);
   }

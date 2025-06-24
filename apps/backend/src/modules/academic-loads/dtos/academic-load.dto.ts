@@ -77,35 +77,41 @@ export class AcademicLoadDto extends BaseDto {
   @IsDate()
   @IsOptional()
   @Type(() => Date)
-  @Transform(({ value }) => {
-    if (!value || value === null || value === undefined || value === '') {
-      return undefined;
-    }
-    
-    if (value instanceof Date) {
-      return isNaN(value.getTime()) ? undefined : value;
-    }
-    
-    if (typeof value === 'string') {
-      // If it's just a date string (YYYY-MM-DD), add time component
-      if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        const date = new Date(value + 'T00:00:00.000Z');
+  @Transform(
+    ({ value }) => {
+      if (!value || value === null || value === undefined || value === '') {
+        return undefined;
+      }
+
+      if (value instanceof Date) {
+        return isNaN(value.getTime()) ? undefined : value;
+      }
+
+      if (typeof value === 'string') {
+        // If it's just a date string (YYYY-MM-DD), add time component
+        if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          const date = new Date(value + 'T00:00:00.000Z');
+          return isNaN(date.getTime()) ? undefined : date;
+        }
+        const date = new Date(value);
         return isNaN(date.getTime()) ? undefined : date;
       }
+
       const date = new Date(value);
       return isNaN(date.getTime()) ? undefined : date;
-    }
-    
-    const date = new Date(value);
-    return isNaN(date.getTime()) ? undefined : date;
-  }, { toClassOnly: true })
-  @Transform(({ value }) => {
-    // Transform when serializing to plain object (toPlainOnly)
-    if (value instanceof Date && !isNaN(value.getTime())) {
-      return value.toISOString();
-    }
-    return value;
-  }, { toPlainOnly: true })
+    },
+    { toClassOnly: true },
+  )
+  @Transform(
+    ({ value }) => {
+      // Transform when serializing to plain object (toPlainOnly)
+      if (value instanceof Date && !isNaN(value.getTime())) {
+        return value.toISOString();
+      }
+      return value;
+    },
+    { toPlainOnly: true },
+  )
   date?: Date;
 
   @ApiProperty({ description: 'Status of the academic load', enum: Status })
