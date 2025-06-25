@@ -4,6 +4,7 @@ import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { Request } from 'express';
+import { UserStatus } from '@una-gc/database/prisma/generated/client';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -52,7 +53,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // Validar que el usuario esté activo
-    if (user.status !== 'ACTIVE') {
+    if (user.status === UserStatus.INACTIVE) {
       this.logger.warn(`JWT validation failed: User ${user.email} has inactive status: ${user.status}`);
       throw new UnauthorizedException('Account is not active');
     }
