@@ -12,7 +12,8 @@ import { toast } from 'sonner'
 import { pdf } from '@react-pdf/renderer'
 import { useDebounce } from '@/shared/hooks/use-debounce'
 
-import useDevStore from '@/store/devStore'
+// Cambio de import: usar session store en lugar del dev store
+import { useSessionStore } from '@/modules/auth/sessionStore'
 import { useDeleteFinalReport, useFinalReportsByProfessor } from '@/modules/final-reports/service/final-reports.service'
 import type { FullFinalReport, FinalReportStatusFE } from '@/modules/final-reports/types/final-reports.types'
 import { FinalReportPDFDocument } from '@/modules/final-reports/components/final-report-pdf'
@@ -34,9 +35,11 @@ const getStatusDisplayProperties = (statusValue: FinalReportStatusFE | undefined
 
 export default function FinalReportsPage() {
   const router = useRouter()
-  const mockProfessorId = useDevStore((state) => state.mockProfessorId)
   
-   
+  // Usar session store en lugar del dev store
+  const { user, isAuthenticated } = useSessionStore()
+  const professorId = user?.id
+  
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
@@ -57,15 +60,15 @@ export default function FinalReportsPage() {
     error,
     refetch
   } = useFinalReportsByProfessor(
-    mockProfessorId,
+    professorId,
     {
       include: 
         'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus',
       page: currentPage,
       limit: pageSize,
-      search: debouncedSearchQuery || undefined
+      ...(debouncedSearchQuery && { search: debouncedSearchQuery })
     },
-    { enabled: !!mockProfessorId }
+    { enabled: !!professorId && isAuthenticated() }
   )
 
   const finalReportsData = paginatedFinalReports?.data || []
@@ -255,12 +258,33 @@ export default function FinalReportsPage() {
     </Button>
   )
 
-  if (!mockProfessorId && !isLoading) {
+  // Verificar autenticación
+  if (!isAuthenticated() && !isLoading) {
     return (
       <div className="container mx-auto py-8 text-center">
         <p className="text-orange-600 dark:text-orange-400 mb-4">
-          ID de profesor no configurado. Por favor, configure un ID de profesor en el mock store.
+          Debes estar autenticado para ver los informes finales.
         </p>
+        <Button asChild>
+          <Link href="/auth/login">
+            Iniciar Sesión
+          </Link>
+        </Button>
+      </div>
+    )
+  }
+
+  if (!professorId && !isLoading) {
+    return (
+      <div className="container mx-auto py-8 text-center">
+        <p className="text-orange-600 dark:text-orange-400 mb-4">
+          No se pudo obtener la información del profesor. Por favor, inicie sesión nuevamente.
+        </p>
+        <Button asChild>
+          <Link href="/auth/login">
+            Iniciar Sesión
+          </Link>
+        </Button>
       </div>
     )
   }
@@ -280,7 +304,12 @@ export default function FinalReportsPage() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Gestión de Informes Finales</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Gestión de Informes Finales</h1>
+          <p className="text-muted-foreground mt-2">
+            Bienvenido, {user?.fullName}
+          </p>
+        </div>
       </div>
 
       <DataTable

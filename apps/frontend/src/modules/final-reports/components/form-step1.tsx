@@ -8,10 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@una-gc/ui/components/input'
 import { UseFormReturn, FormProvider } from 'react-hook-form'
 import { Loader2 } from 'lucide-react'
-import useDevStore from '@/store/devStore'
 import { useAcademicLoadsByProfessor } from '@/modules/academic-loads/service/academic-loads.service'
 import type { FullAcademicLoad } from '@/modules/academic-loads/types/academic-loads.types'
-import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types'
+import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types' 
+import { useSessionStore } from '@/modules/auth/sessionStore'
 
 export const step1Schema = z.object({
   academicLoadId: z.string().min(1, 'Debe seleccionar una carga académica.'), // Ahora siempre requerido
@@ -85,7 +85,10 @@ export function Step1Form({
   onCancel
 }: Step1FormProps) {
   const { control, watch, setValue, handleSubmit, formState, reset } = formMethods
-  const currentProfessorId = useDevStore((state) => state.mockProfessorId)
+  
+  // Cambio: usar session store en lugar del dev store
+  const { user, isAuthenticated } = useSessionStore()
+  const currentProfessorId = user?.id
 
   const {
     data: paginatedAcademicLoads,
@@ -96,7 +99,7 @@ export function Step1Form({
     {
       include: 'course,academicCycle,professor,group'
     },
-    { enabled: !!currentProfessorId }
+    { enabled: !!currentProfessorId && isAuthenticated() }
   )
 
   const availableCourses = useMemo((): TransformedAcademicLoad[] => {
@@ -209,11 +212,21 @@ export function Step1Form({
     )
   }
 
+  // Verificación de autenticación
+  if (!isAuthenticated()) {
+    return (
+      <div className="p-6 h-full flex flex-col items-center justify-center">
+        <p className="text-destructive">Debes estar autenticado para acceder a esta función.</p>
+        <p className="text-sm text-muted-foreground">Por favor, inicia sesión para continuar.</p>
+      </div>
+    )
+  }
+
   if (!currentProfessorId) {
     return (
       <div className="p-6 h-full flex flex-col items-center justify-center">
-        <p className="text-destructive">No se ha configurado un profesor para la demostración.</p>
-        <p className="text-sm text-muted-foreground">Por favor, configure un ID de profesor en el store de desarrollo.</p>
+        <p className="text-destructive">No se pudo obtener la información del profesor.</p>
+        <p className="text-sm text-muted-foreground">Por favor, inicia sesión nuevamente.</p>
       </div>
     )
   }
