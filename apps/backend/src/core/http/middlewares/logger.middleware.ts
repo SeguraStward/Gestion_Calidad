@@ -72,7 +72,7 @@ export class LoggerMiddleware implements NestMiddleware {
       `${this.getStatusEmoji(statusCode)} ${method} ${originalUrl} - Status: ${statusCode} - Size: ${contentLength}b - Time: ${responseTime}ms`,
     );
 
-    this.logDebugDetails(req, res, responseTime);
+    // this.logDebugDetails(req, res, responseTime);
   }
 
   private logDebugDetails(req: Request, res: Response, responseTime: number): void {
@@ -80,13 +80,10 @@ export class LoggerMiddleware implements NestMiddleware {
       method: req.method,
       originalUrl: req.originalUrl,
       statusCode: res.statusCode,
-      // ip: this.getClientIp(req),
-      // userAgent: req.get('user-agent') || 'Unknown',
       contentLength: `${res.get('content-length') || 0}b`,
       responseTimeMs: responseTime,
       timestamp: new Date().toISOString(),
     };
-
     this.logger.debug(
       `Request: ${logData.method} ${logData.originalUrl} - Status: ${logData.statusCode} - Size: ${logData.contentLength} - Time: ${logData.responseTimeMs}ms - At: ${logData.timestamp}`,
     );
