@@ -1,10 +1,8 @@
 'use client'
 
-import React, { useMemo, useEffect } from 'react'
-import { zodResolver } from '@hookform/resolvers/zod'
+import React, { useMemo, useEffect } from 'react' 
 import { z } from 'zod'
-import { Button } from '@una-gc/ui/components/button'
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@una-gc/ui/components/card'
+import { Button } from '@una-gc/ui/components/button' 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
 import { Input } from '@una-gc/ui/components/input'
@@ -107,30 +105,29 @@ export function Step1Form({
       courses = paginatedAcademicLoads.data.map((load: FullAcademicLoad) => ({
         id: load.id,
         nrc: load.nrc,
-        courseName: load.course?.name,
-        courseCode: load.course?.code,
-        professorName: load.professor?.fullName || undefined,
-        groupNumber: load.group?.number,
-        groupLevel: load.course?.level ? String(load.course.level) : undefined,
-        enrolledCapacity: load.enrolledCapacity
+        courseName: load.course?.name || '', // Default to empty string
+        courseCode: load.course?.code || '', // Default to empty string
+        professorName: load.professor?.fullName || '', // Default to empty string
+        groupNumber: load.group?.number || '', // Default to empty string
+        groupLevel: load.course?.level ? String(load.course.level) : '', // Default to empty string
+        enrolledCapacity: load.enrolledCapacity || 0 // Default to 0
       }))
     }
 
     // Si estamos editando y tenemos datos iniciales, y la carga del informe no está en la lista
     // (ej. porque no está "activa" o el filtro la excluyó), la añadimos para que se pueda seleccionar.
     if (isEditing && initialData?.nrc && initialData.academicLoadId) {
-      const editingCourseInList = courses.find((c) => c.nrc === initialData.nrc) // Cambiar a comparar por NRC
+      const editingCourseInList = courses.find((c) => c.nrc === initialData.nrc)
       if (!editingCourseInList) {
         courses.unshift({
-          // Añadir al principio
           id: initialData.academicLoadId,
           nrc: initialData.nrc,
-          courseName: initialData.courseName,
-          courseCode: initialData.courseCode,
-          professorName: initialData.professorName,
-          groupNumber: initialData.groupNumber,
-          groupLevel: initialData.groupLevel,
-          enrolledCapacity: initialData.enrolledCapacity
+          courseName: initialData.courseName || '', // Provide fallback for undefined
+          courseCode: initialData.courseCode || '', // Provide fallback for undefined
+          professorName: initialData.professorName || '', // Provide fallback for undefined
+          groupNumber: initialData.groupNumber || '', // Provide fallback for undefined
+          groupLevel: initialData.groupLevel || '', // Provide fallback for undefined
+          enrolledCapacity: initialData.enrolledCapacity || 0 // Provide fallback for undefined
         })
       }
     }
