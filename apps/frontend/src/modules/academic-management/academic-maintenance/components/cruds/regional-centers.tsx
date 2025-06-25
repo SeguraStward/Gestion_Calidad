@@ -1,24 +1,21 @@
 'use client'
 
-import { useMemo } from 'react'
-import { ColumnDef } from '@tanstack/react-table'
-import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
 import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
+import { ColumnUtilities, CrudModuleBase } from '@/app/(components)/crud/crud-module-base'
 import {
   useCreateRegionalCenter,
-  useUpdateRegionalCenter,
-  useRemoveRegionalCenter,
+  useListRegionalCentersPaginated,
   useOneRegionalCenter,
-  useListRegionalCentersPaginated
+  useRemoveRegionalCenter,
+  useUpdateRegionalCenter
 } from '@/modules/academic-management/academic-maintenance/hooks/useRegionalCenter'
-import { useRegionalCenterFormData } from '../../hooks/useRegionalCenterFormData'
-import {
-  RegionalCenterWithRelations,
-  CreateRegionalCenterInput
-} from '@/modules/academic-management/academic-maintenance/types/regional-center'
+import { RegionalCenterWithRelations } from '@/modules/academic-management/academic-maintenance/types/regional-center'
 import { Status } from '@/shared/types/status'
+import { ColumnDef } from '@tanstack/react-table'
 import { Badge, Button } from '@una-gc/ui/components'
-import { Building, Hash, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { Building, CheckCircle2, Hash, Loader2, Pencil, Trash2, XCircle } from 'lucide-react'
+import { useMemo } from 'react'
+import { useRegionalCenterFormData } from '../../hooks/useRegionalCenterFormData'
 
 // Define the item type for CrudModuleBase
 interface RegionalCenterItem extends RegionalCenterWithRelations {}
@@ -41,12 +38,12 @@ const STATUS_OPTIONS = [
 
 export default function RegionalCentersCrud() {
   // Cargar datos para el formulario
-  const { campuses, isLoadingCampuses } = useRegionalCenterFormData()
+  useRegionalCenterFormData()
 
   // Definición de columnas para la tabla de centros regionales
   const renderColumns = useMemo(
     () =>
-      (utils: ColumnUtilities<RegionalCenterItem>): ColumnDef<RegionalCenterItem>[] => [
+      (utils: ColumnUtilities): ColumnDef<RegionalCenterItem>[] => [
         {
           accessorKey: 'code',
           header: 'Código',
@@ -247,7 +244,7 @@ export default function RegionalCentersCrud() {
         code: '',
         name: '',
         status: Status.ACTIVE
-      } as CreateRegionalCenterInput,
+      },
       renderForm,
       renderColumns,
       processItemForEditing: (item: RegionalCenterItem) => ({

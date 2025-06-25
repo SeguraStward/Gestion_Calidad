@@ -1,10 +1,8 @@
-import { PermissionType, PermissionScope } from '@una-gc/database/prisma/generated/client'
-
-// User status enum matching backend
-export type UserStatus = 'PRE_REGISTRATION' | 'ACTIVE' | 'INACTIVE'
+// Enums
+import { PermissionScope, PermissionType, UserStatus } from '@una-gc/database/prisma/generated/client'
 
 // User profile matching backend UserResponseDto
-export interface UserProfile {
+export interface UserBasicInfo {
   id: string
   email: string
   fullName: string

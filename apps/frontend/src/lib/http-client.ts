@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 
-import { useSessionStore } from '../modules/auth/sessionStore'
 import { Logger } from '@/utils'
+import { useSessionStore } from '../modules/auth/sessionStore'
 
 // --- INICIO: Lógica para manejar el proceso de refresh ---
 let isRefreshing = false
@@ -32,14 +32,17 @@ class HttpClientClass {
   private readonly LOGOUT_URL = `${this.BASE_API_URL}/auth/logout`
 
   constructor() {
-    this.instance = axios.create({
-      baseURL: this.BASE_API_URL,
+    const axiosConfig: AxiosRequestConfig = {
       timeout: 30000, // Increased from 10s to 30s for better UX
       headers: {
         'Content-Type': 'application/json'
       },
       withCredentials: true
-    })
+    }
+    if (this.BASE_API_URL) {
+      axiosConfig.baseURL = this.BASE_API_URL
+    }
+    this.instance = axios.create(axiosConfig)
 
     this.instance.interceptors.request.use(
       (config) => {

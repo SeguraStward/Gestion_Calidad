@@ -53,7 +53,7 @@ export const testBackendResponse = async () => {
 
     // Test usando AuthService
     console.log('🧪 [TEST] Probando con AuthService...')
-    const authServiceResponse = await AuthService.getUserProfile()
+    const authServiceResponse = await AuthService.getUserBasicInfo()
     console.log('🧪 [TEST] AuthService response:', authServiceResponse)
   } catch (error) {
     console.error('🧪 [TEST] ❌ Error en test:', error)

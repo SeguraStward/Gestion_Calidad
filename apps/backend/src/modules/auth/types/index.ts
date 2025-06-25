@@ -1,6 +1,6 @@
 // types and interfaces for authentication module
 
-import { PermissionType, PermissionScope } from '@una-gc/database/prisma/generated/client';
+import { PermissionType, PermissionScope, UserStatus } from '@una-gc/database/prisma/generated/client';
 
 export interface Permission {
   permissionID: string;
@@ -21,8 +21,8 @@ export interface UserBasicInfo {
   id: string;
   email: string;
   fullName: string;
-  fullLastName?: string;
-  profilePicture?: string | null;
+  fullLastName?: string | null;
+  photoUrl?: string | null;
   status: UserStatus;
 }
 
@@ -65,22 +65,11 @@ export interface CookieConfig {
   path: string;
 }
 
-export interface DatabaseUser {
-  id: string;
-  email: string;
-  fullName?: string | null;
-  fullLastName?: string | null;
-  photoUrl?: string | null;
-  status: UserStatus;
-}
-
 export interface ProfileCompletionData {
   fullName: string;
   fullLastName: string;
   phoneNumber?: string;
 }
-
-export type UserStatus = 'PRE_REGISTRATION' | 'ACTIVE' | 'INACTIVE';
 
 export type TokenType = 'JWT_EXPIRATION' | 'JWT_REFRESH_EXPIRATION';
 

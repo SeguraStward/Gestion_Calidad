@@ -1,7 +1,7 @@
 // types.ts
-import { Control, FieldErrors, FieldValues, DefaultValues } from 'react-hook-form'
 import { UseMutationResult, UseQueryResult } from '@tanstack/react-query'
 import { ColumnDef } from '@tanstack/react-table'
+import { Control, DefaultValues, FieldErrors, FieldValues } from 'react-hook-form'
 
 export type CrudPaginationMeta = {
   total: number
@@ -15,7 +15,7 @@ export type CrudItemBase = {
 }
 
 // Utilities passed to column render functions
-export type ColumnUtilities<TItem> = {
+export type ColumnUtilities = {
   onEdit: (id: string) => void
   onDelete: (id: string) => void
   isProcessing: boolean
@@ -51,7 +51,7 @@ export type CrudConfig<
     editingItem?: TItem | null
   }) => React.ReactNode
   // New method for DataTable columns
-  renderColumns: (utils: ColumnUtilities<TItem>) => ColumnDef<TItem>[]
+  renderColumns: (utils: ColumnUtilities) => ColumnDef<TItem>[]
   // Old method for list rendering (kept for backward compatibility)
   renderItem?: (
     item: TItem,

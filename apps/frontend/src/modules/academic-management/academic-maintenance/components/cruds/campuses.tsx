@@ -1,22 +1,22 @@
 // Campus CRUD datatable and form using form-adapter
 'use client'
 
-import { useMemo, useState } from 'react'
-import { ColumnDef } from '@tanstack/react-table'
-import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
 import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
+import { ColumnUtilities, CrudModuleBase } from '@/app/(components)/crud/crud-module-base'
+import { useListRegionalCentersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useRegionalCenter'
 import {
   useCreateCampus,
-  useUpdateCampus,
-  useRemoveCampus,
+  useListCampusesPaginated,
   useOneCampus,
-  useListCampusesPaginated
+  useRemoveCampus,
+  useUpdateCampus
 } from '@/shared/hooks/useCampus'
-import { useListRegionalCentersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useRegionalCenter'
 import { CampusWithRelations, CreateCampusInput } from '@/shared/types/campus'
 import { Status } from '@/shared/types/status'
+import { ColumnDef } from '@tanstack/react-table'
 import { Badge, Button } from '@una-gc/ui/components'
-import { Loader2, Hash, Building2, Globe, MoreHorizontal, Pencil, Trash2, CheckCircle2, XCircle } from 'lucide-react'
+import { Building2, CheckCircle2, Globe, Hash, Loader2, Pencil, Trash2, XCircle } from 'lucide-react'
+import { useMemo, useState } from 'react'
 
 // Status options for select
 const STATUS_OPTIONS = [
@@ -35,10 +35,9 @@ const STATUS_OPTIONS = [
 ]
 
 interface CampusItem extends CampusWithRelations {}
-type UpdateCampusInput = Partial<CreateCampusInput>
 
 export default function CampusCrud() {
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteId] = useState<string | null>(null)
   const deleteMutation = useRemoveCampus()
 
   // Regional centers for select (traer todos, sin paginación)
@@ -47,7 +46,7 @@ export default function CampusCrud() {
   // Table columns
   const renderColumns = useMemo(
     () =>
-      (utils: ColumnUtilities<CampusItem>): ColumnDef<CampusItem>[] => [
+      (utils: ColumnUtilities): ColumnDef<CampusItem>[] => [
         {
           accessorKey: 'code',
           header: 'Código',

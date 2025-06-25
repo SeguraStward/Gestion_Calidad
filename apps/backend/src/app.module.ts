@@ -87,7 +87,7 @@ import {
     UserRolesModule,
     UserWorkExperiencesModule,
     UsersModule,
-    ScheduleModule.forRoot()
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
 })

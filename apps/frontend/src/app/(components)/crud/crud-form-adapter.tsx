@@ -58,7 +58,6 @@ export function CrudFormAdapter<
   isUpdate,
   handleCancel,
   handleSubmitForm,
-  editingId,
   editingItem,
 
   // Props para el CrudForm
@@ -84,7 +83,7 @@ export function CrudFormAdapter<
   const formSections = sections({
     control,
     errors,
-    editingItem,
+    editingItem: editingItem ?? null,
     isUpdate
   })
   // Generar títulos predeterminados basados en el estado de edición
@@ -99,9 +98,9 @@ export function CrudFormAdapter<
       isSubmitting={isProcessing}
       isUpdate={isUpdate}
       title={title || defaultTitle}
-      description={description}
-      submitButtonText={submitButtonText}
-      cancelButtonText={cancelButtonText}
+      description={description ?? ''}
+      submitButtonText={submitButtonText ?? (isUpdate ? 'Actualizar' : 'Crear')}
+      cancelButtonText={cancelButtonText ?? 'Cancelar'}
       footerContent={footerContent}
     />
   )

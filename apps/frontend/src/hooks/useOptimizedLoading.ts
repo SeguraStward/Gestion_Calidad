@@ -50,6 +50,7 @@ export function useOptimizedLoading(options: UseOptimizedLoadingOptions = {}) {
       const timeoutId = setTimeout(() => setState('idle'), 100)
       return () => clearTimeout(timeoutId)
     }
+    return undefined
   }, [onSuccess, resetOnSuccess])
 
   const setErrorState = useCallback(

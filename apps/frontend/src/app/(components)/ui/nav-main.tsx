@@ -1,6 +1,6 @@
 'use client'
-import Link from 'next/link'
 import { ChevronRight, type LucideIcon } from 'lucide-react'
+import Link from 'next/link'
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@una-gc/ui/components/collapsible'
 import {
@@ -33,7 +33,7 @@ export function NavMain({
       <SidebarGroupLabel>Plataforma</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
-          <Collapsible key={item.title} asChild defaultOpen={item.isActive} className="group/collapsible">
+          <Collapsible key={item.title} asChild defaultOpen={item.isActive ?? false} className="group/collapsible">
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton tooltip={item.title}>

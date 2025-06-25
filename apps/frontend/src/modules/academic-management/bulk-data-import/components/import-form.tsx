@@ -1,13 +1,13 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { FormFileInput } from '@/app/(components)/form/file-input'
+import { FormLayout } from '@/app/(components)/form/form-layout'
+import { AlertMessage } from '@/app/(components)/ui/alert-message' // ⚠️ Ajustá esta ruta según tu estructura
 import { Button } from '@una-gc/ui/components/button'
 import { CardFooter } from '@una-gc/ui/components/card'
-import { FormLayout } from '@/app/(components)/form/form-layout'
-import { FormFileInput } from '@/app/(components)/form/file-input'
-import { Upload, RefreshCw, X } from 'lucide-react'
+import { RefreshCw, Upload, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { ImportPreview } from './import-preview'
-import { AlertMessage } from '@/app/(components)/ui/alert-message' // ⚠️ Ajustá esta ruta según tu estructura
 
 interface ImportFormProps {
   file?: File | null
@@ -104,7 +104,12 @@ export function ImportForm({ file, excelData, loading, success, error, onChange,
       </FormLayout>
 
       <div className="w-full max-w-3xl mt-6">
-        <ImportPreview excelData={excelData} file={file} error={showError ? error : null} onErrorClick={handleRemoveFile} />
+        <ImportPreview
+          excelData={excelData}
+          file={file ?? null}
+          error={showError ? (error ?? null) : null}
+          onErrorClick={handleRemoveFile}
+        />
       </div>
 
       {/* MODAL DE ÉXITO */}

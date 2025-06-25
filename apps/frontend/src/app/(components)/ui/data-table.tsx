@@ -1,20 +1,19 @@
 'use client'
 
-import * as React from 'react'
 import { useDebounce } from '@/shared/hooks/use-debounce' // Necesitamos crear este hook
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  useReactTable,
-  Table as TanstackTable, // Alias to avoid naming conflict
-  Row
+  Table as TanstackTable,
+  useReactTable
 } from '@tanstack/react-table'
+import * as React from 'react'
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@una-gc/ui/components/table'
 import { Button } from '@una-gc/ui/components/button'
 import { Input } from '@una-gc/ui/components/input'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@una-gc/ui/components/table'
 import { ChevronLeft, ChevronRight, Loader2, Search } from 'lucide-react' // Added Loader2
 
 interface DataTableProps<TData, TValue> {
@@ -73,7 +72,7 @@ export function DataTable<TData, TValue>({
   }, [serverSideFiltering, onSearchChange])
 
   // Tabla con filtrado del lado del cliente
-  const table: TanstackTable<TData> = useReactTable({
+  const tableOptions: any = {
     data,
     columns,
     state: {
@@ -84,7 +83,9 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: serverSideFiltering ? undefined : getFilteredRowModel(),
     manualFiltering: serverSideFiltering,
     manualPagination: serverSideFiltering
-  })
+  };
+
+  const table = useReactTable(tableOptions);
 
   // Deshabilitar paginación si no hay handler
   const paginacionActiva = typeof onPageChange === 'function' && totalPages > 1

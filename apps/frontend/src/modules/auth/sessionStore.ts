@@ -1,14 +1,14 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 
-import { Role, UserProfile } from './types'
+import { Role, UserBasicInfo } from './types'
 
 export type UserActiveRole = Role
 
 interface SessionState {
-  user: UserProfile | null
+  user: UserBasicInfo | null
   role: UserActiveRole | null
-  setUser: (user: UserProfile) => void
+  setUser: (user: UserBasicInfo) => void
   setRole: (role: UserActiveRole | null) => void
   clearSession: () => void
   isAuthenticated: () => boolean

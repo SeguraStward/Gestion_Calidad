@@ -1,7 +1,6 @@
-import { memo, useMemo, useState, useCallback, useRef } from 'react'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { DataTable } from '@/app/(components)/ui/data-table'
-import type { ColumnDef } from '@tanstack/react-table'
+import { useVirtualizer } from '@tanstack/react-virtual'
+import { memo, useMemo, useRef, useState } from 'react'
 
 interface VirtualizedDataTableProps<T> {
   data: T[]
@@ -48,7 +47,7 @@ export const VirtualizedDataTable = memo(function VirtualizedDataTable<T>({
         data={filteredData}
         columns={columns}
         isLoading={isLoading}
-        searchPlaceholder={searchPlaceholder}
+        searchPlaceholder={searchPlaceholder ?? 'Buscar...'}
         newButton={newButton}
       />
     )

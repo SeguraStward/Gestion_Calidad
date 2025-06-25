@@ -39,7 +39,7 @@ export default function HomePage() {
       href: '/auth/select-role',
       color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
       iconColor: 'text-orange-600 dark:text-orange-400'
-    },
+    }
     // {
     //   title: 'Configuración',
     //   description: 'Ajustes y configuración del sistema',

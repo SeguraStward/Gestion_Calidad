@@ -1,19 +1,19 @@
 'use client'
 
-import { Loader2, ArrowLeft, AlertTriangle, UserCheck, Shield, Sparkles, Crown } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Crown, Loader2, Shield, Sparkles, UserCheck } from 'lucide-react'
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@una-gc/ui/components/card'
-import { Button } from '@una-gc/ui/components/button'
 import { Alert, AlertDescription } from '@una-gc/ui/components/alert'
-import { RadioGroup } from '@una-gc/ui/components/radio-group'
 import { Badge } from '@una-gc/ui/components/badge'
-import { Separator } from '@una-gc/ui/components/separator'
+import { Button } from '@una-gc/ui/components/button'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@una-gc/ui/components/card'
 import { Progress } from '@una-gc/ui/components/progress'
+import { RadioGroup } from '@una-gc/ui/components/radio-group'
+import { Separator } from '@una-gc/ui/components/separator'
 
-import { cn } from '@una-gc/ui/lib/utils'
-import { useRoleSelection } from '@/modules/auth/hooks'
-import { AuthLayout, RoleCard, RoleLoadingSkeleton, EmptyRoleState } from '@/modules/auth/components'
+import { AuthLayout, EmptyRoleState, RoleCard, RoleLoadingSkeleton } from '@/modules/auth/components'
 import RoleTransition from '@/modules/auth/components/RoleTransition'
+import { useRoleSelection } from '@/modules/auth/hooks'
+import { cn } from '@una-gc/ui/lib/utils'
 
 export default function SelectRolePage() {
   const {
@@ -122,7 +122,7 @@ export default function SelectRolePage() {
           ) : roles.length > 0 ? (
             <div className="space-y-4">
               <RadioGroup
-                value={selectedRole?.id.toString()}
+                value={selectedRole ? selectedRole.id.toString() : null}
                 onValueChange={(value) => {
                   const role = roles.find((r) => r.id.toString() === value)
                   if (role) setSelectedRole(role)

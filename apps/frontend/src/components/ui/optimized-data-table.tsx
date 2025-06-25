@@ -1,6 +1,6 @@
-import { memo, useMemo, useCallback } from 'react'
 import { DataTable } from '@/app/(components)/ui/data-table'
 import { VirtualizedDataTable } from '@/components/ui/virtualized-data-table'
+import { memo, useMemo } from 'react'
 
 interface OptimizedDataTableProps<T> {
   data: T[]
@@ -47,9 +47,9 @@ export const OptimizedDataTable = memo(function OptimizedDataTable<T>({
         data={memoizedData}
         columns={memoizedColumns}
         isLoading={isLoading}
-        searchPlaceholder={searchPlaceholder}
+        searchPlaceholder={searchPlaceholder ?? ''}
         newButton={memoizedNewButton}
-        className={className}
+        className={className ?? ''}
       />
     )
   }
@@ -59,7 +59,7 @@ export const OptimizedDataTable = memo(function OptimizedDataTable<T>({
       data={memoizedData}
       columns={memoizedColumns}
       isLoading={isLoading}
-      searchPlaceholder={searchPlaceholder}
+      searchPlaceholder={searchPlaceholder ?? ''}
       newButton={memoizedNewButton}
     />
   )
@@ -69,7 +69,7 @@ export const OptimizedDataTable = memo(function OptimizedDataTable<T>({
  * Hook para optimizar columnas de tabla
  * Evita recreación innecesaria de definiciones de columnas
  */
-export function useOptimizedColumns<T>(columnDefinitions: () => any[], dependencies: any[] = []) {
+export function useOptimizedColumns(columnDefinitions: () => any[], dependencies: any[] = []) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(columnDefinitions, dependencies)
 }
