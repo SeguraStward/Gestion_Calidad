@@ -4,7 +4,9 @@
   "tasks": {
     "db:generate": {
       "cache": true,
-      "outputs": ["./prisma/generated/**"]
+      "outputs": [
+        "./prisma/generated/**"
+      ]
     },
     "db:migrate": {
       "cache": false,
@@ -14,8 +16,14 @@
       "cache": false
     },
     "build": {
-      "dependsOn": ["^build", "^db:generate"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "dependsOn": [
+        "^build",
+        "^db:generate"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*"
+      ],
       "outputs": [
         ".next/**",
         "!.next/cache/**",
@@ -25,7 +33,9 @@
       ]
     },
     "lint": {
-      "dependsOn": ["^lint"],
+      "dependsOn": [
+        "^lint"
+      ],
       "inputs": [
         "src/**/*.ts",
         "src/**/*.tsx",
@@ -35,16 +45,27 @@
       ]
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": [
+        "^check-types"
+      ]
     },
     "dev": {
-      "dependsOn": ["^db:generate"],
+      "dependsOn": [
+        "^db:generate"
+      ],
       "cache": false,
       "persistent": true
     },
     "test": {
-      "dependsOn": ["build"],
-      "inputs": ["src/**/*", "tests/**/*", "package.json", "jest.config.*"]
+      "dependsOn": [
+        "build"
+      ],
+      "inputs": [
+        "src/**/*",
+        "tests/**/*",
+        "package.json",
+        "jest.config.*"
+      ]
     },
     "format": {
       "outputs": []

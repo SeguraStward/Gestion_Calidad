@@ -6,20 +6,16 @@
     "outDir": "./dist",
     "removeComments": true,
     "sourceMap": true,
-    // NestJS
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    // TypeScript
     "strictNullChecks": false,
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    // support Jest y Node
     "types": [
       "node"
     ],
-    // Path aliases
     "paths": {
       "@src/*": [
         "src/*"

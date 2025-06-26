@@ -13,7 +13,6 @@ function isPublicPath(pathname: string): boolean {
     '/auth/register',
     '/auth/callback',
     '/auth/error',
-    '/manifest.json',
     '/favicon.ico',
     '/robots.txt',
     '/assets',
@@ -118,10 +117,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - robots.txt
-     * - manifest.json
      * - assets (static assets)
      * - .well-known (Chrome DevTools and other tools)
      */
-    '/((?!api/|_next/static/|_next/image/|favicon\\.ico|robots\\.txt|manifest\\.json|assets/|\\.well-known/).*)'
+    '/((?!api/|_next/static/|_next/image/|favicon\\.ico|robots\\.txt|assets/|\\.well-known/).*)'
   ]
 }

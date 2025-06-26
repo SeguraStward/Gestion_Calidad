@@ -1,6 +1,5 @@
-/** @type {import('next').NextConfig} */
-import { NextConfig } from 'next'
 import path from 'path'
+import { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -9,7 +8,6 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: path.join(__dirname, '../../'),
   staticPageGenerationTimeout: 180,
-  productionBrowserSourceMaps: false,
 
   eslint: {
     ignoreDuringBuilds: true
@@ -35,15 +33,6 @@ const nextConfig: NextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=86400'
-          }
-        ]
-      },
-      {
-        source: '/.well-known/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=3600'
           }
         ]
       }
