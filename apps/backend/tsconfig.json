@@ -17,8 +17,7 @@
     "noFallthroughCasesInSwitch": false,
     // support Jest y Node
     "types": [
-      "node",
-      "jest"
+      "node"
     ],
     // Path aliases
     "paths": {

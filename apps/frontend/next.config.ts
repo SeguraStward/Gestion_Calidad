@@ -1,3 +1,4 @@
+/** @type {import('next').NextConfig} */
 import { NextConfig } from 'next'
 import path from 'path'
 
@@ -8,7 +9,7 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: path.join(__dirname, '../../'),
   staticPageGenerationTimeout: 180,
-  productionBrowserSourceMaps: false, //for development
+  productionBrowserSourceMaps: false,
 
   eslint: {
     ignoreDuringBuilds: true
