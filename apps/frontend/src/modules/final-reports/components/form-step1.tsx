@@ -1,19 +1,17 @@
 'use client'
 
-import React, { useMemo, useEffect } from 'react'
-import { zodResolver } from '@hookform/resolvers/zod'
+import React, { useMemo, useEffect } from 'react' 
 import { z } from 'zod'
-import { Button } from '@una-gc/ui/components/button'
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@una-gc/ui/components/card'
+import { Button } from '@una-gc/ui/components/button' 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
 import { Input } from '@una-gc/ui/components/input'
 import { UseFormReturn, FormProvider } from 'react-hook-form'
 import { Loader2 } from 'lucide-react'
-import useDevStore from '@/store/devStore'
 import { useAcademicLoadsByProfessor } from '@/modules/academic-loads/service/academic-loads.service'
 import type { FullAcademicLoad } from '@/modules/academic-loads/types/academic-loads.types'
-import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types'
+import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types' 
+import { useSessionStore } from '@/modules/auth/sessionStore'
 
 export const step1Schema = z.object({
   academicLoadId: z.string().min(1, 'Debe seleccionar una carga académica.'), // Ahora siempre requerido
@@ -87,7 +85,10 @@ export function Step1Form({
   onCancel
 }: Step1FormProps) {
   const { control, watch, setValue, handleSubmit, formState, reset } = formMethods
-  const currentProfessorId = useDevStore((state) => state.mockProfessorId)
+  
+  // Cambio: usar session store en lugar del dev store
+  const { user, isAuthenticated } = useSessionStore()
+  const currentProfessorId = user?.id
 
   const {
     data: paginatedAcademicLoads,
@@ -98,7 +99,7 @@ export function Step1Form({
     {
       include: 'course,academicCycle,professor,group'
     },
-    { enabled: !!currentProfessorId }
+    { enabled: !!currentProfessorId && isAuthenticated() }
   )
 
   const availableCourses = useMemo((): TransformedAcademicLoad[] => {
@@ -107,30 +108,29 @@ export function Step1Form({
       courses = paginatedAcademicLoads.data.map((load: FullAcademicLoad) => ({
         id: load.id,
         nrc: load.nrc,
-        courseName: load.course?.name,
-        courseCode: load.course?.code,
-        professorName: load.professor?.fullName || undefined,
-        groupNumber: load.group?.number,
-        groupLevel: load.course?.level ? String(load.course.level) : undefined,
-        enrolledCapacity: load.enrolledCapacity
+        courseName: load.course?.name || '', // Default to empty string
+        courseCode: load.course?.code || '', // Default to empty string
+        professorName: load.professor?.fullName || '', // Default to empty string
+        groupNumber: load.group?.number || '', // Default to empty string
+        groupLevel: load.course?.level ? String(load.course.level) : '', // Default to empty string
+        enrolledCapacity: load.enrolledCapacity || 0 // Default to 0
       }))
     }
 
     // Si estamos editando y tenemos datos iniciales, y la carga del informe no está en la lista
     // (ej. porque no está "activa" o el filtro la excluyó), la añadimos para que se pueda seleccionar.
     if (isEditing && initialData?.nrc && initialData.academicLoadId) {
-      const editingCourseInList = courses.find((c) => c.nrc === initialData.nrc) // Cambiar a comparar por NRC
+      const editingCourseInList = courses.find((c) => c.nrc === initialData.nrc)
       if (!editingCourseInList) {
         courses.unshift({
-          // Añadir al principio
           id: initialData.academicLoadId,
           nrc: initialData.nrc,
-          courseName: initialData.courseName,
-          courseCode: initialData.courseCode,
-          professorName: initialData.professorName,
-          groupNumber: initialData.groupNumber,
-          groupLevel: initialData.groupLevel,
-          enrolledCapacity: initialData.enrolledCapacity
+          courseName: initialData.courseName || '', // Provide fallback for undefined
+          courseCode: initialData.courseCode || '', // Provide fallback for undefined
+          professorName: initialData.professorName || '', // Provide fallback for undefined
+          groupNumber: initialData.groupNumber || '', // Provide fallback for undefined
+          groupLevel: initialData.groupLevel || '', // Provide fallback for undefined
+          enrolledCapacity: initialData.enrolledCapacity || 0 // Provide fallback for undefined
         })
       }
     }
@@ -212,11 +212,21 @@ export function Step1Form({
     )
   }
 
+  // Verificación de autenticación
+  if (!isAuthenticated()) {
+    return (
+      <div className="p-6 h-full flex flex-col items-center justify-center">
+        <p className="text-destructive">Debes estar autenticado para acceder a esta función.</p>
+        <p className="text-sm text-muted-foreground">Por favor, inicia sesión para continuar.</p>
+      </div>
+    )
+  }
+
   if (!currentProfessorId) {
     return (
       <div className="p-6 h-full flex flex-col items-center justify-center">
-        <p className="text-destructive">No se ha configurado un profesor para la demostración.</p>
-        <p className="text-sm text-muted-foreground">Por favor, configure un ID de profesor en el store de desarrollo.</p>
+        <p className="text-destructive">No se pudo obtener la información del profesor.</p>
+        <p className="text-sm text-muted-foreground">Por favor, inicia sesión nuevamente.</p>
       </div>
     )
   }

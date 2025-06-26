@@ -24,6 +24,8 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean
   currentPage?: number
   totalPages?: number
+  totalItems?: number
+  pageSize?: number
   onPageChange?: (page: number) => void
   searchQuery?: string
   onSearchChange?: (query: string) => void
@@ -38,6 +40,8 @@ export function DataTable<TData, TValue>({
   isLoading,
   currentPage = 1,
   totalPages = 1,
+  totalItems = 0,
+  pageSize = 10,
   onPageChange,
   searchQuery,
   onSearchChange,
@@ -46,22 +50,26 @@ export function DataTable<TData, TValue>({
   // Estado para filtrado del lado del cliente
   const [clientFilter, setClientFilter] = React.useState('')
 
-  // Aplicamos debounce a la búsqueda para evitar muchas solicitudes
+  // Aplicamos debounce solo para filtrado del lado del cliente
   const debouncedClientFilter = useDebounce(clientFilter, 300)
 
-  // Manejar cambios en la búsqueda
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Determinar el valor actual del input
+  const inputValue = React.useMemo(() => {
+    return serverSideFiltering ? (searchQuery ?? '') : clientFilter
+  }, [serverSideFiltering, searchQuery, clientFilter])
+
+  // Manejar cambios en la búsqueda con useCallback para evitar recreaciones
+  const handleSearchChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
 
     if (serverSideFiltering && onSearchChange) {
-      // Para filtrado del lado del servidor, propagamos el cambio hacia arriba
-      setClientFilter(value) // Actualizamos el input localmente
-      onSearchChange(value) // Enviamos el valor al componente padre
+      // Para filtrado del lado del servidor, propagamos inmediatamente
+      onSearchChange(value)
     } else {
       // Para filtrado del lado del cliente
       setClientFilter(value)
     }
-  }
+  }, [serverSideFiltering, onSearchChange])
 
   // Tabla con filtrado del lado del cliente
   const tableOptions: any = {
@@ -72,12 +80,12 @@ export function DataTable<TData, TValue>({
     },
     onGlobalFilterChange: serverSideFiltering ? undefined : setClientFilter,
     getCoreRowModel: getCoreRowModel(),
-    // Solo agregamos getFilteredRowModel si no es filtrado del lado del servidor
-    ...(serverSideFiltering ? {} : { getFilteredRowModel: getFilteredRowModel() })
-    // No necesitamos filtrado en la tabla si lo hacemos en el servidor
-  }
+    getFilteredRowModel: serverSideFiltering ? undefined : getFilteredRowModel(),
+    manualFiltering: serverSideFiltering,
+    manualPagination: serverSideFiltering
+  };
 
-  const table: TanstackTable<TData> = useReactTable(tableOptions)
+  const table = useReactTable(tableOptions);
 
   // Deshabilitar paginación si no hay handler
   const paginacionActiva = typeof onPageChange === 'function' && totalPages > 1
@@ -91,7 +99,7 @@ export function DataTable<TData, TValue>({
           </div>
           <Input
             placeholder={searchPlaceholder}
-            value={serverSideFiltering ? searchQuery : clientFilter}
+            value={inputValue}
             onChange={handleSearchChange}
             className="pl-10"
             disabled={isLoading}
@@ -144,7 +152,14 @@ export function DataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-between space-x-2 py-4">
         <div className="text-sm text-muted-foreground">
-          Página {currentPage} de {totalPages}
+          {serverSideFiltering && totalItems > 0 ? (
+            <>
+              Mostrando {Math.min((currentPage - 1) * pageSize + 1, totalItems)} a{' '}
+              {Math.min(currentPage * pageSize, totalItems)} de {totalItems} registros
+            </>
+          ) : (
+            `Página ${currentPage} de ${totalPages}`
+          )}
         </div>
         <div className="space-x-2">
           <Button

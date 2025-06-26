@@ -33,11 +33,12 @@ export class FinalReportsController extends GenericController<FinalReportDto, Fi
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit?: number,
     @Query('status', new ParseEnumPipe(FinalReportStatus, { optional: true })) status?: FinalReportStatus,
+    @Query('search') search?: string,
     @Query('orderBy') orderBy?: string,
     @Query('include') includeQueryParam?: string,
   ) {
     this.logger.log(
-      `Request to find all final reports for professorId: ${professorId}, status: ${status}, page: ${page}, limit: ${limit}, orderBy: ${orderBy}, include: ${includeQueryParam}`,
+      `Request to find all final reports for professorId: ${professorId}, status: ${status}, page: ${page}, limit: ${limit}, search: ${search}, orderBy: ${orderBy}, include: ${includeQueryParam}`,
     );
 
     const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
@@ -48,6 +49,7 @@ export class FinalReportsController extends GenericController<FinalReportDto, Fi
       page,
       limit,
       status,
+      search,
       parsedOrderBy,
       prismaInclude,
     );
