@@ -7,7 +7,7 @@ import {
 } from '@/lib/api/modules/user/user.types'
 import { UserStatus } from '@una-gc/database/prisma/generated/client'
 import { userApiService } from './user-api.service'
-import { useUserBaseStore } from './user.store'
+import { useUserStore } from './user.store'
 
 // Clase de servicio que conecta API con Store (similar al patrón del backend)
 export class UserService {
@@ -15,7 +15,7 @@ export class UserService {
 
   // Helper method to get store (this will be called from React components/hooks context)
   private getStore() {
-    return useUserBaseStore()
+    return useUserStore()
   }
 
   // Obtener usuarios con paginación y filtros
