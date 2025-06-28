@@ -29,7 +29,7 @@
     "@una-gc/eslint-config": "workspace:*",
     "@una-gc/typescript-config": "workspace:*",
     "cspell": "^8.19.4",
-    "eslint": "^9.26.0",
+    "eslint": "^9.29.0",
     "has-flag": "^4.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.1",
