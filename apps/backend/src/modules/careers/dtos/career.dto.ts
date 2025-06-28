@@ -1,13 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsNotEmpty } from 'class-validator';
-import { Status } from '@una-gc/database/prisma/generated/client';
-import { BaseDto } from '@src/modules/generalDto';
-import { Expose, Type } from 'class-transformer';
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { CourseDto } from '@src/modules/courses/dtos/course.dto';
-import { SchoolDto } from '@src/modules/schools/dtos/school.dto';
 import { ProjectDto } from '@src/modules/projects/dtos/project.dto';
+import { SchoolDto } from '@src/modules/schools/dtos/school.dto';
+import { Status } from '@una-gc/database/prisma/generated/client';
+import { Expose, Type } from 'class-transformer';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-export class CareerDto extends BaseDto {
+export class CareerDto extends AuditFields {
   @ApiPropertyOptional({ description: 'Career ID' })
   @Expose()
   @IsString()

@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsArray, ValidateNested, IsNotEmpty } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
+import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { PermissionScope, PermissionType, Status } from '@una-gc/database/prisma/generated/client';
-import { BaseDto } from '@src/modules/generalDto';
 
 export class PermissionDto {
   @ApiProperty({ description: 'Permission ID' })
@@ -28,7 +28,7 @@ export class PermissionDto {
   actions?: string[];
 }
 
-export class UserRoleDto extends BaseDto {
+export class UserRoleDto extends AuditFields {
   @ApiPropertyOptional({ description: 'UserRole ID' })
   @IsString()
   @IsOptional()

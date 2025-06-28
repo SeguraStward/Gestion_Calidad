@@ -10,17 +10,17 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 
 import { AuthService } from './auth.service';
+import { CompleteProfileDto, LoginUserDto, SetActiveRoleDto, UserResponseDto } from './dtos';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
-import { GoogleUser } from './types';
-import { LoginUserDto, CompleteProfileDto, UserResponseDto, SetActiveRoleDto } from './dtos';
 import { mapUserToResponse, validateUserData } from './helpers/user-mapper.helper';
+import { GoogleUser } from './types';
 import { CookieUtil } from './utils/cookie.util';
 
 @ApiTags('Authentication')
@@ -93,7 +93,7 @@ export class AuthController {
     const clearCookieConfig = this.cookieUtil.getBaseCookieConfig();
     res.clearCookie('auth_token', clearCookieConfig);
     res.clearCookie('refresh_token', clearCookieConfig);
-    res.clearCookie('active_role_id', clearCookieConfig);
+    res.clearCookie('user_active_role_id', clearCookieConfig);
 
     this.logger.debug('All authentication cookies cleared');
   }
@@ -180,7 +180,7 @@ export class AuthController {
       await this.authService.setActiveRole(user.id, setActiveRoleDto.roleId);
 
       const activeRoleConfig = this.cookieUtil.getActiveRoleConfig();
-      res.cookie('active_role_id', setActiveRoleDto.roleId, activeRoleConfig);
+      res.cookie('user_active_role_id', setActiveRoleDto.roleId, activeRoleConfig);
 
       return { message: 'Active role set successfully', roleId: setActiveRoleDto.roleId };
     } catch (error) {
@@ -195,7 +195,7 @@ export class AuthController {
   @Get('active-role')
   @UseGuards(JwtAuthGuard)
   getActiveRole(@Req() req: Request) {
-    const activeRoleId = req.cookies.active_role_id;
+    const activeRoleId = req.cookies.user_active_role_id;
     return { activeRoleId: activeRoleId || null };
   }
 

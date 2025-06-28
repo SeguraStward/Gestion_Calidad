@@ -1,5 +1,5 @@
 import { Injectable, Logger, NestMiddleware } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 interface RequestLogData {
   method: string;
@@ -23,7 +23,6 @@ export class LoggerMiddleware implements NestMiddleware {
 
     this.logRequestStart(method, originalUrl);
 
-    // Interceptar res.send para loguear el contenido de la respuesta
     const originalSend = res.send;
     res.send = (body?: any): Response => {
       let responseBodyToLog;
@@ -41,9 +40,9 @@ export class LoggerMiddleware implements NestMiddleware {
       } else {
         responseBodyToLog = String(body);
       }
-      if (responseBodyToLog && responseBodyToLog !== '{}') {
-        this.logger.debug(`[HTTP] Response Body: ${responseBodyToLog}`);
-      }
+      // if (responseBodyToLog && responseBodyToLog !== '{}') {
+      //   this.logger.debug(`[HTTP] Response Body: ${responseBodyToLog}`);
+      // }
       return originalSend.call(res, body);
     };
 
@@ -72,7 +71,7 @@ export class LoggerMiddleware implements NestMiddleware {
       `${this.getStatusEmoji(statusCode)} ${method} ${originalUrl} - Status: ${statusCode} - Size: ${contentLength}b - Time: ${responseTime}ms`,
     );
 
-    // this.logDebugDetails(req, res, responseTime);
+    this.logDebugDetails(req, res, responseTime);
   }
 
   private logDebugDetails(req: Request, res: Response, responseTime: number): void {

@@ -1,23 +1,23 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsEnum,
-  IsOptional,
-  IsString,
   IsArray,
-  ValidateNested,
   IsDate,
   IsEmail,
+  IsEnum,
   IsMongoId,
   IsNumberString,
+  IsOptional,
+  IsString,
+  ValidateNested,
 } from 'class-validator';
 
-import { Type, Expose } from 'class-transformer';
-import { Province, UserStatus } from '@una-gc/database/prisma/generated/client';
-import { BaseDto } from '@src/modules/generalDto';
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { UserRoleDto } from '@src/modules/user-roles/dtos/user-role.dto';
+import { Province, UserStatus } from '@una-gc/database/prisma/generated/client';
+import { Expose, Type } from 'class-transformer';
 import { UserPhoneDto } from './user-type.dto';
 
-export class UserDto extends BaseDto {
+export class UserDto extends AuditFields {
   @ApiPropertyOptional({ description: 'User ID' })
   @IsString()
   @IsMongoId()

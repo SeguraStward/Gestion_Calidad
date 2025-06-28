@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsArray, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 
-import { Expose, Type } from 'class-transformer';
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { FinalReport, FinalReportStatus } from '@una-gc/database/prisma/generated/client';
-import { BaseDto } from '@src/modules/generalDto';
+import { Expose, Type } from 'class-transformer';
 
 import { AcademicLoadDto } from '@src/modules/academic-loads/dtos/academic-load.dto';
 import { UserDto } from '@src/modules/users/dtos/user.dto';
@@ -155,7 +155,7 @@ export class FinalReportStudentInformationDto {
   }
 }
 
-export class FinalReportDto extends BaseDto {
+export class FinalReportDto extends AuditFields {
   @ApiPropertyOptional({ description: 'Final Report ID' })
   @Expose()
   @IsString()

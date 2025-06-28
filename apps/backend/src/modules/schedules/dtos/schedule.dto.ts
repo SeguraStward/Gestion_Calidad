@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum } from 'class-validator';
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { ScheduleDays } from '@una-gc/database/prisma/generated/client'; // Import for ScheduleDays enum
-import { BaseDto } from '@src/modules/generalDto';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
-export class ScheduleDto extends BaseDto {
+export class ScheduleDto extends AuditFields {
   @ApiPropertyOptional({ description: 'Schedule ID' })
   @IsString()
   @IsOptional()

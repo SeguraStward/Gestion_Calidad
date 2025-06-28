@@ -1,8 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsInt, IsString, IsDate } from 'class-validator';
-import { Expose, Type, Transform } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
+import { IsDate, IsInt, IsOptional, IsString } from 'class-validator';
 
-export class BaseDto {
+export class AuditFields {
   @ApiPropertyOptional({ description: 'Version', readOnly: true })
   @IsInt()
   @IsOptional()

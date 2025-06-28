@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsDate, ValidateNested, IsArray } from 'class-validator';
+import { IsArray, IsDate, IsOptional, IsString, ValidateNested } from 'class-validator';
 
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { Type } from 'class-transformer';
-import { BaseDto } from '@src/modules/generalDto';
 
 export class ProjectLogEntryDto {
   @ApiProperty({ description: 'Version number', default: 0 })
@@ -40,7 +40,7 @@ export class ProjectLogEntryDto {
   date?: Date;
 }
 
-export class ProjectLogDto extends BaseDto {
+export class ProjectLogDto extends AuditFields {
   @ApiPropertyOptional({ description: 'Project log ID' })
   @IsString()
   @IsOptional()

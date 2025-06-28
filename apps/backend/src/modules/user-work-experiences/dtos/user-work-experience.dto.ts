@@ -1,11 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsArray, ValidateNested, IsDate } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsArray, IsDate, IsOptional, IsString, ValidateNested } from 'class-validator';
 
-import { EvidenceDto } from '@modules/general-types-dto';
-import { BaseDto } from '@src/modules/generalDto';
+import { AuditFields } from '@src/dtos/audit-fields.dto';
+import { EvidenceDto } from '@src/dtos/general-types.dto';
 
-export class UserWorkExperienceDto extends BaseDto {
+export class UserWorkExperienceDto extends AuditFields {
   @ApiPropertyOptional({ description: 'UserWorkExperience ID' })
   @IsString()
   @IsOptional()

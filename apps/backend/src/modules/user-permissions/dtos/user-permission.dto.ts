@@ -1,10 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { Status } from '@una-gc/database/prisma/generated/client';
-import { BaseDto } from '@src/modules/generalDto';
 
-export class UserPermissionDto extends BaseDto {
+export class UserPermissionDto extends AuditFields {
   @ApiPropertyOptional({ description: 'UserPermission ID' })
   @IsString()
   @IsOptional()
@@ -14,9 +14,10 @@ export class UserPermissionDto extends BaseDto {
   @IsString()
   name: string;
 
-  @ApiPropertyOptional({ description: 'Permission code identifier' })
-  @IsString()
-  code: string;
+  // NOTE: THE code only can be modified by the system administrator (is for code references)
+  // @ApiPropertyOptional({ description: 'Permission code identifier' })
+  // @IsString()
+  // code: string;
 
   @ApiPropertyOptional({ description: 'Parent permission ID' })
   @IsString()
