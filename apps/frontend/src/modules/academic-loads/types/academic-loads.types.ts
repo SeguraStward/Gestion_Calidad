@@ -1,3 +1,5 @@
+import { Status } from '@una-gc/database/prisma/generated/client'
+
 // Basic types for related entities - expand as needed or import from shared types if they exist
 interface Course {
   id: string
@@ -35,8 +37,6 @@ interface CampusNested {
   // ... other campus properties you might need
 }
 
-export type AcademicLoadStatus = 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' // Matches backend Status enum
-
 // Represents a full academic load with potential includes
 export interface FullAcademicLoad {
   id: string
@@ -45,7 +45,7 @@ export interface FullAcademicLoad {
   enrolledCapacity: number
   availableSeats: number
   date?: string | null // Assuming ISO string
-  status: AcademicLoadStatus
+  status: Status
   professorId?: string // Foreign key
   courseId?: string // Foreign key
   academicCycleId?: string // Foreign key
@@ -73,7 +73,7 @@ export interface CreateAcademicLoadDto {
   courseId: string
   academicCycleId: string
   groupId: string
-  status?: AcademicLoadStatus
+  status?: Status
 }
 
 // For updating (if you implement PUT later)
@@ -87,7 +87,7 @@ export interface AcademicLoadFilters {
   limit?: number
   orderBy?: string // e.g., '{"nrc":"asc"}'
   include?: string // e.g., 'course,professor,academicCycle,group'
-  status?: AcademicLoadStatus
+  status?: Status
   professorId?: string // To filter by professor
   // ... any other filterable fields
 }

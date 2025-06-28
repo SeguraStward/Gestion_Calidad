@@ -1,10 +1,10 @@
 'use client'
 
+import { Button } from '@una-gc/ui/components'
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@una-gc/ui/components/sidebar'
+import Link from 'next/link'
 import { NavMain } from './nav-main'
 import { NavUser } from './nav-user'
-import Link from 'next/link'
-import { Button } from '@una-gc/ui/components'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const navMain = [
@@ -21,7 +21,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: 'Gestión de Usuarios',
       url: '/gestión-usuarios',
       icon: require('lucide-react').Users,
-      items: [{ title: 'Mantenimiento', url: '/user-management/user-maintenance' }]
+      items: [{ title: 'Mantenimiento', url: '/user-management/user' }]
     },
     {
       title: 'Informe Final',

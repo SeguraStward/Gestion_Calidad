@@ -1,9 +1,9 @@
 'use client'
 
+import { Badge } from '@una-gc/ui/components/badge'
 import { Button } from '@una-gc/ui/components/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card'
-import { Badge } from '@una-gc/ui/components/badge'
-import { BookOpen, Users, FileText, ChevronRight, Sparkles, Target, Award, Bell, LockKeyholeOpen } from 'lucide-react'
+import { Award, Bell, BookOpen, ChevronRight, FileText, LockKeyholeOpen, Sparkles, Target, Users } from 'lucide-react'
 import Link from 'next/link'
 
 export default function HomePage() {
@@ -20,7 +20,7 @@ export default function HomePage() {
       title: 'Gestión de Usuarios',
       description: 'Administrar usuarios y permisos del sistema',
       icon: Users,
-      href: '/user-management/user-maintenance',
+      href: '/user-management/user',
       color: 'bg-green-500/10 text-green-600 dark:text-green-400',
       iconColor: 'text-green-600 dark:text-green-400'
     },
