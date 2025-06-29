@@ -8,13 +8,13 @@ import {
 import { UserStatus } from '@una-gc/database/prisma/generated/client'
 import { useCallback } from 'react'
 import { userApiService } from '../user-api.service'
-import { useUserBaseStore } from '../user.store'
+import { useUserStore } from '../user.store'
 
 /**
  * Hook para gestionar el servicio de usuarios con acceso correcto al store
  */
 export function useUserService() {
-  const store = useUserBaseStore()
+  const store = useUserStore()
 
   // Obtener usuarios con paginación y filtros
   const getUsers = useCallback(

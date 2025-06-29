@@ -1,8 +1,8 @@
+import { createBaseEntityStore } from '@/lib/api/stores/base-entity.store'
 import { UserStatus } from '@una-gc/database/prisma/generated/client'
-import { createBaseEntityStore } from '../../stores/base-entity.store'
 import { CreateUserDto, UpdateUserDto, UserDto } from './user.types'
 
-// Filtros por defecto para usuarios (solo activos)
+// Filtros por defecto para usuarios (solo activos)src\lib\api\stores\base-entity.store.ts
 const DEFAULT_USER_FILTERS = {
   status: UserStatus.ACTIVE,
   limit: 10,
