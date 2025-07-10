@@ -133,13 +133,13 @@ export class AuthController {
     }
 
     const googleUser = req.user as { email: string; [key: string]: any };
-    const allowedDomain = '@est.una.ac.cr';
+    // const allowedDomain = '@est.una.ac.cr';
 
-    // Validate domain
-    if (!googleUser.email?.endsWith(allowedDomain)) {
-      this.logger.warn(`Login attempt from disallowed domain: ${googleUser.email || 'No email'}`);
-      throw new Error('Domain not allowed');
-    }
+    // // Validate domain
+    // if (!googleUser.email?.endsWith(allowedDomain)) {
+    //   this.logger.warn(`Login attempt from disallowed domain: ${googleUser.email || 'No email'}`);
+    //   throw new Error('Domain not allowed');
+    // }
 
     // Process login
     this.logger.log(`Processing Google login for user: ${googleUser.email}`);
