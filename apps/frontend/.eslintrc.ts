@@ -2,10 +2,7 @@ import { nextJsConfig } from '@una-gc/eslint-config/next-js'
 
 const config = {
   ...nextJsConfig,
-  extends: [
-    'next/core-web-vitals',
-    '@typescript-eslint/recommended'
-  ],
+  extends: ['next/core-web-vitals', '@typescript-eslint/recommended'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     project: './tsconfig.json',
