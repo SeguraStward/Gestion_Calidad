@@ -1,24 +1,21 @@
 'use client'
 
-import { useMemo } from 'react'
-import { ColumnDef } from '@tanstack/react-table'
-import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
 import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
+import { ColumnUtilities, CrudModuleBase } from '@/app/(components)/crud/crud-module-base'
 import {
   useCreateRegionalCenter,
-  useUpdateRegionalCenter,
-  useRemoveRegionalCenter,
+  useListRegionalCentersPaginated,
   useOneRegionalCenter,
-  useListRegionalCentersPaginated
+  useRemoveRegionalCenter,
+  useUpdateRegionalCenter
 } from '@/modules/academic-management/academic-maintenance/hooks/useRegionalCenter'
-import { useRegionalCenterFormData } from '../../hooks/useRegionalCenterFormData'
-import {
-  RegionalCenterWithRelations,
-  CreateRegionalCenterInput
-} from '@/modules/academic-management/academic-maintenance/types/regional-center'
+import { RegionalCenterWithRelations } from '@/modules/academic-management/academic-maintenance/types/regional-center'
 import { Status } from '@/shared/types/status'
+import { ColumnDef } from '@tanstack/react-table'
 import { Badge, Button } from '@una-gc/ui/components'
-import { Building, Hash, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { Building, CheckCircle2, Hash, Loader2, Pencil, Trash2, XCircle } from 'lucide-react'
+import { useMemo } from 'react'
+import { useRegionalCenterFormData } from '../../hooks/useRegionalCenterFormData'
 
 // Define the item type for CrudModuleBase
 interface RegionalCenterItem extends RegionalCenterWithRelations {}
@@ -41,12 +38,12 @@ const STATUS_OPTIONS = [
 
 export default function RegionalCentersCrud() {
   // Cargar datos para el formulario
-  const { campuses, isLoadingCampuses } = useRegionalCenterFormData()
+  useRegionalCenterFormData()
 
   // Definición de columnas para la tabla de centros regionales
   const renderColumns = useMemo(
     () =>
-      (utils: ColumnUtilities<RegionalCenterItem>): ColumnDef<RegionalCenterItem>[] => [
+      (utils: ColumnUtilities): ColumnDef<RegionalCenterItem>[] => [
         {
           accessorKey: 'code',
           header: 'Código',
@@ -175,13 +172,15 @@ export default function RegionalCentersCrud() {
                   type: 'text',
                   name: 'code',
                   label: 'Código',
-                  required: true,
+                  required: true, // igual que en campus
                   placeholder: 'Ej: CR-BRUNCA',
                   helperText: 'Código único del centro regional',
                   rules: {
+                    required: { value: true, message: 'El código es requerido' },
                     minLength: { value: 2, message: 'El código debe tener al menos 2 caracteres' },
                     maxLength: { value: 20, message: 'El código no puede exceder 20 caracteres' },
-                    pattern: { value: /^[A-Za-z0-9\-_]+$/, message: 'Solo letras, números, guiones y guiones bajos' }
+                    pattern: { value: /^[A-Za-z0-9\-_]+$/, message: 'Solo letras, números, guiones y guiones bajos' },
+                    validate: (value: string) => value.trim().length > 0 || 'El código no puede estar vacío o solo espacios'
                   },
                   disabled: isUpdate
                 },
@@ -189,12 +188,14 @@ export default function RegionalCentersCrud() {
                   type: 'text',
                   name: 'name',
                   label: 'Nombre',
-                  required: true,
+                  required: true, // igual que en campus
                   placeholder: 'Ej: Centro Regional Brunca',
                   helperText: 'Nombre completo del centro regional',
                   rules: {
+                    required: { value: true, message: 'El nombre es requerido' },
                     minLength: { value: 3, message: 'El nombre debe tener al menos 3 caracteres' },
-                    maxLength: { value: 100, message: 'El nombre no puede exceder 100 caracteres' }
+                    maxLength: { value: 100, message: 'El nombre no puede exceder 100 caracteres' },
+                    validate: (value: string) => value.trim().length > 0 || 'El nombre no puede estar vacío o solo espacios'
                   }
                 },
                 {
@@ -207,6 +208,9 @@ export default function RegionalCentersCrud() {
                     name: option.name
                   })),
                   helperText: 'Estado actual del centro regional',
+                  rules: {
+                    required: { value: true, message: 'El estado es requerido' }
+                  },
                   renderOption: (option: any) => (
                     <div className="flex items-center">
                       {STATUS_OPTIONS.find((opt) => opt.id === option.id)?.icon}
@@ -240,7 +244,7 @@ export default function RegionalCentersCrud() {
         code: '',
         name: '',
         status: Status.ACTIVE
-      } as CreateRegionalCenterInput,
+      },
       renderForm,
       renderColumns,
       processItemForEditing: (item: RegionalCenterItem) => ({

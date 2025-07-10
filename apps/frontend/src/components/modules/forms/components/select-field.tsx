@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
 import { Checkbox } from '@una-gc/ui/components/checkbox'
-import { SelectFieldProps } from '../types'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
+import { useEffect, useRef } from 'react'
 import { useSelectStore } from '../store/select-store'
+import { SelectFieldProps } from '../types'
 
 interface SelectFieldComponentProps {
   field: SelectFieldProps
@@ -66,7 +66,7 @@ export const SelectField = ({ field, onChange, value, errorMessage }: SelectFiel
   const currentValue = getFieldValue(storeKey) || ''
 
   return (
-    <Select value={currentValue.toString()} onValueChange={handleValueChange} disabled={field.disabled}>
+    <Select value={currentValue.toString()} onValueChange={handleValueChange} disabled={field.disabled ?? false}>
       <SelectTrigger
         id={field.name}
         aria-invalid={!!errorMessage}
@@ -75,8 +75,8 @@ export const SelectField = ({ field, onChange, value, errorMessage }: SelectFiel
         <SelectValue placeholder={field.placeholder || 'Seleccionar...'} />
       </SelectTrigger>
       <SelectContent>
-        {field.options?.map((opt: any) => (
-          <SelectItem key={opt.id} value={opt.id.toString()}>
+        {field.options?.map((opt: any, index: number) => (
+          <SelectItem key={`${opt.id}-${index}`} value={opt.id.toString()}>
             {opt.name}
           </SelectItem>
         ))}

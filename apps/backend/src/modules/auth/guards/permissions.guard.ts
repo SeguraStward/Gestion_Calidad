@@ -10,7 +10,7 @@ import {
   RESOURCE_NAME_TOKEN,
 } from '../decorators/require-permissions.decorator';
 import { RESOURCE_NAME_KEY } from '../decorators/resource-name.decorator';
-import { Permission } from '../interfaces';
+import { Permission } from '../types';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -49,7 +49,7 @@ export class PermissionsGuard implements CanActivate {
         throw new ForbiddenException('User not authenticated');
       }
 
-      const activeRoleId = request.cookies?.active_role_id;
+      const activeRoleId = request.cookies?.user_active_role_id;
 
       if (!activeRoleId) {
         this.logger.warn(`User ${user.id} without active role trying to access protected resource`);

@@ -99,7 +99,7 @@ export const buildSchema = (fields: FormField[]) => {
 
     // Add custom validation if provided
     if (field.validate) {
-      schema = schema.superRefine((val, ctx) => {
+      schema = schema.superRefine(() => {
         // This will be handled in the component with watch and custom validation
       })
     }

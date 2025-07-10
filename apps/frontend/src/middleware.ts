@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-import { SessionStorageManager, Logger } from './utils'
+import { Logger } from './utils'
 
 // DEV temporal for testing purposes
 const DISABLED_AUTH = process.env.DISABLED_AUTH === 'true'
@@ -10,95 +10,70 @@ const DISABLED_ROLES = process.env.DISABLED_ROLES === 'true'
 function isPublicPath(pathname: string): boolean {
   const publicPaths = [
     '/auth/login',
+    '/auth/register',
+    '/auth/callback',
     '/auth/error',
-    '/manifest.json',
     '/favicon.ico',
     '/robots.txt',
     '/assets',
-    '/sw.js',
-    '/_next',
     '/api/auth'
   ]
 
-  const isPublic = publicPaths.some((path) => pathname.startsWith(path))
-  Logger.debug(`Checking if path is public: ${pathname}`, { isPublic })
-  return isPublic
+  return publicPaths.some((path) => pathname.startsWith(path))
 }
 
-function getAccessToken(request: NextRequest): string | undefined {
+function getAccessToken(request: NextRequest): boolean {
   try {
-    const token = request.cookies.get('auth_token')?.value
-    Logger.debug('Access token retrieved', { hasToken: !!token })
-    return token
-  } catch (error) {
-    Logger.error('[Middleware Error] Failed to get access token:', error)
-    return undefined
+    return request.cookies.has('auth_token')
+  } catch {
+    return false
   }
 }
 
 function getActiveRoleId(request: NextRequest): string | undefined {
   try {
-    const roleId = request.cookies.get('active_role_id')?.value // Changed from 'user_active_role_id' to 'active_role_id'
-    Logger.debug('Role ID retrieved', { hasRoleId: !!roleId, roleIdValue: roleId })
-    return roleId
-  } catch (error) {
-    Logger.error('[Middleware Error] Failed to get role ID:', error)
+    return request.cookies.get('user_active_role_id')?.value
+  } catch {
     return undefined
   }
 }
 
-function handlePublicPath(request: NextRequest, accessToken?: string) {
-  Logger.debug('Handling public path', {
-    path: request.nextUrl.pathname,
-    hasAccessToken: !!accessToken
-  })
+function handlePublicPath(request: NextRequest, hasAccessToken: boolean = false) {
+  const pathname = request.nextUrl.pathname
 
-  if (accessToken && request.nextUrl.pathname.startsWith('/auth/login')) {
-    Logger.debug('User is authenticated, redirecting to home')
+  if (hasAccessToken && pathname.startsWith('/auth/login')) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
   return NextResponse.next()
 }
 
-/**
- * Handles access control for protected routes in the application.
- *
- * This function checks for the presence of an access token and an active role ID,
- * redirecting the user to the appropriate authentication or role selection page if necessary.
- * It also respects a global flag (`DISABLED_ROLES`) to optionally bypass role checks.
- * If an error occurs during processing, the user is redirected to a generic error page.
- *
- * @param request - The incoming Next.js request object.
- * @param accessToken - (Optional) The user's access token, if available.
- * @param activeRoleId - (Optional) The currently selected role ID for the user, if available.
- * @returns A `NextResponse` object that either allows the request to proceed or redirects the user.
- */
-function handleProtectedPath(request: NextRequest, accessToken?: string, activeRoleId?: string) {
-  Logger.debug('Handling protected path', {
-    path: request.nextUrl.pathname,
-    hasAccessToken: !!accessToken,
-    hasRoleId: !!activeRoleId,
-    rolesDisabled: DISABLED_ROLES
-  })
-
+function handleProtectedPath(request: NextRequest, hasAccessToken: boolean = false, activeRoleId?: string) {
   try {
-    if (!accessToken) {
-      Logger.debug('No access token found, redirecting to login')
+    if (!hasAccessToken) {
       return NextResponse.redirect(new URL('/auth/login', request.url))
     }
 
     if (DISABLED_ROLES) {
-      Logger.debug('Roles are disabled, proceeding with request')
       return NextResponse.next()
     }
 
-    if (!activeRoleId && !SessionStorageManager.hasActiveRole && !request.nextUrl.pathname.startsWith('/auth/select-role')) {
-      Logger.debug('No role selected, redirecting to role selection')
+    // Verificar si viene de la página de selección de roles
+    const referer = request.headers.get('referer')
+    const isComingFromRoleSelection = referer?.includes('/auth/select-role')
+
+    if (!activeRoleId && !request.nextUrl.pathname.startsWith('/auth/select-role')) {
+      // Si viene de selección de roles, dar una segunda oportunidad
+      if (isComingFromRoleSelection) {
+        const roleIdRetry = request.cookies.get('user_active_role_id')?.value
+        if (roleIdRetry) {
+          return NextResponse.next()
+        }
+      }
+
       return NextResponse.redirect(new URL('/auth/select-role', request.url))
     }
 
-    Logger.debug('Request authorized, proceeding')
     return NextResponse.next()
   } catch (error) {
     Logger.error('[Middleware Error] Error in handleProtectedPath:', error)
@@ -107,25 +82,26 @@ function handleProtectedPath(request: NextRequest, accessToken?: string, activeR
 }
 
 export async function middleware(request: NextRequest) {
-  if (DISABLED_AUTH) {
-    Logger.debug('Auth is disabled, proceeding with request')
+  const pathname = request.nextUrl.pathname
+
+  // Permitir archivos estáticos específicos de Next.js y herramientas
+  if (pathname.startsWith('/_next/static/') || pathname.startsWith('/_next/internal/') || pathname.startsWith('/.well-known/')) {
     return NextResponse.next()
   }
 
-  Logger.debug('Middleware called', {
-    path: request.nextUrl.pathname
-  })
+  if (DISABLED_AUTH) {
+    return NextResponse.next()
+  }
 
   try {
-    const pathname = request.nextUrl.pathname
-    const accessToken = getAccessToken(request)
+    const hasAccessToken = getAccessToken(request)
     const activeRoleId = getActiveRoleId(request)
 
     if (isPublicPath(pathname)) {
-      return handlePublicPath(request, accessToken)
+      return handlePublicPath(request, hasAccessToken)
     }
 
-    return handleProtectedPath(request, accessToken, activeRoleId)
+    return handleProtectedPath(request, hasAccessToken, activeRoleId)
   } catch (error) {
     Logger.error('[Middleware Error] Unhandled error in middleware:', error)
     return NextResponse.redirect(new URL('/auth/error?reason=middleware-error', request.url))
@@ -133,5 +109,17 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|robots.txt|manifest.json|sw.js|assets/).*)']
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - robots.txt
+     * - assets (static assets)
+     * - .well-known (Chrome DevTools and other tools)
+     */
+    '/((?!api/|_next/static/|_next/image/|favicon\\.ico|robots\\.txt|assets/|\\.well-known/).*)'
+  ]
 }

@@ -1,21 +1,21 @@
 'use client'
 
-import { useMemo } from 'react'
-import { ColumnDef } from '@tanstack/react-table'
-import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
 import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
+import { ColumnUtilities, CrudModuleBase } from '@/app/(components)/crud/crud-module-base'
+import { useListCareersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useCareer'
 import {
   useCreateCourse,
-  useUpdateCourse,
-  useRemoveCourse,
+  useListCoursesPaginated,
   useOneCourse,
-  useListCoursesPaginated
+  useRemoveCourse,
+  useUpdateCourse
 } from '@/shared/hooks/useCourses'
-import { useListCareersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useCareer'
-import { CourseWithRelations, CreateCourseInput, StrictCreateCourseInput, StrictCreateCourseOutput } from '@/shared/types/course'
+import { CourseWithRelations, CreateCourseInput } from '@/shared/types/course'
 import { Status } from '@/shared/types/status'
+import { ColumnDef } from '@tanstack/react-table'
 import { Badge, Button } from '@una-gc/ui/components'
-import { Hash, BookUser, GraduationCap, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { BookUser, CheckCircle2, GraduationCap, Hash, Loader2, Pencil, Trash2, XCircle } from 'lucide-react'
+import { useMemo } from 'react'
 
 interface CourseItem extends CourseWithRelations {}
 
@@ -41,7 +41,7 @@ export default function CourseCrud() {
   // Table columns
   const renderColumns = useMemo(
     () =>
-      (utils: ColumnUtilities<CourseItem>): ColumnDef<CourseItem>[] => [
+      (utils: ColumnUtilities): ColumnDef<CourseItem>[] => [
         {
           accessorKey: 'code',
           header: 'Código',
@@ -204,6 +204,12 @@ export default function CourseCrud() {
                   required: true,
                   placeholder: 'Ej: CS101',
                   helperText: 'Código único del curso',
+                  rules: {
+                    required: { value: true, message: 'El código es requerido' },
+                    minLength: { value: 2, message: 'El código debe tener al menos 2 caracteres' },
+                    maxLength: { value: 20, message: 'El código no puede exceder 20 caracteres' },
+                    pattern: { value: /^[A-Za-z0-9\-_]+$/, message: 'Solo letras, números, guiones y guiones bajos' }
+                  },
                   disabled: isUpdate
                 },
                 {
@@ -212,7 +218,12 @@ export default function CourseCrud() {
                   label: 'Nombre',
                   required: true,
                   placeholder: 'Ej: Programación I',
-                  helperText: 'Nombre completo del curso'
+                  helperText: 'Nombre completo del curso',
+                  rules: {
+                    required: { value: true, message: 'El nombre es requerido' },
+                    minLength: { value: 3, message: 'El nombre debe tener al menos 3 caracteres' },
+                    maxLength: { value: 100, message: 'El nombre no puede exceder 100 caracteres' }
+                  }
                 },
                 {
                   type: 'text',
@@ -220,7 +231,11 @@ export default function CourseCrud() {
                   label: 'Descripción',
                   required: false,
                   placeholder: 'Descripción del curso',
-                  helperText: 'Breve descripción del curso'
+                  helperText: 'Breve descripción del curso (opcional)',
+                  rules: {
+                    minLength: { value: 3, message: 'La descripción debe tener al menos 3 caracteres' },
+                    maxLength: { value: 500, message: 'La descripción no puede exceder 500 caracteres' }
+                  }
                 },
                 {
                   type: 'number',
@@ -228,10 +243,15 @@ export default function CourseCrud() {
                   label: 'Créditos',
                   required: true,
                   placeholder: 'Ej: 4',
-                  min: 0,
+                  min: 1,
                   step: 1,
                   valueAsNumber: true,
-                  helperText: 'Cantidad de créditos del curso'
+                  helperText: 'Cantidad de créditos del curso',
+                  rules: {
+                    required: { value: true, message: 'Los créditos son requeridos' },
+                    min: { value: 1, message: 'Los créditos deben ser 1 o mayor' },
+                    max: { value: 20, message: 'Los créditos no pueden exceder 20' }
+                  }
                 },
                 {
                   type: 'number',
@@ -242,7 +262,12 @@ export default function CourseCrud() {
                   min: 1,
                   step: 1,
                   valueAsNumber: true,
-                  helperText: 'Nivel académico del curso'
+                  helperText: 'Nivel académico del curso',
+                  rules: {
+                    required: { value: true, message: 'El nivel es requerido' },
+                    min: { value: 1, message: 'El nivel mínimo es 1' },
+                    max: { value: 10, message: 'El nivel máximo es 10' }
+                  }
                 },
                 {
                   type: 'number',
@@ -250,31 +275,43 @@ export default function CourseCrud() {
                   label: 'Horas Contacto',
                   required: true,
                   placeholder: 'Ej: 32',
-                  min: 0,
+                  min: 1,
                   step: 1,
                   valueAsNumber: true,
-                  helperText: 'Horas de contacto con el profesor'
+                  helperText: 'Horas de contacto con el profesor',
+                  rules: {
+                    required: { value: true, message: 'Las horas de contacto son requeridas' },
+                    min: { value: 1, message: 'Las horas de contacto deben ser 1 o mayor' },
+                    max: { value: 200, message: 'Las horas de contacto no pueden exceder 200' }
+                  }
                 },
                 {
                   type: 'number',
                   name: 'independentHours',
                   label: 'Horas Independientes',
-                  required: true,
+                  required: false,
                   placeholder: 'Ej: 16',
                   min: 0,
                   step: 1,
                   valueAsNumber: true,
-                  helperText: 'Horas de trabajo independiente del estudiante'
+                  helperText: 'Horas de trabajo independiente del estudiante (opcional)',
+                  rules: {
+                    min: { value: 0, message: 'Las horas independientes no pueden ser negativas' },
+                    max: { value: 200, message: 'Las horas independientes no pueden exceder 200' }
+                  }
                 },
                 {
                   type: 'select',
                   name: 'careerId',
                   label: 'Carrera',
-                  required: false,
+                  required: true,
                   options: (careers || []).map((c: any) => ({ id: c.id, name: c.name || '', status: c.status })),
                   isLoading: isLoadingCareers,
                   placeholder: isLoadingCareers ? 'Cargando carreras...' : 'Seleccionar carrera',
-                  helperText: 'Seleccione la carrera a la que pertenece este curso',
+                  helperText: 'Seleccione la carrera a la que pertenece este curso (opcional)',
+                  rules: {
+                    required: { value: true, message: 'La carrera es requerida' }
+                  },
                   renderOption: (option: any) => (
                     <div className="flex items-center gap-2">
                       <span
@@ -294,6 +331,9 @@ export default function CourseCrud() {
                   required: true,
                   options: STATUS_OPTIONS,
                   helperText: 'Estado actual del curso',
+                  rules: {
+                    required: { value: true, message: 'El estado es requerido' }
+                  },
                   renderOption: (option: any) => (
                     <div className="flex items-center">
                       {option.icon}
@@ -326,7 +366,7 @@ export default function CourseCrud() {
         name: '',
         description: '',
         credits: 0,
-        level: 1,
+        level: 0,
         contactHours: 0,
         independentHours: 0,
         careerId: '',
@@ -353,7 +393,12 @@ export default function CourseCrud() {
           credits: Number(values.credits),
           level: Number(values.level),
           contactHours: Number(values.contactHours),
-          independentHours: values.independentHours ? Number(values.independentHours) : undefined
+          independentHours:
+            values.independentHours !== undefined &&
+            values.independentHours !== null &&
+            !(typeof values.independentHours === 'string' && values.independentHours === '')
+              ? Number(values.independentHours)
+              : null
         }
         // Log para depuración
         console.log('🟢 processFormValues (course) salida:', processed, {

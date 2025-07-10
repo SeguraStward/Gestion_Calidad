@@ -1,0 +1,42 @@
+/* Cross-browser vendor prefix fixes */
+html,
+:host {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+button {
+  border-radius: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.backdrop-blur,
+.backdrop-blur-sm,
+.backdrop-blur-md,
+.backdrop-blur-lg,
+.backdrop-blur-xl {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.mask-image {
+  -webkit-mask-image: var(--mask-image, none);
+  mask-image: var(--mask-image, none);
+}
+
+.selectable {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+.clip-bg {
+  -webkit-background-clip: text;
+  background-clip: text;
+}

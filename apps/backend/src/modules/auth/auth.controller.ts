@@ -1,13 +1,14 @@
 import {
+  Body,
   Controller,
   Get,
+  Header,
   Logger,
   Post,
   Req,
   Res,
   UnauthorizedException,
   UseGuards,
-  Body,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
@@ -17,38 +18,84 @@ import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
-import { GoogleUser } from './interfaces';
-import { SetActiveRoleDto } from './dto/set-active-role.dto';
+import { GoogleUser } from './types';
+import { LoginUserDto, CompleteProfileDto, UserResponseDto, SetActiveRoleDto } from './dtos';
+import { mapUserToResponse, validateUserData } from './helpers/user-mapper.helper';
+import { CookieUtil } from './utils/cookie.util';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   private readonly logger: Logger;
+  private readonly cookieUtil: CookieUtil;
+
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
   ) {
     this.logger = new Logger(AuthController.name);
+    this.cookieUtil = new CookieUtil(configService);
   }
 
-  private getCookieMaxAge(key: 'JWT_EXPIRATION' | 'JWT_REFRESH_EXPIRATION'): number {
-    const expiryString = this.configService.get<string>(key);
-    const unit = expiryString.slice(-1);
-    const value = parseInt(expiryString.slice(0, -1), 10);
-    if (isNaN(value)) return 0; // Default or throw error
+  /**
+   * Helper method to handle authentication errors with centralized error mapping
+   */
+  private handleAuthError(error: any, res: Response) {
+    const frontendUrl = this.configService.get('FRONTEND_URL');
+    let errorCode = 'AUTH_007'; // Default error code
 
-    switch (unit) {
-      case 's':
-        return value * 1000;
-      case 'm':
-        return value * 60 * 1000;
-      case 'h':
-        return value * 60 * 60 * 1000;
-      case 'd':
-        return value * 24 * 60 * 60 * 1000;
-      default:
-        return 0; // Default or throw error
+    if (error instanceof UnauthorizedException) {
+      const errorResponse = error.getResponse() as any;
+      const responseCode = errorResponse?.code;
+      const errorMessage = error.message || '';
+
+      // Map specific error codes and patterns to frontend error codes
+      const errorMap = {
+        USER_NOT_FOUND: 'AUTH_010&action=register',
+        ACCOUNT_INACTIVE: 'AUTH_011',
+        ACCOUNT_PENDING: 'AUTH_012',
+      };
+
+      if (responseCode && errorMap[responseCode]) {
+        errorCode = errorMap[responseCode];
+      } else if (errorMessage.includes('pending activation') || errorMessage.includes('PRE_REGISTRATION')) {
+        errorCode = 'AUTH_003';
+      } else if (errorMessage.includes('deactivated') || errorMessage.includes('INACTIVE')) {
+        errorCode = 'AUTH_004';
+      } else if (errorMessage.includes('no access')) {
+        errorCode = 'AUTH_005';
+      } else {
+        errorCode = 'AUTH_006';
+      }
     }
+
+    this.logger.error(`Authentication error handled: ${errorCode}`, error);
+    return res.redirect(`${frontendUrl}/auth/error?code=${errorCode}`);
+  }
+
+  /**
+   * Helper method to set authentication cookies
+   */
+  private setAuthCookies(res: Response, token: string, refreshToken: string) {
+    const authTokenConfig = this.cookieUtil.getAuthTokenConfig();
+    const refreshTokenConfig = this.cookieUtil.getRefreshTokenConfig();
+
+    res.cookie('auth_token', token, authTokenConfig);
+    res.cookie('refresh_token', refreshToken, refreshTokenConfig);
+
+    this.logger.debug('Authentication cookies set successfully');
+  }
+
+  /**
+   * Helper method to clear all authentication cookies
+   */
+  private clearAuthCookies(res: Response) {
+    const clearCookieConfig = this.cookieUtil.getBaseCookieConfig();
+    res.clearCookie('auth_token', clearCookieConfig);
+    res.clearCookie('refresh_token', clearCookieConfig);
+    res.clearCookie('active_role_id', clearCookieConfig);
+
+    this.logger.debug('All authentication cookies cleared');
   }
 
   @ApiOperation({ summary: 'Initiate Google OAuth flow' })
@@ -62,73 +109,49 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
-    this.logger.debug('Google auth callback initiated');
     try {
-      if (!req.user) {
-        this.logger.error('User not found in request after Google OAuth callback');
-        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_001`);
-      }
+      const result = await this.processGoogleCallback(req);
+      this.setAuthCookies(res, result.token, result.refreshToken);
 
-      // Assuming req.user from GoogleStrategy has an 'email' property
-      const googleUser = req.user as { email: string; [key: string]: any };
-      const allowedDomain = '@est.una.ac.cr';
+      const redirectPath = result.needsProfileCompletion ? '/auth/complete-profile' : '/auth/callback';
+      this.logger.log(`Redirecting user ${result.user.email} to ${redirectPath}`);
 
-      if (!googleUser.email || !googleUser.email.endsWith(allowedDomain)) {
-        this.logger.warn(`Login attempt from disallowed domain: ${googleUser.email || 'No email provided'}`);
-        return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_002`);
-      }
-
-      const result = await this.authService.googleLogin(req.user as GoogleUser);
-      this.logger.debug(`User ${result.user.email} authenticated successfully via Google.`);
-
-      res.cookie('auth_token', result.token, {
-        domain: '.arayaroma.software',
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_EXPIRATION'),
-        sameSite: 'lax',
-        path: '/',
-      });
-
-      res.cookie('refresh_token', result.refreshToken, {
-        domain: '.arayaroma.software',
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_REFRESH_EXPIRATION'),
-        sameSite: 'lax',
-        path: '/',
-      });
-
-      return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/select-role`);
+      return res.redirect(`${this.configService.get('FRONTEND_URL')}${redirectPath}`);
     } catch (error) {
-      this.logger.error(
-        `Google authentication callback error: ${error instanceof Error ? error.message : String(error)}`,
-      );
-
-      // Handle specific authentication errors with standardized error codes
-      if (error instanceof UnauthorizedException) {
-        const errorCode = error.getResponse()['code'];
-
-        switch (errorCode) {
-          case 'USER_NOT_FOUND':
-            return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_010`);
-          case 'ACCOUNT_INACTIVE':
-            return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_011`);
-          default:
-            // Fallback to checking error message for backward compatibility
-            const errorMessage = error.message;
-            if (errorMessage.includes('pending activation') || errorMessage.includes('PRE_REGISTRATION')) {
-              return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_003`);
-            } else if (errorMessage.includes('deactivated') || errorMessage.includes('INACTIVE')) {
-              return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_004`);
-            } else if (errorMessage.includes('no access')) {
-              return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_005`);
-            }
-            // Generic unauthorized error
-            return res.redirect(`${this.configService.get('FRONTEND_URL')}/auth/error?code=AUTH_006`);
-        }
-      }
+      this.logger.error('Google authentication callback error:', error);
+      return this.handleAuthError(error, res);
     }
+  }
+
+  /**
+   * Process Google OAuth callback with validation
+   */
+  private async processGoogleCallback(req: Request) {
+    if (!req.user) {
+      this.logger.error('User not found in request after Google OAuth callback');
+      throw new Error('Authentication data missing');
+    }
+
+    const googleUser = req.user as { email: string; [key: string]: any };
+    const allowedDomain = '@est.una.ac.cr';
+
+    // Validate domain
+    if (!googleUser.email?.endsWith(allowedDomain)) {
+      this.logger.warn(`Login attempt from disallowed domain: ${googleUser.email || 'No email'}`);
+      throw new Error('Domain not allowed');
+    }
+
+    // Process login
+    this.logger.log(`Processing Google login for user: ${googleUser.email}`);
+    const result = await this.authService.googleLogin(req.user as GoogleUser);
+
+    // Validate result
+    if (!result.user?.id || !result.user?.email) {
+      this.logger.error('Invalid user data returned from authentication service');
+      throw new Error('Invalid user response');
+    }
+
+    return result;
   }
 
   @ApiOperation({ summary: 'Get current user profile' })
@@ -156,14 +179,8 @@ export class AuthController {
     try {
       await this.authService.setActiveRole(user.id, setActiveRoleDto.roleId);
 
-      res.cookie('active_role_id', setActiveRoleDto.roleId, {
-        domain: '.arayaroma.software',
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_EXPIRATION'),
-        sameSite: 'lax',
-        path: '/',
-      });
+      const activeRoleConfig = this.cookieUtil.getActiveRoleConfig();
+      res.cookie('active_role_id', setActiveRoleDto.roleId, activeRoleConfig);
 
       return { message: 'Active role set successfully', roleId: setActiveRoleDto.roleId };
     } catch (error) {
@@ -197,28 +214,8 @@ export class AuthController {
       }
     }
 
-    res.clearCookie('auth_token', {
-      domain: '.arayaroma.software',
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'lax',
-      path: '/',
-    });
-    res.clearCookie('refresh_token', {
-      domain: '.arayaroma.software',
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'lax',
-      path: '/',
-    });
-    res.clearCookie('active_role_id', {
-      domain: '.arayaroma.software',
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'lax',
-      path: '/',
-    });
-
+    // Clear all authentication cookies
+    this.clearAuthCookies(res);
     return { message: 'Logged out successfully' };
   }
 
@@ -228,7 +225,6 @@ export class AuthController {
   @Post('refresh')
   @UseGuards(JwtRefreshGuard)
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    // JwtRefreshStrategy populates req.user with { id, email, refreshTokenFromCookie, refreshTokenDbId }
     const userFromStrategy = req.user as {
       id: string;
       email: string;
@@ -236,8 +232,8 @@ export class AuthController {
       refreshTokenFromCookie: string;
     };
 
-    if (!userFromStrategy || !userFromStrategy.refreshTokenDbId) {
-      this.logger.error('User object or refreshTokenDbId not found in request after JwtRefreshGuard.');
+    if (!userFromStrategy?.refreshTokenDbId) {
+      this.logger.error('Authentication data missing for refresh token');
       throw new UnauthorizedException('Authentication data missing for refresh.');
     }
 
@@ -245,49 +241,121 @@ export class AuthController {
       const { token: newAccessToken, refreshToken: newRawRefreshToken } =
         await this.authService.refreshToken(userFromStrategy);
 
-      res.cookie('auth_token', newAccessToken, {
-        domain: '.arayaroma.software',
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_EXPIRATION'),
-        sameSite: 'lax',
-        path: '/',
-      });
-
-      res.cookie('refresh_token', newRawRefreshToken, {
-        domain: '.arayaroma.software',
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        maxAge: this.getCookieMaxAge('JWT_REFRESH_EXPIRATION'),
-        sameSite: 'lax',
-        path: '/',
-      });
-
+      this.setAuthCookies(res, newAccessToken, newRawRefreshToken);
       return { accessToken: newAccessToken };
     } catch (error) {
-      this.logger.error(
-        `Refresh token rotation error: ${error instanceof Error ? error.message : String(error)}`,
-      );
-
-      res.clearCookie('auth_token', {
-        domain: '.arayaroma.software',
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        sameSite: 'lax',
-        path: '/',
-      });
-      res.clearCookie('refresh_token', {
-        domain: '.arayaroma.software',
-        httpOnly: true,
-        secure: this.configService.get('NODE_ENV') === 'production',
-        sameSite: 'lax',
-        path: '/',
-      });
+      this.logger.error('Refresh token rotation error:', error);
+      this.clearAuthCookies(res);
 
       if (error instanceof UnauthorizedException) {
         throw error;
       }
       throw new UnauthorizedException('Failed to refresh token due to an internal error.');
+    }
+  }
+
+  @ApiOperation({ summary: 'Get current user info' })
+  @ApiResponse({ status: 200, description: 'Return current user info', type: UserResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @Header('Cache-Control', 'no-store')
+  async getCurrentUserInfo(@Req() req: Request): Promise<UserResponseDto> {
+    const jwtUser = req.user as { id: string; email: string; [key: string]: any };
+    const timestamp = new Date().toISOString();
+
+    this.logger.log(`[${timestamp}] 📡 Solicitud de perfil de usuario: ${jwtUser.email} (ID: ${jwtUser.id})`);
+
+    try {
+      this.logger.debug(`[${timestamp}] 🔍 Obteniendo datos de usuario desde base de datos...`);
+      const user = await this.authService.getUserById(jwtUser.id);
+
+      validateUserData(user);
+      const response = mapUserToResponse(user);
+
+      this.logger.log(`[${timestamp}] ✅ Respuesta de perfil preparada para: ${user.email}`);
+
+      return response;
+    } catch (error) {
+      this.logger.error(`[${timestamp}] ❌ Error obteniendo info de usuario ${jwtUser.id}:`, error);
+      throw new UnauthorizedException('User not found');
+    }
+  }
+
+  @ApiOperation({ summary: 'Authenticate existing user' })
+  @ApiResponse({ status: 200, description: 'User authenticated successfully' })
+  @ApiResponse({ status: 401, description: 'Authentication failed' })
+  @Post('authenticate')
+  async authenticate(@Body() loginDto: LoginUserDto, @Res({ passthrough: true }) res: Response) {
+    try {
+      const result = await this.authService.googleLogin({
+        googleId: loginDto.googleId,
+        email: loginDto.email,
+        firstName: '', // Will be updated from Google data if available
+        picture: null, // Will be updated from Google data if available
+      });
+
+      this.logger.log(`User authentication successful: ${loginDto.email}`);
+      this.setAuthCookies(res, result.token, result.refreshToken);
+
+      return {
+        message: 'Authentication successful',
+        user: result.user,
+        needsProfileCompletion: result.needsProfileCompletion || false,
+      };
+    } catch (error) {
+      this.logger.error(`Authentication failed for ${loginDto.email}:`, error);
+      throw error;
+    }
+  }
+
+  @ApiOperation({ summary: 'Complete user profile' })
+  @ApiResponse({ status: 200, description: 'Profile completed successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid profile data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @Post('complete-profile')
+  @UseGuards(JwtAuthGuard)
+  async completeProfile(@Body() profileData: CompleteProfileDto, @Req() req: Request) {
+    const user = req.user as { id: string; email: string };
+
+    try {
+      const result = await this.authService.completeUserProfile(user.id, {
+        fullName: profileData.fullName,
+        fullLastName: profileData.fullLastName,
+        phoneNumber: profileData.phoneNumber,
+      });
+
+      this.logger.log(`Profile completion successful for user: ${user.email}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Profile completion failed for user ${user.email}:`, error);
+      throw error;
+    }
+  }
+
+  @ApiOperation({ summary: 'Check authentication status after OAuth callback' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return authentication status and user info',
+    type: UserResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @Get('callback/status')
+  @UseGuards(JwtAuthGuard)
+  async getCallbackStatus(@Req() req: Request) {
+    const user = req.user as { id: string; email: string };
+    try {
+      const userInfo = await this.authService.getUserById(user.id);
+      validateUserData(userInfo);
+      const userResponse = mapUserToResponse(userInfo);
+      return {
+        authenticated: true,
+        user: userResponse,
+        needsProfileCompletion: userInfo.status === 'PRE_REGISTRATION',
+      };
+    } catch (error) {
+      this.logger.error(`Error getting callback status for user ${user.id}:`, error);
+      throw new UnauthorizedException('Unable to verify authentication status');
     }
   }
 }

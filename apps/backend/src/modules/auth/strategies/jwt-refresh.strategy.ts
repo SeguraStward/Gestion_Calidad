@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { Request } from 'express';
 import * as crypto from 'crypto';
+import { UserStatus } from '@una-gc/database/prisma/generated/client';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
@@ -90,7 +91,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     }
 
     // Validar que el usuario esté activo
-    if (user.status !== 'ACTIVE') {
+    if (user.status === UserStatus.INACTIVE) {
       this.logger.warn(
         `Refresh token validation failed: User ${user.email} has inactive status: ${user.status}`,
       );

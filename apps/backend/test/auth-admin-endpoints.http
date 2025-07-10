@@ -1,0 +1,64 @@
+### Test Authentication Module - Simplified Auth Flow
+### This file tests the simplified authentication endpoints
+
+@baseUrl = http://localhost:3000/api/v1
+@adminToken = YOUR_ADMIN_JWT_TOKEN_HERE
+@preRegistrationToken = YOUR_PRE_REGISTRATION_TOKEN_HERE
+@activeUserToken = YOUR_ACTIVE_USER_TOKEN_HERE
+
+### 1. Register a new user (Admin only)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+Authorization: Bearer {{adminToken}}
+
+{
+  "email": "nuevo.usuario@est.una.ac.cr",
+  "fullName": "Usuario",
+  "fullLastName": "De Prueba",
+  "googleId": null,
+  "photoUrl": null
+}
+
+### 2. Complete profile (User with PRE_REGISTRATION status)
+POST {{baseUrl}}/auth/complete-profile
+Content-Type: application/json
+Authorization: Bearer {{preRegistrationToken}}
+
+{
+  "fullName": "Juan Carlos",
+  "fullLastName": "Pérez González",
+  "phoneNumber": "+506 8888-8888"
+}
+
+### 3. Test Google OAuth flow (Visit in browser)
+# GET {{baseUrl}}/auth/google/login
+
+### 4. Test role selection (User must be ACTIVE)
+POST {{baseUrl}}/auth/select-role
+Content-Type: application/json
+Authorization: Bearer {{activeUserToken}}
+
+{
+  "roleId": "ROLE_ID_HERE"
+}
+
+### 5. Test get current user profile
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{activeUserToken}}
+
+### 6. Test token refresh
+POST {{baseUrl}}/auth/refresh
+# Note: Refresh token is automatically sent via httpOnly cookie
+
+### 7. Test logout
+GET {{baseUrl}}/auth/logout
+
+### 8. Test unauthorized access to admin endpoints (should fail)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "unauthorized@est.una.ac.cr",
+  "fullName": "Usuario",
+  "fullLastName": "No Autorizado"
+}

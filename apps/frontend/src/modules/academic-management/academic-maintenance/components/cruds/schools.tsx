@@ -1,32 +1,21 @@
 'use client'
 
-import { useMemo } from 'react'
-import { ColumnDef } from '@tanstack/react-table'
-import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
 import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
+import { ColumnUtilities, CrudModuleBase } from '@/app/(components)/crud/crud-module-base'
+import { useListFacultiesFlat } from '@/modules/academic-management/academic-maintenance/hooks/useFaculty'
 import {
   useCreateSchool,
-  useUpdateSchool,
-  useRemoveSchool,
+  useListSchoolsPaginated,
   useOneSchool,
-  useListSchoolsPaginated
+  useRemoveSchool,
+  useUpdateSchool
 } from '@/modules/academic-management/academic-maintenance/hooks/useSchool'
-import { useListFacultiesFlat } from '@/modules/academic-management/academic-maintenance/hooks/useFaculty'
-import { SchoolWithRelations, CreateSchoolInput } from '@/modules/academic-management/academic-maintenance/types/school'
+import { SchoolWithRelations } from '@/modules/academic-management/academic-maintenance/types/school'
 import { Status } from '@/shared/types/status'
+import { ColumnDef } from '@tanstack/react-table'
 import { Badge, Button } from '@una-gc/ui/components'
-import {
-  School as SchoolIcon,
-  BookUser,
-  Award,
-  Hash,
-  GraduationCap,
-  Pencil,
-  Trash2,
-  Loader2,
-  CheckCircle2,
-  XCircle
-} from 'lucide-react'
+import { CheckCircle2, GraduationCap, Hash, Loader2, Pencil, School as SchoolIcon, Trash2, XCircle } from 'lucide-react'
+import { useMemo } from 'react'
 
 interface SchoolItem extends SchoolWithRelations {}
 //FIXED
@@ -53,7 +42,7 @@ export default function SchoolCrud() {
   // Table columns
   const renderColumns = useMemo(
     () =>
-      (utils: ColumnUtilities<SchoolItem>): ColumnDef<SchoolItem>[] => [
+      (utils: ColumnUtilities): ColumnDef<SchoolItem>[] => [
         {
           accessorKey: 'code',
           header: 'Código',
@@ -278,10 +267,10 @@ export default function SchoolCrud() {
       defaultFormValues: {
         code: '',
         name: '',
-        description: '', // Opcional, puede estar vacío
+        description: '',
         facultyId: '',
         status: Status.ACTIVE
-      } as unknown as CreateSchoolInput,
+      },
       renderForm,
       renderColumns,
       processItemForEditing: (item: SchoolItem) => ({

@@ -1,5 +1,4 @@
 // filepath: c:\Users\juanc\Documents\GitHub\gestion-calidad\apps\frontend\src\shared\components\form\types.ts
-import * as z from 'zod'
 
 export interface FormFieldBase {
   name: string

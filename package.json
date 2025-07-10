@@ -1,6 +1,7 @@
 {
   "name": "una-gc",
   "version": "0.0.1",
+  "description": "Una Gestión de Calidad monorepo",
   "private": true,
   "scripts": {
     "test": "turbo test",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",
+    "@swc/helpers": "^0.5.8",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
     "@typescript-eslint/typescript-estree": "^8.31.1",
@@ -28,9 +30,11 @@
     "@una-gc/typescript-config": "workspace:*",
     "cspell": "^8.19.4",
     "eslint": "^9.26.0",
+    "has-flag": "^4.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.1",
     "prettier": "^3.5.3",
+    "semver": "^7.5.4",
     "turbo": "^2.5.2",
     "typescript": "^5.8.3"
   },

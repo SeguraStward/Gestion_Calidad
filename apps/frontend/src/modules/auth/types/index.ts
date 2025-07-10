@@ -1,7 +1,33 @@
-import { PermissionType, PermissionScope } from '@una-gc/database/prisma/generated/client'
+// Enums
+import { PermissionScope, PermissionType, UserStatus } from '@una-gc/database/prisma/generated/client'
 
-// special tytpe (modifiqueted)
-export type Permission = {
+// User profile matching backend UserResponseDto
+export interface UserBasicInfo {
+  id: string
+  email: string
+  fullName: string
+  fullLastName?: string | null
+  photoUrl?: string | null
+  status: UserStatus
+}
+
+// Cookie presence detection (since cookies are HttpOnly)
+export interface CookiePresence {
+  hasAuthToken: boolean
+  hasRefreshToken: boolean
+  hasActiveRole: boolean
+  isAuthenticated: boolean
+}
+
+// Complete profile data
+export interface CompleteProfileData {
+  fullName: string
+  fullLastName: string
+  phoneNumber?: string
+}
+
+// Role and permission types
+export interface Permission {
   id: string
   name: string
   code: string
@@ -11,15 +37,18 @@ export type Permission = {
   scope: PermissionScope
 }
 
-// especial Role type (modifiqueted)
-export type Role = {
+export interface Role {
   id: string
   name: string
   description: string
   permissions: Permission[]
 }
 
-// reponde expected from the API
-export type UserRolesResponse = {
-  data: Role[]
+export type UserRolesResponse = Role[]
+
+// Auth error types
+export interface AuthError {
+  code: string
+  message: string
+  action?: string
 }

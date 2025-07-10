@@ -1,16 +1,16 @@
 'use client'
 
-import { useMemo } from 'react'
-import { ColumnDef } from '@tanstack/react-table'
-import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
 import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
-import { usePaginatedUsers, useCreateUser, useUpdateUser, useDeleteUser, useUser } from '../hooks/useUserCrud'
-import { useActiveUserRolesFlat } from '../../user-roles/hooks/useUserRole'
-import type { UserWithRelations, CreateUserInput, UpdateUserInput } from '@/shared/types/user'
-import { UserCircle2, Mail, Phone, Pencil, Trash2 } from 'lucide-react'
-import { PageHeader } from '@/app/(components)/ui/page-header'
-import { Badge, Button } from '@una-gc/ui/components'
+import { ColumnUtilities, CrudModuleBase } from '@/app/(components)/crud/crud-module-base'
 import { FormSelectMultiple } from '@/app/(components)/form/select-multiple'
+import { PageHeader } from '@/app/(components)/ui/page-header'
+import type { CreateUserInput, UpdateUserInput, UserWithRelations } from '@/shared/types/user'
+import { ColumnDef } from '@tanstack/react-table'
+import { Badge, Button } from '@una-gc/ui/components'
+import { Mail, Pencil, Phone, Trash2, UserCircle2 } from 'lucide-react'
+import { useMemo } from 'react'
+import { useActiveUserRolesFlat } from '../../user-roles/hooks/useUserRole'
+import { useCreateUser, useDeleteUser, usePaginatedUsers, useUpdateUser, useUser } from '../hooks/useUserCrud'
 
 // Opciones de status
 const STATUS_OPTIONS = [
@@ -54,7 +54,7 @@ export default function UserCrud() {
   // Columnas de la tabla de usuarios
   const renderColumns = useMemo(
     () =>
-      (utils: ColumnUtilities<UserWithRelations>): ColumnDef<UserWithRelations>[] => [
+      (utils: ColumnUtilities): ColumnDef<UserWithRelations>[] => [
         {
           accessorKey: 'email',
           header: 'Correo',

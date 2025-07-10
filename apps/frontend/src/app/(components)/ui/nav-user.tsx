@@ -1,7 +1,7 @@
 'use client'
 
-import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from 'lucide-react'
-
+import { useSessionStore } from '@/modules/auth/sessionStore'
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@una-gc/ui/components/sidebar'
 import { Avatar, AvatarFallback, AvatarImage } from '@una-gc/ui/components/avatar'
 import {
   DropdownMenu,
@@ -12,27 +12,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@una-gc/ui/components/dropdown-menu'
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@una-gc/ui/components/sidebar'
+import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from 'lucide-react'
 
-export function NavUser({
-  user
-}: {
-  user: {
-    name: string
-    email: string
-    avatar: string
-  }
-}) {
+export function NavUser() {
   const { isMobile } = useSidebar()
+  const user = useSessionStore((state) => state.user)
+  const role = useSessionStore((state) => state.role)
+
+  if (!user) return null
 
   const renderAvatar = () => (
     <Avatar className="h-8 w-8 rounded-lg">
-      <AvatarImage
-        src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
-        alt={user.name}
-      />
+      <AvatarImage src={user.photoUrl || `/assets/images/default-profile-image.png`} alt={user.fullName} />
       <AvatarFallback className="rounded-lg">
-        {user.name
+        {user.fullName
           .split(' ')
           .map((n) => n[0])
           .join('')
@@ -43,15 +36,16 @@ export function NavUser({
 
   const renderUserInfo = () => (
     <div className="grid flex-1 text-left text-sm leading-tight">
-      <span className="truncate font-semibold">{user.name}</span>
+      <span className="truncate font-semibold">{user.fullName}</span>
       <span className="truncate text-xs">{user.email}</span>
+      {role && <span className="truncate text-xs text-muted-foreground">{role.name}</span>}
     </div>
   )
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
-      import('@/utils/cookie.manager').then(({ CookieManager }) => {
-        CookieManager.deleteTokens()
+      import('@/modules/auth/utils/cookie.manager').then(({ CookieManager }) => {
+        CookieManager.clearAll()
       })
     }
   }
@@ -60,7 +54,6 @@ export function NavUser({
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          {/* Dropdown Trigger */}
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
@@ -72,14 +65,12 @@ export function NavUser({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
 
-          {/* Dropdown Content */}
           <DropdownMenuContent
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
             side={isMobile ? 'bottom' : 'right'}
             align="end"
             sideOffset={4}
           >
-            {/* User Info Label */}
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 {renderAvatar()}
@@ -89,7 +80,6 @@ export function NavUser({
 
             <DropdownMenuSeparator />
 
-            {/* Account Section */}
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
@@ -103,7 +93,6 @@ export function NavUser({
 
             <DropdownMenuSeparator />
 
-            {/* Logout */}
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Log out

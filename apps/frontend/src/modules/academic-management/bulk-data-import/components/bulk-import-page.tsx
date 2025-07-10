@@ -1,10 +1,10 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components/card'
+import { Badge } from '@una-gc/ui/components/badge'
 import { useImportExcel } from '../hooks/useImportExcel'
-import { BulkImportHeader } from './page-header'
 import { ImportForm } from './import-form'
-import { RefreshCw, Upload } from 'lucide-react'
+import { RefreshCw, Upload, FileSpreadsheet } from 'lucide-react'
 import { Skeleton } from '@una-gc/ui/components/skeleton'
 
 export function BulkImportPage() {
@@ -12,43 +12,70 @@ export function BulkImportPage() {
 
   if (loading) {
     return (
-      <div className="p-10 max-w-4xl mx-auto">
-        <div className="flex items-center justify-center mb-8">
-          <RefreshCw className="animate-spin h-6 w-6 mr-3 text-primary" />
-          <Skeleton className="h-10 w-1/3" />
+      <div className="space-y-6">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-4">
+            <RefreshCw className="animate-spin h-8 w-8 text-primary mr-4" />
+            <Skeleton className="h-10 w-1/3" />
+          </div>
+          <Skeleton className="h-6 w-1/2 mx-auto" />
         </div>
-        <Skeleton className="h-12 w-full mb-4" />
-        <Skeleton className="h-12 w-full mb-4" />
-        <Skeleton className="h-12 w-1/2 mb-6" />
+        <Card className="border-0 shadow-sm glass-effect">
+          <CardContent className="p-6 space-y-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-1/2" />
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen py-2 px-2 flex flex-col items-center bg-background">
-      <div className="w-full max-w-4xl mx-auto">
-        <BulkImportHeader />
-        <Card className="w-full">
-          <CardHeader className="pb-2 pt-4">
-            <CardTitle className="text-2xl font-semibold text-center flex justify-center items-center gap-2">
-              <Upload className="h-5 w-5 text-primary" />
-              <span>Selecciona el archivo Excel que deseas importar</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4 px-6 space-y-4">
-            <ImportForm
-              file={file}
-              excelData={excelData}
-              loading={loading}
-              success={success}
-              error={error}
-              onChange={handleFileChange}
-              onSubmit={handleSubmit}
-              reset={resetImport}
-            />
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center mb-4">
+          <div className="p-3 rounded-full bg-primary/10 mr-4 icon-bounce">
+            <FileSpreadsheet className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Importación Masiva de Datos
+            </h1>
+            <div className="flex items-center justify-center mt-2">
+              <Badge variant="secondary" className="text-xs">
+                Cargar Archivos Excel
+              </Badge>
+            </div>
+          </div>
+        </div>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Importe datos masivamente desde archivos Excel para agilizar la gestión académica.
+        </p>
       </div>
+
+      {/* Content Card */}
+      <Card className="border-0 shadow-sm glass-effect">
+        <CardHeader className="pb-2 pt-6">
+          <CardTitle className="text-xl font-semibold text-center flex justify-center items-center gap-2">
+            <Upload className="h-5 w-5 text-primary" />
+            <span>Selecciona el archivo Excel que deseas importar</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4 px-6 space-y-4">
+          <ImportForm
+            file={file}
+            excelData={excelData}
+            loading={loading}
+            success={success}
+            error={error}
+            onChange={handleFileChange}
+            onSubmit={handleSubmit}
+            reset={resetImport}
+          />
+        </CardContent>
+      </Card>
     </div>
   )
 }

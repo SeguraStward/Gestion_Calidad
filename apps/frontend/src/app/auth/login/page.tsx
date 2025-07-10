@@ -1,10 +1,10 @@
 'use client'
 
 import { useCallback } from 'react'
-import { Button } from '@una-gc/ui/components/button'
-import { CardContent, CardHeader, CardTitle, CardDescription } from '@una-gc/ui/components/card'
-import { Badge } from '@una-gc/ui/components/badge'
-import { LogIn, Shield, BookOpen } from 'lucide-react'
+import { LogIn, Shield, BookOpen, Sparkles } from 'lucide-react'
+
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Badge, Separator } from '@una-gc/ui/components'
+
 import { AuthLayout } from '@/modules/auth/components'
 
 export default function LoginPage() {
@@ -23,36 +23,51 @@ export default function LoginPage() {
       icon={<BookOpen className="w-8 h-8 text-primary" />}
       maxWidth="md"
     >
-      <div className="w-full max-w-lg mx-auto bg-white/90 dark:bg-zinc-900/90 rounded-xl shadow-xl border border-border p-0 overflow-hidden">
-        <CardHeader className="text-center space-y-3 bg-primary/5 py-8 px-6">
-          <CardTitle className="text-3xl font-bold flex items-center justify-center gap-2 text-primary">
-            <Shield className="w-7 h-7 text-primary" />
-            Iniciar Sesión
-          </CardTitle>
-          <CardDescription className="text-base text-muted-foreground">
-            Accede con tu cuenta institucional de Google
-          </CardDescription>
+      <Card className="shadow-2xl border-0 bg-gradient-to-br from-white to-gray-50/80 dark:from-zinc-900 dark:to-zinc-800/80 overflow-hidden backdrop-blur-sm">
+        <CardHeader className="text-center space-y-4 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 pb-8">
+          <div className="mx-auto w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center ring-4 ring-primary/10">
+            <Shield className="w-8 h-8 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+              Iniciar Sesión
+            </CardTitle>
+            <CardDescription className="text-base text-muted-foreground">
+              Accede con tu cuenta institucional de Google
+            </CardDescription>
+          </div>
         </CardHeader>
 
-        <CardContent className="space-y-8 py-8 px-6">
-          {/* Botón de login */}
+        <CardContent className="space-y-6 py-8 px-8">
+          {/* Botón de login principal */}
           <Button
             onClick={handleGoogleLogin}
-            className="w-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all duration-200 bg-primary"
+            size="lg"
+            className="w-full h-14 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary group"
           >
-            <LogIn className="mr-2 h-5 w-5" />
-            Iniciar sesión con Google
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                <LogIn className="h-5 w-5" />
+              </div>
+              <span>Iniciar sesión con Google</span>
+              <Sparkles className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
           </Button>
 
-          {/* Footer info */}
-          <div className="text-center space-y-2">
-            <Badge variant="secondary" className="text-xs">
-              Acceso exclusivo @est.una.ac.cr
-            </Badge>
-            <p className="text-xs text-muted-foreground">Sistema de gestión de calidad académica</p>
+          <Separator className="my-6" />
+
+          {/* Información institucional */}
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <Badge variant="secondary" className="text-xs font-medium px-3 py-1 bg-primary/10 text-primary border-primary/20">
+                <Shield className="w-3 h-3 mr-1" />
+                Acceso exclusivo @est.una.ac.cr
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">Sistema de gestión de calidad académica</p>
           </div>
         </CardContent>
-      </div>
+      </Card>
     </AuthLayout>
   )
 }

@@ -110,47 +110,34 @@ export function Step7EditForm({
           }
         })
       }
-      console.log('[Step7EditForm] Resetting form with initial (numeric) values:', formValuesForVisibleQuestions)
       reset(formValuesForVisibleQuestions)
     } else if (!isEditing) {
-      // Solo para el modo de creación, si no hay initialData
       const defaultValues = {
         respuestasRadio: todasLasPreguntasFiltradas.map((p) => ({ idPregunta: p.questionId, respuesta: '' }))
       }
-      console.log('[Step7EditForm] No initialData, resetting with default empty values for visible questions.')
       reset(defaultValues)
     }
   }, [initialData, reset, todasLasPreguntasFiltradas, reportType, isEditing]) // Añadir isEditing
 
-  // Función para manejar errores de validación
   const handleValidationErrors = (errors: any) => {
     toast.error('Por favor, corrija los errores en el formulario del Paso 7.')
   }
 
-  // Esta función se llamará cuando el formulario del Paso 7 sea válido y se envíe.
   const localSubmitAndFinalize = async (data: Step7FormData) => {
-    console.log('[Step7EditForm] localSubmitAndFinalize INVOCADA. Data del form:', JSON.stringify(data, null, 2))
-    // Opcional: actualizar el estado en la página padre con los datos de este form ANTES de la llamada final.
-    // Esto asegura que si onFinalSubmit (handleSubmitAllSteps) usa step7Data del estado, esté actualizado.
-    // Sin embargo, la versión actual de handleSubmitAllSteps usa getValues(), así que esto es redundante pero inofensivo.
     onSaveAndNext(data)
 
     await onFinalSubmit() // Llama a handleSubmitAllSteps de la página padre
   }
 
   const handlePreviousClickInternal = () => {
-    const currentData = getValues() // Obtener datos actuales del formulario
-    // No es estrictamente necesario llamar a onSaveAndNext aquí si la página padre
-    // ya usa los datos pasados a onPrevious para actualizar su estado.
-    // onSaveAndNext(currentData)
+    const currentData = getValues()
     if (onPrevious) {
-      onPrevious(currentData) // <--- CORRECCIÓN: Pasar currentData
+      onPrevious(currentData)
     }
   }
 
   return (
     <div className="flex flex-col">
-      {/* Header Section (Stays Visible) */}
       <div className="mb-4">
         <h2 className="text-xl font-semibold flex items-center gap-3">
           <Activity className="w-5 h-5 text-foreground/70" />
@@ -166,7 +153,6 @@ export function Step7EditForm({
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
           <form onSubmit={handleSubmit(localSubmitAndFinalize, handleValidationErrors)} className="flex-1 flex flex-col min-h-0">
-            {/* Scrollable Questions Area */}
             <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-2 sm:space-y-2.5 md:space-y-3">
               {todasLasPreguntasFiltradas.length === 0 ? (
                 <div className="text-center py-4 sm:py-5 text-muted-foreground">
@@ -254,7 +240,6 @@ export function Step7EditForm({
               )}
             </div>
 
-            {/* Navigation Buttons (Stays Visible at the bottom) */}
             <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
               {onPrevious && (
                 <Button

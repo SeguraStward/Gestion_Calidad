@@ -1,19 +1,17 @@
 'use client'
 
-import React, { useMemo, useEffect } from 'react'
-import { zodResolver } from '@hookform/resolvers/zod'
+import React, { useMemo, useEffect } from 'react' 
 import { z } from 'zod'
-import { Button } from '@una-gc/ui/components/button'
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@una-gc/ui/components/card'
+import { Button } from '@una-gc/ui/components/button' 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
 import { Input } from '@una-gc/ui/components/input'
 import { UseFormReturn, FormProvider } from 'react-hook-form'
 import { Loader2 } from 'lucide-react'
-import useDevStore from '@/store/devStore'
 import { useAcademicLoadsByProfessor } from '@/modules/academic-loads/service/academic-loads.service'
 import type { FullAcademicLoad } from '@/modules/academic-loads/types/academic-loads.types'
-import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types'
+import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types' 
+import { useSessionStore } from '@/modules/auth/sessionStore'
 
 export const step1Schema = z.object({
   academicLoadId: z.string().min(1, 'Debe seleccionar una carga académica.'), // Ahora siempre requerido
@@ -30,14 +28,9 @@ export type Step1FormData = z.infer<typeof step1Schema>
 
 export function transformReportToStep1Data(report: FullFinalReport): Step1FormData | null {
   if (!report.academicLoad) {
-    console.warn('[transformReportToStep1Data] Reporte no tiene academicLoad, no se pueden transformar datos para Step 1.')
     return null
   }
-  // Asegúrate de que academicLoad.id exista también
   if (!report.academicLoad.id) {
-    console.warn('[transformReportToStep1Data] Reporte tiene academicLoad pero academicLoad.id es undefined.')
-    // Decide cómo manejar esto, ¿quizás retornar null o un valor por defecto si es permisible?
-    // Por ahora, para que coincida con la lógica anterior de que academicLoadId podría ser undefined:
     return {
       academicLoadId: '',
       nrc: report.academicLoad.nrc || '',
@@ -92,12 +85,10 @@ export function Step1Form({
   onCancel
 }: Step1FormProps) {
   const { control, watch, setValue, handleSubmit, formState, reset } = formMethods
-  const currentProfessorId = useDevStore((state) => state.mockProfessorId)
-
-  console.log('[Step1Form] initialData received:', initialData)
-  if (initialData) {
-    console.log('[Step1Form] initialData.academicLoadId:', initialData.academicLoadId)
-  }
+  
+  // Cambio: usar session store en lugar del dev store
+  const { user, isAuthenticated } = useSessionStore()
+  const currentProfessorId = user?.id
 
   const {
     data: paginatedAcademicLoads,
@@ -108,7 +99,7 @@ export function Step1Form({
     {
       include: 'course,academicCycle,professor,group'
     },
-    { enabled: !!currentProfessorId }
+    { enabled: !!currentProfessorId && isAuthenticated() }
   )
 
   const availableCourses = useMemo((): TransformedAcademicLoad[] => {
@@ -117,67 +108,68 @@ export function Step1Form({
       courses = paginatedAcademicLoads.data.map((load: FullAcademicLoad) => ({
         id: load.id,
         nrc: load.nrc,
-        courseName: load.course?.name,
-        courseCode: load.course?.code,
-        professorName: load.professor?.fullName || undefined,
-        groupNumber: load.group?.number,
-        groupLevel: load.course?.level ? String(load.course.level) : undefined,
-        enrolledCapacity: load.enrolledCapacity
+        courseName: load.course?.name || '', // Default to empty string
+        courseCode: load.course?.code || '', // Default to empty string
+        professorName: load.professor?.fullName || '', // Default to empty string
+        groupNumber: load.group?.number || '', // Default to empty string
+        groupLevel: load.course?.level ? String(load.course.level) : '', // Default to empty string
+        enrolledCapacity: load.enrolledCapacity || 0 // Default to 0
       }))
     }
 
     // Si estamos editando y tenemos datos iniciales, y la carga del informe no está en la lista
     // (ej. porque no está "activa" o el filtro la excluyó), la añadimos para que se pueda seleccionar.
     if (isEditing && initialData?.nrc && initialData.academicLoadId) {
-      const editingCourseInList = courses.find((c) => c.id === initialData.academicLoadId)
+      const editingCourseInList = courses.find((c) => c.nrc === initialData.nrc)
       if (!editingCourseInList) {
         courses.unshift({
-          // Añadir al principio
           id: initialData.academicLoadId,
           nrc: initialData.nrc,
-          courseName: initialData.courseName,
-          courseCode: initialData.courseCode,
-          professorName: initialData.professorName,
-          groupNumber: initialData.groupNumber,
-          groupLevel: initialData.groupLevel,
-          enrolledCapacity: initialData.enrolledCapacity
+          courseName: initialData.courseName || '', // Provide fallback for undefined
+          courseCode: initialData.courseCode || '', // Provide fallback for undefined
+          professorName: initialData.professorName || '', // Provide fallback for undefined
+          groupNumber: initialData.groupNumber || '', // Provide fallback for undefined
+          groupLevel: initialData.groupLevel || '', // Provide fallback for undefined
+          enrolledCapacity: initialData.enrolledCapacity || 0 // Provide fallback for undefined
         })
       }
     }
-    return courses
+    
+    // Eliminar duplicados por NRC (mantener el primero)
+    const uniqueCourses = courses.filter((course, index, self) => 
+      index === self.findIndex(c => c.nrc === course.nrc)
+    )
+    
+    // Debug: verificar duplicados
+    console.log('Available courses:', uniqueCourses)
+    const nrcCounts = uniqueCourses.reduce((acc, course) => {
+      acc[course.nrc] = (acc[course.nrc] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+    const duplicateNRCs = Object.entries(nrcCounts).filter(([_, count]) => count > 1)
+    if (duplicateNRCs.length > 0) {
+      console.warn('Duplicate NRCs found:', duplicateNRCs)
+    }
+    
+    return uniqueCourses
   }, [paginatedAcademicLoads, isEditing, initialData])
 
   const selectedNrc = watch('nrc')
   const selectedAcademicLoadId = watch('academicLoadId')
 
-  useEffect(() => {
-    console.log('[Step1Form] selectedAcademicLoadId changed:', selectedAcademicLoadId)
-  }, [selectedAcademicLoadId])
+  useEffect(() => {}, [selectedAcademicLoadId])
 
   // Efecto para poblar el formulario con initialData
   useEffect(() => {
-    console.log(
-      '[Step1Form InitialDataEffect] Running. isEditing:',
-      isEditing,
-      'has initialData:',
-      !!initialData,
-      'isDirty:',
-      formState.isDirty,
-      'selectedAcademicLoadId:',
-      selectedAcademicLoadId
-    )
     if (isEditing && initialData && formState.isDirty === false && !selectedAcademicLoadId) {
-      console.log('[Step1Form InitialDataEffect] Resetting form with initialData:', initialData)
       reset(initialData)
     }
   }, [isEditing, initialData, reset, formState.isDirty, selectedAcademicLoadId])
 
   // Efecto para actualizar campos cuando selectedNrc cambia
   useEffect(() => {
-    console.log('[Step1Form NrcEffect] Running. selectedNrc:', selectedNrc, 'availableCourses count:', availableCourses.length)
     const courseData = availableCourses.find((course) => course.nrc === selectedNrc)
     if (courseData) {
-      console.log('[Step1Form NrcEffect] Found courseData:', courseData, 'Setting academicLoadId to:', courseData.id)
       setValue('academicLoadId', courseData.id, { shouldValidate: true, shouldDirty: true })
       setValue('courseName', courseData.courseName, { shouldValidate: true, shouldDirty: true })
       setValue('groupNumber', courseData.groupNumber, { shouldValidate: true, shouldDirty: true })
@@ -186,7 +178,6 @@ export function Step1Form({
       setValue('groupLevel', courseData.groupLevel, { shouldValidate: true, shouldDirty: true })
       setValue('enrolledCapacity', courseData.enrolledCapacity, { shouldValidate: true, shouldDirty: true })
     } else if (!selectedNrc) {
-      console.log('[Step1Form NrcEffect] NRC is empty, clearing academicLoadId.')
       setValue('academicLoadId', '')
       setValue('courseName', '')
       setValue('groupNumber', '')
@@ -194,15 +185,12 @@ export function Step1Form({
       setValue('courseCode', '')
       setValue('groupLevel', '')
       setValue('enrolledCapacity', undefined)
-    } else {
-      console.log('[Step1Form NrcEffect] NRC has value but no courseData found. academicLoadId not changed by this effect.')
     }
   }, [selectedNrc, availableCourses, setValue])
 
   const onSubmitHandler = (data: Step1FormData) => {
     // El academicLoadId y nrc ya deberían estar correctos por la selección y el useEffect.
     // Los demás campos también.
-    console.log('Step 1 Data to Save:', data)
     onSaveAndNext(data)
   }
 
@@ -224,11 +212,21 @@ export function Step1Form({
     )
   }
 
+  // Verificación de autenticación
+  if (!isAuthenticated()) {
+    return (
+      <div className="p-6 h-full flex flex-col items-center justify-center">
+        <p className="text-destructive">Debes estar autenticado para acceder a esta función.</p>
+        <p className="text-sm text-muted-foreground">Por favor, inicia sesión para continuar.</p>
+      </div>
+    )
+  }
+
   if (!currentProfessorId) {
     return (
       <div className="p-6 h-full flex flex-col items-center justify-center">
-        <p className="text-destructive">No se ha configurado un profesor para la demostración.</p>
-        <p className="text-sm text-muted-foreground">Por favor, configure un ID de profesor en el store de desarrollo.</p>
+        <p className="text-destructive">No se pudo obtener la información del profesor.</p>
+        <p className="text-sm text-muted-foreground">Por favor, inicia sesión nuevamente.</p>
       </div>
     )
   }
@@ -283,8 +281,8 @@ export function Step1Form({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {availableCourses.map((course) => (
-                            <SelectItem key={course.id} value={course.nrc}>
+                          {availableCourses.map((course, index) => (
+                            <SelectItem key={`nrc-${course.nrc}-${index}`} value={course.nrc}>
                               <div className="flex flex-col">
                                 <span className="font-medium">NRC: {course.nrc}</span>
                                 <span className="text-xs text-muted-foreground">

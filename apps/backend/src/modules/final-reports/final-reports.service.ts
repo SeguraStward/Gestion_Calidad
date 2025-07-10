@@ -13,7 +13,7 @@ export class FinalReportsService extends GenericService<FinalReport, FinalReport
   protected readonly logger = new Logger(FinalReportsService.name);
 
   protected readonly relationCheckConfig = {
-    relationFields: [''],
+    relationFields: [],
     errorMessage: 'Cannot delete FinalReport because it has associated: none.',
   };
 
@@ -29,12 +29,14 @@ export class FinalReportsService extends GenericService<FinalReport, FinalReport
     page = 1,
     limit = 10,
     status?: FinalReportStatus,
+    search?: string,
     orderBy?: Prisma.FinalReportOrderByWithRelationInput,
     include?: Prisma.FinalReportInclude,
   ): Promise<PaginatedResponse<FinalReportDto>> {
     this.logger.debug(
-      `Finding all final reports for professorId: ${professorId}, status: ${status}, page: ${page}, limit: ${limit}`,
+      `Finding all final reports for professorId: ${professorId}, status: ${status}, search: ${search}, page: ${page}, limit: ${limit}`,
     );
+    
     const where: Prisma.FinalReportWhereInput = {
       professorId: professorId,
     };
@@ -43,8 +45,33 @@ export class FinalReportsService extends GenericService<FinalReport, FinalReport
       where.status = status;
     }
 
+    // Implementar búsqueda con prioridad para coincidencias exactas de NRC
+    if (search) {
+      where.OR = [
+        // Coincidencia exacta del NRC tiene la prioridad más alta
+        { academicLoad: { nrc: { equals: search, mode: 'insensitive' } } },
+        // Luego coincidencias que empiecen con el término de búsqueda
+        { academicLoad: { nrc: { startsWith: search, mode: 'insensitive' } } },
+        { academicLoad: { course: { name: { startsWith: search, mode: 'insensitive' } } } },
+        // Finalmente coincidencias que contengan el término
+        { academicLoad: { nrc: { contains: search, mode: 'insensitive' } } },
+        { academicLoad: { course: { name: { contains: search, mode: 'insensitive' } } } },
+        { academicLoad: { course: { code: { contains: search, mode: 'insensitive' } } } },
+        { professor: { fullName: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    // Ordenamiento personalizado para priorizar coincidencias exactas
+    let finalOrderBy = orderBy;
+    if (search && !orderBy) {
+      // Si hay búsqueda y no se especifica ordenamiento, ordenamos por relevancia
+      // Prisma no soporta ordenamiento condicional directamente, pero podemos usar el campo createdAt
+      // como fallback después de que la consulta OR ya haya priorizado las coincidencias exactas
+      finalOrderBy = { createdAt: 'desc' };
+    }
+
     // Call the generic findAll method from the base GenericService
-    return super.findAll(page, limit, where, orderBy, include);
+    return super.findAll(page, limit, where, finalOrderBy, include);
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)

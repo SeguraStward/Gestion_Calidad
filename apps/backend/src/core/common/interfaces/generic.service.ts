@@ -32,9 +32,6 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
     }
 
     if (Array.isArray(entity)) {
-      // Ensure you have a consistent strategy for excludeExtraneousValues
-      // If your DTOs use @Expose(), then excludeExtraneousValues: true is appropriate.
-      // If not, you might want it to be false or omit it.
       return entity.map((e) => plainToClass(this.dtoClass!, e, { excludeExtraneousValues: true }));
     } else {
       return plainToClass(this.dtoClass!, entity, { excludeExtraneousValues: true });
@@ -135,35 +132,62 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
    * @returns A promise that resolves to true if the deletion was successful, or throws an error if not.
    * @throws NotFoundException if the entity with the given ID does not exist.
    * @throws Error if there are related records preventing deletion.
-   */
-  async deleteById(id: string): Promise<boolean> {
+   */ async deleteById(id: string): Promise<boolean> {
     try {
       // If relation check config is defined, perform checks
       if (this.relationCheckConfig) {
-        const entity = await this.repository.findById(id);
+        // Create include object to load only the relation fields we need to check
+        const includeRelations = this.relationCheckConfig.relationFields.reduce(
+          (acc, field) => {
+            acc[field] = true;
+            return acc;
+          },
+          {} as Record<string, boolean>,
+        );
+
+        const entity = await this.repository.findById(id, includeRelations);
         if (!entity) {
           throw new NotFoundException(`Entity with id ${id} not found`);
-        }
-
-        // Check each configured relation field
+        } // Check each configured relation field
         for (const relationField of this.relationCheckConfig.relationFields) {
+          const relationData = (entity as any)[relationField];
+          this.logger.debug(`Checking relation field '${relationField}':`, JSON.stringify(relationData));
+
           // For array relationships
-          if (Array.isArray((entity as any)[relationField]) && (entity as any)[relationField].length > 0) {
-            this.logger.warn(
-              `Cannot delete entity with id ${id}: has ${(entity as any)[relationField].length} related ${relationField}`,
-            );
-            throw new Error(
-              this.relationCheckConfig.errorMessage ||
-                `Cannot delete: Entity has related ${relationField} records`,
-            );
+          if (Array.isArray(relationData)) {
+            this.logger.debug(`Relation '${relationField}' is array with length: ${relationData.length}`);
+            if (relationData.length > 0) {
+              // Filter out inactive records if they have a status field
+              const activeRelations = relationData.filter(
+                (item) => !item.status || item.status !== 'INACTIVE',
+              );
+              this.logger.debug(`Active relations in '${relationField}': ${activeRelations.length}`);
+
+              if (activeRelations.length > 0) {
+                this.logger.warn(
+                  `Cannot delete entity with id ${id}: has ${activeRelations.length} active related ${relationField}`,
+                );
+                throw new Error(
+                  this.relationCheckConfig.errorMessage ||
+                    `Cannot delete: Entity has related ${relationField} records`,
+                );
+              }
+            }
           }
-          // For single object relationships (if needed)
-          else if ((entity as any)[relationField] && typeof (entity as any)[relationField] === 'object') {
-            this.logger.warn(`Cannot delete entity with id ${id}: has related ${relationField}`);
-            throw new Error(
-              this.relationCheckConfig.errorMessage ||
-                `Cannot delete: Entity has a related ${relationField} record`,
-            );
+          // For single object relationships
+          else if (relationData && typeof relationData === 'object') {
+            this.logger.debug(`Relation '${relationField}' is single object:`, JSON.stringify(relationData));
+            // Check if the related record is active
+            const isActive = !relationData.status || relationData.status !== 'INACTIVE';
+            this.logger.debug(`Related record in '${relationField}' is active: ${isActive}`);
+
+            if (isActive) {
+              this.logger.warn(`Cannot delete entity with id ${id}: has active related ${relationField}`);
+              throw new Error(
+                this.relationCheckConfig.errorMessage ||
+                  `Cannot delete: Entity has a related ${relationField} record`,
+              );
+            }
           }
         }
       }
@@ -192,10 +216,24 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
    * Performs a soft delete by updating the entity's status to inactive
    * @param id - The ID of the entity to soft delete
    * @returns The updated entity
-   */
-  async softDeleteById(id: string): Promise<D> {
+   */ async softDeleteById(id: string): Promise<D> {
     try {
-      const entity = await this.repository.findById(id);
+      // Create include object to load only the relation fields we need to check
+      let entity;
+      if (this.relationCheckConfig) {
+        const includeRelations = this.relationCheckConfig.relationFields.reduce(
+          (acc, field) => {
+            acc[field] = true;
+            return acc;
+          },
+          {} as Record<string, boolean>,
+        );
+
+        entity = await this.repository.findById(id, includeRelations);
+      } else {
+        entity = await this.repository.findById(id);
+      }
+
       if (!entity) {
         throw new NotFoundException(`Entity with id ${id} not found`);
       }
@@ -204,23 +242,49 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
       if (this.relationCheckConfig) {
         // Check each configured relation field
         for (const relationField of this.relationCheckConfig.relationFields) {
+          const relationData = (entity as any)[relationField];
+          this.logger.debug(
+            `Checking relation field '${relationField}' for soft delete:`,
+            JSON.stringify(relationData),
+          );
+
           // For array relationships
-          if (Array.isArray((entity as any)[relationField]) && (entity as any)[relationField].length > 0) {
-            this.logger.warn(
-              `Cannot soft delete entity with id ${id}: has ${(entity as any)[relationField].length} related ${relationField}`,
-            );
-            throw new Error(
-              this.relationCheckConfig.errorMessage ||
-                `Cannot soft delete: Entity has related ${relationField} records`,
-            );
+          if (Array.isArray(relationData)) {
+            this.logger.debug(`Relation '${relationField}' is array with length: ${relationData.length}`);
+            if (relationData.length > 0) {
+              // Filter out inactive records if they have a status field
+              const activeRelations = relationData.filter(
+                (item) => !item.status || item.status !== 'INACTIVE',
+              );
+              this.logger.debug(`Active relations in '${relationField}': ${activeRelations.length}`);
+
+              if (activeRelations.length > 0) {
+                this.logger.warn(
+                  `Cannot soft delete entity with id ${id}: has ${activeRelations.length} active related ${relationField}`,
+                );
+                throw new Error(
+                  this.relationCheckConfig.errorMessage ||
+                    `Cannot soft delete: Entity has related ${relationField} records`,
+                );
+              }
+            }
           }
           // For single object relationships
-          else if ((entity as any)[relationField] && typeof (entity as any)[relationField] === 'object') {
-            this.logger.warn(`Cannot soft delete entity with id ${id}: has related ${relationField}`);
-            throw new Error(
-              this.relationCheckConfig.errorMessage ||
-                `Cannot soft delete: Entity has a related ${relationField} record`,
-            );
+          else if (relationData && typeof relationData === 'object') {
+            this.logger.debug(`Relation '${relationField}' is single object:`, JSON.stringify(relationData));
+            // Check if the related record is active
+            const isActive = !relationData.status || relationData.status !== 'INACTIVE';
+            this.logger.debug(`Related record in '${relationField}' is active: ${isActive}`);
+
+            if (isActive) {
+              this.logger.warn(
+                `Cannot soft delete entity with id ${id}: has active related ${relationField}`,
+              );
+              throw new Error(
+                this.relationCheckConfig.errorMessage ||
+                  `Cannot soft delete: Entity has a related ${relationField} record`,
+              );
+            }
           }
         }
       }

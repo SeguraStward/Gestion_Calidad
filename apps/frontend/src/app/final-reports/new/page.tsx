@@ -1,44 +1,42 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Card, CardContent } from '@una-gc/ui/components/card'
-import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 // Import step components and their schemas/types
-import { Step1Form, step1Schema, Step1FormData } from '@/modules/final-reports/components/form-step1'
-import { Step2Form, step2Schema, Step2FormData } from '@/modules/final-reports/components/form-step2'
-import { Step3Form, step3Schema, Step3FormData } from '@/modules/final-reports/components/form-step3'
-import { Step4Form, step4Schema, Step4FormData } from '@/modules/final-reports/components/form-step4'
-import { Step5Form, step5Schema, Step5FormData } from '@/modules/final-reports/components/form-step5'
-import { Step6Form, step6Schema, Step6FormData } from '@/modules/final-reports/components/form-step6'
+import { Step1Form, Step1FormData, step1Schema } from '@/modules/final-reports/components/form-step1'
+import { Step2Form, Step2FormData, step2Schema } from '@/modules/final-reports/components/form-step2'
+import { Step3Form, Step3FormData, step3Schema } from '@/modules/final-reports/components/form-step3'
+import { Step4Form, Step4FormData, step4Schema } from '@/modules/final-reports/components/form-step4'
+import { Step5Form, Step5FormData, step5Schema } from '@/modules/final-reports/components/form-step5'
+import { Step6Form, Step6FormData, step6Schema } from '@/modules/final-reports/components/form-step6'
 // Assuming step7QuestionsFormMock (from form-step7.tsx) is now also translated
 // and its items use 'questionId', 'question', 'questionGroup', 'responseTypeFE', 'options'
-import { Step7Form, step7Schema, Step7FormData } from '@/modules/final-reports/components/form-step7'
+import { Step7Form, Step7FormData, step7Schema } from '@/modules/final-reports/components/form-step7'
 import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header'
 
 // Import service hook and DTO type
+import { useSessionStore } from '@/modules/auth/sessionStore'
 import { useCreateFinalReport } from '@/modules/final-reports/service/final-reports.service'
-import type { CreateFinalReportDto, ReportType, FinalReportEvaluationFE } from '@/modules/final-reports/types/final-reports.types' // Renamed TipoInforme, Added FinalReportEvaluationFE
-import useDevStore from '@/store/devStore'
+import type { CreateFinalReportDto, FinalReportEvaluationFE, ReportType } from '@/modules/final-reports/types/final-reports.types' // Renamed TipoInforme, Added FinalReportEvaluationFE
 
 // Import translated mock data
+import { MAIN_TOOLS_QUESTION_ID, OTHER_TOOLS_QUESTION_ID } from '@/modules/final-reports/mocks/constants' // Import constants for question IDs
 import {
   step5QuestionsMock,
   step6QuestionsPageMock,
-  step7QuestionsPageMock,
-  Step7Question
+  Step7Question,
+  step7QuestionsPageMock
 } from '@/modules/final-reports/mocks/questions' // Renamed mocks, Import step7QuestionsPageMock and Step7Question
 
 const TOTAL_STEPS = 7
 // User-facing labels remain in Spanish
 const STEP_LABELS_SPANISH = ['Información', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
-
-const MAIN_TOOLS_QUESTION_ID = 'herramientas_utilizadas' // ID Canónico para la pregunta de herramientas
-const OTHER_TOOLS_QUESTION_ID = 'otras_herramientas_utilizadas' // ID para el campo de texto de otras herramientas
 
 export default function NewFinalReportPage() {
   const router = useRouter()
@@ -52,10 +50,10 @@ export default function NewFinalReportPage() {
   const [step5Data, setStep5Data] = useState<Step5FormData | null>(null)
   const [step6Data, setStep6Data] = useState<Step6FormData | null>(null)
   const [step7Data, setStep7Data] = useState<Step7FormData | null>(null)
-  const [reportType, setReportType] = useState<ReportType>('INFORME_FINAL_V1')
+  const [reportType] = useState<ReportType>('INFORME_FINAL_V1')
 
   const createFinalReportMutation = useCreateFinalReport()
-  const currentProfessorId = useDevStore((state) => state.mockProfessorId)
+  const currentProfessorId = useSessionStore((state) => state.user?.id)
 
   const formStep1Methods = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
@@ -274,7 +272,7 @@ export default function NewFinalReportPage() {
             question: questionDetails?.question || r.idPregunta,
             questionGroup: questionDetails?.group || 'herramientas',
             responseType: 'SELECCION_MULTIPLE' as const,
-            response: undefined,
+            response: 'undefined',
             multipleResponse: r.respuestasSeleccionadas || [],
             options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
             otherResponse: undefined
@@ -298,7 +296,6 @@ export default function NewFinalReportPage() {
             ]
           : []),
         ...currentStep7DataFromForm.respuestasRadio.map((r) => {
-          // Changed currentStep7Data to currentStep7DataFromForm
           const questionDetails = step7QuestionsPageMock.find((p) => p.questionId === r.idPregunta)
           const resolvedResponseType = questionDetails?.responseType || ('SELECCION_UNICA' as const)
 
@@ -312,7 +309,7 @@ export default function NewFinalReportPage() {
             responseType: resolvedResponseType,
             response: resolvedResponseType === 'SELECCION_MULTIPLE' ? undefined : responseValueToSend,
             multipleResponse: resolvedResponseType === 'SELECCION_MULTIPLE' ? (r.respuesta ? [responseValueToSend] : []) : [],
-            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
+            options: [],
             otherResponse: undefined
           }
         })
@@ -320,30 +317,20 @@ export default function NewFinalReportPage() {
         ...item,
         response: item.response === undefined ? undefined : item.response,
         multipleResponse: item.multipleResponse || [],
-        options: item.options || [],
+        options: [],
         questionGroup: item.questionGroup || 'general',
-        // Now item.otherResponse will exist, even if undefined
         otherResponse: item.otherResponse === undefined ? undefined : item.otherResponse
-      })) as FinalReportEvaluationFE[]
+      })) as unknown as FinalReportEvaluationFE[]
     }
-    console.log('Final Report Payload to Send:', JSON.stringify(finalReportPayload, null, 2))
     try {
       await createFinalReportMutation.mutateAsync(finalReportPayload)
       router.push('/final-reports') // Navigate on success
     } catch (error) {
-      // User-facing error message
-      console.error('Explicit error trying to create report in page.tsx:', error)
       toast.error('Error al crear el informe. Intente nuevamente.')
     }
   }
 
   const saveDataForCurrentStepBeforeNavigatingBack = (step: number, data: any) => {
-    // Guardado "parcial" sin validación estricta al retroceder.
-    // Es importante que 'data' aquí sea el objeto de datos del formulario,
-    // que debería ser serializable.
-    console.log(`[NewPage] Saving data for step ${step} before navigating back.`)
-    // Para evitar errores de JSON.stringify con estructuras circulares en el log:
-    // console.log(`[NewPage] Data:`, JSON.stringify(data, null, 2)); // Omitir si causa problemas
     switch (step) {
       case 2:
         setStep2Data(data as Step2FormData)
@@ -364,7 +351,6 @@ export default function NewFinalReportPage() {
         setStep7Data(data as Step7FormData)
         break
       default:
-        console.warn(`[NewPage] Attempted to save data for unknown step: ${step}`)
     }
   }
 
@@ -472,7 +458,7 @@ export default function NewFinalReportPage() {
         stepLabels={STEP_LABELS_SPANISH}
         currentStep={currentStep}
         backButton={{ href: '/final-reports', text: 'Volver a la Lista de Informes' }}
-        nrc={step1Data?.nrc}
+        nrc={step1Data?.nrc ?? null}
       />
       <main className="flex-grow flex flex-col items-center overflow-hidden pt-2 pb-6 md:pt-4">
         <Card className="shadow-lg border-border/50 w-full max-w-5xl flex flex-col flex-grow overflow-hidden rounded-lg">

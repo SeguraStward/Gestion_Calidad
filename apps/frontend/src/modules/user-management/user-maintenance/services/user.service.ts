@@ -1,5 +1,5 @@
 import { GenericService } from '@/services/base/generic.service'
-import type { UserWithRelations, CreateUserInput, UpdateUserInput } from '@/shared/types/user'
+import type { CreateUserInput, UpdateUserInput, UserWithRelations } from '@/shared/types/user'
 
 // Puedes extender para métodos custom si lo necesitas
 export class UserService extends GenericService<UserWithRelations, CreateUserInput, UpdateUserInput, Record<string, any>> {
@@ -72,12 +72,12 @@ export class UserService extends GenericService<UserWithRelations, CreateUserInp
     return filtered
   }
 
-  async create(payload: CreateUserInput): Promise<UserWithRelations> {
+  override async create(payload: CreateUserInput): Promise<UserWithRelations> {
     const filtered = this.filterPayload(payload)
     return super.create(filtered as CreateUserInput)
   }
 
-  async update(id: string, payload: UpdateUserInput): Promise<UserWithRelations> {
+  override async update(id: string, payload: UpdateUserInput): Promise<UserWithRelations> {
     const filtered = this.filterPayload(payload)
     return super.update(id, filtered as UpdateUserInput)
   }

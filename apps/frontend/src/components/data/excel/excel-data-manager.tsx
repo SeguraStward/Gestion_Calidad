@@ -1,17 +1,17 @@
 'use client'
 
-import { useState, useCallback, memo } from 'react'
+import { showErrorAlert, showSuccessAlert } from '@/lib/alert'
 import { Button } from '@una-gc/ui/components/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card'
 import { Input } from '@una-gc/ui/components/input'
 import { Label } from '@una-gc/ui/components/label'
 import { Progress } from '@una-gc/ui/components/progress'
-import { showErrorAlert, showSuccessAlert } from '@/lib/alert'
-import { Download, FileSpreadsheet, Loader2, Upload, FileDown } from 'lucide-react'
 import { RadioGroup, RadioGroupItem } from '@una-gc/ui/components/radio-group'
+import { Download, FileDown, FileSpreadsheet, Loader2, Upload } from 'lucide-react'
+import { memo, useCallback, useState } from 'react'
 
-import { ExcelDataManagerProps, DEFAULT_LABELS, DEFAULT_ALLOWED_TYPES, DEFAULT_MAX_FILE_SIZE } from './types'
 import FileDisplay from './file-display'
+import { DEFAULT_ALLOWED_TYPES, DEFAULT_LABELS, DEFAULT_MAX_FILE_SIZE, ExcelDataManagerProps } from './types'
 import { useExcelImport } from './useExcelImport'
 
 const ExcelDataManager = memo(
@@ -32,7 +32,7 @@ const ExcelDataManager = memo(
     const { fileInfo, importMode, progress, isProcessing, fileInputRef, handleFileChange, handleImport, setImportMode } =
       useExcelImport({
         importExcel,
-        refetch,
+        refetch: refetch ?? (() => {}),
         allowedFileTypes,
         maxFileSize
       })

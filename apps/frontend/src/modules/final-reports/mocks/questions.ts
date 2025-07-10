@@ -1,99 +1,40 @@
-// Define a common structure for options, aligning with FinalReportEvaluationOptions
+import type { ReportType } from '../types/final-reports.types'
+import { MAIN_TOOLS_QUESTION_ID, OTHER_TOOLS_QUESTION_ID } from './constants'
+
+export { ReportType }
+
+// Tipos centralizados
+export type ResponseTypeFE = 'TEXT' | 'SELECCION_UNICA' | 'SELECCION_MULTIPLE'
+
 export interface OptionFE {
-  // Renamed from Option to avoid conflict with potential HTMLOptionElement
-  label: string // User-facing
+  label: string
   value: string
   category?: string
 }
 
-// ReportType is now defined in final-reports.types.ts, ensure it's imported if used directly here
-// export type ReportType = 'INFORME_FINAL_V1' | 'INFORME_FINAL_V2' | 'TODOS';
-
-// --- Step 5: Achievements, Difficulties, and Recommendations (Text-based) ---
-export interface Step5Question {
+// Interfaz base para preguntas
+export interface BaseQuestion {
   questionId: string
   question: string
-  group: string // <--- AÑADIR ESTO
-  responseType: 'TEXT' // <--- AÑADIR ESTO (o un tipo más general si varía)
-  options: OptionFE[] // <--- AÑADIR ESTO (será [] para preguntas de texto)
+  group: string
+  responseType: ResponseTypeFE
+  options: OptionFE[]
 }
 
-export const step5QuestionsMock: Step5Question[] = [
-  {
-    questionId: 'logros_alcanzados',
-    question: 'Principales logros alcanzados en el desarrollo de la asignatura.',
-    group: 'evaluacion_general_curso', // <--- AÑADIR VALOR
-    responseType: 'TEXT', // <--- AÑADIR VALOR
-    options: [] // <--- AÑADIR VALOR
-  },
-  {
-    questionId: 'dificultades_presentadas',
-    question: 'Principales dificultades que se presentaron en el desarrollo de la asignatura.',
-    group: 'evaluacion_general_curso', // <--- AÑADIR VALOR
-    responseType: 'TEXT', // <--- AÑADIR VALOR
-    options: [] // <--- AÑADIR VALOR
-  },
-  {
-    questionId: 'recomendaciones_mejora',
-    question: 'Recomendaciones para la mejora de la asignatura.',
-    group: 'evaluacion_general_curso', // <--- AÑADIR VALOR
-    responseType: 'TEXT', // <--- AÑADIR VALOR
-    options: [] // <--- AÑADIR VALOR
-  }
-  // ... agregar las propiedades a cualquier otra pregunta del Step 5 si existen
-]
-
-// --- Step 6: Technological Tools (Multiple Choice & Text) ---
-export interface Step6Question {
-  questionId: string // Was idPregunta
-  question: string // Was pregunta (user-facing)
-  description?: string // Was descripcion (user-facing)
-  options?: OptionFE[]
-  responseType?: 'TEXT' | 'SELECCION_UNICA' | 'SELECCION_MULTIPLE'
-  group?: string // Was grupo_pregunta
-  // responseType would implicitly be 'SELECCION_MULTIPLE' for the main question
+// Interfaces específicas con extensiones
+export interface Step5Question extends BaseQuestion {
+  responseType: 'TEXT'
 }
 
-export const step6QuestionsPageMock: Step6Question[] = [
-  // Renamed from preguntasPaso6PageMock
-  {
-    questionId: 'herramientas_utilizadas', // This ID should match what Step6Form expects, e.g., 'herramientas_tec'
-    question: 'Herramientas Tecnológicas Utilizadas',
-    description: 'Seleccione todas las herramientas tecnológicas que utilizó durante el ciclo académico.',
-    options: [
-      { label: 'Plataforma Moodle', value: 'moodle' },
-      { label: 'Microsoft Teams', value: 'teams' },
-      { label: 'Zoom', value: 'zoom' },
-      { label: 'Google Classroom', value: 'classroom' },
-      { label: 'Kahoot!', value: 'kahoot' },
-      { label: 'Genially', value: 'genially' },
-      { label: 'Canva', value: 'canva' },
-      { label: 'Padlet', value: 'padlet' }
-    ],
-    group: 'herramientas' // Added for consistency
-  },
-  {
-    questionId: 'otras_herramientas', // For the "other tools" text input
-    question: 'Otras herramientas utilizadas (opcional)',
-    group: 'herramientas'
-  }
-]
-
-// --- Step 7: General Perception and Performance (Radio Buttons) ---
-// Assuming ReportType is imported from types.ts or defined elsewhere if needed here.
-// For this file, we'll assume ReportType is available.
-import type { ReportType } from '../types/final-reports.types'
-export { ReportType }
-
-export interface Step7Question {
-  questionId: string // Was idPregunta
-  question: string // Was pregunta (user-facing)
-  options: OptionFE[] // Was opciones
-  group?: string // Was grupo (user-facing for UI grouping)
-  appliesTo: ReportType[] // Was aplicaPara
-  responseType?: 'TEXT' | 'SELECCION_UNICA' | 'SELECCION_MULTIPLE' // Added to be explicit
+export interface Step6Question extends BaseQuestion {
+  description?: string
 }
 
+export interface Step7Question extends BaseQuestion {
+  appliesTo: ReportType[]
+}
+
+// Opciones estándar reutilizables
 const standardStep7Options: OptionFE[] = [
   { label: 'Muy malo', value: '1' },
   { label: 'Malo', value: '2' },
@@ -102,9 +43,80 @@ const standardStep7Options: OptionFE[] = [
   { label: 'Muy bueno', value: '5' }
 ]
 
+// Herramientas tecnológicas extendidas
+const herramientasTecnologicas: OptionFE[] = [
+  { label: 'Plataforma Moodle', value: 'moodle' },
+  { label: 'Microsoft Teams', value: 'teams' },
+  { label: 'Zoom', value: 'zoom' },
+  { label: 'Google Classroom', value: 'classroom' },
+  { label: 'Google Meet', value: 'meet' },
+  { label: 'Kahoot!', value: 'kahoot' },
+  { label: 'Mentimeter', value: 'mentimeter' },
+  { label: 'Genially', value: 'genially' },
+  { label: 'Canva', value: 'canva' },
+  { label: 'Padlet', value: 'padlet' },
+  { label: 'Nearpod', value: 'nearpod' },
+  { label: 'Quizizz', value: 'quizizz' },
+  { label: 'Jamboard', value: 'jamboard' },
+  { label: 'Notion', value: 'notion' },
+  { label: 'Microsoft Forms', value: 'forms' },
+  { label: 'Google Forms', value: 'google_forms' },
+  { label: 'Flipgrid', value: 'flipgrid' },
+  { label: 'EdPuzzle', value: 'edpuzzle' },
+  { label: 'Prezi', value: 'prezi' },
+  { label: 'Microsoft PowerPoint', value: 'powerpoint' },
+  { label: 'Google Slides', value: 'google_slides' },
+  { label: 'Slack', value: 'slack' },
+  { label: 'Discord', value: 'discord' },
+  { label: 'Trello', value: 'trello' }
+]
+
+// Datos de preguntas
+export const step5QuestionsMock: Step5Question[] = [
+  {
+    questionId: 'logros_alcanzados',
+    question: 'Principales logros alcanzados en el desarrollo de la asignatura.',
+    group: 'Evaluacion_general_curso',
+    responseType: 'TEXT',
+    options: []
+  },
+  {
+    questionId: 'dificultades_presentadas',
+    question: 'Principales dificultades que se presentaron en el desarrollo de la asignatura.',
+    group: 'Evaluacion_general_curso',
+    responseType: 'TEXT',
+    options: []
+  },
+  {
+    questionId: 'recomendaciones_mejora',
+    question: 'Recomendaciones para la mejora de la asignatura.',
+    group: 'Evaluacion_general_curso',
+    responseType: 'TEXT',
+    options: []
+  }
+]
+
+export const step6QuestionsPageMock: Step6Question[] = [
+  {
+    questionId: MAIN_TOOLS_QUESTION_ID, // Usar la constante importada
+    question: 'Herramientas Tecnológicas Utilizadas',
+    description: 'Seleccione todas las herramientas tecnológicas que utilizó durante el ciclo académico.',
+    options: herramientasTecnologicas,
+    group: 'Herramientas',
+    responseType: 'SELECCION_MULTIPLE'
+  },
+  {
+    questionId: OTHER_TOOLS_QUESTION_ID, // Usar la constante importada
+    question: 'Otras herramientas o metodologías utilizadas (opcional)',
+    description: 'Si utilizó otras no listadas, descríbalas aquí.',
+    group: 'Herramientas',
+    responseType: 'TEXT',
+    options: []
+  }
+]
+
 export const step7QuestionsPageMock: Step7Question[] = [
-  // Renamed from preguntasPaso7PageMock
-  // Grupo: Percepción del Estudiante sobre el Curso
+  // Percepción del Estudiante sobre el Curso
   {
     questionId: 'percepcion_contenido_relevante',
     question: 'El contenido del curso fue relevante para mi aprendizaje.',
@@ -121,7 +133,7 @@ export const step7QuestionsPageMock: Step7Question[] = [
     appliesTo: ['INFORME_FINAL_V1', 'INFORME_FINAL_V2'],
     responseType: 'SELECCION_UNICA'
   },
-  // Grupo: Desempeño del Docente
+  // Desempeño del Docente
   {
     questionId: 'desempeno_dominio_tema',
     question: 'El docente demostró dominio de los temas tratados.',
@@ -146,7 +158,6 @@ export const step7QuestionsPageMock: Step7Question[] = [
     appliesTo: ['INFORME_FINAL_V2', 'TODOS'],
     responseType: 'SELECCION_UNICA'
   },
-  // Adding a few more example questions to show the pattern
   {
     questionId: 'desempeno_retroalimentacion_util',
     question: 'La retroalimentación proporcionada por el docente fue útil para mi aprendizaje.',
@@ -155,6 +166,7 @@ export const step7QuestionsPageMock: Step7Question[] = [
     appliesTo: ['TODOS'],
     responseType: 'SELECCION_UNICA'
   },
+  // Ambiente de Aprendizaje
   {
     questionId: 'ambiente_aprendizaje_positivo',
     question: 'El docente promovió un ambiente de aprendizaje positivo y respetuoso.',
@@ -163,6 +175,7 @@ export const step7QuestionsPageMock: Step7Question[] = [
     appliesTo: ['TODOS'],
     responseType: 'SELECCION_UNICA'
   },
+  // Carga de Trabajo y Recursos
   {
     questionId: 'carga_trabajo_adecuada',
     question: 'La carga de trabajo del curso fue adecuada.',
@@ -180,54 +193,3 @@ export const step7QuestionsPageMock: Step7Question[] = [
     responseType: 'SELECCION_UNICA'
   }
 ]
-// Example of how this mock data would translate to FinalReportEvaluation items
-// This transformation would happen in your `handleSubmitAllSteps` function in page.tsx
-
-/*
-const exampleEvaluationItemFromStep5: FinalReportEvaluation = {
-  questionId: 'logros_alcanzados',
-  question: '¿Cuáles han sido los principales logros alcanzados durante el ciclo académico?',
-  response: 'Se logró que el 90% de los estudiantes comprendieran los conceptos clave.', // User's text input
-  responseType: 'TEXT',
-  options: [], // No options for text
-  multipleResponse: [],
-  // questionGroup: null, // Or based on some logic if Step 5 questions are grouped
-};
-
-const exampleEvaluationItemFromStep6Tools: FinalReportEvaluation = {
-  questionId: 'herramientas_utilizadas',
-  question: 'Herramientas Tecnológicas Utilizadas',
-  multipleResponse: ['moodle', 'teams'], // User's selected values
-  responseType: 'SELECCION_MULTIPLE',
-  options: [ // These would be the options defined in preguntasPaso6PageMock
-    { label: 'Plataforma Moodle', value: 'moodle' },
-    { label: 'Microsoft Teams', value: 'teams' },
-    // ... all other tool options
-  ],
-  // questionGroup: 'Tecnología', // Or however you define it
-};
-
-const exampleEvaluationItemFromStep6OtherTools: FinalReportEvaluation = {
-  questionId: 'otras_herramientas',
-  question: 'Otras herramientas utilizadas (opcional)',
-  response: 'Padlet y Mentimeter', // User's text input
-  responseType: 'TEXT',
-  options: [],
-  multipleResponse: [],
-};
-
-
-const exampleEvaluationItemFromStep7: FinalReportEvaluation = {
-  questionId: 'percepcion_contenido_relevante',
-  question: 'El contenido del curso fue relevante para mi aprendizaje.',
-  response: '5', // User's selected radio value
-  responseType: 'RADIO',
-  options: [ // These would be the options defined in preguntasPaso7PageMock for this question
-    { label: 'Totalmente de acuerdo', value: '5' },
-    { label: 'De acuerdo', value: '4' },
-    // ... other options
-  ],
-  questionGroup: 'Percepción del Estudiante sobre el Curso',
-  multipleResponse: [],
-};
-*/

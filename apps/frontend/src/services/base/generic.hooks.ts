@@ -96,8 +96,6 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
     return useMutation({
       mutationFn: (payload: CreateDTO) => service.create(payload),
       onSuccess: (data) => {
-        console.log('✅ Creación exitosa, invalidando queries...', data)
-
         // Invalidar TODAS las queries relacionadas
         qc.invalidateQueries({
           queryKey: [queryKeyPrefix],
@@ -133,7 +131,6 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
       },
       onError: (error: any) => {
         const errorMessage = getApiErrorMessage(error)
-        console.error('❌ Error en create mutation:', error.response?.data || error.message || error)
         toast.error(`Error al crear: ${errorMessage}`) // User-facing: Spanish
       }
     })
@@ -183,7 +180,6 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
       onSuccess: () => {
         console.log('✅ Eliminación exitosa, invalidando queries...')
 
-        // Invalidar todas las queries relacionadas
         qc.invalidateQueries({
           queryKey: [queryKeyPrefix],
           exact: false

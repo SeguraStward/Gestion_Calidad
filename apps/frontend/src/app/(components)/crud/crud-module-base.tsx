@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { useForm, FieldValues } from 'react-hook-form'
-import { toast } from 'sonner'
 import { usePagination } from '@/shared/hooks/usePagination'
+import { ColumnDef } from '@tanstack/react-table'
 import { Button, Card, CardContent } from '@una-gc/ui/components'
-import { CrudConfig, CrudItemBase, ColumnUtilities } from './crud-types'
+import { Loader2, PlusCircle } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { FieldValues, useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { AlertMessage } from '../ui/alert-message'
 import { DataTable } from '../ui/data-table'
-import { ColumnDef } from '@tanstack/react-table'
-import { Loader2, PlusCircle } from 'lucide-react'
+import { ColumnUtilities, CrudConfig, CrudItemBase } from './crud-types'
 
 export type { ColumnUtilities }
 
@@ -86,6 +86,7 @@ export const CrudModuleBase = <
     }
   }, [paginatedData?.meta?.total, previousTotalItems, itemsPerPage, paginatedData?.meta?.totalPages, setCurrentPage])
   // Formulario
+  const formValues = (editingItem || defaultFormValues) as TCreateInput | TUpdateInput | undefined
   const {
     control,
     handleSubmit,
@@ -94,7 +95,7 @@ export const CrudModuleBase = <
   } = useForm<TCreateInput | TUpdateInput>({
     defaultValues: defaultFormValues as any,
     mode: 'onChange',
-    values: (editingItem || defaultFormValues) as TCreateInput | TUpdateInput | undefined // <-- Esto asegura que los valores del item se muestren en el form
+    ...(formValues ? { values: formValues as TCreateInput | TUpdateInput } : {})
   })
 
   // Mutaciones

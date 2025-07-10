@@ -4,7 +4,6 @@ import { FileFieldProps } from '../types'
 // Component to handle file inputs
 export const FileInputComponent = ({
   field,
-  value,
   onChange,
   error
 }: {

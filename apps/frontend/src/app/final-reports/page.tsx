@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useMemo, useState } from 'react' // Added useState
+import React, { useMemo, useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ColumnDef, Row } from '@tanstack/react-table'
+import { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@una-gc/ui/components/button'
 import { MoreHorizontal, FileDown, Edit, Trash2, PlusCircle, Loader2 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@una-gc/ui/components/dropdown-menu'
@@ -10,8 +10,10 @@ import { DataTable } from '@/app/(components)/ui/data-table'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { pdf } from '@react-pdf/renderer'
+import { useDebounce } from '@/shared/hooks/use-debounce'
 
-import useDevStore from '@/store/devStore'
+// Cambio de import: usar session store en lugar del dev store
+import { useSessionStore } from '@/modules/auth/sessionStore'
 import { useDeleteFinalReport, useFinalReportsByProfessor } from '@/modules/final-reports/service/final-reports.service'
 import type { FullFinalReport, FinalReportStatusFE } from '@/modules/final-reports/types/final-reports.types'
 import { FinalReportPDFDocument } from '@/modules/final-reports/components/final-report-pdf'
@@ -33,61 +35,86 @@ const getStatusDisplayProperties = (statusValue: FinalReportStatusFE | undefined
 
 export default function FinalReportsPage() {
   const router = useRouter()
-  const mockProfessorId = useDevStore((state) => state.mockProfessorId)
-  console.log('[FinalReportsPage] mockProfessorId:', mockProfessorId) // DEBUG
-
+  
+  // Usar session store en lugar del dev store
+  const { user, isAuthenticated } = useSessionStore()
+  const professorId = user?.id
+  
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(12)
+  const [searchQuery, setSearchQuery] = useState('')
   const [isGeneratingPdfId, setIsGeneratingPdfId] = useState<string | null>(null)
 
-  // Fetch final reports for the specific professor
+  // Debounce del lado del servidor para la búsqueda
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 300)
+
+  // Resetear la página a 1 cuando cambia la búsqueda
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearchQuery])
+
+  // Fetch final reports with pagination and search
   const {
-    data: paginatedFinalReports, // This will be PaginatedResponse<FullFinalReport>
+    data: paginatedFinalReports,
     isLoading,
     error,
     refetch
   } = useFinalReportsByProfessor(
-    mockProfessorId,
+    professorId,
     {
-      include:
-        'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus'
+      include: 
+        'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus',
+      page: currentPage,
+      limit: pageSize,
+      ...(debouncedSearchQuery && { search: debouncedSearchQuery })
     },
-    { enabled: !!mockProfessorId }
+    { enabled: !!professorId && isAuthenticated() }
   )
 
-  console.log('[FinalReportsPage] Raw paginatedFinalReports (should be object):', paginatedFinalReports) // DEBUG
+  const finalReportsData = paginatedFinalReports?.data || []
 
-  const finalReportsData: FullFinalReport[] = paginatedFinalReports?.data || [] // This will now correctly access the array
-  console.log('[FinalReportsPage] Data for table (finalReportsData):', finalReportsData) // DEBUG
+  const totalItems = paginatedFinalReports?.meta?.total || 0
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setCurrentPage(newPage)
+  }, [])
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query)
+  }, [])
 
   const deleteFinalReportMutation = useDeleteFinalReport()
 
-  const handleEdit = (id: string) => {
-    router.push(`/final-reports/edit/${id}`)
-  }
+  const handleEdit = useCallback(
+    (id: string) => {
+      router.push(`/final-reports/edit/${id}`)
+    },
+    [router]
+  )
 
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteFinalReportMutation.mutateAsync(id)
-      // toast.success('Informe final eliminado.'); // Handled by useDeleteFinalReport hook
-    } catch (err) {
-      console.error('Error deleting final report:', err)
-      // toast.error('Error al eliminar el informe.'); // Handled by useDeleteFinalReport hook
-    }
-  }
+  const handleDelete = useCallback(
+    async (id: string) => {
+      try {
+        await deleteFinalReportMutation.mutateAsync(id)
+      } catch (err) {
+        console.error('Error deleting final report:', err)
+      }
+    },
+    [deleteFinalReportMutation]
+  )
 
-  const handleDownloadPdf = async (reportToDownload: FullFinalReport | undefined) => {
-    if (!reportToDownload) {
+  const handleDownloadPdf = async (report: FullFinalReport) => {
+    if (!report) {
       toast.error('No se encontró el informe para generar el PDF.')
       return
     }
-    setIsGeneratingPdfId(reportToDownload.id)
-    toast.info(`Generando PDF para NRC ${reportToDownload.academicLoad?.nrc || ''}... Por favor espere.`)
-
     try {
-      const blob = await pdf(<FinalReportPDFDocument report={reportToDownload} />).toBlob()
+      const blob = await pdf(<FinalReportPDFDocument report={report} />).toBlob()
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      const fileName = `InformeFinal-${reportToDownload.academicLoad?.nrc || reportToDownload.id}.pdf`
+      const fileName = `InformeFinal-${report.academicLoad?.nrc || report.id}.pdf`
       link.setAttribute('download', fileName)
       document.body.appendChild(link)
       link.click()
@@ -220,8 +247,7 @@ export default function FinalReportsPage() {
         }
       }
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [deleteFinalReportMutation.isPending, deleteFinalReportMutation.variables, router, isGeneratingPdfId]
+    [deleteFinalReportMutation.isPending, deleteFinalReportMutation.variables, isGeneratingPdfId, handleDelete, handleEdit]
   )
 
   const newReportButton = (
@@ -231,12 +257,34 @@ export default function FinalReportsPage() {
       </Link>
     </Button>
   )
-  if (!mockProfessorId && !isLoading) {
+
+  // Verificar autenticación
+  if (!isAuthenticated() && !isLoading) {
     return (
       <div className="container mx-auto py-8 text-center">
         <p className="text-orange-600 dark:text-orange-400 mb-4">
-          ID de profesor no configurado. Por favor, configure un ID de profesor en el mock store.
+          Debes estar autenticado para ver los informes finales.
         </p>
+        <Button asChild>
+          <Link href="/auth/login">
+            Iniciar Sesión
+          </Link>
+        </Button>
+      </div>
+    )
+  }
+
+  if (!professorId && !isLoading) {
+    return (
+      <div className="container mx-auto py-8 text-center">
+        <p className="text-orange-600 dark:text-orange-400 mb-4">
+          No se pudo obtener la información del profesor. Por favor, inicie sesión nuevamente.
+        </p>
+        <Button asChild>
+          <Link href="/auth/login">
+            Iniciar Sesión
+          </Link>
+        </Button>
       </div>
     )
   }
@@ -256,15 +304,29 @@ export default function FinalReportsPage() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Gestión de Informes Finales</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Gestión de Informes Finales</h1>
+          <p className="text-muted-foreground mt-2">
+            Bienvenido, {user?.fullName}
+          </p>
+        </div>
       </div>
 
       <DataTable
         columns={columns}
         data={finalReportsData}
         isLoading={isLoading}
-        searchPlaceholder="Buscar por NRC, curso..."
+        searchPlaceholder="Buscar por NRC, curso, nombre..."
         newButton={newReportButton}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={handlePageChange}
+        // Nuevas props para filtrado del lado del servidor
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        serverSideFiltering={true}
       />
     </div>
   )

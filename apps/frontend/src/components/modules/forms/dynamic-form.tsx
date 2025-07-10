@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import * as z from 'zod'
 
 import { Button } from '@una-gc/ui/components/button'
-import { useSelectStore } from './store/select-store'
 import { buildSchema } from './schema-builder'
+import { useSelectStore } from './store/select-store'
 
 import { CheckboxField, FileInputComponent, RelationFieldComponent, SelectField, TextareaField, TextField } from './components'
 
-import { DynamicFormProps, FormField, SelectFieldProps, RelationFieldProps, FileFieldProps } from './types'
+import { DynamicFormProps, FileFieldProps, FormField, RelationFieldProps, SelectFieldProps } from './types'
 
 export default function DynamicForm({
   fields = [],
@@ -167,7 +167,7 @@ export default function DynamicForm({
               control={control}
               name={field.name}
               render={({ field: { onChange, value } }) => (
-                <SelectField field={field} onChange={onChange} value={value} errorMessage={errorMessage} />
+                <SelectField field={field} onChange={onChange} value={value} errorMessage={errorMessage ?? ''} />
               )}
             />
           )
@@ -181,7 +181,7 @@ export default function DynamicForm({
                   field={field as RelationFieldProps}
                   value={value}
                   onChange={onChange}
-                  error={errorMessage}
+                  {...(errorMessage ? { error: errorMessage } : {})}
                 />
               )}
             />
@@ -192,7 +192,12 @@ export default function DynamicForm({
               control={control}
               name={field.name}
               render={({ field: { onChange, value } }) => (
-                <FileInputComponent field={field as FileFieldProps} value={value} onChange={onChange} error={errorMessage} />
+                <FileInputComponent
+                  field={field as FileFieldProps}
+                  value={value}
+                  onChange={onChange}
+                  {...(errorMessage ? { error: errorMessage } : {})}
+                />
               )}
             />
           )

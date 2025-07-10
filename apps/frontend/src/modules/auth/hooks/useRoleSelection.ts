@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import axios, { AxiosError } from 'axios'
 
-import { AuthService } from '@/modules/auth/auth.service'
-import { useAsyncOperation } from '@/hooks/useAsyncOperation'
-import { CookieManager } from '@/utils'
+import { AuthService } from '@/modules/auth/services/auth.service'
+import { CookieManager } from '../utils/cookie.manager'
+import { useSessionStore } from '@/modules/auth/sessionStore'
 import { Role } from '../types'
 
 export interface UseRoleSelectionReturn {
@@ -17,99 +16,50 @@ export interface UseRoleSelectionReturn {
   error: string | null
   canSkip: boolean
   hasActiveRole: boolean
-  retryCount: number
-  canRetry: boolean
+  showTransition: boolean
 
   // Actions
   setSelectedRole: (role: Role | null) => void
   handleSubmit: () => Promise<void>
   handleSkip: () => void
   fetchRoles: () => Promise<void>
-  retryFetchRoles: () => void
   resetError: () => void
 }
-
-const MAX_RETRY_ATTEMPTS = 3
-const RETRY_DELAY = 2000
 
 export function useRoleSelection(): UseRoleSelectionReturn {
   const [roles, setRoles] = useState<Role[]>([])
   const [selectedRole, setSelectedRole] = useState<Role | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [canSkip, setCanSkip] = useState(false)
   const [hasActiveRole, setHasActiveRole] = useState(false)
-  const [retryCount, setRetryCount] = useState(0)
+  const [showTransition, setShowTransition] = useState(false)
 
   const router = useRouter()
-  const { loading, error, execute: executeAsync } = useAsyncOperation<Role[]>()
-  const { loading: submitting, execute: executeSubmit } = useAsyncOperation<void>()
-
+  const { setRole } = useSessionStore()
   const resetError = useCallback(() => {
-    setRetryCount(0)
+    setError(null)
   }, [])
 
   const getErrorMessage = useCallback((error: unknown): string => {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError
-
-      switch (axiosError.response?.status) {
-        case 401:
-          return 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.'
-        case 403:
-          return 'No tienes permisos para acceder a esta funcionalidad.'
-        case 404:
-          return 'No se encontraron roles disponibles para tu usuario.'
-        case 500:
-          return 'Error interno del servidor. Si el problema persiste, contacta soporte.'
-        case 502:
-        case 503:
-        case 504:
-          return 'El servicio no está disponible temporalmente. Intenta más tarde.'
-        default:
-          return (
-            (axiosError.response?.data && typeof axiosError.response.data === 'object' && 'message' in axiosError.response.data
-              ? (axiosError.response.data as { message?: string }).message
-              : undefined) || 'Error de conexión. Verifica tu internet.'
-          )
-      }
-    }
-
     if (error instanceof Error) {
       return error.message
     }
-
+    if (typeof error === 'string') {
+      return error
+    }
     return 'Ha ocurrido un error inesperado.'
   }, [])
 
-  const handleRolesResult = useCallback(
-    (result: Role[] | null) => {
-      if (result) {
-        setRoles(result)
-        setRetryCount(0)
-
-        if (result.length === 1 && result[0]) {
-          setSelectedRole(result[0])
-        }
-      } else if (error) {
-        setRetryCount((prev) => prev + 1)
-
-        if (error.includes('Token expirado') || error.includes('sesión ha expirado') || error.includes('401')) {
-          toast.error(error)
-          router.push('/auth/login')
-          return
-        }
-
-        toast.error(error)
-      }
-    },
-    [error, router]
-  )
-
   const fetchRoles = useCallback(async () => {
-    console.log('🏁 Manual fetch user roles...')
+    if (loading) return
 
-    const result = await executeAsync(async () => {
-      const userRoles = await AuthService.getUserActiveRoles()
-      console.log('📊 User roles received:', userRoles)
+    setLoading(true)
+    setError(null)
+
+    try {
+      const userRoles = await AuthService.getUserRoles()
 
       if (!Array.isArray(userRoles)) {
         throw new Error('Formato de respuesta inválido del servidor.')
@@ -119,43 +69,79 @@ export function useRoleSelection(): UseRoleSelectionReturn {
         throw new Error('No tienes roles asignados. Contacta al administrador.')
       }
 
-      return userRoles.map((role: any) => ({
+      const mappedRoles = userRoles.map((role: any) => ({
         id: role.id,
         name: role.name,
         description: role.description ?? '',
         permissions: role.permissions ?? []
       }))
-    })
 
-    handleRolesResult(result)
-  }, [executeAsync, handleRolesResult])
+      setRoles(mappedRoles)
+      // Auto-select if only one role
+      if (mappedRoles.length === 1 && mappedRoles[0]) {
+        setSelectedRole(mappedRoles[0])
+      }
+    } catch (err) {
+      const errorMessage = getErrorMessage(err)
+      setError(errorMessage)
 
-  const retryFetchRoles = useCallback(() => {
-    fetchRoles()
-  }, [fetchRoles])
+      // Handle auth errors
+      if (
+        errorMessage.includes('401') ||
+        errorMessage.includes('403') ||
+        errorMessage.includes('sesión') ||
+        errorMessage.includes('token')
+      ) {
+        toast.error('Sesión expirada. Redirigiendo al login...')
+        router.push('/auth/login')
+        return
+      }
 
+      toast.error(`Error: ${errorMessage}`)
+    } finally {
+      setLoading(false)
+    }
+  }, [loading, getErrorMessage, router])
   const handleSubmit = useCallback(async () => {
     if (!selectedRole) {
       toast.error('Por favor selecciona un rol.')
       return
     }
 
-    await executeSubmit(async () => {
-      console.log('🔄 Setting active role via API:', selectedRole)
+    if (submitting) return
 
-      await CookieManager.setActiveRole(selectedRole)
+    setSubmitting(true)
+    setError(null)
 
-      const roleData = {
-        id: selectedRole.id,
-        name: selectedRole.name,
-        permissions: selectedRole.permissions || []
+    try {
+      setShowTransition(true)
+
+      const success = await AuthService.setActiveRole(selectedRole.id)
+
+      if (!success) {
+        throw new Error('Error al configurar el rol en el servidor')
       }
-      localStorage.setItem('selected_role', JSON.stringify(roleData))
 
-      toast.success(`Rol seleccionado exitosamente: ${selectedRole.name}`)
-      router.push('/')
-    })
-  }, [selectedRole, executeSubmit, router])
+      // Update session store
+      setRole(selectedRole)
+
+      // Save to sessionStorage for UI
+      CookieManager.setActiveRole(selectedRole)
+
+      toast.success(`Rol activo: ${selectedRole.name}`)
+
+      // Small delay for UX before redirect
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    } catch (error) {
+      console.error('Error setting active role:', error)
+      setShowTransition(false)
+      const errorMessage = getErrorMessage(error)
+      setError(errorMessage)
+      toast.error(`Error: ${errorMessage}`)
+    } finally {
+      setSubmitting(false)
+    }
+  }, [selectedRole, submitting, setRole, getErrorMessage])
 
   const handleSkip = useCallback(() => {
     if (canSkip) {
@@ -163,55 +149,29 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     }
   }, [canSkip, router])
 
+  // Initialize role selection
   useEffect(() => {
-    const hasRole = CookieManager.hasActiveRole()
-    setHasActiveRole(hasRole)
-    setCanSkip(hasRole)
-  }, [])
-
-  useEffect(() => {
-    let mounted = true
-
-    const loadRoles = async () => {
+    const initializeRoleSelection = async () => {
       try {
-        console.log('🏁 Starting to fetch user roles...')
+        const activeRoleId = await AuthService.getActiveRole()
+        const hasServerRole = activeRoleId !== null
 
-        const result = await executeAsync(async () => {
-          const userRoles = await AuthService.getUserActiveRoles()
-          console.log('📊 User roles received:', userRoles)
+        setHasActiveRole(hasServerRole)
+        setCanSkip(hasServerRole)
+      } catch (error) {
+        console.warn('Error checking active role:', error)
+        setHasActiveRole(false)
+        setCanSkip(false)
+      }
 
-          if (!Array.isArray(userRoles)) {
-            throw new Error('Formato de respuesta inválido del servidor.')
-          }
-
-          if (userRoles.length === 0) {
-            throw new Error('No tienes roles asignados. Contacta al administrador.')
-          }
-
-          return userRoles.map((role: any) => ({
-            id: role.id,
-            name: role.name,
-            description: role.description ?? '',
-            permissions: role.permissions ?? []
-          }))
-        })
-
-        if (mounted) {
-          handleRolesResult(result)
-        }
-      } catch (err) {
-        if (mounted) {
-          console.error('Error loading roles:', err)
-        }
+      // Load roles if not loaded
+      if (roles.length === 0) {
+        fetchRoles()
       }
     }
 
-    loadRoles()
-
-    return () => {
-      mounted = false
-    }
-  }, [executeAsync, handleRolesResult])
+    initializeRoleSelection()
+  }, [fetchRoles, roles.length])
 
   return {
     roles,
@@ -221,13 +181,11 @@ export function useRoleSelection(): UseRoleSelectionReturn {
     error,
     canSkip,
     hasActiveRole,
-    retryCount,
-    canRetry: retryCount < MAX_RETRY_ATTEMPTS,
+    showTransition,
     setSelectedRole,
     handleSubmit,
     handleSkip,
     fetchRoles,
-    retryFetchRoles,
     resetError
   }
 }

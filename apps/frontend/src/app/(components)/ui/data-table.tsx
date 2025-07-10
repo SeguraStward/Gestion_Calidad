@@ -1,20 +1,20 @@
 'use client'
 
-import * as React from 'react'
+import { useDebounce } from '@/shared/hooks/use-debounce' // Necesitamos crear este hook
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  useReactTable,
-  Table as TanstackTable, // Alias to avoid naming conflict
-  Row
+  Table as TanstackTable,
+  useReactTable
 } from '@tanstack/react-table'
+import * as React from 'react'
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@una-gc/ui/components/table'
 import { Button } from '@una-gc/ui/components/button'
 import { Input } from '@una-gc/ui/components/input'
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react' // Added Loader2
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@una-gc/ui/components/table'
+import { ChevronLeft, ChevronRight, Loader2, Search } from 'lucide-react' // Added Loader2
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -22,10 +22,14 @@ interface DataTableProps<TData, TValue> {
   searchPlaceholder?: string
   newButton?: React.ReactNode
   isLoading?: boolean
-  // Server-side pagination props:
   currentPage?: number
   totalPages?: number
+  totalItems?: number
+  pageSize?: number
   onPageChange?: (page: number) => void
+  searchQuery?: string
+  onSearchChange?: (query: string) => void
+  serverSideFiltering?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -36,21 +40,52 @@ export function DataTable<TData, TValue>({
   isLoading,
   currentPage = 1,
   totalPages = 1,
-  onPageChange
+  totalItems = 0,
+  pageSize = 10,
+  onPageChange,
+  searchQuery,
+  onSearchChange,
+  serverSideFiltering = false
 }: DataTableProps<TData, TValue>) {
-  const [globalFilter, setGlobalFilter] = React.useState('')
+  // Estado para filtrado del lado del cliente
+  const [clientFilter, setClientFilter] = React.useState('')
 
-  // No TanStack pagination, just filtering
-  const table: TanstackTable<TData> = useReactTable({
+  // Aplicamos debounce solo para filtrado del lado del cliente
+  const debouncedClientFilter = useDebounce(clientFilter, 300)
+
+  // Determinar el valor actual del input
+  const inputValue = React.useMemo(() => {
+    return serverSideFiltering ? (searchQuery ?? '') : clientFilter
+  }, [serverSideFiltering, searchQuery, clientFilter])
+
+  // Manejar cambios en la búsqueda con useCallback para evitar recreaciones
+  const handleSearchChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+
+    if (serverSideFiltering && onSearchChange) {
+      // Para filtrado del lado del servidor, propagamos inmediatamente
+      onSearchChange(value)
+    } else {
+      // Para filtrado del lado del cliente
+      setClientFilter(value)
+    }
+  }, [serverSideFiltering, onSearchChange])
+
+  // Tabla con filtrado del lado del cliente
+  const tableOptions: any = {
     data,
     columns,
     state: {
-      globalFilter
+      globalFilter: serverSideFiltering ? undefined : debouncedClientFilter
     },
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: serverSideFiltering ? undefined : setClientFilter,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel()
-  })
+    getFilteredRowModel: serverSideFiltering ? undefined : getFilteredRowModel(),
+    manualFiltering: serverSideFiltering,
+    manualPagination: serverSideFiltering
+  };
+
+  const table = useReactTable(tableOptions);
 
   // Deshabilitar paginación si no hay handler
   const paginacionActiva = typeof onPageChange === 'function' && totalPages > 1
@@ -58,13 +93,18 @@ export function DataTable<TData, TValue>({
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <Input
-          placeholder={searchPlaceholder}
-          value={globalFilter ?? ''}
-          onChange={(event) => setGlobalFilter(event.target.value)}
-          className="max-w-sm"
-          disabled={isLoading}
-        />
+        <div className="relative max-w-sm flex-1">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <Search className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <Input
+            placeholder={searchPlaceholder}
+            value={inputValue}
+            onChange={handleSearchChange}
+            className="pl-10"
+            disabled={isLoading}
+          />
+        </div>
         {newButton}
       </div>
       <div className="rounded-md border">
@@ -112,7 +152,14 @@ export function DataTable<TData, TValue>({
       </div>
       <div className="flex items-center justify-between space-x-2 py-4">
         <div className="text-sm text-muted-foreground">
-          Página {currentPage} de {totalPages}
+          {serverSideFiltering && totalItems > 0 ? (
+            <>
+              Mostrando {Math.min((currentPage - 1) * pageSize + 1, totalItems)} a{' '}
+              {Math.min(currentPage * pageSize, totalItems)} de {totalItems} registros
+            </>
+          ) : (
+            `Página ${currentPage} de ${totalPages}`
+          )}
         </div>
         <div className="space-x-2">
           <Button

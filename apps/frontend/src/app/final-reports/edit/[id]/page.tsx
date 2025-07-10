@@ -1,101 +1,71 @@
 'use client'
 
-import { useRouter, useParams } from 'next/navigation'
-import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { useForm, UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
+import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 
 import { Button } from '@una-gc/ui/components/button'
-// Card y sus subcomponentes ya estaban, pero asegúrate de que se usan consistentemente
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card'
-import { Loader2, FileText, AlertTriangle, CheckCircle, Save } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components/card'
+import { Loader2 } from 'lucide-react'
 
-// Importa ReportPageHeader
-import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header' // <<--- AÑADIDO
+import { ReportPageHeader } from '@/modules/final-reports/components/report-page-header'
 
-// Schemas, Types, and Components for each step
-import { Step1FormData, step1Schema, Step1Form, transformReportToStep1Data } from '@/modules/final-reports/components/form-step1'
-import { Step2FormData, step2Schema, Step2Form, transformReportToStep2Data } from '@/modules/final-reports/components/form-step2'
-import { Step3FormData, step3Schema, Step3Form, transformReportToStep3Data } from '@/modules/final-reports/components/form-step3'
-import { Step4FormData, step4Schema, Step4Form, transformReportToStep4Data } from '@/modules/final-reports/components/form-step4'
+import { Step1Form, Step1FormData, step1Schema, transformReportToStep1Data } from '@/modules/final-reports/components/form-step1'
+import { Step2Form, Step2FormData, step2Schema, transformReportToStep2Data } from '@/modules/final-reports/components/form-step2'
+import { Step3Form, Step3FormData, step3Schema, transformReportToStep3Data } from '@/modules/final-reports/components/form-step3'
+import { Step4Form, Step4FormData, step4Schema, transformReportToStep4Data } from '@/modules/final-reports/components/form-step4'
 import {
+  Step5EditForm,
   Step5FormData,
   step5Schema,
-  Step5EditForm,
   transformReportToStep5Data
 } from '@/modules/final-reports/components/form-step5-edit'
 import {
+  OTHER_TOOLS_QUESTION_ID,
+  Step6EditForm,
   Step6FormData,
   step6Schema,
-  Step6EditForm,
-  transformReportToStep6Data,
-  OTHER_TOOLS_QUESTION_ID
+  transformReportToStep6Data
 } from '@/modules/final-reports/components/form-step6-edit'
-import { Step7FormData, step7Schema, Step7EditForm } from '@/modules/final-reports/components/form-step7-edit'
+import { Step7EditForm, Step7FormData, step7Schema } from '@/modules/final-reports/components/form-step7-edit'
 
-// Mocks and services
 import { step5QuestionsMock, step6QuestionsPageMock, step7QuestionsPageMock } from '@/modules/final-reports/mocks/questions'
 
-// Service hooks
 import { useFinalReport, useUpdateFinalReport } from '@/modules/final-reports/service/final-reports.service'
 import {
-  FullFinalReport,
-  UpdateFinalReportDto,
   FinalReportEvaluationFE,
-  ReportType
+  FullFinalReport,
+  ReportType,
+  UpdateFinalReportDto
 } from '@/modules/final-reports/types/final-reports.types'
 
 const TOTAL_STEPS = 7
 
-// Mantén los mismos labels que en new/page.tsx si quieres consistencia
 const STEP_LABELS_SPANISH = ['Información', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
 
 function transformReportToStep7Data(report: FullFinalReport, currentReportType: ReportType): Step7FormData | null {
-  console.log(`[transformReportToStep7Data] Iniciando transformación para reportType: ${currentReportType}`)
   const filteredQuestions = step7QuestionsPageMock.filter((q) => {
     if (Array.isArray(q.appliesTo)) {
       return q.appliesTo.includes(currentReportType) || q.appliesTo.includes('TODOS')
     }
-    return false // O true si las preguntas sin 'appliesTo' deben incluirse siempre
+    return false
   })
-  console.log(`[transformReportToStep7Data] ${filteredQuestions.length} preguntas filtradas para el tipo de informe.`)
 
-  const step7Responses = filteredQuestions.map((p, index) => {
+  const step7Responses = filteredQuestions.map((p) => {
     const existingEvaluation = report.evaluation?.find((e) => e.questionId === p.questionId)
     let formResponseValue = ''
 
-    console.log(
-      `[transformReportToStep7Data] Procesando pregunta visible #${index + 1}: ID="${p.questionId}", Pregunta="${p.question}"`
-    )
-
     if (existingEvaluation) {
-      console.log(
-        `[transformReportToStep7Data]   Encontrada evaluación existente para ID="${p.questionId}": Response Label="${existingEvaluation.response}"`
-      )
       const questionDetails = step7QuestionsPageMock.find((mockQuestion) => mockQuestion.questionId === p.questionId)
       if (questionDetails && questionDetails.options) {
         const matchedOption = questionDetails.options.find((opt) => opt.label === existingEvaluation.response)
         if (matchedOption) {
           formResponseValue = matchedOption.value
-          console.log(
-            `[transformReportToStep7Data]     Coincidencia de opción encontrada: Label="${matchedOption.label}" -> Value="${formResponseValue}"`
-          )
-        } else {
-          console.warn(
-            `[transformReportToStep7Data]     ¡ADVERTENCIA! No se encontró opción coincidente para Label="${existingEvaluation.response}" en pregunta ID="${p.questionId}". Se usará valor vacío.`
-          )
         }
-      } else {
-        console.warn(
-          `[transformReportToStep7Data]     ¡ADVERTENCIA! No se encontraron detalles de pregunta o opciones en mock para ID="${p.questionId}".`
-        )
       }
-    } else {
-      console.log(
-        `[transformReportToStep7Data]   No se encontró evaluación existente para ID="${p.questionId}". Se usará valor vacío.`
-      )
     }
 
     return {
@@ -103,7 +73,6 @@ function transformReportToStep7Data(report: FullFinalReport, currentReportType: 
       respuesta: formResponseValue
     }
   })
-  console.log('[transformReportToStep7Data] Datos transformados finales para Step 7 form:', { respuestasRadio: step7Responses })
   return { respuestasRadio: step7Responses }
 }
 
@@ -115,7 +84,7 @@ export default function EditFinalReportPage() {
   const queryClient = useQueryClient()
 
   const [currentStep, setCurrentStep] = useState(1)
-  const [reportType, setReportType] = useState<ReportType>('INFORME_FINAL_V1')
+  const [reportType] = useState<ReportType>('INFORME_FINAL_V1')
 
   const [step1Data, setStep1Data] = useState<Step1FormData | null>(null)
   const [step2Data, setStep2Data] = useState<Step2FormData | null>(null)
@@ -137,7 +106,6 @@ export default function EditFinalReportPage() {
       retry: 1
     }
   )
-
   const updateReportHook = useUpdateFinalReport()
   const { mutateAsync: updateReportMutation } = updateReportHook
   const isUpdatingReport = updateReportHook.status === 'pending'
@@ -148,12 +116,10 @@ export default function EditFinalReportPage() {
   const formStep4Methods = useForm<Step4FormData>({ resolver: zodResolver(step4Schema) })
   const formStep5Methods = useForm<Step5FormData>({ resolver: zodResolver(step5Schema) })
   const formStep6Methods = useForm<Step6FormData>({ resolver: zodResolver(step6Schema) })
-  const formStep7Methods = useForm<Step7FormData>({ resolver: step7Schema ? zodResolver(step7Schema) : undefined })
+  const formStep7Methods = step7Schema ? useForm<Step7FormData>({ resolver: zodResolver(step7Schema) }) : useForm<Step7FormData>()
 
   useEffect(() => {
     if (fetchedReport && reportType) {
-      console.log('[EditFinalReportPage] Fetched report or reportType changed, processing data...', fetchedReport)
-
       const initialStep1 = transformReportToStep1Data(fetchedReport)
       if (initialStep1) {
         setStep1Data(initialStep1)
@@ -194,7 +160,6 @@ export default function EditFinalReportPage() {
       if (initialStep7) {
         setStep7Data(initialStep7)
         formStep7Methods.reset(initialStep7)
-        console.log('[EditFinalReportPage] Initial Step 7 Data set and form reset:', initialStep7)
       }
     }
   }, [
@@ -229,13 +194,11 @@ export default function EditFinalReportPage() {
   }, [step6Data, formStep6Methods])
   useEffect(() => {
     if (step7Data) {
-      console.log('[EditFinalReportPage] step7Data changed, resetting formStep7Methods with:', step7Data)
       formStep7Methods.reset(step7Data)
     }
   }, [step7Data, formStep7Methods])
 
   const handleUpdateStepData = (step: number, data: any) => {
-    console.log(`[handleUpdateStepData] Step: ${step}, Data:`, data)
     switch (step) {
       case 1:
         setStep1Data(data)
@@ -257,7 +220,6 @@ export default function EditFinalReportPage() {
         break
       case 7:
         setStep7Data(data as Step7FormData)
-        console.log('[handleUpdateStepData - Case 7] Step 7 data updated in state:', data)
         return
     }
     if (step < TOTAL_STEPS) {
@@ -270,20 +232,13 @@ export default function EditFinalReportPage() {
   }
 
   const handleSubmitAllSteps = async () => {
-    console.log('[handleSubmitAllSteps] INVOCADA.')
     const currentStep7ValuesFromForm = formStep7Methods.getValues()
-    console.log(
-      '[handleSubmitAllSteps] Valores actuales del form Paso 7 (getValues):',
-      JSON.stringify(currentStep7ValuesFromForm, null, 2)
-    )
 
     try {
       if (step7Schema) {
         step7Schema.parse(currentStep7ValuesFromForm)
       }
-      console.log('[handleSubmitAllSteps] Validación de datos del Paso 7 (getValues) exitosa.')
     } catch (validationError) {
-      console.error('[handleSubmitAllSteps] Error de validación en datos del Paso 7 (getValues):', validationError)
       toast.error('Hay errores de validación en el Paso 7. Por favor, revise las respuestas.')
       return
     }
@@ -300,48 +255,54 @@ export default function EditFinalReportPage() {
       currentStep7ValuesFromForm.respuestasRadio.some((r) => !r.idPregunta)
     ) {
       toast.error('Faltan datos de algunos pasos o hay IDs de pregunta faltantes en el paso 7.')
-      console.error('Datos faltantes para handleSubmitAllSteps:', {
-        /* ... */
-      })
+
       return
     }
 
     try {
       const evaluationData: FinalReportEvaluationFE[] = [
-        // ... (tu lógica para construir evaluationData) ...
         ...(step5Data?.respuestas.map((resp) => ({
           questionId: resp.idPregunta,
           response: resp.respuesta,
-          responseType: 'TEXT', // Asumiendo que todas las del paso 5 son TEXT
+          responseType: 'TEXT',
           questionGroup: step5QuestionsMock.find((q) => q.questionId === resp.idPregunta)?.group || 'evaluacion_general_curso',
           question: step5QuestionsMock.find((q) => q.questionId === resp.idPregunta)?.question || resp.idPregunta,
-          options: [], // Las preguntas de texto no tienen opciones predefinidas aquí
-          multipleResponse: []
+          options: [],
+          multipleResponse: [],
+          otherResponse: undefined
         })) || []),
-        ...(step6Data?.respuestasMultiples.flatMap((rm) => {
-          const questionDetails = step6QuestionsPageMock.find((q) => q.questionId === rm.idPregunta)
-          return rm.respuestasSeleccionadas.map((sel) => ({
-            questionId: rm.idPregunta,
-            response: sel, // En SELECCION_MULTIPLE, 'response' puede ser cada valor seleccionado
-            responseType: 'SELECCION_MULTIPLE',
-            questionGroup: questionDetails?.group || 'herramientas',
-            question: questionDetails?.question || rm.idPregunta,
-            options: questionDetails?.options || [],
-            multipleResponse: rm.respuestasSeleccionadas // Guardar todas las seleccionadas aquí
-          }))
-        }) || []),
+        ...(step6Data?.respuestasMultiples?.[0]?.respuestasSeleccionadas?.length
+          ? [
+              {
+                questionId: step6Data.respuestasMultiples[0].idPregunta,
+                question:
+                  step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.question ||
+                  step6Data.respuestasMultiples[0].idPregunta,
+                questionGroup:
+                  step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.group ||
+                  'herramientas',
+                responseType: 'SELECCION_MULTIPLE' as const,
+                response: null,
+                multipleResponse: step6Data.respuestasMultiples[0].respuestasSeleccionadas,
+                options: [],
+                otherResponse: undefined
+              }
+            ]
+          : []),
         ...(step6Data?.otrasHerramientas && step6Data.otrasHerramientas.trim() !== ''
           ? [
               {
                 questionId: OTHER_TOOLS_QUESTION_ID,
-                response: step6Data.otrasHerramientas,
-                responseType: 'TEXT',
-                questionGroup: 'herramientas', // O el grupo que corresponda
                 question:
                   step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
-                  'Descripción de otras herramientas utilizadas',
+                  'Otras herramientas utilizadas (opcional)',
+                questionGroup:
+                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.group || 'herramientas',
+                responseType: 'TEXT' as const,
+                response: step6Data.otrasHerramientas,
+                multipleResponse: [],
                 options: [],
-                multipleResponse: []
+                otherResponse: undefined
               }
             ]
           : []),
@@ -354,14 +315,8 @@ export default function EditFinalReportPage() {
               const selectedOption = questionDetails.options.find((opt) => opt.value === resp.respuesta)
               if (selectedOption) {
                 responseLabelToSend = selectedOption.label
-              } else {
-                console.error(
-                  `[handleSubmitAllSteps - Step 7] Opción no encontrada para questionId: "${resp.idPregunta}" con VALOR: "${resp.respuesta}".`
-                )
               }
             }
-          } else {
-            console.error(`[handleSubmitAllSteps - Step 7] No se encontraron detalles para questionId: "${resp.idPregunta}".`)
           }
           return {
             questionId: resp.idPregunta,
@@ -372,19 +327,21 @@ export default function EditFinalReportPage() {
               questionDetails?.options?.map((opt) => ({
                 value: opt.value,
                 label: opt.label,
-                category: questionDetails?.group // O opt.category si lo tienes
+                category: questionDetails?.group
               })) || [],
             question: questionDetails?.question || resp.idPregunta,
-            multipleResponse: []
+            multipleResponse: [],
+            otherResponse: undefined
           }
         })
       ].map((item) => ({
         ...item,
-        response: item.response,
+        response: item.response === undefined ? undefined : item.response,
         multipleResponse: item.multipleResponse || [],
         options: item.options || [],
-        questionGroup: item.questionGroup || 'general'
-      })) as FinalReportEvaluationFE[]
+        questionGroup: item.questionGroup || 'general',
+        otherResponse: item.otherResponse === undefined ? undefined : item.otherResponse
+      })) as unknown as FinalReportEvaluationFE[]
 
       const updatePayload: UpdateFinalReportDto = {
         statistics: {
@@ -410,22 +367,16 @@ export default function EditFinalReportPage() {
             // id: sg.id, // Descomentar si necesitas enviar el ID de la salvaguarda
           }))
         },
-        evaluation: evaluationData,
-        version: reportType === 'INFORME_FINAL_V1' ? 1 : 2 // Asegúrate que esto coincida con tu lógica de backend
+        evaluation: evaluationData
       }
 
-      console.log('[handleSubmitAllSteps] Payload FINAL para UpdateFinalReportDto:', JSON.stringify(updatePayload, null, 2))
       await updateReportMutation({ id: reportId, data: updatePayload })
 
-      // <<--- AÑADIDO: Invalidar la query para este informe específico
-      // La queryKey debe coincidir con la usada por useFinalReport (useOne)
-      // que es [queryKeyPrefix, id] -> ['finalReports', reportId]
       await queryClient.invalidateQueries({ queryKey: ['finalReports', reportId] })
       toast.success('Informe actualizado exitosamente!') // Mover toast aquí para mejor flujo
 
       router.push('/final-reports')
     } catch (error: any) {
-      console.error('Error en handleSubmitAllSteps:', error)
       toast.error(`Error al actualizar el informe: ${error.message || 'Error desconocido'}`)
     }
   }

@@ -1,21 +1,21 @@
 'use client'
 
-import { useMemo } from 'react'
-import { ColumnDef } from '@tanstack/react-table'
-import { CrudModuleBase, ColumnUtilities } from '@/app/(components)/crud/crud-module-base'
 import { CrudFormAdapter } from '@/app/(components)/crud/crud-form-adapter'
+import { ColumnUtilities, CrudModuleBase } from '@/app/(components)/crud/crud-module-base'
 import {
   useCreateCareer,
-  useUpdateCareer,
-  useRemoveCareer,
+  useListCareersPaginated,
   useOneCareer,
-  useListCareersPaginated
+  useRemoveCareer,
+  useUpdateCareer
 } from '@/modules/academic-management/academic-maintenance/hooks/useCareer'
 import { useListSchoolsFlat } from '@/modules/academic-management/academic-maintenance/hooks/useSchool'
 import { CareerWithRelations, CreateCareerInput } from '@/modules/academic-management/academic-maintenance/types/career'
 import { Status } from '@/shared/types/status'
+import { ColumnDef } from '@tanstack/react-table'
 import { Badge, Button } from '@una-gc/ui/components'
-import { Hash, School as SchoolIcon, BookUser, Pencil, Trash2, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { BookUser, CheckCircle2, Hash, Loader2, Pencil, School as SchoolIcon, Trash2, XCircle } from 'lucide-react'
+import { useMemo } from 'react'
 
 interface CareerItem extends CareerWithRelations {}
 
@@ -40,7 +40,7 @@ export default function CareerCrud() {
 
   // Table columns
   const renderColumns = useMemo<(...args: any[]) => ColumnDef<CareerItem>[]>(
-    () => (utils: ColumnUtilities<CareerItem>) => [
+    () => (utils: ColumnUtilities) => [
       {
         accessorKey: 'code',
         header: 'Código',

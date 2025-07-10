@@ -1,13 +1,30 @@
 'use client'
 
-import * as React from 'react'
+import { Button } from '@una-gc/ui/components/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@una-gc/ui/components/dropdown-menu'
 import { Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { Button } from '@una-gc/ui/components/button'
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@una-gc/ui/components/dropdown-menu'
+import * as React from 'react'
 
 export function ThemeToggle() {
   const { setTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Prevent hydration mismatch by showing a simple button until mounted
+  if (!mounted) {
+    return (
+      <div className="z-10 absolute top-4 right-4">
+        <Button variant="outline" size="icon">
+          <Sun className="h-[1.2rem] w-[1.2rem]" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="z-10 absolute top-4 right-4">
