@@ -257,20 +257,20 @@ export class AuthController {
     const jwtUser = req.user as { id: string; email: string; [key: string]: any };
     const timestamp = new Date().toISOString();
 
-    this.logger.log(`[${timestamp}] 📡 Solicitud de perfil de usuario: ${jwtUser.email} (ID: ${jwtUser.id})`);
+    this.logger.log(`[${timestamp}] 📡 User profile request: ${jwtUser.email} (ID: ${jwtUser.id})`);
 
     try {
-      this.logger.debug(`[${timestamp}] 🔍 Obteniendo datos de usuario desde base de datos...`);
+      this.logger.debug(`[${timestamp}] 🔍 Fetching user data from database...`);
       const user = await this.authService.getUserById(jwtUser.id);
 
       validateUserData(user);
       const response = mapUserToResponse(user);
 
-      this.logger.log(`[${timestamp}] ✅ Respuesta de perfil preparada para: ${user.email}`);
+      this.logger.log(`[${timestamp}] ✅ Profile response prepared for: ${user.email}`);
 
       return response;
     } catch (error) {
-      this.logger.error(`[${timestamp}] ❌ Error obteniendo info de usuario ${jwtUser.id}:`, error);
+      this.logger.error(`[${timestamp}] ❌ Error fetching user info for ${jwtUser.id}:`, error);
       throw new UnauthorizedException('User not found');
     }
   }

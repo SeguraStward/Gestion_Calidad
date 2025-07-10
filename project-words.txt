@@ -2,7 +2,9 @@ calidad
 dtos
 Elipssis
 gestión
+González
 nums
+Pérez
 Ppaa
 ppaas
 serviceworker

@@ -2,40 +2,40 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class UserResponseDto {
   @ApiProperty({
-    description: 'ID único del usuario',
+    description: 'Unique user ID',
     example: '507f1f77bcf86cd799439011',
   })
   id: string;
 
   @ApiProperty({
-    description: 'Correo electrónico del usuario',
+    description: 'User email address',
     example: 'juan.perez@est.una.ac.cr',
   })
   email: string;
 
   @ApiProperty({
-    description: 'Nombre completo del usuario',
+    description: 'Full name of the user',
     example: 'Juan Carlos',
     required: false,
   })
   fullName?: string;
 
   @ApiProperty({
-    description: 'Apellidos del usuario',
+    description: 'User last names',
     example: 'Pérez González',
     required: false,
   })
   fullLastName?: string;
 
   @ApiProperty({
-    description: 'URL de la foto de perfil',
+    description: 'Profile photo URL',
     example: 'https://lh3.googleusercontent.com/...',
     required: false,
   })
   photoUrl?: string | null;
 
   @ApiProperty({
-    description: 'Estado del usuario',
+    description: 'User status',
     example: 'ACTIVE',
     enum: ['PRE_REGISTRATION', 'ACTIVE', 'INACTIVE'],
   })
