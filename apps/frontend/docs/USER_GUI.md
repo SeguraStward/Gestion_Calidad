@@ -38,6 +38,11 @@ paginas:
 uso de componentes para formar las paginas
 src\app\user-management\user
 
+## manejo especial en la edicion y creacion
+
+se usa los campos minimos en la creacion nombre, cedula, correo
+en la edicion si puede editar en general al usuario
+
 ## Estructura lógica de organización para las páginas
 
 - user:

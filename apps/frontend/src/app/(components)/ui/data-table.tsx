@@ -59,17 +59,20 @@ export function DataTable<TData, TValue>({
   }, [serverSideFiltering, searchQuery, clientFilter])
 
   // Manejar cambios en la búsqueda con useCallback para evitar recreaciones
-  const handleSearchChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
+  const handleSearchChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value
 
-    if (serverSideFiltering && onSearchChange) {
-      // Para filtrado del lado del servidor, propagamos inmediatamente
-      onSearchChange(value)
-    } else {
-      // Para filtrado del lado del cliente
-      setClientFilter(value)
-    }
-  }, [serverSideFiltering, onSearchChange])
+      if (serverSideFiltering && onSearchChange) {
+        // Para filtrado del lado del servidor, propagamos inmediatamente
+        onSearchChange(value)
+      } else {
+        // Para filtrado del lado del cliente
+        setClientFilter(value)
+      }
+    },
+    [serverSideFiltering, onSearchChange]
+  )
 
   // Tabla con filtrado del lado del cliente
   const tableOptions: any = {
@@ -83,9 +86,9 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: serverSideFiltering ? undefined : getFilteredRowModel(),
     manualFiltering: serverSideFiltering,
     manualPagination: serverSideFiltering
-  };
+  }
 
-  const table = useReactTable(tableOptions);
+  const table = useReactTable(tableOptions)
 
   // Deshabilitar paginación si no hay handler
   const paginacionActiva = typeof onPageChange === 'function' && totalPages > 1
@@ -154,8 +157,8 @@ export function DataTable<TData, TValue>({
         <div className="text-sm text-muted-foreground">
           {serverSideFiltering && totalItems > 0 ? (
             <>
-              Mostrando {Math.min((currentPage - 1) * pageSize + 1, totalItems)} a{' '}
-              {Math.min(currentPage * pageSize, totalItems)} de {totalItems} registros
+              Mostrando {Math.min((currentPage - 1) * pageSize + 1, totalItems)} a {Math.min(currentPage * pageSize, totalItems)}{' '}
+              de {totalItems} registros
             </>
           ) : (
             `Página ${currentPage} de ${totalPages}`
