@@ -18,9 +18,14 @@ const registerSchema = z.object({
   email: z
     .string()
     .email('Debe ser un email válido')
-    .refine((email) => email.endsWith('@est.una.ac.cr'), {
-      message: 'Debe usar un correo institucional @est.una.ac.cr'
-    }),
+    .refine(
+      (email) =>
+        email.endsWith('@gmail.com') ||
+        email.endsWith('@est.una.ac.cr') || {
+          message:
+            'Debe usar un correo válido de Google o institucional, la cuenta se debe verificar con google para el inicio de sesión'
+        }
+    ),
   fullName: z
     .string()
     .min(2, 'El nombre debe tener al menos 2 caracteres')
@@ -223,8 +228,8 @@ export default function RegisterPage() {
               <Alert className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30">
                 <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 <AlertDescription className="text-blue-800 dark:text-blue-200">
-                  <strong>Importante:</strong> Solo se aceptan correos institucionales con dominio @est.una.ac.cr. Tu solicitud
-                  será revisada por un administrador antes de ser aprobada.
+                  <strong>Importante:</strong> Solo se aceptan correos institucionales con dominio @est.una.ac.cr o de lo
+                  contrario un correo de google. Tu solicitud será revisada por un administrador antes de ser aprobada.
                 </AlertDescription>
               </Alert>
 

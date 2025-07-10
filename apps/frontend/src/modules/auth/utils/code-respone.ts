@@ -16,7 +16,7 @@ export const AUTH_ERROR_CODES: Record<string, AuthErrorInfo> = {
   },
   AUTH_002: {
     title: 'Dominio no autorizado',
-    message: 'Solo se permiten correos del dominio @est.una.ac.cr',
+    message: 'Code de dominio no autorizado. Por favor verifica tu acceso.',
     severity: 'error'
   },
   AUTH_003: {

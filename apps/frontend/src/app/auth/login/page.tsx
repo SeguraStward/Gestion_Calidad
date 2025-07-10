@@ -55,17 +55,6 @@ export default function LoginPage() {
           </Button>
 
           <Separator className="my-6" />
-
-          {/* Información institucional */}
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <Badge variant="secondary" className="text-xs font-medium px-3 py-1 bg-primary/10 text-primary border-primary/20">
-                <Shield className="w-3 h-3 mr-1" />
-                Acceso exclusivo @est.una.ac.cr
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">Sistema de gestión de calidad académica</p>
-          </div>
         </CardContent>
       </Card>
     </AuthLayout>
