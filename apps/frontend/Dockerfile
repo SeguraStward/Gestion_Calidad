@@ -73,9 +73,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/static       
 ENV PORT=80
 ENV HOSTNAME="0.0.0.0"
 
-ENV NEST_API=changeme
-ENV NEST_API_PROD=changeme
-ENV NEXT_PUBLIC_API_URL=changeme
 ENV NODE_ENV=production
 
 EXPOSE 80
