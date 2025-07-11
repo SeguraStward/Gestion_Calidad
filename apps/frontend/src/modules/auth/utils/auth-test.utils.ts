@@ -89,13 +89,13 @@ export class AuthTestUtils {
     console.log('🧪 Testing Environment Detection...')
 
     const isDev = process.env.NODE_ENV == 'development'
-    const cookieDomain = isDev ? 'localhost' : '.arayaroma.software'
+    const cookieDomain = isDev ? 'localhost' : process.env.DOMAIN
 
     console.log('Is development:', isDev)
     console.log('Cookie domain:', cookieDomain)
-    console.log('Expected domain:', isDev ? 'undefined' : '.arayaroma.software')
+    console.log('Expected domain:', isDev ? 'undefined' : process.env.DOMAIN)
 
-    const isCorrect = isDev ? cookieDomain === undefined : cookieDomain === '.arayaroma.software'
+    const isCorrect = isDev ? cookieDomain === undefined : cookieDomain === process.env.DOMAIN
 
     if (isCorrect) {
       console.log('✅ Environment detection test passed')
