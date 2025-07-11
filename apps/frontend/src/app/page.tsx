@@ -16,14 +16,14 @@ export default function HomePage() {
       color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
       iconColor: 'text-blue-600 dark:text-blue-400'
     },
-    {
-      title: 'Gestión de Usuarios',
-      description: 'Administrar usuarios y permisos del sistema',
-      icon: Users,
-      href: '/user-management/user',
-      color: 'bg-green-500/10 text-green-600 dark:text-green-400',
-      iconColor: 'text-green-600 dark:text-green-400'
-    },
+    // {
+    //   title: 'Gestión de Usuarios',
+    //   description: 'Administrar usuarios y permisos del sistema',
+    //   icon: Users,
+    //   href: '/user-management/user',
+    //   color: 'bg-green-500/10 text-green-600 dark:text-green-400',
+    //   iconColor: 'text-green-600 dark:text-green-400'
+    // },
     {
       title: 'Informes Finales',
       description: 'Crear y gestionar informes de calidad',

@@ -17,12 +17,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         { title: 'Mantenimiento General', url: '/academic-management/academic-maintenance' }
       ]
     },
-    {
-      title: 'Gestión de Usuarios',
-      url: '/gestión-usuarios',
-      icon: require('lucide-react').Users,
-      items: [{ title: 'Mantenimiento', url: '/user-management/user' }]
-    },
+    // {
+    //   title: 'Gestión de Usuarios',
+    //   url: '/gestión-usuarios',
+    //   icon: require('lucide-react').Users,
+    //   items: [{ title: 'Mantenimiento', url: '/user-management/user' }]
+    // },
     {
       title: 'Informe Final',
       url: '/final-report',
