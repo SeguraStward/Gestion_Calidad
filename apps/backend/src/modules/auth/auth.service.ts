@@ -3,16 +3,16 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as crypto from 'crypto';
 
-import { PrismaService } from '@src/prisma/prisma.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { PrismaService } from '@src/prisma/prisma.service';
 import {
-  GoogleUser,
   AuthResult,
-  UserFromRefreshToken,
-  UserBasicInfo,
-  ProfileCompletionData,
+  GoogleUser,
   JwtPayload,
+  ProfileCompletionData,
   RefreshTokenPayload,
+  UserBasicInfo,
+  UserFromRefreshToken,
 } from './types';
 import { parseExpiryToMilliseconds } from './utils/expiry-parser.util';
 
@@ -38,7 +38,6 @@ export class AuthService {
   async googleLogin(googleUser: GoogleUser): Promise<AuthResult> {
     this.logger.log(`Google login attempt for: ${googleUser.email}`);
 
-    // Validar datos mínimos requeridos
     if (!googleUser.email || !googleUser.googleId) {
       this.logger.error('Google user missing required fields:', {
         hasEmail: !!googleUser.email,
@@ -60,7 +59,6 @@ export class AuthService {
     if (!user) {
       this.logger.log(`Creating new user with PRE_REGISTRATION status: ${googleUser.email}`);
 
-      // Procesar nombre desde Google
       const fullName = googleUser.firstName || googleUser.email.split('@')[0];
       const fullLastName = googleUser.familyName || '';
 
@@ -101,7 +99,7 @@ export class AuthService {
         });
 
       case 'ACTIVE': {
-        // Update Google data if needed (mantener datos actualizados)
+        // Update Google data if needed
         let shouldUpdate = false;
         const updateData: any = {};
 
@@ -115,7 +113,7 @@ export class AuthService {
           shouldUpdate = true;
         }
 
-        // Actualizar nombre si está vacío o si viene de Google y es diferente
+        // Update name if it's empty or if it comes from Google and is different
         if (!user.fullName || (googleUser.firstName && user.fullName !== googleUser.firstName)) {
           updateData.fullName = googleUser.firstName || user.fullName || googleUser.email.split('@')[0];
           shouldUpdate = true;
@@ -265,7 +263,6 @@ export class AuthService {
   async getUserById(userId: string): Promise<UserBasicInfo> {
     this.logger.log(`Getting user by ID: ${userId}`);
 
-    // Validar que el userId sea válido
     if (!userId || typeof userId !== 'string') {
       this.logger.error(`Invalid userId provided: ${userId}`);
       throw new UnauthorizedException('Invalid user ID');
@@ -293,13 +290,11 @@ export class AuthService {
       throw new UnauthorizedException('User account is inactive');
     }
 
-    // Validar que tengamos datos básicos
     if (!user.email) {
       this.logger.error(`User ${userId} has incomplete data - missing email`);
       throw new UnauthorizedException('User data is incomplete');
     }
 
-    // Asegurar que tenemos un nombre, usar email como fallback
     if (!user.fullName) {
       this.logger.warn(`User ${userId} has no fullName, using email prefix as fallback`);
     }
@@ -418,7 +413,6 @@ export class AuthService {
   }
 
   async setActiveRole(userId: string, roleId: string): Promise<void> {
-    // Verificar que el usuario tiene acceso a este rol
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {

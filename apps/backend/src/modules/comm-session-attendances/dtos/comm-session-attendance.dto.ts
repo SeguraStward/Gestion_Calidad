@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 
-import { BaseDto } from '@src/modules/generalDto';
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 
-export class CommSessionAttendanceDto extends BaseDto {
+export class CommSessionAttendanceDto extends AuditFields {
   @ApiPropertyOptional({ description: 'CommSessionAttendance ID' })
   @IsString()
   @IsOptional()

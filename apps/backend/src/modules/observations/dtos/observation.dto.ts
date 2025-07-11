@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsArray, ValidateNested, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsArray, IsDateString, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { Status } from '@una-gc/database/prisma/generated/client';
-import { BaseDto } from '@src/modules/generalDto';
 
 export class TypeObservationDto {
   @ApiPropertyOptional({ description: 'Observation text' })
@@ -17,7 +17,7 @@ export class TypeObservationDto {
   date?: Date;
 }
 
-export class ObservationDto extends BaseDto {
+export class ObservationDto extends AuditFields {
   @ApiPropertyOptional({ description: 'Observation ID' })
   @IsString()
   @IsOptional()

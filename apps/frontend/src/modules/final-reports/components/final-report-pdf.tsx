@@ -1,6 +1,6 @@
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import React from 'react'
-import { Page, Text, View, Document, StyleSheet, Font, Image } from '@react-pdf/renderer'
-import type { FullFinalReport, FinalReportEvaluationFE } from '../types/final-reports.types'
+import type { FinalReportEvaluationFE, FullFinalReport } from '../types/final-reports.types'
 
 const styles = StyleSheet.create({
   page: {
@@ -8,15 +8,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 30,
     paddingTop: 20,
-    paddingBottom: 35,  
+    paddingBottom: 35,
     fontFamily: 'Helvetica'
   },
   headerContainer: {
     flexDirection: 'column',
-    alignItems: 'center',  
+    alignItems: 'center',
     marginBottom: 20,
     width: '100%'
-  }, 
+  },
   logoContainer: {
     position: 'absolute',
     top: 0,
@@ -253,12 +253,12 @@ const getLogoUrl = (): string => {
   if (typeof window !== 'undefined') {
     return `${window.location.origin}/assets/images/una-logo.png`
   }
-  
+
   // Opción 2: En el servidor, usar VERCEL_URL (Vercel automáticamente la provee)
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}/assets/images/una-logo.png`
   }
-  
+
   // Opción 3: Fallback para desarrollo local
   return 'http://localhost:3001/assets/images/una-logo.png'
 }
@@ -324,15 +324,10 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
 
   // URL del logo de la UNA
   const logoUrl = getLogoUrl()
-  
+
   // Función para renderizar el logo si está disponible
   const renderLogo = () => {
-    return (
-      <Image 
-        style={styles.logoImage} 
-        src={logoUrl}
-      />
-    )
+    return <Image style={styles.logoImage} src={logoUrl} />
   }
 
   return (
@@ -340,9 +335,7 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
       <Page size="A4" style={styles.page}>
         {/* Header: Logo y Bloque de Título - Solo en la primera página */}
         <View style={styles.headerContainer}>
-          <View style={styles.logoContainer}>
-            {renderLogo()}
-          </View>
+          <View style={styles.logoContainer}>{renderLogo()}</View>
           <View style={styles.titleBlock}>
             <Text style={styles.mainTitle}>INFORME FINAL DE CURSO</Text>
             <Text style={styles.subTitle}>Campus: {campusName}</Text>
@@ -381,9 +374,18 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
           <View style={styles.table}>
             {[
               { label: 'Total Estudiantes Inscritos', value: stats.totalStudents },
-              { label: 'Estudiantes Aprobados', value: `${stats.passed} (${calculatePercentage(stats.passed, stats.totalStudents)})` },
-              { label: 'Estudiantes Reprobados', value: `${stats.failed} (${calculatePercentage(stats.failed, stats.totalStudents)})` },
-              { label: 'Estudiantes Desertores (Retirados)', value: `${stats.dropouts} (${calculatePercentage(stats.dropouts, stats.totalStudents)})` }
+              {
+                label: 'Estudiantes Aprobados',
+                value: `${stats.passed} (${calculatePercentage(stats.passed, stats.totalStudents)})`
+              },
+              {
+                label: 'Estudiantes Reprobados',
+                value: `${stats.failed} (${calculatePercentage(stats.failed, stats.totalStudents)})`
+              },
+              {
+                label: 'Estudiantes Desertores (Retirados)',
+                value: `${stats.dropouts} (${calculatePercentage(stats.dropouts, stats.totalStudents)})`
+              }
             ].map((item, index, arr) => (
               <View
                 style={[styles.tableRow, index === arr.length - 1 ? { borderBottomWidth: 0 } : {}]}
@@ -408,7 +410,9 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
         {studentInfo?.adjustments && studentInfo.adjustments.length > 0 ? (
           <View style={styles.table}>
             <View style={styles.studentSectionHeaderRow}>
-              <Text style={styles.studentSectionHeaderText}>Ajustes Metodológicos y de Evaluación (estudiantes que requirieron algún tipo de adecuación o apoyo pedagógico)</Text>
+              <Text style={styles.studentSectionHeaderText}>
+                Ajustes Metodológicos y de Evaluación (estudiantes que requirieron algún tipo de adecuación o apoyo pedagógico)
+              </Text>
             </View>
             <View style={styles.tableRow} fixed>
               <View style={[styles.tableColHeader, { width: '20%' }]}>
@@ -454,7 +458,9 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
         ) : (
           <View style={styles.table}>
             <View style={styles.studentSectionHeaderRow}>
-              <Text style={styles.studentSectionHeaderText}>Ajustes Metodológicos y de Evaluación (estudiantes que requirieron algún tipo de adecuación o apoyo pedagógico)</Text>
+              <Text style={styles.studentSectionHeaderText}>
+                Ajustes Metodológicos y de Evaluación (estudiantes que requirieron algún tipo de adecuación o apoyo pedagógico)
+              </Text>
             </View>
             <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
               <View style={[styles.tableCol, { borderRightWidth: 0 }]}>
@@ -467,7 +473,10 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
         {studentInfo?.safeguards && studentInfo.safeguards.length > 0 ? (
           <View style={styles.table}>
             <View style={styles.studentSectionHeaderRow}>
-              <Text style={styles.studentSectionHeaderText}>Plan para Poblaciones Indígenas (grupos de interés institucional, estudiantes provenientes de territorios indígenas)</Text>
+              <Text style={styles.studentSectionHeaderText}>
+                Plan para Poblaciones Indígenas (grupos de interés institucional, estudiantes provenientes de territorios
+                indígenas)
+              </Text>
             </View>
             <View style={styles.tableRow} fixed>
               <View style={[styles.tableColHeader, { width: '25%' }]}>
@@ -507,7 +516,10 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
         ) : (
           <View style={styles.table}>
             <View style={styles.studentSectionHeaderRow}>
-              <Text style={styles.studentSectionHeaderText}>Plan para Poblaciones Indígenas (grupos de interés institucional, estudiantes provenientes de territorios indígenas)</Text>
+              <Text style={styles.studentSectionHeaderText}>
+                Plan para Poblaciones Indígenas (grupos de interés institucional, estudiantes provenientes de territorios
+                indígenas)
+              </Text>
             </View>
             <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
               <View style={[styles.tableCol, { borderRightWidth: 0 }]}>
@@ -529,11 +541,15 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
                 {questions.map((q, qIndex, arr) => (
                   <React.Fragment key={`${groupName}-${q.questionId}-${qIndex}`}>
                     <View style={styles.evalQuestionRow} wrap={false}>
-                      <Text style={styles.evalQuestionTextCell}>{qIndex + 1}. {q.question}</Text>
+                      <Text style={styles.evalQuestionTextCell}>
+                        {qIndex + 1}. {q.question}
+                      </Text>
                     </View>
                     <View style={[styles.evalAnswerRow, qIndex === arr.length - 1 ? { borderBottomWidth: 0 } : {}]} wrap={false}>
                       <View style={styles.evalAnswerTextCell}>
-                        {q.responseType === 'TEXT' && <Text>{capitalizeFirstLetter(q.response || q.otherResponse || 'N/R')}</Text>}
+                        {q.responseType === 'TEXT' && (
+                          <Text>{capitalizeFirstLetter(q.response || q.otherResponse || 'N/R')}</Text>
+                        )}
                         {q.responseType === 'SELECCION_UNICA' && (
                           <Text>{getOptionLabel(q.options, q.response || '') || 'N/R'}</Text>
                         )}

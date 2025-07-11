@@ -21,7 +21,7 @@ export class CookieDetectionService {
 
   /**
    * Check if authentication cookies are present through API validation
-   * Returns presence status of all 3 cookies: auth_token, refresh_token, active_role_id
+   * Returns presence status of all 3 cookies: auth_token, refresh_token, user_active_role_id
    */
   static async checkCookiePresence(): Promise<CookiePresence> {
     try {

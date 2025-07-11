@@ -2,5 +2,5 @@
 enum Status {
   ACTIVE
   INACTIVE
-  ARCHIVED
+  // ARCHIVED
 }

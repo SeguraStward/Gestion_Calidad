@@ -36,7 +36,7 @@ export class FinalReportsService extends GenericService<FinalReport, FinalReport
     this.logger.debug(
       `Finding all final reports for professorId: ${professorId}, status: ${status}, search: ${search}, page: ${page}, limit: ${limit}`,
     );
-    
+
     const where: Prisma.FinalReportWhereInput = {
       professorId: professorId,
     };

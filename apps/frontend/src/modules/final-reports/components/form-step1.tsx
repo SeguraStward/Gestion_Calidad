@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useMemo, useEffect } from 'react' 
+import React, { useMemo, useEffect } from 'react'
 import { z } from 'zod'
-import { Button } from '@una-gc/ui/components/button' 
+import { Button } from '@una-gc/ui/components/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
 import { Input } from '@una-gc/ui/components/input'
@@ -10,7 +10,7 @@ import { UseFormReturn, FormProvider } from 'react-hook-form'
 import { Loader2 } from 'lucide-react'
 import { useAcademicLoadsByProfessor } from '@/modules/academic-loads/service/academic-loads.service'
 import type { FullAcademicLoad } from '@/modules/academic-loads/types/academic-loads.types'
-import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types' 
+import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types'
 import { useSessionStore } from '@/modules/auth/sessionStore'
 
 export const step1Schema = z.object({
@@ -85,7 +85,7 @@ export function Step1Form({
   onCancel
 }: Step1FormProps) {
   const { control, watch, setValue, handleSubmit, formState, reset } = formMethods
-  
+
   // Cambio: usar session store en lugar del dev store
   const { user, isAuthenticated } = useSessionStore()
   const currentProfessorId = user?.id
@@ -134,23 +134,24 @@ export function Step1Form({
         })
       }
     }
-    
+
     // Eliminar duplicados por NRC (mantener el primero)
-    const uniqueCourses = courses.filter((course, index, self) => 
-      index === self.findIndex(c => c.nrc === course.nrc)
-    )
-    
+    const uniqueCourses = courses.filter((course, index, self) => index === self.findIndex((c) => c.nrc === course.nrc))
+
     // Debug: verificar duplicados
     console.log('Available courses:', uniqueCourses)
-    const nrcCounts = uniqueCourses.reduce((acc, course) => {
-      acc[course.nrc] = (acc[course.nrc] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
+    const nrcCounts = uniqueCourses.reduce(
+      (acc, course) => {
+        acc[course.nrc] = (acc[course.nrc] || 0) + 1
+        return acc
+      },
+      {} as Record<string, number>
+    )
     const duplicateNRCs = Object.entries(nrcCounts).filter(([_, count]) => count > 1)
     if (duplicateNRCs.length > 0) {
       console.warn('Duplicate NRCs found:', duplicateNRCs)
     }
-    
+
     return uniqueCourses
   }, [paginatedAcademicLoads, isEditing, initialData])
 

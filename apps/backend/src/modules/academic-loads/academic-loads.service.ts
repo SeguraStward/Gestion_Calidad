@@ -1,12 +1,10 @@
-// src/modules/academic-loads/academic-loads.service.ts
-
-import { GenericService } from '@core/common/interfaces/generic.service';
 import { DtoValidator } from '@core/common/dto-validator';
+import { GenericService } from '@core/common/interfaces/generic.service';
+import { PaginatedResponse } from '@core/http/interfaces/paginated-response.interface';
 import { Injectable, Logger } from '@nestjs/common';
-import { AcademicLoadDto } from './dtos/academic-load.dto';
 import { AcademicLoad, Prisma, Status } from '@una-gc/database/prisma/generated/client';
 import { AcademicLoadsRepository } from './academic-loads.repository';
-import { PaginatedResponse } from '@core/http/interfaces/paginated-response.interface';
+import { AcademicLoadDto } from './dtos/academic-load.dto';
 
 // Define full include object for relations
 const FULL_INCLUDE: Prisma.AcademicLoadInclude = {
@@ -47,7 +45,7 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
   }
 
   // Override save to handle relations properly
-  async save(payload: AcademicLoadDto): Promise<AcademicLoadDto> {
+  override async save(payload: AcademicLoadDto): Promise<AcademicLoadDto> {
     this.logger.debug(`Saving academic load with payload: ${JSON.stringify(payload)}`);
 
     // Ensure numeric fields are properly converted
@@ -101,7 +99,7 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
   }
 
   // Override update to handle relations properly
-  async update(id: string, payload: Partial<AcademicLoadDto>): Promise<AcademicLoadDto> {
+  override async update(id: string, payload: Partial<AcademicLoadDto>): Promise<AcademicLoadDto> {
     this.logger.debug(`Updating academic load ${id} with payload: ${JSON.stringify(payload)}`);
 
     // Calculate available seats if capacity fields are being updated
@@ -153,12 +151,12 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
   }
 
   // Override findById to include all relations
-  async findById(id: string): Promise<AcademicLoadDto | null> {
+  override async findById(id: string): Promise<AcademicLoadDto | null> {
     return this.academicLoadsRepository.findById(id, FULL_INCLUDE) as any;
   }
 
   // Override findAll to include all relations
-  async findAll(
+  override async findAll(
     page = 1,
     limit = 10,
     where?: Prisma.AcademicLoadWhereInput,
@@ -183,7 +181,7 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
   }
 
   // Override delete method to handle any specific logic if needed
-  async delete(id: string): Promise<boolean> {
+  override async delete(id: string): Promise<boolean> {
     this.logger.debug(`Deleting academic load with id: ${id}`);
 
     // First, check if the record exists

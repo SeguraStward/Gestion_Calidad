@@ -20,10 +20,9 @@ class FinalReportService extends GenericService<FullFinalReport, CreateFinalRepo
     filters?: Omit<FinalReportFilters, 'professorId'>
   ): Promise<PaginatedResponse<FullFinalReport>> {
     // Use the specific professor endpoint to get the search functionality
-    const response = await HttpClient.get<PaginatedResponse<FullFinalReport>>(
-      `/${this.resource}/professor/${professorId}`,
-      { params: filters }
-    )
+    const response = await HttpClient.get<PaginatedResponse<FullFinalReport>>(`/${this.resource}/professor/${professorId}`, {
+      params: filters
+    })
     return response.data
   }
 

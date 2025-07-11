@@ -1,17 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsInt, IsDate, ValidateNested } from 'class-validator';
-import { Expose, Type, Transform } from 'class-transformer';
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { Status } from '@una-gc/database/prisma/generated/client'; // Assuming Status is correctly generated
-import { BaseDto } from '@src/modules/generalDto';
+import { Expose, Transform, Type } from 'class-transformer';
+import { IsDate, IsEnum, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
 
-import { CourseDto } from '@src/modules/courses/dtos/course.dto';
 import { AcademicCycleDto } from '@src/modules/academic-cycles/dtos/academic-cycle.dto';
-import { UserDto } from '@src/modules/users/dtos/user.dto';
 import { CampusDto } from '@src/modules/campuses/dtos/campus.dto';
+import { CourseDto } from '@src/modules/courses/dtos/course.dto';
+import { UserDto } from '@src/modules/users/dtos/user.dto';
 // Import the AcademicLoadGroupDto
 import { AcademicLoadGroupDto } from '@src/modules/academic-load-groups/dtos/academic-load-group.dto'; // Adjust path if necessary
 
-export class AcademicLoadDto extends BaseDto {
+export class AcademicLoadDto extends AuditFields {
   @ApiPropertyOptional({ description: 'AcademicLoad ID' })
   @Expose()
   @IsString()

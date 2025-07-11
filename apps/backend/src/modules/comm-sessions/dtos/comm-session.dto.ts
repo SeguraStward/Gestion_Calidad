@@ -1,19 +1,19 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
-  IsOptional,
-  IsString,
-  IsEnum,
-  IsInt,
-  IsDate,
   IsArray,
   IsBoolean,
-  ValidateNested,
+  IsDate,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
   IsUrl,
+  ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { CommSessionStage, ProjectCommSessionStatus, Status } from '@una-gc/database/prisma/generated/client';
-import { BaseDto } from '@src/modules/generalDto';
 
 export class ProjectCommSessionDto {
   @ApiProperty({ description: 'Review ID' })
@@ -60,7 +60,7 @@ export class ProjectCommSessionDto {
   notificationSent?: boolean;
 }
 
-export class CommSessionDto extends BaseDto {
+export class CommSessionDto extends AuditFields {
   @ApiPropertyOptional({ description: 'CommSession ID' })
   @IsString()
   @IsOptional()

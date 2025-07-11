@@ -35,11 +35,11 @@ const getStatusDisplayProperties = (statusValue: FinalReportStatusFE | undefined
 
 export default function FinalReportsPage() {
   const router = useRouter()
-  
+
   // Usar session store en lugar del dev store
   const { user, isAuthenticated } = useSessionStore()
   const professorId = user?.id
-  
+
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(12)
   const [searchQuery, setSearchQuery] = useState('')
@@ -62,7 +62,7 @@ export default function FinalReportsPage() {
   } = useFinalReportsByProfessor(
     professorId,
     {
-      include: 
+      include:
         'academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.professor,academicLoad.group,academicLoad.campus',
       page: currentPage,
       limit: pageSize,
@@ -262,13 +262,9 @@ export default function FinalReportsPage() {
   if (!isAuthenticated() && !isLoading) {
     return (
       <div className="container mx-auto py-8 text-center">
-        <p className="text-orange-600 dark:text-orange-400 mb-4">
-          Debes estar autenticado para ver los informes finales.
-        </p>
+        <p className="text-orange-600 dark:text-orange-400 mb-4">Debes estar autenticado para ver los informes finales.</p>
         <Button asChild>
-          <Link href="/auth/login">
-            Iniciar Sesión
-          </Link>
+          <Link href="/auth/login">Iniciar Sesión</Link>
         </Button>
       </div>
     )
@@ -281,9 +277,7 @@ export default function FinalReportsPage() {
           No se pudo obtener la información del profesor. Por favor, inicie sesión nuevamente.
         </p>
         <Button asChild>
-          <Link href="/auth/login">
-            Iniciar Sesión
-          </Link>
+          <Link href="/auth/login">Iniciar Sesión</Link>
         </Button>
       </div>
     )
@@ -306,9 +300,7 @@ export default function FinalReportsPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Gestión de Informes Finales</h1>
-          <p className="text-muted-foreground mt-2">
-            Bienvenido, {user?.fullName}
-          </p>
+          <p className="text-muted-foreground mt-2">Bienvenido, {user?.fullName}</p>
         </div>
       </div>
 

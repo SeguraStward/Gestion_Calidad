@@ -10,17 +10,17 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 
 import { AuthService } from './auth.service';
+import { CompleteProfileDto, LoginUserDto, SetActiveRoleDto, UserResponseDto } from './dtos';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
-import { GoogleUser } from './types';
-import { LoginUserDto, CompleteProfileDto, UserResponseDto, SetActiveRoleDto } from './dtos';
 import { mapUserToResponse, validateUserData } from './helpers/user-mapper.helper';
+import { GoogleUser } from './types';
 import { CookieUtil } from './utils/cookie.util';
 
 @ApiTags('Authentication')
@@ -93,7 +93,7 @@ export class AuthController {
     const clearCookieConfig = this.cookieUtil.getBaseCookieConfig();
     res.clearCookie('auth_token', clearCookieConfig);
     res.clearCookie('refresh_token', clearCookieConfig);
-    res.clearCookie('active_role_id', clearCookieConfig);
+    res.clearCookie('user_active_role_id', clearCookieConfig);
 
     this.logger.debug('All authentication cookies cleared');
   }
@@ -133,13 +133,6 @@ export class AuthController {
     }
 
     const googleUser = req.user as { email: string; [key: string]: any };
-    // const allowedDomain = '@est.una.ac.cr';
-
-    // // Validate domain
-    // if (!googleUser.email?.endsWith(allowedDomain)) {
-    //   this.logger.warn(`Login attempt from disallowed domain: ${googleUser.email || 'No email'}`);
-    //   throw new Error('Domain not allowed');
-    // }
 
     // Process login
     this.logger.log(`Processing Google login for user: ${googleUser.email}`);
@@ -180,7 +173,7 @@ export class AuthController {
       await this.authService.setActiveRole(user.id, setActiveRoleDto.roleId);
 
       const activeRoleConfig = this.cookieUtil.getActiveRoleConfig();
-      res.cookie('active_role_id', setActiveRoleDto.roleId, activeRoleConfig);
+      res.cookie('user_active_role_id', setActiveRoleDto.roleId, activeRoleConfig);
 
       return { message: 'Active role set successfully', roleId: setActiveRoleDto.roleId };
     } catch (error) {
@@ -195,7 +188,7 @@ export class AuthController {
   @Get('active-role')
   @UseGuards(JwtAuthGuard)
   getActiveRole(@Req() req: Request) {
-    const activeRoleId = req.cookies.active_role_id;
+    const activeRoleId = req.cookies.user_active_role_id;
     return { activeRoleId: activeRoleId || null };
   }
 
@@ -264,20 +257,20 @@ export class AuthController {
     const jwtUser = req.user as { id: string; email: string; [key: string]: any };
     const timestamp = new Date().toISOString();
 
-    this.logger.log(`[${timestamp}] 📡 Solicitud de perfil de usuario: ${jwtUser.email} (ID: ${jwtUser.id})`);
+    this.logger.log(`[${timestamp}] 📡 User profile request: ${jwtUser.email} (ID: ${jwtUser.id})`);
 
     try {
-      this.logger.debug(`[${timestamp}] 🔍 Obteniendo datos de usuario desde base de datos...`);
+      this.logger.debug(`[${timestamp}] 🔍 Fetching user data from database...`);
       const user = await this.authService.getUserById(jwtUser.id);
 
       validateUserData(user);
       const response = mapUserToResponse(user);
 
-      this.logger.log(`[${timestamp}] ✅ Respuesta de perfil preparada para: ${user.email}`);
+      this.logger.log(`[${timestamp}] ✅ Profile response prepared for: ${user.email}`);
 
       return response;
     } catch (error) {
-      this.logger.error(`[${timestamp}] ❌ Error obteniendo info de usuario ${jwtUser.id}:`, error);
+      this.logger.error(`[${timestamp}] ❌ Error fetching user info for ${jwtUser.id}:`, error);
       throw new UnauthorizedException('User not found');
     }
   }

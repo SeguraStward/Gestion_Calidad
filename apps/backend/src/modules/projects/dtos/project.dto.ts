@@ -1,10 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsArray, IsNotEmpty, IsMongoId } from 'class-validator';
+import { IsArray, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { ProjectStatus, Status } from '@una-gc/database/prisma/generated/client';
-import { BaseDto } from '@src/modules/generalDto';
 
-export class ProjectDto extends BaseDto {
+export class ProjectDto extends AuditFields {
   @ApiPropertyOptional({ description: 'Project ID' })
   @IsString()
   @IsOptional()

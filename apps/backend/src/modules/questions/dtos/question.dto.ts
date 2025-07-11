@@ -1,8 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum, IsArray, ValidateNested, IsNotEmpty } from 'class-validator';
+import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { ResponseType, Status } from '@una-gc/database/prisma/generated/client';
-import { BaseDto } from '@src/modules/generalDto';
 import { Type } from 'class-transformer';
 
 export class QuestionOptionDto {
@@ -22,7 +22,7 @@ export class QuestionOptionDto {
   value: string;
 }
 
-export class QuestionDto extends BaseDto {
+export class QuestionDto extends AuditFields {
   @ApiPropertyOptional({ description: 'Question ID' })
   @IsString()
   @IsOptional()

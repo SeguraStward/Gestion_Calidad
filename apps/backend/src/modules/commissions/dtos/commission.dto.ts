@@ -1,10 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsEnum } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
+import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { Status } from '@una-gc/database/prisma/generated/client'; // Added Status import
-import { BaseDto } from '@src/modules/generalDto';
 
-export class CommissionDto extends BaseDto {
+export class CommissionDto extends AuditFields {
   @ApiPropertyOptional({ description: 'Commission ID' })
   @IsString()
   @IsOptional()

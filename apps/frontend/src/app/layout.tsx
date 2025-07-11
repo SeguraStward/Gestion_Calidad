@@ -1,12 +1,12 @@
-import '@una-gc/ui/globals.css'
 import '@/styles/homepage.css'
+import '@una-gc/ui/globals.css'
 import { Inter } from 'next/font/google'
 import { ReactNode } from 'react'
 
+import { HydrationGuard } from '@/components/styles/hydration-guard'
+import { ContentLayout } from '@/components/ui/layouts/content.layout'
+import { ThemeToggle } from '@/components/ui/toggles/theme.toggle'
 import Providers from '@/providers/providers'
-import { ThemeToggle } from '@/components/toggles/theme.toggle'
-import { ContentLayout } from '@/components/layouts/content.layout'
-import { HydrationGuard } from '@/components/hydration-guard'
 
 const inter = Inter({ subsets: ['latin'] })
 

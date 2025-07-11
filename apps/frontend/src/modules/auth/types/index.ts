@@ -1,5 +1,5 @@
 // Enums
-import { PermissionScope, PermissionType, UserStatus } from '@una-gc/database/prisma/generated/client'
+import { PermissionScope, PermissionType, Status, UserStatus } from '@una-gc/database/prisma/generated/client'
 
 // User profile matching backend UserResponseDto
 export interface UserBasicInfo {
@@ -31,7 +31,7 @@ export interface Permission {
   id: string
   name: string
   code: string
-  status: string
+  status: Status
   type: PermissionType[]
   actions: string[]
   scope: PermissionScope

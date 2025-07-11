@@ -1,11 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsInt, IsEnum, IsArray, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { AuditFields } from '@src/dtos/audit-fields.dto';
+import { EvidenceDto } from '@src/dtos/general-types.dto';
 import { Status } from '@una-gc/database/prisma/generated/client';
-import { EvidenceDto } from '@modules/general-types-dto';
-import { BaseDto } from '@src/modules/generalDto';
+import { Type } from 'class-transformer';
+import { IsArray, IsEnum, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
 
-export class UserLanguageDto extends BaseDto {
+export class UserLanguageDto extends AuditFields {
   @ApiPropertyOptional({ description: 'UserLanguage ID' })
   @IsString()
   @IsOptional()

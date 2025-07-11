@@ -1,8 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { plainToClass } from 'class-transformer';
+import { DtoValidator } from '../dto-validator';
 import type { GenericRepository } from './generic-repository.interface';
 import { IGenericService } from './generic-service.interface';
-import { DtoValidator } from '../dto-validator';
-import { plainToClass } from 'class-transformer'; // Make sure plainToClass is imported
 
 @Injectable()
 export abstract class GenericService<E extends Record<string, any>, D, C = any, U = any>
@@ -12,37 +12,29 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
 
   constructor(
     protected readonly repository: GenericRepository<E>,
-    protected readonly dtoClass?: new (...args: any[]) => D, // Adjusted constructor signature for dtoClass
+    protected readonly dtoClass?: new (...args: any[]) => D,
     protected readonly dtoValidator?: DtoValidator,
   ) {}
 
   private transformDto(entity: E): D;
   private transformDto(entity: E[]): D[];
   private transformDto(entity: E | E[]): D | D[] {
-    // this.logger.debug('Bypassing DTO transformation for debugging includes.');
-    // return entity as any;
-
-    // Restore original logic:
     if (!this.dtoClass) {
       this.logger.warn(`dtoClass is not defined in ${this.constructor.name}, returning raw entity/entities.`);
-      if (Array.isArray(entity)) {
-        return entity as any as D[];
-      }
-      return entity as any as D;
+      return entity as any;
     }
 
     if (Array.isArray(entity)) {
       return entity.map((e) => plainToClass(this.dtoClass!, e, { excludeExtraneousValues: true }));
-    } else {
-      return plainToClass(this.dtoClass!, entity, { excludeExtraneousValues: true });
     }
+    return plainToClass(this.dtoClass!, entity, { excludeExtraneousValues: true });
   }
 
   async findAll(page = 1, limit = 10, where?: any, orderBy?: any, include?: any) {
     try {
       const result = await this.repository.findAll(page, limit, where, orderBy, include);
       return {
-        data: this.transformDto(result.data), // This will now use the restored transformation
+        data: this.transformDto(result.data),
         meta: result.meta,
       };
     } catch (error) {
@@ -52,25 +44,17 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
   }
 
   async findById(id: string, include?: any): Promise<D | null> {
-    this.logger.debug(`Finding entity by id: ${id} with includes: ${JSON.stringify(include)}`);
     try {
       const entity = await this.repository.findById(id, include);
       if (!entity) {
-        this.logger.warn(`Entity with id ${id} not found`);
         return null;
       }
-      this.logger.debug(`Entity found: ${JSON.stringify(entity)}`);
-      return this.transformDto(entity) as D; // This will now use the restored transformation
+      return this.transformDto(entity);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new NotFoundException(`Entity with id ${id} not found`);
       }
-      // Updated error logging
-      if (error instanceof Error) {
-        this.logger.error(`Error in findById for id ${id}: ${error.message}`, error.stack);
-      } else {
-        this.logger.error(`Error in findById for id ${id}:`, error);
-      }
+      this.logger.error(`Error in findById for id ${id}:`, error);
       throw error;
     }
   }
@@ -91,11 +75,9 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
   }
 
   async save(payload: C): Promise<D> {
-    this.logger.log(`Creating entity with data: ${JSON.stringify(payload)}`);
     try {
       const result = await this.repository.save(payload);
       const validatedResult = await this.dtoValidator.validate(result, this.dtoClass as any);
-      this.logger.log(`Created entity: ${JSON.stringify(validatedResult)}`);
       return this.transformDto(Array.isArray(validatedResult) ? validatedResult[0] : validatedResult);
     } catch (error) {
       this.logger.error(`Error saving entity: ${JSON.stringify(payload)}`, error);
@@ -113,83 +95,61 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
     }
   }
 
-  /*
-   * Optional configuration for relation checks before deletion.
-   * If defined, it will check for related records before allowing deletion.
-   * If any related records are found, it will throw an error with the specified message.
-   * This is useful for preventing accidental deletions of entities that have related records.
-   */
   protected relationCheckConfig?: {
     relationFields: string[];
     errorMessage: string;
   };
 
-  /*
-   * Deletes an entity by its ID after checking for related records.
-   * If the entity has related records in the specified relation fields, it will throw an error.
-   * If no related records are found, it will proceed with the deletion.
-   * @param id - The ID of the entity to delete.
-   * @returns A promise that resolves to true if the deletion was successful, or throws an error if not.
-   * @throws NotFoundException if the entity with the given ID does not exist.
-   * @throws Error if there are related records preventing deletion.
-   */ async deleteById(id: string): Promise<boolean> {
-    try {
-      // If relation check config is defined, perform checks
-      if (this.relationCheckConfig) {
-        // Create include object to load only the relation fields we need to check
-        const includeRelations = this.relationCheckConfig.relationFields.reduce(
-          (acc, field) => {
-            acc[field] = true;
-            return acc;
-          },
-          {} as Record<string, boolean>,
-        );
+  private createIncludeRelations(): Record<string, boolean> {
+    return (
+      this.relationCheckConfig?.relationFields.reduce(
+        (acc, field) => {
+          acc[field] = true;
+          return acc;
+        },
+        {} as Record<string, boolean>,
+      ) || {}
+    );
+  }
 
+  private checkActiveRelations(entity: any, operationType: string = 'delete'): void {
+    if (!this.relationCheckConfig) return;
+
+    for (const relationField of this.relationCheckConfig.relationFields) {
+      const relationData = (entity as any)[relationField];
+
+      if (Array.isArray(relationData) && relationData.length > 0) {
+        const activeRelations = relationData.filter((item) => !item.status || item.status !== 'INACTIVE');
+
+        if (activeRelations.length > 0) {
+          throw new Error(
+            this.relationCheckConfig.errorMessage ||
+              `Cannot ${operationType}: Entity has related ${relationField} records`,
+          );
+        }
+      } else if (relationData && typeof relationData === 'object') {
+        const isActive = !relationData.status || relationData.status !== 'INACTIVE';
+        if (isActive) {
+          throw new Error(
+            this.relationCheckConfig.errorMessage ||
+              `Cannot ${operationType}: Entity has a related ${relationField} record`,
+          );
+        }
+      }
+    }
+  }
+
+  async deleteById(id: string): Promise<boolean> {
+    try {
+      if (this.relationCheckConfig) {
+        const includeRelations = this.createIncludeRelations();
         const entity = await this.repository.findById(id, includeRelations);
+
         if (!entity) {
           throw new NotFoundException(`Entity with id ${id} not found`);
-        } // Check each configured relation field
-        for (const relationField of this.relationCheckConfig.relationFields) {
-          const relationData = (entity as any)[relationField];
-          this.logger.debug(`Checking relation field '${relationField}':`, JSON.stringify(relationData));
-
-          // For array relationships
-          if (Array.isArray(relationData)) {
-            this.logger.debug(`Relation '${relationField}' is array with length: ${relationData.length}`);
-            if (relationData.length > 0) {
-              // Filter out inactive records if they have a status field
-              const activeRelations = relationData.filter(
-                (item) => !item.status || item.status !== 'INACTIVE',
-              );
-              this.logger.debug(`Active relations in '${relationField}': ${activeRelations.length}`);
-
-              if (activeRelations.length > 0) {
-                this.logger.warn(
-                  `Cannot delete entity with id ${id}: has ${activeRelations.length} active related ${relationField}`,
-                );
-                throw new Error(
-                  this.relationCheckConfig.errorMessage ||
-                    `Cannot delete: Entity has related ${relationField} records`,
-                );
-              }
-            }
-          }
-          // For single object relationships
-          else if (relationData && typeof relationData === 'object') {
-            this.logger.debug(`Relation '${relationField}' is single object:`, JSON.stringify(relationData));
-            // Check if the related record is active
-            const isActive = !relationData.status || relationData.status !== 'INACTIVE';
-            this.logger.debug(`Related record in '${relationField}' is active: ${isActive}`);
-
-            if (isActive) {
-              this.logger.warn(`Cannot delete entity with id ${id}: has active related ${relationField}`);
-              throw new Error(
-                this.relationCheckConfig.errorMessage ||
-                  `Cannot delete: Entity has a related ${relationField} record`,
-              );
-            }
-          }
         }
+
+        this.checkActiveRelations(entity);
       }
 
       return this.repository.deleteById(id);
@@ -203,96 +163,22 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
     return this.repository.deleteById(id);
   }
 
-  /**
-   * Returns the payload to use for soft deletion.
-   * Override this method in derived services to customize the soft delete behavior.
-   */
   protected getSoftDeletePayload(): Partial<U> {
-    // Default implementation assumes a status field
     return { status: 'INACTIVE' } as unknown as Partial<U>;
   }
 
-  /**
-   * Performs a soft delete by updating the entity's status to inactive
-   * @param id - The ID of the entity to soft delete
-   * @returns The updated entity
-   */ async softDeleteById(id: string): Promise<D> {
+  async softDeleteById(id: string): Promise<D> {
     try {
-      // Create include object to load only the relation fields we need to check
-      let entity;
-      if (this.relationCheckConfig) {
-        const includeRelations = this.relationCheckConfig.relationFields.reduce(
-          (acc, field) => {
-            acc[field] = true;
-            return acc;
-          },
-          {} as Record<string, boolean>,
-        );
-
-        entity = await this.repository.findById(id, includeRelations);
-      } else {
-        entity = await this.repository.findById(id);
-      }
+      const includeRelations = this.relationCheckConfig ? this.createIncludeRelations() : undefined;
+      const entity = await this.repository.findById(id, includeRelations);
 
       if (!entity) {
         throw new NotFoundException(`Entity with id ${id} not found`);
       }
 
-      // If relation check config is defined, perform checks
-      if (this.relationCheckConfig) {
-        // Check each configured relation field
-        for (const relationField of this.relationCheckConfig.relationFields) {
-          const relationData = (entity as any)[relationField];
-          this.logger.debug(
-            `Checking relation field '${relationField}' for soft delete:`,
-            JSON.stringify(relationData),
-          );
+      this.checkActiveRelations(entity, 'soft delete');
 
-          // For array relationships
-          if (Array.isArray(relationData)) {
-            this.logger.debug(`Relation '${relationField}' is array with length: ${relationData.length}`);
-            if (relationData.length > 0) {
-              // Filter out inactive records if they have a status field
-              const activeRelations = relationData.filter(
-                (item) => !item.status || item.status !== 'INACTIVE',
-              );
-              this.logger.debug(`Active relations in '${relationField}': ${activeRelations.length}`);
-
-              if (activeRelations.length > 0) {
-                this.logger.warn(
-                  `Cannot soft delete entity with id ${id}: has ${activeRelations.length} active related ${relationField}`,
-                );
-                throw new Error(
-                  this.relationCheckConfig.errorMessage ||
-                    `Cannot soft delete: Entity has related ${relationField} records`,
-                );
-              }
-            }
-          }
-          // For single object relationships
-          else if (relationData && typeof relationData === 'object') {
-            this.logger.debug(`Relation '${relationField}' is single object:`, JSON.stringify(relationData));
-            // Check if the related record is active
-            const isActive = !relationData.status || relationData.status !== 'INACTIVE';
-            this.logger.debug(`Related record in '${relationField}' is active: ${isActive}`);
-
-            if (isActive) {
-              this.logger.warn(
-                `Cannot soft delete entity with id ${id}: has active related ${relationField}`,
-              );
-              throw new Error(
-                this.relationCheckConfig.errorMessage ||
-                  `Cannot soft delete: Entity has a related ${relationField} record`,
-              );
-            }
-          }
-        }
-      }
-
-      // Get the soft delete payload from the derived class
       const softDeletePayload = this.getSoftDeletePayload();
-
-      // Update the entity status
       const result = await this.repository.update(id, softDeletePayload as U);
       return this.transformDto(result);
     } catch (error) {

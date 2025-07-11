@@ -1,7 +1,7 @@
 /**
  * Cookie Manager - Simplified
  *
- * IMPORTANT: This does NOT handle HttpOnly cookies (auth_token, refresh_token, active_role_id)
+ * IMPORTANT: This does NOT handle HttpOnly cookies (auth_token, refresh_token, user_active_role_id)
  * Those are handled automatically by the browser and validated via API calls.
  *
  * This only manages sessionStorage for UI state and preferences.
