@@ -43,15 +43,15 @@ export function EvidenceTable() {
   const { data: evidences, isLoading, refetch } = useEvidences()
   const deleteEvidenceMutation = useDeleteEvidence()
   const [isGeneratingPdfId, setIsGeneratingPdfId] = useState<string | null>(null)
-  
+
   const handleView = (id: string) => {
     router.push(`/evidence-management/view/${id}`)
   }
-  
+
   const handleEdit = (id: string) => {
     router.push(`/evidence-management/edit/${id}`)
   }
-  
+
   const handleDelete = async (id: string) => {
     try {
       await deleteEvidenceMutation.mutateAsync(id)
@@ -60,44 +60,64 @@ export function EvidenceTable() {
       console.error('Error deleting evidence:', error)
     }
   }
-  
+
   const handleDownload = async (evidence: EvidenceType) => {
     setIsGeneratingPdfId(evidence.id)
-    
+
     // Simulate download delay
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
+
     // Open the Google Drive link in a new tab
     window.open(evidence.driveFileLink, '_blank')
-    
+
     setIsGeneratingPdfId(null)
   }
-  
+
   const columns: ColumnDef<EvidenceType>[] = [
     {
-      accessorKey: 'title',
-      header: 'Título',
+      accessorKey: 'documentCode',
+      header: 'Código',
+      size: 100,
       cell: ({ row }) => (
-        <div className="max-w-[250px] truncate" title={row.original.title}>
-          {row.original.title}
+        <div className="font-medium">
+          {row.original.documentCode}
+        </div>
+      )
+    },
+    {
+      accessorKey: 'documentType',
+      header: 'Tipo',
+      size: 120,
+      cell: ({ row }) => {
+        const typeMap: Record<string, string> = {
+          'NORMATIVA': 'Normativa',
+          'INFORME': 'Informe',
+          'ACTA': 'Acta',
+          'PLAN': 'Plan',
+          'CONVENIO': 'Convenio',
+          'OTRO': 'Otro'
+        }
+        return <Badge>{typeMap[row.original.documentType] || row.original.documentType}</Badge>
+      }
+    },
+    {
+      accessorKey: 'description',
+      header: 'Descripción',
+      cell: ({ row }) => (
+        <div className="max-w-[250px] truncate" title={row.original.description || ''}>
+          {row.original.description || 'Sin descripción'}
         </div>
       )
     },
     {
       accessorKey: 'fileType',
-      header: 'Tipo',
+      header: 'Formato',
       size: 80,
       cell: ({ row }) => {
         const fileType = row.original.fileType
         const extension = fileType.split('/').pop()?.toUpperCase() || fileType
         return <Badge variant="outline">{extension}</Badge>
       }
-    },
-    {
-      accessorKey: 'year',
-      header: 'Año',
-      size: 70,
-      cell: ({ row }) => row.original.year
     },
     {
       accessorKey: 'careers',
@@ -108,7 +128,7 @@ export function EvidenceTable() {
           const career = careersMock.find(c => c.id === id)
           return career?.name || id
         })
-        
+
         return (
           <div className="max-w-[200px] truncate" title={careerNames.join(', ')}>
             {careerNames.join(', ')}
@@ -117,15 +137,15 @@ export function EvidenceTable() {
       }
     },
     {
-      accessorKey: 'criteria',
-      header: 'Criterios',
+      accessorKey: 'evidencePromptLinks',
+      header: 'Evidencias Cubiertas',
       size: 100,
       cell: ({ row }) => {
-        const criteriaCount = row.original.criteria.length
+        const count = row.original.evidencePromptLinks?.length ?? 0
         return (
-          <Badge variant="secondary">
-            {criteriaCount} criterio{criteriaCount !== 1 ? 's' : ''}
-          </Badge>
+          <div className="text-center">
+            <Badge variant="secondary">{count}</Badge>
+          </div>
         )
       }
     },
@@ -156,7 +176,7 @@ export function EvidenceTable() {
         const evidence = row.original
         const isCurrentPdfGenerating = isGeneratingPdfId === evidence.id
         const isDeleting = deleteEvidenceMutation.isPending && deleteEvidenceMutation.variables === evidence.id
-        
+
         return (
           <div className="text-right">
             <DropdownMenu>
@@ -201,18 +221,14 @@ export function EvidenceTable() {
       }
     }
   ]
-  
+
   return (
     <DataTable
       columns={columns}
       data={evidences || []}
       isLoading={isLoading}
       searchPlaceholder="Buscar por título, año, criterio..."
-      newButton={
-        <Button onClick={() => router.push('/evidence-management/upload')}>
-          Subir Nueva Evidencia
-        </Button>
-      }
+
     />
   )
 }

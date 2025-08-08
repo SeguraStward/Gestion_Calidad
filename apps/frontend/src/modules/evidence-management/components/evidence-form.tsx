@@ -1,38 +1,33 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
-import { Calendar as CalendarIcon, Loader2, Upload } from 'lucide-react'
+import { Loader2, Upload } from 'lucide-react'
 import { Button } from '@una-gc/ui/components/button'
-import { Card, CardContent } from '@una-gc/ui/components/card'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import { Input } from '@una-gc/ui/components/input'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
-import { Calendar } from '@una-gc/ui/components/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@una-gc/ui/components/popover'
 import { Checkbox } from '@una-gc/ui/components/checkbox'
-import { cn } from '@una-gc/ui/lib/utils'
 import { SinaesSelector } from './sinaes-selector'
-import { EvidenceType, EvidenceFormData } from '../types/evidence.types'
+import { EvidenceType, EvidenceFormData, DocumentType } from '../types/evidence.types'
 import { useCareers } from '../service/evidence.service'
+import { documentTypeOptions, getNextCodeForType } from '../mocks/document-types'
 
-// Schema de validación
+// Schema de validación actualizado sin título, fechas, ni notas
 const evidenceFormSchema = z.object({
-  title: z.string().min(3, 'El título debe tener al menos 3 caracteres'),
-  description: z.string().default(''),
+  documentType: z.enum(['NORMATIVA', 'INFORME', 'ACTA', 'PLAN', 'CONVENIO', 'OTRO'] as const),
+  documentCode: z.string().min(3, 'El código debe tener al menos 3 caracteres'),
+  description: z.string().optional(),
   file: z.any().optional(),
-  year: z.number().int().min(2000, 'El año debe ser 2000 o posterior'),
-  month: z.number().int().min(1).max(12).optional(),
-  keywords: z.string().default(''),
-  criteriaIds: z.array(z.string()).min(1, 'Debe seleccionar al menos un criterio'),
+  keywords: z.string().optional().default(''),
+  evidencePromptIds: z.array(z.string()).min(1, 'Debe seleccionar al menos una evidencia sugerida'),
   careerIds: z.array(z.string()).min(1, 'Debe seleccionar al menos una carrera'),
-  notes: z.string().default('')
+  year: z.number().optional(),
+  month: z.number().optional(),
 })
 
 interface EvidenceFormProps {
@@ -45,42 +40,36 @@ export function EvidenceForm({ initialData, onSubmit, isSubmitting }: EvidenceFo
   const router = useRouter()
   const { data: careers, isLoading: careersLoading } = useCareers()
   const [filePreview, setFilePreview] = useState<string | null>(null)
-  
-  // Preparar datos iniciales si estamos editando
-  const defaultValues: Partial<EvidenceFormData> = initialData
-    ? {
-        title: initialData.title,
-        description: initialData.description || '',
-        year: initialData.year,
-        month: initialData.month,
-        keywords: initialData.keywords.join(', '),
-        criteriaIds: initialData.criteria.map(c => c.criterionId),
-        careerIds: initialData.careerIds,
-        notes: initialData.criteria[0]?.notes || ''
-      }
-    : {
-        title: '',
-        description: '',
-        year: new Date().getFullYear(),
-        month: new Date().getMonth() + 1,
-        keywords: '',
-        criteriaIds: [],
-        careerIds: [],
-        notes: ''
-      }
-  
-  const form = useForm<EvidenceFormData>({
+  const [autoGenerateCode, setAutoGenerateCode] = useState(true)
+
+  // Valores por defecto actualizados
+  const form = useForm<z.infer<typeof evidenceFormSchema>>({
     resolver: zodResolver(evidenceFormSchema),
-    defaultValues
+    defaultValues: {
+      documentType: initialData?.documentType || 'OTRO',
+      documentCode: initialData?.documentCode || '',
+      description: initialData?.description || '',
+      keywords: initialData?.keywords?.join(', ') || '',
+      evidencePromptIds: initialData?.evidencePromptLinks?.map(link => link.evidencePromptId) || [],
+      careerIds: initialData?.careerIds || [],
+    }
   })
-  
+
+  // Actualizar código cuando cambia el tipo de documento
+  useEffect(() => {
+    if (autoGenerateCode) {
+      const docType = form.watch('documentType') as DocumentType
+      const newCode = getNextCodeForType(docType)
+      form.setValue('documentCode', newCode)
+    }
+  }, [form.watch('documentType'), autoGenerateCode, form])
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    
+
     form.setValue('file', file)
-    
-    // Crear preview para ciertos tipos de archivo
+
     if (file.type.startsWith('image/')) {
       const reader = new FileReader()
       reader.onload = () => {
@@ -91,36 +80,94 @@ export function EvidenceForm({ initialData, onSubmit, isSubmitting }: EvidenceFo
       setFilePreview(null)
     }
   }
-  
-  const handleFormSubmit = async (data: EvidenceFormData) => {
+
+  const handleFormSubmit = async (data: z.infer<typeof evidenceFormSchema>) => {
     try {
-      await onSubmit(data)
+      // Convert schema data to EvidenceFormData
+      const formData: EvidenceFormData = {
+        ...data,
+        year: data.year ?? new Date().getFullYear(), // Provide a default value for year
+        month: data.month ?? new Date().getMonth() + 1, // Provide a default value for month
+      }
+      await onSubmit(formData)
       router.push('/evidence-management')
     } catch (error) {
       console.error('Error al enviar el formulario:', error)
     }
   }
-  
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 h-full flex flex-col">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 overflow-auto pr-2">
           {/* Columna izquierda */}
           <div className="space-y-4">
+            {/* Tipo de Documento */}
             <FormField
               control={form.control}
-              name="title"
+              name="documentType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Título del documento</FormLabel>
+                  <FormLabel>Tipo de Documento</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar tipo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {documentTypeOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Código del Documento */}
+            <FormField
+              control={form.control}
+              name="documentCode"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex justify-between items-center">
+                    <FormLabel>Código del Documento</FormLabel>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="auto-code"
+                        checked={autoGenerateCode}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            const docType = form.watch('documentType') as DocumentType
+                            form.setValue('documentCode', getNextCodeForType(docType))
+                          }
+                          setAutoGenerateCode(!!checked)
+                        }}
+                      />
+                      <label htmlFor="auto-code" className="text-xs text-muted-foreground">
+                        Auto-generar
+                      </label>
+                    </div>
+                  </div>
                   <FormControl>
-                    <Input placeholder="Ej: Plan Estratégico 2024" {...field} />
+                    <Input
+                      {...field}
+                      disabled={autoGenerateCode}
+                      placeholder="Ej: NORM-001"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="description"
@@ -128,66 +175,17 @@ export function EvidenceForm({ initialData, onSubmit, isSubmitting }: EvidenceFo
                 <FormItem>
                   <FormLabel>Descripción</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      placeholder="Breve descripción del documento..." 
+                    <Textarea
+                      placeholder="Breve descripción del documento..."
                       className="min-h-[100px]"
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="year"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Año</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="Año" 
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || new Date().getFullYear())}
-                        value={field.value?.toString() || ''}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="month"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Mes</FormLabel>
-                    <Select
-                      value={field.value?.toString()}
-                      onValueChange={value => field.onChange(parseInt(value))}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar mes" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                          <SelectItem key={month} value={month.toString()}>
-                            {format(new Date(2000, month - 1, 1), 'MMMM', { locale: es })}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
+
             <FormField
               control={form.control}
               name="keywords"
@@ -195,9 +193,9 @@ export function EvidenceForm({ initialData, onSubmit, isSubmitting }: EvidenceFo
                 <FormItem>
                   <FormLabel>Palabras clave</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Ej: plan, estrategia, objetivos (separadas por comas)" 
-                      {...field} 
+                    <Input
+                      placeholder="Ej: plan, estrategia, objetivos (separadas por comas)"
+                      {...field}
                     />
                   </FormControl>
                   <FormDescription>
@@ -207,7 +205,7 @@ export function EvidenceForm({ initialData, onSubmit, isSubmitting }: EvidenceFo
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="file"
@@ -225,8 +223,8 @@ export function EvidenceForm({ initialData, onSubmit, isSubmitting }: EvidenceFo
                       <label htmlFor="file-upload" className="cursor-pointer block">
                         <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
                         <p className="text-sm text-muted-foreground">
-                          {initialData 
-                            ? `Archivo actual: ${initialData.fileName}` 
+                          {initialData
+                            ? `Archivo actual: ${initialData.fileName}`
                             : "Haga clic para seleccionar un archivo o arrastre y suelte aquí"}
                         </p>
                         {form.watch('file') && (
@@ -242,29 +240,29 @@ export function EvidenceForm({ initialData, onSubmit, isSubmitting }: EvidenceFo
               )}
             />
           </div>
-          
+
           {/* Columna derecha */}
           <div className="space-y-4">
             <FormField
               control={form.control}
-              name="criteriaIds"
+              name="evidencePromptIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Criterios SINAES</FormLabel>
+                  <FormLabel>Evidencias SINAES Cubiertas</FormLabel>
                   <FormControl>
-                    <SinaesSelector 
-                      selectedCriteria={field.value}
+                    <SinaesSelector
+                      selectedPrompts={field.value}
                       onChange={field.onChange}
                     />
                   </FormControl>
                   <FormDescription>
-                    Seleccione los criterios SINAES a los que se relaciona esta evidencia
+                    Seleccione las evidencias específicas que este documento cumple.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="careerIds"
@@ -276,26 +274,29 @@ export function EvidenceForm({ initialData, onSubmit, isSubmitting }: EvidenceFo
                       <p className="text-sm text-muted-foreground">Cargando carreras...</p>
                     ) : (
                       <div className="space-y-2">
-                        {careers?.map(career => (
-                          <div key={career.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`career-${career.id}`}
-                              checked={field.value.includes(career.id)}
-                              onCheckedChange={(checked) => {
-                                const updatedValue = checked
-                                  ? [...field.value, career.id]
-                                  : field.value.filter(id => id !== career.id)
-                                field.onChange(updatedValue)
-                              }}
-                            />
-                            <label
-                              htmlFor={`career-${career.id}`}
-                              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              {career.name} ({career.code}) - {career.degree}
-                            </label>
-                          </div>
-                        ))}
+                        {careers?.map(career => {
+                          const currentValue = field.value || []
+                          return (
+                            <div key={career.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`career-${career.id}`}
+                                checked={currentValue.includes(career.id)}
+                                onCheckedChange={(checked) => {
+                                  const updatedValue = checked
+                                    ? [...currentValue, career.id]
+                                    : currentValue.filter(id => id !== career.id)
+                                  field.onChange(updatedValue)
+                                }}
+                              />
+                              <label
+                                htmlFor={`career-${career.id}`}
+                                className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {career.name} ({career.code}) - {career.degree}
+                              </label>
+                            </div>
+                          )
+                        })}
                       </div>
                     )}
                   </div>
@@ -303,30 +304,9 @@ export function EvidenceForm({ initialData, onSubmit, isSubmitting }: EvidenceFo
                 </FormItem>
               )}
             />
-            
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notas adicionales</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Notas adicionales sobre esta evidencia..." 
-                      className="min-h-[100px]"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Información adicional relevante sobre esta evidencia
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
         </div>
-        
+
         <div className="flex justify-between space-x-2 pt-4 border-t">
           <Button
             type="button"
@@ -335,8 +315,8 @@ export function EvidenceForm({ initialData, onSubmit, isSubmitting }: EvidenceFo
           >
             Cancelar
           </Button>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isSubmitting}
           >
             {isSubmitting ? (

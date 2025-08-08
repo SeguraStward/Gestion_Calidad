@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -8,20 +9,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-
 import { Badge } from '@una-gc/ui/components/badge'
 import { Button } from '@una-gc/ui/components/button'
 import { Separator } from '@una-gc/ui/components/separator'
-import { useEvidence } from '@/modules/evidence-management/service/evidence.service'
+import { useEvidence, useDimensions, useComponents, useCriteria, useEvidencePrompts, useStandards } from '@/modules/evidence-management/service/evidence.service'
 import { careersMock } from '@/modules/evidence-management/mocks/careers'
 import { componentsMock } from '@/modules/evidence-management/mocks/components'
 import { dimensionsMock } from '@/modules/evidence-management/mocks/dimensions'
 import { criteriaMock } from '@/modules/evidence-management/mocks/criteria'
+import { EvidencePromptLink } from '@/modules/evidence-management/types/evidence.types'
+import { evidencePromptsMock } from '@/modules/evidence-management/mocks/evidence-prompts'
 
 // Helper function to get criterion details including component and dimension
 const getCriterionDetails = (criterionId: string) => {
   const criterion = criteriaMock.find(c => c.id === criterionId)
   if (!criterion) return { code: '', name: '', component: { code: '', name: '' }, dimension: { code: '', name: '' } }
-  
+
   const component = componentsMock.find(comp => comp.id === criterion.componentId)
   const dimension = component ? dimensionsMock.find(dim => dim.id === component.dimensionId) : null
-  
+
   return {
     code: criterion.code,
     name: criterion.name,
@@ -45,10 +48,99 @@ const formatFileSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
+// Helper para obtener la etiqueta legible del tipo de documento
+const getDocumentTypeLabel = (type: string): string => {
+  const typeMap: Record<string, string> = {
+    'NORMATIVA': 'Normativa',
+    'INFORME': 'Informe',
+    'ACTA': 'Acta de Reunión',
+    'PLAN': 'Plan Estratégico',
+    'CONVENIO': 'Convenio',
+    'OTRO': 'Otro Documento'
+  }
+  return typeMap[type] || type
+}
+
+const CriterionDetail = ({ criterionId, notes }: { criterionId: string, notes?: string }) => {
+  // Buscar el prompt y luego el criterio
+  const prompt = evidencePromptsMock.find(p => p.id === criterionId)
+  const criterionDetails = prompt ? getCriterionDetails(prompt.criterionId) :
+    getCriterionDetails(criterionId) // Fallback al comportamiento anterior
+  const { data: standards } = useStandards(criterionId)
+  const { data: evidencePrompts } = useEvidencePrompts(criterionId)
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+        <div>
+          <h3 className="font-medium">
+            {criterionDetails.code} - {criterionDetails.name}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {criterionDetails.component.code} - {criterionDetails.component.name}
+          </p>
+        </div>
+        <Badge variant="outline" className="sm:self-start">
+          {criterionDetails.dimension.code}
+        </Badge>
+      </div>
+
+      {notes && (
+        <div className="bg-muted/50 rounded-md p-3 mt-2">
+          <h4 className="text-sm font-medium mb-1">Notas de la evidencia:</h4>
+          <p className="text-sm">{notes}</p>
+        </div>
+      )}
+
+      {standards && standards.length > 0 && (
+        <div className="border-l-2 border-blue-300 pl-3 mt-2">
+          <h4 className="text-sm font-semibold mb-1 flex items-center text-blue-800 dark:text-blue-200"><BarChart className="h-4 w-4 mr-2" /> Estándares Asociados</h4>
+          <ul className="list-disc pl-5 space-y-1 text-xs">
+            {standards.map(std => <li key={std.id}><strong>{std.code}:</strong> {std.description}</li>)}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Un nuevo componente para mostrar el detalle del vínculo
+const EvidenceLinkDetail = ({ link }: { link: EvidencePromptLink }) => {
+  // Necesitamos encontrar a qué criterio y componente pertenece este prompt
+  const prompt = evidencePromptsMock.find(p => p.id === link.evidencePromptId)
+  if (!prompt) return null
+
+  const criterion = criteriaMock.find(c => c.id === prompt.criterionId)
+  if (!criterion) return null
+
+  const component = componentsMock.find(c => c.id === criterion.componentId)
+  const dimension = component ? dimensionsMock.find(d => d.id === component.dimensionId) : null
+
+  return (
+    <div className="space-y-2">
+      <div>
+        <h4 className="font-medium text-primary">{prompt.code}: {prompt.description}</h4>
+        <p className="text-sm text-muted-foreground">
+          {criterion.code} - {criterion.name}
+        </p>
+      </div>
+      {link.notes && (
+        <div className="bg-muted/50 rounded-md p-3 mt-2">
+          <p className="text-sm italic">"{link.notes}"</p>
+        </div>
+      )}
+      <div className="flex gap-2 text-xs">
+        <Badge variant="outline">{dimension?.code}</Badge>
+        <Badge variant="secondary">{component?.code}</Badge>
+      </div>
+    </div>
+  )
+}
+
 export default function ViewEvidencePage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const { data: evidence, isLoading } = useEvidence(params.id)
-  
+
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -59,7 +151,7 @@ export default function ViewEvidencePage({ params }: { params: { id: string } })
       </div>
     )
   }
-  
+
   if (!evidence) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -72,16 +164,16 @@ export default function ViewEvidencePage({ params }: { params: { id: string } })
       </div>
     )
   }
-  
-  const dateFormatted = evidence.month 
-    ? format(new Date(evidence.year, evidence.month - 1), 'MMMM yyyy', { locale: es }) 
+
+  const dateFormatted = evidence.month
+    ? format(new Date(evidence.year, evidence.month - 1), 'MMMM yyyy', { locale: es })
     : evidence.year.toString()
-  
+
   const careers = evidence.careerIds.map(id => {
     const career = careersMock.find(c => c.id === id)
     return career ? `${career.name} (${career.code})` : id
   })
-  
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="mb-4 flex justify-between items-center">
@@ -90,9 +182,10 @@ export default function ViewEvidencePage({ params }: { params: { id: string } })
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver a la lista
           </Button>
-          <h2 className="text-xl font-semibold">{evidence.title}</h2>
+          {/* Reemplazar evidence.name con documentCode y documentType */}
+          <h2 className="text-xl font-semibold">{evidence.documentCode} - {getDocumentTypeLabel(evidence.documentType)}</h2>
           <p className="text-muted-foreground text-sm">
-            Detalles de la evidencia
+            Detalles del documento probatorio
           </p>
         </div>
         <div className="flex gap-2">
@@ -105,7 +198,7 @@ export default function ViewEvidencePage({ params }: { params: { id: string } })
           </Button>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 overflow-auto pr-2">
         {/* Columna izquierda - Información general */}
         <Card>
@@ -117,7 +210,7 @@ export default function ViewEvidencePage({ params }: { params: { id: string } })
               <h3 className="text-sm font-medium text-muted-foreground">Descripción</h3>
               <p className="mt-1">{evidence.description || 'Sin descripción'}</p>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground flex items-center">
@@ -126,7 +219,7 @@ export default function ViewEvidencePage({ params }: { params: { id: string } })
                 </h3>
                 <p className="mt-1 capitalize">{dateFormatted}</p>
               </div>
-              
+
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground flex items-center">
                   <Clock className="h-4 w-4 mr-1" />
@@ -135,7 +228,7 @@ export default function ViewEvidencePage({ params }: { params: { id: string } })
                 <p className="mt-1">{format(new Date(evidence.createdAt), 'dd/MM/yyyy')}</p>
               </div>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-medium text-muted-foreground flex items-center">
                 <FileType className="h-4 w-4 mr-1" />
@@ -146,7 +239,7 @@ export default function ViewEvidencePage({ params }: { params: { id: string } })
                 <Badge variant="outline">{formatFileSize(evidence.fileSize)}</Badge>
               </div>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-medium text-muted-foreground flex items-center">
                 <Tag className="h-4 w-4 mr-1" />
@@ -158,7 +251,7 @@ export default function ViewEvidencePage({ params }: { params: { id: string } })
                 ))}
               </div>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-medium text-muted-foreground flex items-center">
                 <Building className="h-4 w-4 mr-1" />
@@ -172,7 +265,7 @@ export default function ViewEvidencePage({ params }: { params: { id: string } })
                 ))}
               </div>
             </div>
-            
+
             <div className="pt-2">
               <Button variant="outline" size="sm" className="w-full" onClick={() => window.open(evidence.driveFileLink, '_blank')}>
                 <ExternalLink className="h-4 w-4 mr-2" />
@@ -181,48 +274,40 @@ export default function ViewEvidencePage({ params }: { params: { id: string } })
             </div>
           </CardContent>
         </Card>
-        
+
         {/* Columna derecha - Criterios SINAES */}
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Criterios SINAES</CardTitle>
             <CardDescription>
-              Esta evidencia está asociada a {evidence.criteria.length} criterio{evidence.criteria.length !== 1 ? 's' : ''}
+              Esta evidencia está asociada a {evidence.evidencePromptLinks.length} criterio{evidence.evidencePromptLinks.length !== 1 ? 's' : ''}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {evidence.criteria.map((criteriaItem, index) => {
-              const criterionDetails = getCriterionDetails(criteriaItem.criterionId)
-              
-              return (
-                <div key={criteriaItem.criterionId} className="mb-4 last:mb-0">
-                  {index > 0 && <Separator className="mb-4" />}
-                  
-                  <div className="space-y-2">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-                      <div>
-                        <h3 className="font-medium">
-                          {criterionDetails.code} - {criterionDetails.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {criterionDetails.component.code} - {criterionDetails.component.name}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="sm:self-start">
-                        {criterionDetails.dimension.code}
-                      </Badge>
-                    </div>
-                    
-                    {criteriaItem.notes && (
-                      <div className="bg-muted/50 rounded-md p-3 mt-2">
-                        <h4 className="text-sm font-medium mb-1">Notas:</h4>
-                        <p className="text-sm">{criteriaItem.notes}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
+            {evidence.evidencePromptLinks.map((criteriaItem, index) => (
+              <React.Fragment key={criteriaItem.evidencePromptId}>
+                {index > 0 && <Separator className="my-4" />}
+                <CriterionDetail criterionId={criteriaItem.evidencePromptId} notes={criteriaItem.notes} />
+              </React.Fragment>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Columna derecha - Criterios y Evidencias Cubiertas */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Criterios y Evidencias Cubiertas</CardTitle>
+            <CardDescription>
+              Este documento sirve como prueba para {evidence.evidencePromptLinks.length} evidencia{evidence.evidencePromptLinks.length !== 1 ? 's' : ''} sugerida{evidence.evidencePromptLinks.length !== 1 ? 's' : ''}.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {evidence.evidencePromptLinks.map((link, index) => (
+              <React.Fragment key={link.evidencePromptId}>
+                {index > 0 && <Separator />}
+                <EvidenceLinkDetail link={link} />
+              </React.Fragment>
+            ))}
           </CardContent>
         </Card>
       </div>

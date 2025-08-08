@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation'
 
 export default function EvidenceManagementLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  
+
   // Determine active tab based on current path
   const getActiveTab = () => {
     if (pathname.includes('/upload')) return 'upload'
@@ -24,7 +24,7 @@ export default function EvidenceManagementLayout({ children }: { children: React
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold">Sistema de Gestión de Evidencias SINAES</h1>
           </div>
-          
+
           <Tabs defaultValue={getActiveTab()} className="flex-1 flex flex-col overflow-hidden">
             <div className="border-b pb-2">
               <TabsList className="grid w-full max-w-3xl grid-cols-3">
@@ -48,17 +48,17 @@ export default function EvidenceManagementLayout({ children }: { children: React
                 </TabsTrigger>
               </TabsList>
             </div>
-            
+
             <TabsContent value="evidences" className="flex-1 overflow-hidden pt-4">
-              {getActiveTab() === 'evidences' ? children : null}
+              {children}
             </TabsContent>
-            
+
             <TabsContent value="upload" className="flex-1 overflow-hidden pt-4">
-              {getActiveTab() === 'upload' ? children : null}
+              {children}
             </TabsContent>
-            
+
             <TabsContent value="settings" className="flex-1 overflow-hidden pt-4">
-              {getActiveTab() === 'settings' ? children : null}
+              {children}
             </TabsContent>
           </Tabs>
         </div>

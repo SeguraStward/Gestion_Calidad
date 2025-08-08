@@ -14,7 +14,14 @@ import { toast } from 'sonner'
 export default function SettingsPage() {
   const [isConnected, setIsConnected] = useState(true)
   const [isSyncing, setIsSyncing] = useState(false)
-  
+  const [autoKeywords, setAutoKeywords] = useState(true)
+  const [notifications, setNotifications] = useState(false)
+  const [showPreview, setShowPreview] = useState(true)
+  const [autoBackup, setAutoBackup] = useState(true)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [backupFrequency, setBackupFrequency] = useState('daily')
+  const [defaultCareer, setDefaultCareer] = useState('') // 1. Add state for the new input
+
   const handleSyncDrive = async () => {
     setIsSyncing(true)
     await new Promise(resolve => setTimeout(resolve, 2000))
@@ -30,14 +37,14 @@ export default function SettingsPage() {
           Administre la configuración del sistema de gestión de evidencias
         </p>
       </div>
-      
+
       <Tabs defaultValue="general" className="flex-1 overflow-auto">
         <TabsList className="mb-4">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="sync">Sincronización</TabsTrigger>
           <TabsTrigger value="backup">Respaldo</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="general" className="space-y-4">
           <Card>
             <CardHeader>
@@ -50,9 +57,15 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="default-career">Carrera predeterminada</Label>
-                  <Input id="default-career" placeholder="Seleccionar carrera predeterminada" />
+                  {/* 2. Make the input controlled */}
+                  <Input
+                    id="default-career"
+                    placeholder="Seleccionar carrera predeterminada"
+                    value={defaultCareer}
+                    onChange={(e) => setDefaultCareer(e.target.value)}
+                  />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="auto-keywords">Generar palabras clave automáticamente</Label>
@@ -60,9 +73,13 @@ export default function SettingsPage() {
                       Extraer palabras clave del contenido del documento
                     </p>
                   </div>
-                  <Switch id="auto-keywords" checked={true} />
+                  <Switch
+                    id="auto-keywords"
+                    checked={autoKeywords}
+                    onCheckedChange={setAutoKeywords}
+                  />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="notifications">Notificaciones</Label>
@@ -70,12 +87,16 @@ export default function SettingsPage() {
                       Recibir notificaciones sobre cambios en las evidencias
                     </p>
                   </div>
-                  <Switch id="notifications" />
+                  <Switch
+                    id="notifications"
+                    checked={notifications}
+                    onCheckedChange={setNotifications}
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Preferencias de visualización</CardTitle>
@@ -92,18 +113,27 @@ export default function SettingsPage() {
                       Ver miniatura de documentos en la lista
                     </p>
                   </div>
-                  <Switch id="show-preview" checked={true} />
+                  <Switch
+                    id="show-preview"
+                    checked={showPreview}
+                    onCheckedChange={setShowPreview}
+                  />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="items-per-page">Elementos por página</Label>
-                  <Input id="items-per-page" type="number" defaultValue="10" />
+                  <Input
+                    id="items-per-page"
+                    type="number"
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="sync" className="space-y-4">
           <Card>
             <CardHeader>
@@ -140,9 +170,9 @@ export default function SettingsPage() {
                   </div>
                 )}
               </div>
-              
+
               <Separator />
-              
+
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="drive-folder">Carpeta de Google Drive</Label>
@@ -151,17 +181,17 @@ export default function SettingsPage() {
                     Ruta donde se guardarán los archivos de evidencia
                   </p>
                 </div>
-                
+
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Button 
+                  <Button
                     variant={isConnected ? "outline" : "default"}
                     onClick={() => setIsConnected(!isConnected)}
                   >
                     {isConnected ? "Desconectar cuenta" : "Conectar con Google Drive"}
                   </Button>
-                  
-                  <Button 
-                    variant="outline" 
+
+                  <Button
+                    variant="outline"
                     onClick={handleSyncDrive}
                     disabled={!isConnected || isSyncing}
                   >
@@ -182,7 +212,7 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="backup" className="space-y-4">
           <Card>
             <CardHeader>
@@ -200,13 +230,19 @@ export default function SettingsPage() {
                       Crear respaldos periódicos de la base de datos
                     </p>
                   </div>
-                  <Switch id="auto-backup" checked={true} />
+                  <Switch
+                    id="auto-backup"
+                    checked={autoBackup}
+                    onCheckedChange={setAutoBackup}
+                  />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="backup-frequency">Frecuencia de respaldos</Label>
-                  <select 
-                    id="backup-frequency" 
+                  <select
+                    id="backup-frequency"
+                    value={backupFrequency}
+                    onChange={(e) => setBackupFrequency(e.target.value)}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <option value="daily">Diario</option>
@@ -214,9 +250,9 @@ export default function SettingsPage() {
                     <option value="monthly">Mensual</option>
                   </select>
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="space-y-2">
                   <Label>Respaldo manual</Label>
                   <div className="flex flex-col sm:flex-row gap-2">

@@ -13,177 +13,233 @@ import {
   CommandSeparator
 } from '@una-gc/ui/components/command'
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@una-gc/ui/components/popover'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@una-gc/ui/components/dialog'
 import { ScrollArea } from '@una-gc/ui/components/scroll-area'
 import { Badge } from '@una-gc/ui/components/badge'
-import { useDimensions, useComponents, useCriteria } from '../service/evidence.service'
+import { useDimensions, useComponents, useCriteria, useEvidencePrompts } from '../service/evidence.service'
+import { CriterionType } from '../types/evidence.types'
+import { evidencePromptsMock } from '../mocks/evidence-prompts'
 
-interface SinaesSelectorProps {
-  selectedCriteria: string[]
-  onChange: (selectedIds: string[]) => void
+// --- SOLUCIÓN DEFINITIVA ---
+const CriterionPrompts = ({ criterion, selectedPrompts, togglePrompt }: {
+  criterion: CriterionType
+  selectedPrompts: string[]
+  togglePrompt: (promptId: string) => void
+}) => {
+  const { data: prompts, isLoading } = useEvidencePrompts(criterion.id)
+
+  if (isLoading) return <div className="pl-12 py-2 text-xs text-muted-foreground">Cargando evidencias...</div>
+  if (!prompts || prompts.length === 0) return <div className="pl-12 py-2 text-xs text-muted-foreground">No hay evidencias sugeridas.</div>
+
+  return (
+    <div className="pl-12 py-1 space-y-1">
+      {prompts.map(prompt => (
+        <div
+          key={prompt.id}
+          className="flex items-center p-2 rounded-md hover:bg-accent cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation()
+            togglePrompt(prompt.id)
+          }}
+        >
+          <div className={`w-4 h-4 mr-3 border rounded flex items-center justify-center shrink-0 ${selectedPrompts.includes(prompt.id)
+            ? "bg-primary border-primary"
+            : "border-muted-foreground"
+            }`}>
+            {selectedPrompts.includes(prompt.id) && <Check className="h-3 w-3 text-white" />}
+          </div>
+          <span className="text-sm">{prompt.code}: {prompt.description}</span>
+        </div>
+      ))}
+    </div>
+  )
 }
 
-export function SinaesSelector({ selectedCriteria, onChange }: SinaesSelectorProps) {
+export function SinaesSelector({ selectedPrompts = [], onChange }: {
+  selectedPrompts?: string[]
+  onChange: (selectedIds: string[]) => void
+}) {
   const [open, setOpen] = useState(false)
   const [selectedDimensionId, setSelectedDimensionId] = useState<string | undefined>()
   const [selectedComponentId, setSelectedComponentId] = useState<string | undefined>()
-  
+  const [expandedCriteria, setExpandedCriteria] = useState<Set<string>>(new Set())
+
   const { data: dimensions, isLoading: isDimensionsLoading } = useDimensions()
   const { data: components, isLoading: isComponentsLoading } = useComponents(selectedDimensionId)
   const { data: criteria, isLoading: isCriteriaLoading } = useCriteria(selectedComponentId)
-  
-  // Reset component selection when dimension changes
+
+  const toggleCriterionExpansion = (criterionId: string) => {
+    setExpandedCriteria(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(criterionId)) {
+        newSet.delete(criterionId)
+      } else {
+        newSet.add(criterionId)
+      }
+      return newSet
+    })
+  }
+
+  const togglePrompt = (promptId: string) => {
+    if (!onChange) return
+    const newSelection = selectedPrompts.includes(promptId)
+      ? selectedPrompts.filter(id => id !== promptId)
+      : [...selectedPrompts, promptId]
+    onChange(newSelection)
+  }
+
+  // Resetear selecciones al cambiar de nivel
   useEffect(() => {
     setSelectedComponentId(undefined)
+    setExpandedCriteria(new Set())
   }, [selectedDimensionId])
-  
-  // Helper function to get criterion name by ID
-  const getCriterionById = (id: string) => {
-    const allCriteria = criteria || []
-    const criterion = allCriteria.find(c => c.id === id)
-    return criterion ? `${criterion.code} - ${criterion.name}` : id
+
+  useEffect(() => {
+    setExpandedCriteria(new Set())
+  }, [selectedComponentId])
+
+  // Lógica para mostrar los badges de selección
+  const getPromptLabel = (promptId: string) => {
+    const prompt = evidencePromptsMock.find(p => p.id === promptId)
+    return prompt ? `${prompt.code}` : promptId
   }
-  
-  const toggleCriterion = (criterionId: string) => {
-    const updatedSelection = selectedCriteria.includes(criterionId)
-      ? selectedCriteria.filter(id => id !== criterionId)
-      : [...selectedCriteria, criterionId]
-    onChange(updatedSelection)
-  }
-  
-  const getDimensionName = (dimensionId: string) => {
-    const dimension = dimensions?.find(d => d.id === dimensionId)
-    return dimension ? `${dimension.code} - ${dimension.name}` : ''
-  }
-  
-  const getComponentName = (componentId: string) => {
-    const component = components?.find(c => c.id === componentId)
-    return component ? `${component.code} - ${component.name}` : ''
-  }
-  
+
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap gap-1 mb-2">
-        {selectedCriteria.map((criterionId) => (
-          <Badge key={criterionId} variant="secondary" className="mr-1 mb-1">
-            {getCriterionById(criterionId)}
-            <button 
-              onClick={() => toggleCriterion(criterionId)} 
-              className="ml-1 text-xs rounded-full hover:bg-muted p-1"
+      {/* Badges para mostrar lo que está seleccionado */}
+      <div className="flex flex-wrap gap-1 min-h-[24px]">
+        {selectedPrompts.map((promptId) => (
+          <Badge key={promptId} variant="secondary">
+            {getPromptLabel(promptId)}
+            <button
+              type="button"
+              onClick={() => togglePrompt(promptId)}
+              className="ml-1.5 text-primary/70 hover:text-primary rounded-full"
+              aria-label={`Quitar ${getPromptLabel(promptId)}`}
             >
-              ×
+              &times;
             </button>
           </Badge>
         ))}
       </div>
-      
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="justify-between w-full text-left"
+            className="w-full justify-between"
           >
-            {selectedCriteria.length > 0 
-              ? `${selectedCriteria.length} criterio${selectedCriteria.length !== 1 ? 's' : ''} seleccionado${selectedCriteria.length !== 1 ? 's' : ''}` 
-              : "Seleccionar criterios SINAES..."}
+            {selectedPrompts.length > 0
+              ? `${selectedPrompts.length} evidencia${selectedPrompts.length !== 1 ? 's' : ''} seleccionada${selectedPrompts.length !== 1 ? 's' : ''}`
+              : "Seleccionar evidencias SINAES..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="p-0 w-full min-w-[300px] max-w-[500px]" align="start">
-          <Command>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-2xl p-0">
+          <DialogHeader className="p-6 pb-4">
+            <DialogTitle>Seleccionar Evidencias SINAES</DialogTitle>
+            <DialogDescription>
+              Navega por la jerarquía y selecciona las evidencias que este documento cumple.
+            </DialogDescription>
+          </DialogHeader>
+          <Command className="border-t" onSelect={() => {
+            // Este onSelect vacío en el Command padre es un truco para
+            // prevenir que la selección de un item cierre el diálogo.
+          }}>
             <CommandInput placeholder="Buscar dimensión, componente o criterio..." />
             <CommandList>
-              <CommandEmpty>No se encontraron resultados.</CommandEmpty>
-              <ScrollArea className="h-[300px]">
-                {isDimensionsLoading ? (
-                  <div className="p-2 text-center text-sm">Cargando dimensiones...</div>
-                ) : (
-                  dimensions?.map((dimension) => (
-                    <React.Fragment key={dimension.id}>
-                      <CommandGroup heading={`${dimension.code} - ${dimension.name}`}>
-                        <CommandItem 
-                          onSelect={() => {
-                            setSelectedDimensionId(selectedDimensionId === dimension.id ? undefined : dimension.id)
-                          }}
-                          className="cursor-pointer"
-                        >
-                          <span className={selectedDimensionId === dimension.id ? "font-medium" : ""}>
-                            {dimension.code} - {dimension.name}
-                          </span>
-                          {selectedDimensionId === dimension.id && (
-                            <Check className="ml-auto h-4 w-4 opacity-70" />
-                          )}
-                        </CommandItem>
-                        
-                        {selectedDimensionId === dimension.id && (
-                          <>
-                            {isComponentsLoading ? (
-                              <div className="pl-6 py-2 text-sm text-muted-foreground">Cargando componentes...</div>
-                            ) : (
-                              components?.filter(c => c.dimensionId === dimension.id).map(component => (
-                                <React.Fragment key={component.id}>
-                                  <CommandItem 
-                                    onSelect={() => {
-                                      setSelectedComponentId(selectedComponentId === component.id ? undefined : component.id)
-                                    }}
-                                    className="pl-6 cursor-pointer"
-                                  >
-                                    <span className={selectedComponentId === component.id ? "font-medium" : ""}>
-                                      {component.code} - {component.name}
-                                    </span>
-                                    {selectedComponentId === component.id && (
-                                      <Check className="ml-auto h-4 w-4 opacity-70" />
-                                    )}
-                                  </CommandItem>
-                                  
-                                  {selectedComponentId === component.id && (
-                                    <>
-                                      {isCriteriaLoading ? (
-                                        <div className="pl-12 py-2 text-sm text-muted-foreground">Cargando criterios...</div>
-                                      ) : (
-                                        criteria?.filter(cr => cr.componentId === component.id).map(criterion => (
-                                          <CommandItem 
-                                            key={criterion.id}
-                                            onSelect={() => toggleCriterion(criterion.id)}
-                                            className="pl-12 cursor-pointer"
-                                          >
-                                            <div className="flex items-center">
-                                              <div className={`w-4 h-4 mr-2 border rounded flex items-center justify-center ${
-                                                selectedCriteria.includes(criterion.id) 
-                                                  ? "bg-primary border-primary" 
-                                                  : "border-muted-foreground"
-                                              }`}>
-                                                {selectedCriteria.includes(criterion.id) && (
-                                                  <Check className="h-3 w-3 text-white" />
-                                                )}
-                                              </div>
-                                              {criterion.code} - {criterion.name}
-                                            </div>
-                                          </CommandItem>
-                                        ))
-                                      )}
-                                    </>
-                                  )}
-                                </React.Fragment>
-                              ))
+              <ScrollArea className="h-[450px]">
+                <CommandEmpty>No se encontraron resultados.</CommandEmpty>
+
+                {/* Nivel 1: Dimensiones */}
+                <CommandGroup heading="1. Dimensiones">
+                  {isDimensionsLoading ? <CommandItem disabled>Cargando...</CommandItem> :
+                    dimensions?.map(dimension => (
+                      <CommandItem
+                        key={dimension.id}
+                        onSelect={() => setSelectedDimensionId(dimension.id)}
+                        className="cursor-pointer"
+                      >
+                        <Check className={`mr-2 h-4 w-4 ${selectedDimensionId === dimension.id ? 'opacity-100' : 'opacity-0'}`} />
+                        {dimension.code} - {dimension.name}
+                      </CommandItem>
+                    ))
+                  }
+                </CommandGroup>
+
+                {/* Nivel 2: Componentes */}
+                {selectedDimensionId && (
+                  <>
+                    <CommandSeparator />
+                    <CommandGroup heading="2. Componentes">
+                      {isComponentsLoading ? <CommandItem disabled>Cargando...</CommandItem> :
+                        components?.map(component => (
+                          <CommandItem
+                            key={component.id}
+                            onSelect={() => setSelectedComponentId(component.id)}
+                            className="cursor-pointer"
+                          >
+                            <Check className={`mr-2 h-4 w-4 ${selectedComponentId === component.id ? 'opacity-100' : 'opacity-0'}`} />
+                            {component.code} - {component.name}
+                          </CommandItem>
+                        ))
+                      }
+                    </CommandGroup>
+                  </>
+                )}
+
+                {/* Nivel 3: Criterios y Evidencias */}
+                {selectedComponentId && (
+                  <>
+                    <CommandSeparator />
+                    <CommandGroup heading="3. Criterios y Evidencias Sugeridas">
+                      {isCriteriaLoading ? <CommandItem disabled>Cargando...</CommandItem> :
+                        criteria?.map(criterion => (
+                          <React.Fragment key={criterion.id}>
+                            <CommandItem
+                              onSelect={() => {
+                                // Prevenir comportamiento por defecto
+                                toggleCriterionExpansion(criterion.id)
+                              }}
+                              className="flex justify-between items-center cursor-pointer"
+                            >
+                              <span>{criterion.code} - {criterion.name}</span>
+                              {(() => {
+                                const count = selectedPrompts.filter(pId => evidencePromptsMock.find(p => p.id === pId)?.criterionId === criterion.id).length
+                                if (count > 0) return <Badge variant="secondary">{count}</Badge>
+                                return null
+                              })()}
+                            </CommandItem>
+                            {expandedCriteria.has(criterion.id) && (
+                              <CriterionPrompts
+                                criterion={criterion}
+                                selectedPrompts={selectedPrompts}
+                                togglePrompt={togglePrompt}
+                              />
                             )}
-                          </>
-                        )}
-                      </CommandGroup>
-                      <CommandSeparator />
-                    </React.Fragment>
-                  ))
+                          </React.Fragment>
+                        ))
+                      }
+                    </CommandGroup>
+                  </>
                 )}
               </ScrollArea>
             </CommandList>
           </Command>
-        </PopoverContent>
-      </Popover>
+          <DialogFooter className="p-4 border-t">
+            <Button type="button" onClick={() => setOpen(false)}>Cerrar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
