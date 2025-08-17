@@ -131,11 +131,61 @@ export class UsersController extends GenericController<UserDto, UserDto> {
     type: [Object],
   })
   @AuthorizedEndpoint(PermissionType.READ)
-  async getAllUserRoles(@Param('id') userId: string): Promise<SimpleRoleWithPermissions[]> {
+  async getAllUserRoles(
+    @Param('id') userId: string,
+    @Request() request: any,
+  ): Promise<SimpleRoleWithPermissions[]> {
     this.logger.log(`Getting all roles for user: ${userId}`);
+
+    // Debug logging
+    const user = request.user;
+    const activeRoleId = request.cookies?.user_active_role_id;
+    this.logger.debug(`Request user: ${user?.email} (${user?.id})`);
+    this.logger.debug(`Active role ID from cookie: ${activeRoleId}`);
+    this.logger.debug(`User roles count: ${user?.roles?.length || 0}`);
+    this.logger.debug(`Request cookies: ${JSON.stringify(request.cookies)}`);
+
     const userRoles = await this.usersService.getUserActiveRolesWithPermissions(userId);
     this.logger.debug(`Found ${userRoles.length} roles for user ${userId}`);
     return userRoles;
+  }
+
+  @Get(':id/roles-debug')
+  @ApiOperation({ summary: 'Debug endpoint - Get all roles for a specific user without auth' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User roles retrieved successfully',
+    type: [Object],
+  })
+  async getAllUserRolesDebug(
+    @Param('id') userId: string,
+    @Request() request: any,
+  ): Promise<any> {
+    this.logger.log(`[DEBUG] Getting all roles for user: ${userId}`);
+
+    // Debug info
+    const user = request.user;
+    const activeRoleId = request.cookies?.user_active_role_id;
+    const cookies = request.cookies;
+
+    this.logger.debug(`[DEBUG] Request user: ${user?.email} (${user?.id})`);
+    this.logger.debug(`[DEBUG] Active role ID from cookie: ${activeRoleId}`);
+    this.logger.debug(`[DEBUG] All cookies: ${JSON.stringify(cookies)}`);
+    this.logger.debug(`[DEBUG] User roles count: ${user?.roles?.length || 0}`);
+
+    const userRoles = await this.usersService.getUserActiveRolesWithPermissions(userId);
+    this.logger.debug(`[DEBUG] Found ${userRoles.length} roles for user ${userId}`);
+
+    return {
+      user: {
+        id: user?.id,
+        email: user?.email,
+        rolesCount: user?.roles?.length || 0
+      },
+      activeRoleId,
+      cookies,
+      userRoles
+    };
   }
 
   @Get('all-roles')

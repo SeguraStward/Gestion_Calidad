@@ -73,6 +73,7 @@ export function useRoleSelection(): UseRoleSelectionReturn {
         id: role.id,
         name: role.name,
         description: role.description ?? '',
+        status: role.status,
         permissions: role.permissions ?? []
       }))
 
@@ -151,27 +152,9 @@ export function useRoleSelection(): UseRoleSelectionReturn {
 
   // Initialize role selection
   useEffect(() => {
-    const initializeRoleSelection = async () => {
-      try {
-        const activeRoleId = await AuthService.getActiveRole()
-        const hasServerRole = activeRoleId !== null
-
-        setHasActiveRole(hasServerRole)
-        setCanSkip(hasServerRole)
-      } catch (error) {
-        console.warn('Error checking active role:', error)
-        setHasActiveRole(false)
-        setCanSkip(false)
-      }
-
-      // Load roles if not loaded
-      if (roles.length === 0) {
-        fetchRoles()
-      }
-    }
-
-    initializeRoleSelection()
-  }, [fetchRoles, roles.length])
+    fetchRoles()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return {
     roles,

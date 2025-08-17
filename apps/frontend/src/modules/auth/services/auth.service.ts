@@ -50,15 +50,18 @@ export class AuthService {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache'
       }
-    })
+    });
 
     if (!response.ok) {
-      throw new Error(`Failed to get user roles: ${response.statusText}`)
+      if (response.status === 401) {
+        throw new Error('401: Unauthorized');
+      }
+      throw new Error(`Failed to get user roles: ${response.statusText}`);
     }
 
-    const data = await response.json()
+    const data = await response.json();
     // Backend puede enviar: {data: [...]} o directamente [...]
-    return data.data || data
+    return data.data || data;
   }
 
   /**

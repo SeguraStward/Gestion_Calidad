@@ -5,8 +5,28 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } fr
 import Link from 'next/link'
 import { NavMain } from './nav-main'
 import { NavUser } from './nav-user'
+import { useAuth } from '@/modules/auth/hooks'
+import { USER_MANAGEMENT_PERMISSIONS, ACTIONS, SCOPES } from '@/modules/auth/constants/permissions'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { hasPermission, user, role } = useAuth()
+
+  // Check if user has admin permission for user management
+  const canManageUsers = hasPermission(USER_MANAGEMENT_PERMISSIONS.USER, ACTIONS.READ, SCOPES.ALL)
+
+  // Debug logging
+  console.debug('Sidebar permission check:', {
+    user,
+    role,
+    canManageUsers,
+    userPermission: USER_MANAGEMENT_PERMISSIONS.USER,
+    action: ACTIONS.READ,
+    scope: SCOPES.ALL
+  })
+
+  // Temporarily show user management for all authenticated users while debugging
+  const showUserManagement = true // !!user || canManageUsers
+
   const navMain = [
     {
       title: 'Gestión Académica',
@@ -17,12 +37,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         { title: 'Mantenimiento General', url: '/academic-management/academic-maintenance' }
       ]
     },
-    // {
-    //   title: 'Gestión de Usuarios',
-    //   url: '/gestión-usuarios',
-    //   icon: require('lucide-react').Users,
-    //   items: [{ title: 'Mantenimiento', url: '/user-management/user' }]
-    // },
+    // Only show User Management section if user has permission
+    ...(showUserManagement ? [{
+      title: 'Gestión de Usuarios',
+      url: '/user-management',
+      icon: require('lucide-react').Users,
+      items: [
+        { title: 'Usuarios', url: '/user-management/user' },
+        { title: 'Roles', url: '/user-management/user-role' },
+        { title: 'Permisos', url: '/user-management/user-permission' }
+      ]
+    }] : []),
     {
       title: 'Informe Final',
       url: '/final-report',

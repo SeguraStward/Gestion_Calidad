@@ -20,6 +20,7 @@ const processQueue = (error: any, token: string | null = null) => {
 // --- FIN: Lógica para manejar el proceso de refresh ---
 
 const triggerLogoutProcedures = () => {
+  console.error('🚨 [HTTP Client] Triggering logout procedures: clear user state, redirect, etc.')
   Logger.log('Triggering logout procedures: clear user state, redirect, etc.')
   useSessionStore.getState().clearSession()
   // La redirección se hará después de intentar el logout en el servidor.
@@ -57,6 +58,7 @@ class HttpClientClass {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
         if (error.response?.status === 401 && originalRequest.url !== this.REFRESH_TOKEN_URL && !originalRequest._retry) {
+          console.error(`🚨 [HTTP Client] Received 401 from ${originalRequest.url}. Full error:`, error.response)
           Logger.log(`[HTTP Client] Received 401 from ${originalRequest.url}. Attempting to use refresh token.`)
 
           if (isRefreshing) {

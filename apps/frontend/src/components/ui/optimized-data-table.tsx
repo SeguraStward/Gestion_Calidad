@@ -11,6 +11,15 @@ interface OptimizedDataTableProps<T> {
   virtualized?: boolean
   virtualizationThreshold?: number
   className?: string
+  // Agregar props de paginación
+  currentPage?: number
+  totalPages?: number
+  totalItems?: number
+  pageSize?: number
+  onPageChange?: (page: number) => void
+  searchQuery?: string
+  onSearchChange?: (query: string) => void
+  serverSideFiltering?: boolean
 }
 
 /**
@@ -25,7 +34,16 @@ export const OptimizedDataTable = memo(function OptimizedDataTable<T>({
   newButton,
   virtualized = false,
   virtualizationThreshold = 100,
-  className
+  className,
+  // Props de paginación
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+  searchQuery,
+  onSearchChange,
+  serverSideFiltering = false
 }: OptimizedDataTableProps<T>) {
   // Memoizar las columnas para evitar re-renders innecesarios
   const memoizedColumns = useMemo(() => columns, [columns])
@@ -61,6 +79,14 @@ export const OptimizedDataTable = memo(function OptimizedDataTable<T>({
       isLoading={isLoading}
       searchPlaceholder={searchPlaceholder ?? ''}
       newButton={memoizedNewButton}
+      currentPage={currentPage}
+      totalPages={totalPages}
+      totalItems={totalItems}
+      pageSize={pageSize}
+      onPageChange={onPageChange}
+      searchQuery={searchQuery}
+      onSearchChange={onSearchChange}
+      serverSideFiltering={serverSideFiltering}
     />
   )
 })

@@ -135,9 +135,21 @@ export function DataTable<TData, TValue>({
               </TableRow>
             ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'} onClick={undefined}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && 'selected'}
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement
+                    if (target.closest('[data-no-row-click]')) {
+                      return
+                    }
+                  }}
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} style={{ width: cell.column.getSize() !== 150 ? cell.column.getSize() : undefined }}>
+                    <TableCell
+                      key={cell.id}
+                      style={{ width: cell.column.getSize() !== 150 ? cell.column.getSize() : undefined }}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

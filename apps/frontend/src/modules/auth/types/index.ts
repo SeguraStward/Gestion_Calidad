@@ -1,5 +1,28 @@
 // Enums
-import { PermissionScope, PermissionType, Status, UserStatus } from '@una-gc/database/prisma/generated/client'
+export enum Status {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE'
+}
+
+export enum UserStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  PRE_REGISTRATION = 'PRE_REGISTRATION'
+}
+
+// Añadir PermissionType enum
+export enum PermissionType {
+  CREATE = 'CREATE',
+  READ = 'READ',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+  REPORT = 'REPORT'
+}
+
+export enum PermissionScope {
+  ALL = 'ALL',
+  OWN = 'OWN'
+}
 
 // User profile matching backend UserResponseDto
 export interface UserBasicInfo {
@@ -28,19 +51,20 @@ export interface CompleteProfileData {
 
 // Role and permission types
 export interface Permission {
-  id: string
-  name: string
-  code: string
-  status: Status
-  type: PermissionType[]
-  actions: string[]
-  scope: PermissionScope
+  id: string;
+  name: string;
+  code: string;
+  status: Status;
+  type: PermissionType[];
+  scope: PermissionScope;
+  actions: string[];
 }
 
 export interface Role {
   id: string
   name: string
   description: string
+  status: Status
   permissions: Permission[]
 }
 

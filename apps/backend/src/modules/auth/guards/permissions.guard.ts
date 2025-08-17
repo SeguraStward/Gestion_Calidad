@@ -19,12 +19,14 @@ export class PermissionsGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private prisma: PrismaService,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const disable = process.env.DISABLED_ROLES == 'true';
-    if (disable) {
-      this.logger.warn('This guard is disabled, all requests will be allowed (DISABLED_ROLES=true)');
+    const disableRoles = process.env.DISABLED_ROLES === 'true';
+    const disableAuth = process.env.DISABLED_AUTH === 'true';
+
+    if (disableRoles || disableAuth) {
+      this.logger.warn(`This guard is disabled, all requests will be allowed (DISABLED_ROLES=${disableRoles}, DISABLED_AUTH=${disableAuth})`);
       return true;
     }
 

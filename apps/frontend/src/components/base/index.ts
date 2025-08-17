@@ -7,8 +7,8 @@ export type { PaginationControlsProps, PaginationInfo } from './pagination-contr
 export { StatusBadge, getStatusBadgeVariant, getStatusLabel } from './status-badge'
 export type { StatusBadgeProps } from './status-badge'
 
-export { UserAvatar, getUserInitials } from './user-avatar'
-export type { UserAvatarProps } from './user-avatar'
+// export { UserAvatar, getUserInitials } from './user-avatar'
+// export type { UserAvatarProps } from './user-avatar'
 
 export { FiltersPanel } from './filters-panel'
 export type { FilterField, FiltersPanelProps } from './filters-panel'

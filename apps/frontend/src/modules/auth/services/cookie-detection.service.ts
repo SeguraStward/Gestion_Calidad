@@ -104,11 +104,11 @@ export class CookieDetectionService {
    */
   static async isAuthenticated(): Promise<boolean> {
     try {
-      // Cancel previous request if any
-      this.cancelRequests()
-
-      // Create new abort controller
-      this.abortController = new AbortController()
+      // Don't cancel previous requests immediately, let them complete
+      // Only create new abort controller if we don't have one
+      if (!this.abortController) {
+        this.abortController = new AbortController()
+      }
 
       const response = await fetch(`${this.API_URL}/auth/me`, {
         method: 'GET',
@@ -121,12 +121,19 @@ export class CookieDetectionService {
       })
 
       this.abortController = null
-      return response.ok
+      const isAuth = response.ok
+      return isAuth
     } catch (error) {
       if (error instanceof Error && error.name !== 'AbortError') {
         console.warn('Auth check failed:', error)
       }
       this.abortController = null
+
+      // If the error is an abort error, return true to prevent clearing session
+      if (error instanceof Error && error.name === 'AbortError') {
+        return true
+      }
+
       return false
     }
   }

@@ -44,12 +44,14 @@ export class UserRoleDto extends AuditFields {
   @ApiPropertyOptional({ description: 'Role description' })
   @IsString()
   @IsOptional()
+  @Expose()
   description?: string;
 
   @ApiProperty({ type: [PermissionDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PermissionDto)
+  @Expose()
   permissions: PermissionDto[];
 
   @ApiPropertyOptional({ type: [String] })
@@ -61,6 +63,7 @@ export class UserRoleDto extends AuditFields {
   @ApiPropertyOptional({ enum: Status, default: Status.ACTIVE })
   @IsEnum(Status)
   @IsOptional()
+  @Expose()
   status?: Status;
 
   constructor(dto: Partial<UserRoleDto> = {}) {
