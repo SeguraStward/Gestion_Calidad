@@ -1,0 +1,39 @@
+// Criterion model for quality management categorization
+
+// Enum for common criterion types (extensible with customType field)
+enum CriterionType {
+  COMPONENT_BASED // Traditional criteria that belong to a component
+  ADMISSIBILITY // Independent criteria like "Criterios de Admisibilidad"
+  INSTITUTIONAL // Institutional-level criteria
+  PROGRAM_LEVEL
+  SUSTAINABILITY // Program-level criteria independent of dimensions
+  CUSTOM // For flexible custom types (use customType field)
+}
+
+model Criterion {
+  version Int    @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+
+  code        String        @unique
+  name        String
+  description String?
+  order       Int
+  componentId String?       @db.ObjectId // Optional - allows independent criteria
+  type        CriterionType @default(COMPONENT_BASED) // Predefined types
+  customType  String? // Flexible field for custom types when type = CUSTOM
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  component Component?        @relation(fields: [componentId], references: [id]) // Optional relation
+  standards Standard[] // Optional standards
+  evidences QualityEvidence[] // Direct evidences when no standards exist
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("criteria")
+}

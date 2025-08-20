@@ -1,0 +1,22 @@
+// StandardEvidence model - Many-to-many relationship between Standards and Evidences
+model StandardEvidence {
+  version Int    @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+
+  standardId String @db.ObjectId
+  evidenceId String @db.ObjectId
+
+  // Relations
+  standard Standard        @relation(fields: [standardId], references: [id])
+  evidence QualityEvidence @relation(fields: [evidenceId], references: [id])
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  // Ensure unique combination
+  @@unique([standardId, evidenceId])
+  @@map("standard_evidences")
+}

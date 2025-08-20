@@ -1,0 +1,28 @@
+// QualityEvidence model for quality management categorization
+model QualityEvidence {
+  version Int    @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+
+  code        String  @unique
+  name        String
+  description String
+  order       Int
+  standardId  String? @db.ObjectId // Optional - when evidence belongs to a standard
+  criterionId String? @db.ObjectId // Optional - when evidence belongs directly to criterion
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  standard          Standard?          @relation(fields: [standardId], references: [id])
+  criterion         Criterion?         @relation(fields: [criterionId], references: [id])
+  proofDocuments    ProofDocument[]
+  standardEvidences StandardEvidence[] // Many-to-many with standards
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("quality_evidences")
+}

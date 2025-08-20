@@ -1,0 +1,23 @@
+// Dimension model for quality management categorization
+model Dimension {
+  version Int    @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+
+  code        String  @unique
+  name        String
+  description String?
+  order       Int
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  components Component[]
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("dimensions")
+}

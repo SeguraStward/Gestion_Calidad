@@ -1,0 +1,17 @@
+// DocumentCounter model for tracking document numbers per type
+model DocumentCounter {
+  version Int    @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+
+  proofDocumentTypeId String @unique @db.ObjectId
+  lastNumber          Int    @default(0)
+
+  // Relations
+  proofDocumentType ProofDocumentType @relation(fields: [proofDocumentTypeId], references: [id])
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("document_counters")
+}

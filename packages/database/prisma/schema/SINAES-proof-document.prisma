@@ -1,0 +1,35 @@
+// ProofDocument model for storing actual proof documents
+model ProofDocument {
+  version Int    @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+
+  code                String  @unique // Auto-generated: PREFIX-NUMBER (e.g., CONV-001)
+  name                String
+  description         String?
+  fileUrl             String // Google Drive public URL
+  fileName            String
+  fileType            String // e.g., "pdf", "docx", "xlsx"
+  fileSize            Int? // Size in bytes
+  evidenceId          String  @db.ObjectId
+  proofDocumentTypeId String  @db.ObjectId
+
+  // Google Drive metadata
+  googleDriveFileId   String? // Google Drive file ID
+  googleDriveFolderId String? // Parent folder ID in Google Drive
+  googleDriveVersion  String? // Version tracking for updates
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  evidence             QualityEvidence       @relation(fields: [evidenceId], references: [id])
+  proofDocumentType    ProofDocumentType     @relation(fields: [proofDocumentTypeId], references: [id])
+  careerProofDocuments CareerProofDocument[] @relation("ProofDocumentToCareers")
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("proof_documents")
+}

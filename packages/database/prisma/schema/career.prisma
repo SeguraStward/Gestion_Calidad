@@ -14,8 +14,9 @@ model Career {
   // Relations
   school School @relation(fields: [schoolId], references: [id])
 
-  courses  Course[]
-  projects Project[]
+  courses              Course[]
+  projects             Project[]
+  careerProofDocuments CareerProofDocument[] @relation("CareerToProofDocuments")
 
   // Audit fields
   createdAt DateTime @default(now())

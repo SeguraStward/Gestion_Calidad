@@ -1,0 +1,28 @@
+// GoogleDriveFolder model for managing folder structure in Google Drive
+model GoogleDriveFolder {
+  version Int    @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name           String // Folder name in Google Drive
+  googleFolderId String  @unique // Google Drive folder ID
+  parentFolderId String? @db.ObjectId // Parent folder ID in our system
+  level          Int // 1=Dimension, 2=Component, 3=Criterion, 4=Standard, 5=Evidence
+  entityType     String // "dimension", "component", "criterion", "standard", "evidence"
+  entityId       String? @db.ObjectId // Reference to the actual entity
+  careerCode     String? // For career-specific folders
+  path           String // Full path in Google Drive
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  parentFolder GoogleDriveFolder?  @relation("FolderHierarchy", fields: [parentFolderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  childFolders GoogleDriveFolder[] @relation("FolderHierarchy")
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("google_drive_folders")
+}

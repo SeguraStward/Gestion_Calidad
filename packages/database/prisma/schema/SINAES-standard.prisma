@@ -1,0 +1,26 @@
+// Standard model for quality management categorization
+model Standard {
+  version Int    @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+
+  code        String  @unique
+  name        String
+  description String?
+  order       Int
+  criterionId String  @db.ObjectId
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  criterion         Criterion          @relation(fields: [criterionId], references: [id])
+  evidences         QualityEvidence[] // Direct evidences (legacy - optional)
+  standardEvidences StandardEvidence[] // Many-to-many with evidences
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("standards")
+}

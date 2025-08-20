@@ -1,0 +1,24 @@
+// ProofDocumentType model for managing types of proof documents
+model ProofDocumentType {
+  version Int    @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+
+  code        String  @unique // e.g., "CONV-01"
+  name        String // e.g., "Convenio"
+  description String?
+  prefix      String // e.g., "CONV" for generating document codes
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  proofDocuments  ProofDocument[]
+  documentCounter DocumentCounter?
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("proof_document_types")
+}

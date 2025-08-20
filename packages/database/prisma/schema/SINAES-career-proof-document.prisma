@@ -1,0 +1,23 @@
+// CareerProofDocument model for many-to-many relationship between careers and proof documents
+model CareerProofDocument {
+  version Int    @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+
+  careerId        String @db.ObjectId
+  proofDocumentId String @db.ObjectId
+
+  status Status @default(ACTIVE)
+
+  // Relations
+  career        Career        @relation("CareerToProofDocuments", fields: [careerId], references: [id])
+  proofDocument ProofDocument @relation("ProofDocumentToCareers", fields: [proofDocumentId], references: [id])
+
+  // Audit fields
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([careerId, proofDocumentId])
+  @@map("career_proof_documents")
+}
