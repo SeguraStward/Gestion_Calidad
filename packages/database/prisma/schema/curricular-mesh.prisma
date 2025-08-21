@@ -1,0 +1,72 @@
+// Modelo optimizado para mallas curriculares reutilizando modelos existentes
+
+model CurricularMesh {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  name        String
+  description String?
+  startYear   Int // Año de implementación
+  endYear     Int? // Año de finalización (si aplica)
+  isActive    Boolean @default(true)
+
+  // Relación con carrera existente
+  careerId String @db.ObjectId
+  career   Career @relation("CareerCurricularMesh", fields: [careerId], references: [id])
+
+  status Status @default(ACTIVE)
+
+  // Relaciones optimizadas
+  courses              CurricularMeshCourse[]        @relation("MeshCourses")
+  professorAssignments ProfessorAssignment[]         @relation("MeshAssignments")
+  allocations          CampusJourneyTimeAllocation[] @relation("MeshAllocations")
+
+  // Campos de auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([careerId, startYear], name: "unique_career_mesh_year")
+  @@index([careerId])
+  @@map("curricular_meshes")
+}
+
+// Tabla de unión optimizada que conecta cursos existentes con ciclos académicos
+model CurricularMeshCourse {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  // Relaciones con modelos existentes
+  curricularMeshId String @db.ObjectId
+  courseId         String @db.ObjectId
+  academicCycleId  String @db.ObjectId
+
+  curricularMesh CurricularMesh @relation("MeshCourses", fields: [curricularMeshId], references: [id])
+  course         Course         @relation("CourseMeshes", fields: [courseId], references: [id])
+  academicCycle  AcademicCycle  @relation("CycleCourses", fields: [academicCycleId], references: [id])
+
+  // Información específica del curso en esta malla
+  isRequired       Boolean @default(true)
+  isRepeatOffering Boolean @default(false) // Marca cursos de repitencia
+
+  // El tiempo de jornada se calcula automáticamente desde Course.contactHours
+  // No necesitamos guardarlo aquí para evitar redundancia
+
+  status Status @default(ACTIVE)
+
+  // Relaciones
+  professorAssignments ProfessorAssignment[] @relation("CourseAssignments")
+
+  // Campos de auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([curricularMeshId, courseId, academicCycleId], name: "unique_mesh_course_cycle")
+  @@index([curricularMeshId])
+  @@index([courseId])
+  @@index([academicCycleId])
+  @@map("curricular_mesh_courses")
+}

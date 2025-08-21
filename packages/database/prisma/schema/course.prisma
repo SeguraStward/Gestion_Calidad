@@ -23,6 +23,9 @@ model Course {
 
   academicLoads AcademicLoad[]
 
+  // Relations with Journey Time Management - Optimized
+  meshCourses CurricularMeshCourse[] @relation("CourseMeshes")
+
   // Audit fields
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

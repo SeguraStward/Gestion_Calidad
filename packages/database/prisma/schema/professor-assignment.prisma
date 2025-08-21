@@ -1,0 +1,63 @@
+// Modelo unificado y optimizado para asignaciones de profesores
+
+model ProfessorAssignment {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  // Relaciones básicas con modelos existentes
+  professorId     String @db.ObjectId
+  academicCycleId String @db.ObjectId
+  campusId        String @db.ObjectId
+
+  professor     User          @relation("ProfessorJourneyAssignments", fields: [professorId], references: [id])
+  academicCycle AcademicCycle @relation("CycleAssignments", fields: [academicCycleId], references: [id])
+  campus        Campus        @relation("CampusAssignments", fields: [campusId], references: [id])
+
+  // Tipo de asignación
+  assignmentType AssignmentType
+
+  // Relaciones condicionales según tipo de asignación
+  // Para cursos (regulares y de repitencia)
+  curricularMeshCourseId String?               @db.ObjectId
+  curricularMeshCourse   CurricularMeshCourse? @relation("CourseAssignments", fields: [curricularMeshCourseId], references: [id])
+
+  // Para malla curricular general
+  curricularMeshId String?         @db.ObjectId
+  curricularMesh   CurricularMesh? @relation("MeshAssignments", fields: [curricularMeshId], references: [id])
+
+  // Para proyectos institucionales
+  institutionalProjectId String?               @db.ObjectId
+  institutionalProject   InstitutionalProject? @relation("ProjectAssignments", fields: [institutionalProjectId], references: [id])
+
+  // Para asignaciones por campus
+  campusAllocationId String?                      @db.ObjectId
+  campusAllocation   CampusJourneyTimeAllocation? @relation("AllocationAssignments", fields: [campusAllocationId], references: [id])
+
+  // Tiempo de jornada calculado automáticamente
+  // Se calcula desde Course.contactHours o InstitutionalProject.requiredJourneyTime
+  calculatedJourneyTime Float
+
+  // Información adicional
+  notes        String?
+  observations String?
+
+  // Fechas
+  startDate DateTime?
+  endDate   DateTime?
+
+  // Estado
+  status Status @default(ACTIVE)
+
+  // Campos de auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@index([professorId])
+  @@index([academicCycleId])
+  @@index([campusId])
+  @@index([curricularMeshCourseId])
+  @@index([institutionalProjectId])
+  @@map("professor_assignments")
+}

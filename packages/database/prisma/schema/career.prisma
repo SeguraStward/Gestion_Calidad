@@ -17,6 +17,7 @@ model Career {
   courses              Course[]
   projects             Project[]
   careerProofDocuments CareerProofDocument[] @relation("CareerToProofDocuments")
+  curricularMeshes     CurricularMesh[]      @relation("CareerCurricularMesh")
 
   // Audit fields
   createdAt DateTime @default(now())

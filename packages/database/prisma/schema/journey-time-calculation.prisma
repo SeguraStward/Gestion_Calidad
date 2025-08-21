@@ -1,0 +1,40 @@
+// Configuración simplificada para cálculo automático de tiempos de jornada
+
+model JourneyTimeCalculationConfig {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  // Configuración de rangos de horas para tipos de tiempo
+  quarterTimeMinHours Int @default(1) // Mínimo para ¼ tiempo
+  quarterTimeMaxHours Int @default(5) // Máximo para ¼ tiempo
+
+  halfTimeMinHours Int @default(6) // Mínimo para ½ tiempo
+  halfTimeMaxHours Int @default(7) // Máximo para ½ tiempo
+
+  threeQuarterMinHours Int @default(8) // Mínimo para ¾ tiempo
+  threeQuarterMaxHours Int @default(11) // Máximo para ¾ tiempo
+
+  fullTimeMinHours Int @default(12) // Mínimo para tiempo completo
+
+  // Valores de tiempo de jornada por tipo
+  quarterTimeValue      Float @default(0.25) // ¼ tiempo
+  halfTimeValue         Float @default(0.5) // ½ tiempo
+  threeQuarterTimeValue Float @default(0.75) // ¾ tiempo
+  fullTimeValue         Float @default(1.0) // Tiempo completo
+
+  // Año de vigencia de la configuración
+  effectiveYear Int
+
+  // Estado
+  isActive Boolean @default(true)
+  status   Status  @default(ACTIVE)
+
+  // Campos de auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([effectiveYear], name: "unique_config_year")
+  @@map("journey_time_calculation_configs")
+}

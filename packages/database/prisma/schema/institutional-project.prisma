@@ -1,0 +1,50 @@
+// Modelo para proyectos institucionales
+
+model InstitutionalProject {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  // Código único del proyecto
+  code String @unique
+
+  // Información básica del proyecto
+  title       String
+  description String?
+  objectives  String?
+
+  // Tipo de proyecto
+  projectType ProjectType
+
+  // Tiempo de jornada requerido/asignado al proyecto
+  requiredJourneyTime Float
+  assignedJourneyTime Float @default(0)
+
+  // Período de ejecución
+  startDate DateTime
+  endDate   DateTime
+
+  // Relación con campus y asignación
+  campusAllocationId String                      @db.ObjectId
+  campusAllocation   CampusJourneyTimeAllocation @relation("AllocationProjects", fields: [campusAllocationId], references: [id])
+
+  // Director/Coordinador del proyecto
+  directorId String @db.ObjectId
+  director   User   @relation("ProjectDirector", fields: [directorId], references: [id])
+
+  // Estado del proyecto
+  projectStatus AllocationStatus @default(DRAFT)
+  status        Status           @default(ACTIVE)
+
+  // Relaciones
+  professorAssignments ProfessorAssignment[] @relation("ProjectAssignments")
+
+  // Campos de auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@index([campusAllocationId])
+  @@index([directorId])
+  @@map("institutional_projects")
+}

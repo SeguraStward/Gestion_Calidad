@@ -1,0 +1,35 @@
+// Enums para el módulo de gestión de tiempos de jornada
+
+enum JourneyTimeType {
+  QUARTER // ¼ tiempo (1-5 horas)
+  HALF // ½ tiempo (6-7 horas)
+  THREE_QUARTER // ¾ tiempo (8-11 horas)
+  FULL // Tiempo completo (12+ horas)
+}
+
+enum ProviderType {
+  UNIVERSITY // Universidad
+  EXTERNAL // Proveedor externo
+  AGREEMENT // Convenio
+}
+
+enum ProjectType {
+  INSTITUTIONAL // Proyecto institucional
+  ACADEMIC // Proyecto académico
+  RESEARCH // Proyecto de investigación
+  EXTENSION // Proyecto de extensión
+}
+
+enum AssignmentType {
+  REGULAR_COURSE // Curso regular de malla curricular
+  REPEAT_COURSE // Curso de repitencia
+  INSTITUTIONAL_PROJECT // Proyecto institucional
+  ADMINISTRATIVE // Trabajo administrativo
+}
+
+enum AllocationStatus {
+  DRAFT // Borrador
+  APPROVED // Aprobado
+  ACTIVE // Activo
+  CLOSED // Cerrado
+}

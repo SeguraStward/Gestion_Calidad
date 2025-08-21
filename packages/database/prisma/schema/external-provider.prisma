@@ -1,0 +1,46 @@
+// Modelo para proveedores externos de tiempos de jornada
+
+model ExternalProvider {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  // Nombre del proveedor/convenio
+  name String
+
+  // Descripción del proveedor o convenio
+  description String?
+
+  // Tipo de proveedor
+  providerType ProviderType
+
+  // Contacto del proveedor
+  contactEmail  String?
+  contactPhone  String?
+  contactPerson String?
+
+  // Relación con asignación anual
+  annualAllocationId String                      @db.ObjectId
+  annualAllocation   AnnualJourneyTimeAllocation @relation("AnnualExternalProviders", fields: [annualAllocationId], references: [id])
+
+  // Tiempo de jornada proporcionado
+  providedJourneyTime Float
+
+  // Si es un tiempo fijo o variable
+  isFixedTime Boolean @default(true)
+
+  // Fecha de inicio y fin del convenio/proveedor
+  startDate DateTime?
+  endDate   DateTime?
+
+  // Estado
+  status Status @default(ACTIVE)
+
+  // Campos de auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@index([annualAllocationId])
+  @@map("external_providers")
+}
