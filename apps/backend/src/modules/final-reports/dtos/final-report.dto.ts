@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { FinalReport, FinalReportStatus } from '@una-gc/database/prisma/generated/client';
@@ -11,18 +11,22 @@ import { UserDto } from '@src/modules/users/dtos/user.dto';
 export class FinalReportStatisticsDto {
   @ApiProperty({ description: 'Number of students that passed' })
   @Expose()
+  @IsNumber()
   passed: number;
 
   @ApiProperty({ description: 'Number of students that failed' })
   @Expose()
+  @IsNumber()
   failed: number;
 
   @ApiProperty({ description: 'Number of students that dropped out' })
   @Expose()
+  @IsNumber()
   dropouts: number;
 
   @ApiProperty({ description: 'Total number of students' })
   @Expose()
+  @IsNumber()
   totalStudents: number;
 
   constructor(partial: Partial<FinalReportStatisticsDto> | any = {}) {
@@ -31,49 +35,83 @@ export class FinalReportStatisticsDto {
 }
 
 export class FinalReportEvaluationOptionsDto {
-  @ApiProperty({ description: 'Category' })
+  @ApiPropertyOptional({ description: 'Category' })
   @Expose()
-  category: string;
-  @ApiProperty({ description: 'Label' })
+  @IsString()
+  @IsOptional()
+  category?: string;
+
+  @ApiPropertyOptional({ description: 'Label' })
   @Expose()
-  label: string;
-  @ApiProperty({ description: 'Value' })
+  @IsString()
+  @IsOptional()
+  label?: string;
+
+  @ApiPropertyOptional({ description: 'Value' })
   @Expose()
-  value: string;
+  @IsString()
+  @IsOptional()
+  value?: string;
   constructor(partial: Partial<FinalReportEvaluationOptionsDto> | any = {}) {
     Object.assign(this, partial);
+    // Clean up optional fields
+    if (this.category === 'undefined' || this.category === '') {
+      this.category = undefined;
+    }
+    if (this.label === 'undefined' || this.label === '') {
+      this.label = undefined;
+    }
+    if (this.value === 'undefined' || this.value === '') {
+      this.value = undefined;
+    }
   }
 }
 
 export class FinalReportEvaluationDto {
-  @ApiProperty({ description: 'Question Group' })
+  @ApiPropertyOptional({ description: 'Question Group' })
   @Expose()
-  questionGroup: string;
+  @IsString()
+  @IsOptional()
+  questionGroup?: string;
+
   @ApiProperty({ description: 'Question ID' })
   @Expose()
+  @IsString()
   questionId: string;
+
   @ApiProperty({ description: 'Options', type: [FinalReportEvaluationOptionsDto] })
   @Expose()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => FinalReportEvaluationOptionsDto)
   options: FinalReportEvaluationOptionsDto[];
-  @ApiProperty({ description: 'Other Response' })
+
+  @ApiPropertyOptional({ description: 'Other Response' })
   @Expose()
-  otherResponse: string;
+  @IsString()
+  @IsOptional()
+  otherResponse?: string;
+
   @ApiProperty({ description: 'Question' })
   @Expose()
+  @IsString()
   question: string;
-  @ApiProperty({ description: 'Response' })
+
+  @ApiPropertyOptional({ description: 'Response' })
   @Expose()
-  response: string;
+  @IsString()
+  @IsOptional()
+  response?: string;
+
   @ApiProperty({ description: 'Multiple Response', type: [String] })
   @Expose()
   @IsArray()
   @IsString({ each: true })
   multipleResponse: string[];
+
   @ApiProperty({ description: 'Response Type' })
   @Expose()
+  @IsString()
   responseType: string;
 
   constructor(partial: Partial<FinalReportEvaluationDto> | any = {}) {
@@ -83,45 +121,81 @@ export class FinalReportEvaluationDto {
         opt instanceof FinalReportEvaluationOptionsDto ? opt : new FinalReportEvaluationOptionsDto(opt),
       );
     }
+    // Clean up fields that might come as string "undefined" or empty strings
+    if (this.response === 'undefined' || this.response === '') {
+      this.response = undefined;
+    }
+    if (this.otherResponse === 'undefined' || this.otherResponse === '') {
+      this.otherResponse = undefined;
+    }
+    if (this.questionGroup === 'undefined' || this.questionGroup === '') {
+      this.questionGroup = undefined;
+    }
   }
 }
 
 export class FinalReportStudentAdjustmentDto {
   @ApiProperty({ description: 'Support' })
   @Expose()
+  @IsString()
   support: string;
+
   @ApiProperty({ description: 'ID Number' })
   @Expose()
+  @IsString()
   idNumber: string;
+
   @ApiProperty({ description: 'Student Name' })
   @Expose()
+  @IsString()
   name: string;
+
   @ApiProperty({ description: 'Grade' })
   @Expose()
+  @IsString()
   grade: string;
-  @ApiProperty({ description: 'Observation' })
+
+  @ApiPropertyOptional({ description: 'Observation' })
   @Expose()
-  observation: string;
+  @IsString()
+  @IsOptional()
+  observation?: string;
   constructor(partial: Partial<FinalReportStudentAdjustmentDto> | any = {}) {
     Object.assign(this, partial);
+    // Convert empty strings to undefined for optional fields
+    if (this.observation === '') {
+      this.observation = undefined;
+    }
   }
 }
 
 export class FinalReportStudentSafeguardDto {
   @ApiProperty({ description: 'ID Number' })
   @Expose()
+  @IsString()
   idNumber: string;
+
   @ApiProperty({ description: 'Student Name' })
   @Expose()
+  @IsString()
   name: string;
+
   @ApiProperty({ description: 'Grade' })
   @Expose()
+  @IsString()
   grade: string;
-  @ApiProperty({ description: 'Observation' })
+
+  @ApiPropertyOptional({ description: 'Observation' })
   @Expose()
-  observation: string;
+  @IsString()
+  @IsOptional()
+  observation?: string;
   constructor(partial: Partial<FinalReportStudentSafeguardDto> | any = {}) {
     Object.assign(this, partial);
+    // Convert empty strings to undefined for optional fields
+    if (this.observation === '') {
+      this.observation = undefined;
+    }
   }
 }
 

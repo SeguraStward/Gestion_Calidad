@@ -44,8 +44,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: require('lucide-react').Users,
       items: [
         { title: 'Usuarios', url: '/user-management/user' },
-        { title: 'Roles', url: '/user-management/user-role' },
-        { title: 'Permisos', url: '/user-management/user-permission' }
+        { title: 'Roles', url: '/user-management/user-role' }
       ]
     }] : []),
     {

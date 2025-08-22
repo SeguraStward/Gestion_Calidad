@@ -1,0 +1,645 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{colortbl}
+\usepackage{textcomp}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+% Configuración de colores más intensos
+\definecolor{darkblue}{RGB}{0,51,102}
+\definecolor{lightblue}{RGB}{70,130,180}
+\definecolor{lightgray}{RGB}{245,245,245}
+\definecolor{tableblue}{RGB}{0,102,204}
+
+% Configuración de header/footer
+\setlength{\headheight}{15pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textcolor{darkblue}{\textbf{Diccionario de Datos}}}
+\fancyhead[R]{\textcolor{darkblue}{\textbf{Sistema de Gestión de Tiempos}}}
+\fancyfoot[C]{\thepage}
+
+% Configuración de enlaces
+\hypersetup{
+    colorlinks=true,
+    linkcolor=lightblue,
+    filecolor=lightblue,
+    urlcolor=lightblue,
+    citecolor=lightblue
+}
+
+% Configuración para tablas
+\renewcommand{\arraystretch}{1.3}
+
+\begin{document}
+
+% Portada
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\textcolor{darkblue}{\textbf{DICCIONARIO DE DATOS}}}
+    
+    \vspace{1cm}
+    
+    {\Large\textcolor{darkblue}{\textbf{Sistema de Gestión de Tiempos de Jornada}}}
+    
+    \vspace{2cm}
+    
+    {\large\textbf{Base de Datos - Modelo Relacional}}
+    
+    \vspace{3cm}
+    
+    \begin{tabular}{ll}
+        \textbf{Proyecto:} & Sistema de Gestión de Calidad \\
+        \textbf{Módulo:} & Gestión de Tiempos de Jornada \\
+        \textbf{Base de Datos:} & MongoDB con Prisma ORM \\
+        \textbf{Fecha de entrega:} & \today \\
+    \end{tabular}
+    
+    \vfill
+    
+    {\large Universidad}
+    
+    {\large Facultad de Ingeniería}
+    
+    {\large Departamento de Sistemas}
+    
+\end{titlepage}
+
+% Índice
+\newpage
+\tableofcontents
+\newpage
+
+% Introducción
+\section{Introducción}
+
+Este documento presenta el diccionario de datos para el sistema de gestión de tiempos de jornada académica. El sistema permite la administración y control de la asignación de tiempos de jornada de profesores, distribución por campus y gestión de proyectos institucionales.
+
+\subsection{Objetivos del Sistema}
+\begin{itemize}
+    \item Gestionar la asignación anual de tiempos de jornada
+    \item Distribuir tiempos por campus y mallas curriculares
+    \item Controlar asignaciones de profesores a cursos y proyectos
+    \item Automatizar cálculos de tiempo según horas de contacto
+    \item Generar reportes de disponibilidad y consumo
+\end{itemize}
+
+\subsection{Arquitectura de Datos}
+El sistema utiliza MongoDB como base de datos principal con Prisma como ORM. Se implementan 8 nuevos modelos que se integran con los modelos existentes del sistema base.
+
+\newpage
+
+% Tablas del Sistema
+\section{Modelos de Datos}
+
+{\color{darkblue}\Large\subsection{CurricularMesh - Mallas Curriculares}}
+
+\begin{longtable}{p{3cm}p{2.8cm}p{3.5cm}p{5.2cm}}
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endfirsthead
+
+\multicolumn{4}{c}%
+{{\tablename\ \thetable{} -- Continuación de la página anterior}} \\
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endhead
+
+\multicolumn{4}{r}{{Continúa en la siguiente página...}} \\
+\endfoot
+
+\endlastfoot
+
+id & String & @id @default(cuid()) & Identificador único de la malla curricular \\
+\rowcolor{lightgray}
+name & String & Requerido & Nombre descriptivo de la malla curricular \\
+careerId & String & @db.ObjectId & Referencia a la carrera (FK) \\
+\rowcolor{lightgray}
+code & String & @unique & Código oficial único de la malla \\
+degree & String & Requerido & Tipo de grado académico asociado \\
+\rowcolor{lightgray}
+description & String? & Opcional & Descripción detallada opcional de la malla \\
+isActive & Boolean & @default(true) & Estado activo/inactivo de la malla \\
+\rowcolor{lightgray}
+createdAt & DateTime & @default(now()) & Fecha y hora de creación del registro \\
+updatedAt & DateTime & @updatedAt & Fecha y hora de última actualización \\
+\end{longtable}
+
+\paragraph{Relaciones:}
+\begin{itemize}
+    \item \textbf{Career}: Relación con carrera (muchos a uno)
+    \item \textbf{CurricularMeshCourse}: Cursos de la malla (uno a muchos)
+    \item \textbf{CampusJourneyTimeAllocation}: Asignaciones por campus (uno a muchos)
+\end{itemize}
+
+\vspace{0.5cm}
+
+\textbf{Propósito Detallado}: Esta tabla constituye el núcleo del sistema de planificación académica, ya que define las diferentes versiones de mallas curriculares por carrera. Su importancia radica en que permite la gestión histórica de cambios curriculares, manteniendo múltiples versiones activas simultáneamente según el año de ingreso de los estudiantes. Es fundamental para el cálculo de recursos docentes, ya que cada malla puede tener diferentes requerimientos de tiempo de jornada según su estructura curricular y el nivel académico que representa. Facilita la transición entre planes de estudio y asegura la continuidad académica.
+
+{\color{darkblue}\Large\subsection{CurricularMeshCourse - Cursos por Malla}}
+
+\begin{longtable}{p{3cm}p{2.8cm}p{3.5cm}p{5.2cm}}
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endfirsthead
+
+\multicolumn{4}{c}%
+{{\tablename\ \thetable{} -- Continuación de la página anterior}} \\
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endhead
+
+\multicolumn{4}{r}{{Continúa en la siguiente página...}} \\
+\endfoot
+
+\endlastfoot
+
+id & String & @id @default(cuid()) & Identificador único del curso en malla \\
+\rowcolor{lightgray}
+meshId & String & @db.ObjectId & Referencia a malla curricular (FK) \\
+courseId & String & @db.ObjectId & Referencia al curso (FK) \\
+\rowcolor{lightgray}
+cycleId & String & @db.ObjectId & Ciclo académico programado (FK) \\
+isRepeatOffering & Boolean & @default(false) & Indica si es oferta de repetición \\
+\rowcolor{lightgray}
+estimatedStudents & Int & Requerido & Número estimado de estudiantes \\
+isActive & Boolean & @default(true) & Estado activo/inactivo \\
+\rowcolor{lightgray}
+createdAt & DateTime & @default(now()) & Fecha de creación del registro \\
+updatedAt & DateTime & @updatedAt & Fecha de última actualización \\
+\end{longtable}
+
+\paragraph{Relaciones:}
+\begin{itemize}
+    \item \textbf{CurricularMesh}: Malla curricular (muchos a uno)
+    \item \textbf{Course}: Curso específico (muchos a uno)
+    \item \textbf{AcademicCycle}: Ciclo académico (muchos a uno)
+    \item \textbf{ProfessorAssignment}: Asignaciones de profesores (uno a muchos)
+\end{itemize}
+
+\paragraph{Restricciones:}
+\begin{itemize}
+    \item \textbf{PK}: id
+    \item \textbf{Únicos}: curricularMeshId + courseId + academicCycleId
+\end{itemize}
+
+\vspace{0.5cm}
+
+\textbf{Propósito Detallado}: Esta tabla es fundamental para el sistema ya que relaciona los cursos específicos con las mallas curriculares y ciclos académicos. Permite la gestión granular de la oferta académica, distinguiendo entre ofertas regulares y de repetición. Es esencial para calcular los tiempos de jornada requeridos por campus y malla, ya que cada combinación curso-ciclo puede tener diferentes requerimientos de profesores y horas de contacto. Su función principal es servir como punto de control para la asignación de recursos docentes y la planificación académica por períodos.
+
+{\color{darkblue}\Large\subsection{AnnualJourneyTimeAllocation - Asignación Anual}}
+
+\begin{longtable}{p{3cm}p{2.8cm}p{3.5cm}p{5.2cm}}
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endfirsthead
+
+\multicolumn{4}{c}%
+{{\tablename\ \thetable{} -- Continuación de la página anterior}} \\
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endhead
+
+\multicolumn{4}{r}{{Continúa en la siguiente página...}} \\
+\endfoot
+
+\endlastfoot
+
+id & String & @id @default(cuid()) & Identificador único de asignación anual \\
+\rowcolor{lightgray}
+cycleId & String & @db.ObjectId & Ciclo académico (FK) \\
+totalJourneyTime & Float & @default(0) & Tiempo total disponible para el año \\
+\rowcolor{lightgray}
+totalToCampus & Float & @default(0) & Total asignado a campus \\
+totalFromExternal & Float & @default(0) & Total de proveedores externos \\
+\rowcolor{lightgray}
+availableTime & Float & @default(0) & Tiempo disponible restante \\
+observations & String? & Opcional & Observaciones adicionales \\
+\rowcolor{lightgray}
+status & AllocationStatus & @default(DRAFT) & Estado de la asignación \\
+createdAt & DateTime & @default(now()) & Fecha de creación del registro \\
+\rowcolor{lightgray}
+updatedAt & DateTime & @updatedAt & Fecha de última actualización \\
+\end{longtable}
+
+\paragraph{Relaciones:}
+\begin{itemize}
+    \item \textbf{AcademicCycle}: Ciclo académico (muchos a uno)
+    \item \textbf{CampusJourneyTimeAllocation}: Distribución por campus (uno a muchos)
+    \item \textbf{ExternalProvider}: Proveedores externos (uno a muchos)
+\end{itemize}
+
+\paragraph{Restricciones:}
+\begin{itemize}
+    \item \textbf{PK}: id
+    \item \textbf{Únicos}: academicCycleId
+    \item \textbf{Validaciones}: Todos los valores $\geq$ 0, availableJourneyTime calculado automáticamente
+\end{itemize}
+
+\vspace{0.5cm}
+
+\textbf{Propósito Detallado}: Esta tabla funciona como el núcleo de control presupuestario del sistema, estableciendo el marco financiero y de recursos para cada ciclo académico. Su importancia crítica radica en que define el techo máximo de tiempos de jornada disponibles para toda la institución por período. Controla la distribución equitativa de recursos entre campus, permite el seguimiento de aportes externos y mantiene la coherencia financiera del sistema. Es esencial para la toma de decisiones estratégicas de asignación de recursos y para generar reportes de utilización presupuestaria. Sin esta tabla, no sería posible controlar el gasto en tiempos de jornada ni planificar adecuadamente la capacidad docente institucional.
+
+{\color{darkblue}\Large\subsection{CampusJourneyTimeAllocation - Asignación por Campus}}
+
+\begin{longtable}{p{3cm}p{2.8cm}p{3.5cm}p{5.2cm}}
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endfirsthead
+
+\multicolumn{4}{c}%
+{{\tablename\ \thetable{} -- Continuación de la página anterior}} \\
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endhead
+
+\multicolumn{4}{r}{{Continúa en la siguiente página...}} \\
+\endfoot
+
+\endlastfoot
+
+id & String & @id @default(cuid()) & Identificador único de asignación \\
+\rowcolor{lightgray}
+annualAllocId & String & @db.ObjectId & Referencia a asignación anual (FK) \\
+campusId & String & @db.ObjectId & Campus específico (FK) \\
+\rowcolor{lightgray}
+meshId & String & @db.ObjectId & Malla curricular (FK) \\
+cycleId & String & @db.ObjectId & Ciclo académico (FK) \\
+\rowcolor{lightgray}
+allocatedTime & Float & @default(0) & Tiempo asignado al campus \\
+baseTimeConsumed & Float & @default(0) & Tiempo base consumido \\
+\rowcolor{lightgray}
+additionalTime & Float & @default(0) & Tiempo adicional utilizado \\
+availableTime & Float & @default(0) & Tiempo disponible restante \\
+\rowcolor{lightgray}
+status & AllocationStatus & @default(DRAFT) & Estado de la asignación \\
+createdAt & DateTime & @default(now()) & Fecha de creación del registro \\
+\rowcolor{lightgray}
+updatedAt & DateTime & @updatedAt & Fecha de última actualización \\
+\end{longtable}
+
+\paragraph{Relaciones:}
+\begin{itemize}
+    \item \textbf{AnnualJourneyTimeAllocation}: Asignación anual (muchos a uno)
+    \item \textbf{Campus}: Campus específico (muchos a uno)
+    \item \textbf{CurricularMesh}: Malla curricular (muchos a uno)
+    \item \textbf{AcademicCycle}: Ciclo académico (muchos a uno)
+    \item \textbf{ProfessorAssignment}: Asignaciones de profesores (uno a muchos)
+    \item \textbf{InstitutionalProject}: Proyectos institucionales (uno a muchos)
+\end{itemize}
+
+\paragraph{Restricciones:}
+\begin{itemize}
+    \item \textbf{PK}: id
+    \item \textbf{Únicos}: annualAllocationId + campusId + curricularMeshId
+\end{itemize}
+
+\vspace{0.5cm}
+
+\textbf{Propósito Detallado}: Esta tabla representa el nivel operativo de distribución de recursos, descomponiendo la asignación anual en unidades específicas por campus y malla curricular. Su función crítica es permitir la gestión descentralizada de recursos, donde cada campus puede administrar sus tiempos de jornada según las necesidades específicas de sus programas académicos. Facilita el control de gastos por ubicación geográfica, permite la identificación de campus con exceso o déficit de recursos, y sirve como base para la asignación de profesores específicos. Es fundamental para la planificación local y para generar reportes de utilización por campus, asegurando que los recursos se distribuyan de manera eficiente según la demanda académica real.
+
+{\color{darkblue}\Large\subsection{ProfessorAssignment - Asignaciones de Profesores}}
+
+\begin{longtable}{p{3cm}p{2.8cm}p{3.5cm}p{5.2cm}}
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endfirsthead
+
+\multicolumn{4}{c}%
+{{\tablename\ \thetable{} -- Continuación de la página anterior}} \\
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endhead
+
+\multicolumn{4}{r}{{Continúa en la siguiente página...}} \\
+\endfoot
+
+\endlastfoot
+
+id & String & @id @default(cuid()) & Identificador único de asignación \\
+\rowcolor{lightgray}
+userId & String & @db.ObjectId & Profesor asignado (FK) \\
+assignmentType & AssignmentType & Requerido & Tipo de asignación (curso/proyecto) \\
+\rowcolor{lightgray}
+meshCourseId & String? & @db.ObjectId Opcional & Curso específico (FK, opcional) \\
+cycleId & String & @db.ObjectId & Ciclo académico (FK) \\
+\rowcolor{lightgray}
+campusId & String & @db.ObjectId & Campus de ejecución (FK) \\
+projectId & String? & @db.ObjectId Opcional & Proyecto institucional (FK, opcional) \\
+\rowcolor{lightgray}
+campusAllocId & String & @db.ObjectId & Asignación de campus (FK) \\
+calcJourneyTime & Float & @default(0) & Tiempo de jornada calculado \\
+\rowcolor{lightgray}
+observations & String? & Opcional & Observaciones adicionales \\
+createdAt & DateTime & @default(now()) & Fecha de creación del registro \\
+\rowcolor{lightgray}
+updatedAt & DateTime & @updatedAt & Fecha de última actualización \\
+\end{longtable}
+
+\paragraph{Relaciones:}
+\begin{itemize}
+    \item \textbf{User}: Usuario/Profesor (muchos a uno)
+    \item \textbf{CurricularMeshCourse}: Curso específico (muchos a uno, opcional)
+    \item \textbf{AcademicCycle}: Ciclo académico (muchos a uno)
+    \item \textbf{Campus}: Campus de ejecución (muchos a uno)
+    \item \textbf{InstitutionalProject}: Proyecto institucional (muchos a uno, opcional)
+    \item \textbf{CampusJourneyTimeAllocation}: Asignación de campus (muchos a uno)
+\end{itemize}
+
+\paragraph{Restricciones:}
+\begin{itemize}
+    \item \textbf{PK}: id
+    \item \textbf{Validaciones}: calculatedJourneyTime $\geq$ 0, debe tener curricularMeshCourseId O institutionalProjectId
+\end{itemize}
+
+\vspace{0.5cm}
+
+\textbf{Propósito Detallado}: Esta tabla es el corazón operativo del sistema, ya que registra cada asignación específica de tiempo de jornada a profesores individuales. Su importancia radica en ser el punto donde se materializa toda la planificación previa, conectando recursos humanos con necesidades académicas concretas. Permite el seguimiento detallado del uso de tiempo de jornada por profesor, facilita la identificación de sobrecargas o subutilización de recursos, y sirve como base para cálculos de nómina y reportes de productividad académica. Es esencial para el control de calidad docente, la planificación de horarios, y para asegurar que cada curso y proyecto tenga los recursos humanos necesarios para su ejecución exitosa.
+
+{\color{darkblue}\Large\subsection{InstitutionalProject - Proyectos Institucionales}}
+
+\begin{longtable}{p{3cm}p{2.8cm}p{3.5cm}p{5.2cm}}
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endfirsthead
+
+\multicolumn{4}{c}%
+{{\tablename\ \thetable{} -- Continuación de la página anterior}} \\
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endhead
+
+\multicolumn{4}{r}{{Continúa en la siguiente página...}} \\
+\endfoot
+
+\endlastfoot
+
+id & String & @id @default(cuid()) & Identificador único del proyecto \\
+\rowcolor{lightgray}
+name & String & Requerido & Nombre del proyecto institucional \\
+description & String? & Opcional & Descripción detallada del proyecto \\
+\rowcolor{lightgray}
+projectType & ProjectType & Requerido & Tipo de proyecto institucional \\
+directorId & String & @db.ObjectId & Director del proyecto (FK) \\
+\rowcolor{lightgray}
+campusId & String & @db.ObjectId & Campus de ejecución (FK) \\
+campusAllocId & String & @db.ObjectId & Asignación de campus (FK) \\
+\rowcolor{lightgray}
+startDate & DateTime & Requerido & Fecha de inicio del proyecto \\
+endDate & DateTime? & Opcional & Fecha de finalización (opcional) \\
+\rowcolor{lightgray}
+requiredTime & Float & @default(0) & Tiempo de jornada requerido \\
+assignedTime & Float & @default(0) & Tiempo de jornada asignado \\
+\rowcolor{lightgray}
+status & AllocationStatus & @default(DRAFT) & Estado del proyecto \\
+createdAt & DateTime & @default(now()) & Fecha de creación del registro \\
+\rowcolor{lightgray}
+updatedAt & DateTime & @updatedAt & Fecha de última actualización \\
+\end{longtable}
+
+\paragraph{Relaciones:}
+\begin{itemize}
+    \item \textbf{User}: Director del proyecto (muchos a uno)
+    \item \textbf{Campus}: Campus de ejecución (muchos a uno)
+    \item \textbf{CampusJourneyTimeAllocation}: Asignación de campus (muchos a uno)
+    \item \textbf{ProfessorAssignment}: Asignaciones de profesores (uno a muchos)
+\end{itemize}
+
+\paragraph{Restricciones:}
+\begin{itemize}
+    \item \textbf{PK}: id
+    \item \textbf{Validaciones}: requiredJourneyTime $\geq$ 0, assignedJourneyTime $\geq$ 0, startDate $\leq$ endDate
+\end{itemize}
+
+\vspace{0.5cm}
+
+\textbf{Propósito Detallado}: Esta tabla gestiona las actividades institucionales que van más allá de la docencia tradicional pero que requieren tiempo de jornada de los profesores. Su importancia estratégica radica en que permite balancear las cargas de trabajo entre actividades de enseñanza y proyectos de investigación, extensión o administración. Es fundamental para el cumplimiento de objetivos institucionales más amplios, facilita la asignación de recursos para actividades de desarrollo institucional, y permite el seguimiento de la productividad académica en áreas no docentes. Contribuye a la planificación integral de recursos humanos y asegura que las actividades estratégicas de la institución tengan el respaldo de tiempo de jornada necesario.
+
+{\color{darkblue}\Large\subsection{ExternalProvider - Proveedores Externos}}
+
+\begin{longtable}{p{3cm}p{2.8cm}p{3.5cm}p{5.2cm}}
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endfirsthead
+
+\multicolumn{4}{c}%
+{{\tablename\ \thetable{} -- Continuación de la página anterior}} \\
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endhead
+
+\multicolumn{4}{r}{{Continúa en la siguiente página...}} \\
+\endfoot
+
+\endlastfoot
+
+id & String & @id @default(cuid()) & Identificador único del proveedor \\
+\rowcolor{lightgray}
+name & String & Requerido & Nombre del proveedor externo \\
+description & String? & Opcional & Descripción del proveedor \\
+\rowcolor{lightgray}
+providerType & ProviderType & Requerido & Tipo de proveedor externo \\
+contactInfo & String? & Opcional & Información de contacto \\
+\rowcolor{lightgray}
+providedTime & Float & @default(0) & Tiempo de jornada proporcionado \\
+certaintyType & CertaintyType & Requerido & Nivel de certeza del aporte \\
+\rowcolor{lightgray}
+contractDetails & String? & Opcional & Detalles del contrato/acuerdo \\
+startDate & DateTime & Requerido & Fecha de inicio del acuerdo \\
+\rowcolor{lightgray}
+endDate & DateTime? & Opcional & Fecha de finalización (opcional) \\
+annualAllocId & String & @db.ObjectId & Asignación anual (FK) \\
+\rowcolor{lightgray}
+isActive & Boolean & @default(true) & Estado activo/inactivo \\
+createdAt & DateTime & @default(now()) & Fecha de creación del registro \\
+\rowcolor{lightgray}
+updatedAt & DateTime & @updatedAt & Fecha de última actualización \\
+\end{longtable}
+
+\paragraph{Relaciones:}
+\begin{itemize}
+    \item \textbf{AnnualJourneyTimeAllocation}: Asignación anual (muchos a uno)
+\end{itemize}
+
+\paragraph{Restricciones:}
+\begin{itemize}
+    \item \textbf{PK}: id
+    \item \textbf{Validaciones}: providedJourneyTime $\geq$ 0, startDate $\leq$ endDate
+\end{itemize}
+
+\vspace{0.5cm}
+
+\textbf{Propósito Detallado}: Esta tabla es crucial para la sostenibilidad financiera del sistema, ya que registra fuentes de financiamiento externo que complementan el presupuesto institucional de tiempos de jornada. Su importancia estratégica radica en que permite diversificar las fuentes de financiamiento, reducir la dependencia de recursos internos, y facilitar la gestión de proyectos con financiamiento externo. Es fundamental para el cumplimiento de compromisos contractuales con entidades financiadoras, permite el seguimiento de la certeza de ingresos, y facilita la planificación de recursos considerando tanto fuentes seguras como probables. Contribuye significativamente a la estabilidad financiera y al crecimiento de la capacidad institucional.
+
+{\color{darkblue}\Large\subsection{JourneyTimeCalculationConfig - Configuración de Cálculos}}
+
+\begin{longtable}{p{3cm}p{2.8cm}p{3.5cm}p{5.2cm}}
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endfirsthead
+
+\multicolumn{4}{c}%
+{{\tablename\ \thetable{} -- Continuación de la página anterior}} \\
+\rowcolor{darkblue}
+\textcolor{white}{\textbf{Campo}} & \textcolor{white}{\textbf{Tipo}} & \textcolor{white}{\textbf{Restricciones}} & \textcolor{white}{\textbf{Descripción}} \\
+\endhead
+
+\multicolumn{4}{r}{{Continúa en la siguiente página...}} \\
+\endfoot
+
+\endlastfoot
+
+id & String & @id @default(cuid()) & Identificador único de configuración \\
+\rowcolor{lightgray}
+quarterMinHours & Int & @default(10) & Mínimo de horas para 1/4 tiempo \\
+quarterMaxHours & Int & @default(20) & Máximo de horas para 1/4 tiempo \\
+\rowcolor{lightgray}
+halfMinHours & Int & @default(21) & Mínimo de horas para 1/2 tiempo \\
+halfMaxHours & Int & @default(30) & Máximo de horas para 1/2 tiempo \\
+\rowcolor{lightgray}
+threeQuarterMin & Int & @default(31) & Mínimo de horas para 3/4 tiempo \\
+threeQuarterMax & Int & @default(37) & Máximo de horas para 3/4 tiempo \\
+\rowcolor{lightgray}
+fullTimeMin & Int & @default(38) & Mínimo de horas para tiempo completo \\
+quarterValue & Float & @default(0.25) & Valor de 1/4 tiempo de jornada \\
+\rowcolor{lightgray}
+halfValue & Float & @default(0.5) & Valor de 1/2 tiempo de jornada \\
+threeQuarterValue & Float & @default(0.75) & Valor de 3/4 tiempo de jornada \\
+\rowcolor{lightgray}
+fullValue & Float & @default(1.0) & Valor de tiempo completo \\
+isActive & Boolean & @default(true) & Configuración activa \\
+\rowcolor{lightgray}
+createdAt & DateTime & @default(now()) & Fecha de creación del registro \\
+updatedAt & DateTime & @updatedAt & Fecha de última actualización \\
+\end{longtable}
+
+\paragraph{Restricciones:}
+\begin{itemize}
+    \item \textbf{PK}: id
+    \item \textbf{Validaciones}: Todos los valores $>$ 0, rangos no superpuestos, solo una configuración activa
+\end{itemize}
+
+\textbf{Propósito Detallado}: Esta tabla es el motor de automatización del sistema, estableciendo las reglas de negocio que permiten convertir automáticamente las horas de contacto académico en equivalencias de tiempo de jornada. Su importancia fundamental radica en que estandariza los cálculos en toda la institución, elimina discrecionalidades en las asignaciones, y asegura la equidad en la distribución de cargas de trabajo. Es esencial para la escalabilidad del sistema, ya que permite procesar grandes volúmenes de asignaciones de manera consistente. Facilita la transparencia en los cálculos, permite ajustes institucionales de políticas de carga académica, y sirve como base para auditorías y validaciones de las asignaciones de tiempo de jornada.
+
+\newpage
+
+\section{Relaciones entre Modelos}
+
+\subsection{Relaciones Principales}
+
+\textbf{Jerarquía de Asignación de Tiempos:}
+\begin{itemize}
+    \item \textbf{AnnualJourneyTimeAllocation}: annualAllocationId, academicCycleId
+    \item \textbf{CampusJourneyTimeAllocation}: annualAllocationId, campusId, curricularMeshId, academicCycleId
+    \item \textbf{ProfessorAssignment}: campusAllocationId, userId, curricularMeshCourseId/institutionalProjectId
+    \item \textbf{InstitutionalProject}: campusAllocationId, directorId
+\end{itemize}
+
+\textbf{Relaciones de Configuración Académica:}
+\begin{itemize}
+    \item \textbf{CurricularMesh}: careerId
+    \item \textbf{CurricularMeshCourse}: curricularMeshId, courseId, academicCycleId
+    \item \textbf{ProfessorAssignment}: curricularMeshCourseId, academicCycleId, campusId
+\end{itemize}
+
+\textbf{Relaciones de Apoyo Externo:}
+\begin{itemize}
+    \item \textbf{ExternalProvider}: annualAllocationId
+\end{itemize}
+
+\subsection{Claves Foráneas}
+
+Las siguientes son las relaciones de claves foráneas principales:
+
+\begin{itemize}
+    \item \textbf{CurricularMesh} $\rightarrow$ Career: careerId
+    \item \textbf{CurricularMeshCourse} $\rightarrow$ CurricularMesh: curricularMeshId
+    \item \textbf{CurricularMeshCourse} $\rightarrow$ Course: courseId
+    \item \textbf{CurricularMeshCourse} $\rightarrow$ AcademicCycle: academicCycleId
+    \item \textbf{AnnualJourneyTimeAllocation} $\rightarrow$ AcademicCycle: academicCycleId
+    \item \textbf{CampusJourneyTimeAllocation} $\rightarrow$ AnnualJourneyTimeAllocation: annualAllocationId, Campus: campusId, CurricularMesh: curricularMeshId, AcademicCycle: academicCycleId
+    \item \textbf{ProfessorAssignment} $\rightarrow$ User: userId, CurricularMeshCourse: curricularMeshCourseId, AcademicCycle: academicCycleId, Campus: campusId, InstitutionalProject: institutionalProjectId, CampusJourneyTimeAllocation: campusAllocationId
+    \item \textbf{InstitutionalProject} $\rightarrow$ User: directorId, Campus: campusId, CampusJourneyTimeAllocation: campusAllocationId
+    \item \textbf{ExternalProvider} $\rightarrow$ AnnualJourneyTimeAllocation: annualAllocationId
+\end{itemize}
+
+\subsection{Restricciones de Integridad}
+
+\textbf{Restricciones Generales:}
+\begin{itemize}
+    \item \textbf{Fechas}: startDate $\leq$ endDate (donde aplique)
+    \item \textbf{Tiempos}: Todos los valores de tiempo $\geq$ 0
+    \item \textbf{Estados}: Solo registros activos pueden tener asignaciones
+    \item \textbf{Unicidad}: Combinaciones específicas deben ser únicas
+\end{itemize}
+
+\textbf{Restricciones de Negocio:}
+\begin{itemize}
+    \item Un profesor no puede tener asignaciones superpuestas en el mismo período
+    \item El tiempo total asignado no puede exceder el tiempo disponible
+    \item Los proyectos deben tener al menos un director asignado
+    \item Solo puede existir una configuración de cálculo activa a la vez
+\end{itemize}
+
+\newpage
+
+\section{Enumeraciones del Sistema}
+
+\subsection{AssignmentType - Tipos de Asignación}
+\begin{itemize}
+    \item \textbf{COURSE}: Asignación a curso regular
+    \item \textbf{INSTITUTIONAL\_PROJECT}: Asignación a proyecto institucional
+\end{itemize}
+
+\subsection{ProjectType - Tipos de Proyecto}
+\begin{itemize}
+    \item \textbf{RESEARCH}: Proyecto de investigación
+    \item \textbf{EXTENSION}: Proyecto de extensión universitaria
+    \item \textbf{ADMINISTRATIVE}: Proyecto administrativo
+    \item \textbf{ACADEMIC\_SUPPORT}: Apoyo académico
+\end{itemize}
+
+\subsection{ProviderType - Tipos de Proveedor}
+\begin{itemize}
+    \item \textbf{GOVERNMENT\_AGREEMENT}: Acuerdo gubernamental
+    \item \textbf{PRIVATE\_CONTRACT}: Contrato privado
+    \item \textbf{INTERNATIONAL\_COOPERATION}: Cooperación internacional
+    \item \textbf{FOUNDATION\_GRANT}: Beca de fundación
+\end{itemize}
+
+\subsection{CertaintyType - Tipos de Certeza}
+\begin{itemize}
+    \item \textbf{CONFIRMED}: Confirmado y garantizado
+    \item \textbf{PROBABLE}: Probable pero no confirmado
+    \item \textbf{UNCERTAIN}: Incierto, dependiente de condiciones
+\end{itemize}
+
+\subsection{AllocationStatus - Estados de Asignación}
+\begin{itemize}
+    \item \textbf{DRAFT}: Borrador, en planificación
+    \item \textbf{APPROVED}: Aprobado para ejecución
+    \item \textbf{ACTIVE}: Activo y en ejecución
+    \item \textbf{COMPLETED}: Completado exitosamente
+    \item \textbf{CANCELLED}: Cancelado
+\end{itemize}
+
+\subsection{JourneyTimeType - Tipos de Tiempo de Jornada}
+\begin{itemize}
+    \item \textbf{QUARTER}: Un cuarto de tiempo (0.25)
+    \item \textbf{HALF}: Medio tiempo (0.5)
+    \item \textbf{THREE\_QUARTER}: Tres cuartos de tiempo (0.75)
+    \item \textbf{FULL}: Tiempo completo (1.0)
+\end{itemize}
+
+\end{document}

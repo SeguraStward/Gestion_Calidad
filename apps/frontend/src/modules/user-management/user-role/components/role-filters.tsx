@@ -24,7 +24,7 @@ export function RoleFiltersComponent({
       key: 'search',
       label: 'Buscar',
       type: 'text',
-      placeholder: 'Nombre o código del rol...'
+      placeholder: 'Nombre del rol...'
     },
     {
       key: 'status',
@@ -34,6 +34,25 @@ export function RoleFiltersComponent({
         { value: 'ALL', label: 'Todos' },
         { value: 'ACTIVE', label: 'Activo' },
         { value: 'INACTIVE', label: 'Inactivo' }
+      ]
+    },
+    {
+      key: 'sortBy',
+      label: 'Ordenar por',
+      type: 'select',
+      options: [
+        { value: 'name', label: 'Nombre' },
+        { value: 'createdAt', label: 'Fecha de creación' },
+        { value: 'updatedAt', label: 'Última actualización' }
+      ]
+    },
+    {
+      key: 'sortOrder',
+      label: 'Orden',
+      type: 'select',
+      options: [
+        { value: 'asc', label: 'Ascendente' },
+        { value: 'desc', label: 'Descendente' }
       ]
     }
   ]

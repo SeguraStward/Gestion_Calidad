@@ -33,7 +33,9 @@ export default function RoleListPage() {
   const { hasPermission } = useAuth()
   const [filters, setFilters] = useState<UserRoleFilters>({
     page: 1,
-    limit: 10
+    limit: 10,
+    sortBy: 'name',
+    sortOrder: 'asc'
   })
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -133,7 +135,7 @@ export default function RoleListPage() {
             onFiltersChange={setFilters}
             onSearch={() => refetch()}
             onClear={() => {
-              setFilters({ page: 1, limit: 10 })
+              setFilters({ page: 1, limit: 10, sortBy: 'name', sortOrder: 'asc' })
               refetch()
             }}
           />

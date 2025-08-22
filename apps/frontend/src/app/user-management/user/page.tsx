@@ -33,7 +33,9 @@ export default function UserListPage() {
   const { hasPermission } = useAuth()
   const [filters, setFilters] = useState<UserFilters>({
     page: 1,
-    limit: 10
+    limit: 10,
+    sortBy: 'fullName',
+    sortOrder: 'asc'
   })
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -137,7 +139,7 @@ export default function UserListPage() {
             onFiltersChange={handleFiltersChange}
             onSearch={() => refetch()}
             onClear={() => {
-              setFilters({ page: 1, limit: 10 })
+              setFilters({ page: 1, limit: 10, sortBy: 'fullName', sortOrder: 'asc' })
               refetch()
             }}
           />

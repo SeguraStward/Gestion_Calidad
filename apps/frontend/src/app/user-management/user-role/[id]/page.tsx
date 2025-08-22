@@ -12,16 +12,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@una-gc/ui/components/badge'
 import { toast } from 'sonner'
 import { ArrowLeft, Save, Plus, X, Shield, Users, FileText, BarChart3, Trash2, Loader2 } from 'lucide-react'
-import { useUserRole, useUpdateUserRole, useGetAllPermissions } from '@/modules/user-management/user-role/service/user-role.service'
+import { useUserRole, useUpdateUserRole, useGetAllPermissions, useUserRoleWithPermissions } from '@/modules/user-management/user-role/service/user-role.service'
 import { PermissionType, PermissionScope } from '@/modules/auth/types'
-import type { UserRoleStatus } from '@/modules/user-management/user-role/types/user-role.types'
+import type { UserRoleStatus, RolePermissionAssignment, SimpleUserPermission } from '@/modules/user-management/user-role/types/user-role.types'
 
 const PERMISSION_TYPES = [
-  { value: PermissionType.CREATE, label: 'Crear', icon: Plus, color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' },
-  { value: PermissionType.READ, label: 'Leer', icon: FileText, color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100' },
-  { value: PermissionType.UPDATE, label: 'Actualizar', icon: Shield, color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100' },
-  { value: PermissionType.DELETE, label: 'Eliminar', icon: Trash2, color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100' },
-  { value: PermissionType.REPORT, label: 'Reportes', icon: BarChart3, color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100' }
+  { value: PermissionType.CREATE, label: 'Crear', icon: Plus, color: 'bg-green-100 text-green-800' },
+  { value: PermissionType.READ, label: 'Leer', icon: FileText, color: 'bg-blue-100 text-blue-800' },
+  { value: PermissionType.UPDATE, label: 'Actualizar', icon: Shield, color: 'bg-yellow-100 text-yellow-800' },
+  { value: PermissionType.DELETE, label: 'Eliminar', icon: Trash2, color: 'bg-red-100 text-red-800' },
+  { value: PermissionType.REPORT, label: 'Reportes', icon: BarChart3, color: 'bg-purple-100 text-purple-800' }
 ]
 
 const PERMISSION_SCOPES = [
@@ -29,11 +29,9 @@ const PERMISSION_SCOPES = [
   { value: PermissionScope.OWN, label: 'Solo recursos propios' }
 ]
 
-interface PermissionAssignment {
-  permissionID: string
-  permissions: PermissionType[]
-  scope: PermissionScope
-  actions: string[]
+// Permission assignment interface for the role (extends the base type with display info)
+interface PermissionAssignment extends RolePermissionAssignment {
+  // Display info from backend permission
   name?: string
   code?: string
 }
@@ -43,9 +41,9 @@ export default function EditUserRolePage() {
   const router = useRouter()
   const roleId = params.id as string
 
-  const { data: role, isLoading, error } = useUserRole(roleId)
+  const { data: role, isLoading, error } = useUserRoleWithPermissions(roleId)
   const { mutate: updateRole, isPending } = useUpdateUserRole()
-  const { data: availablePermissions, isLoading: permissionsLoading } = useGetAllPermissions()
+  const { data: availablePermissions, isLoading: permissionsLoading, error: permissionsError } = useGetAllPermissions()
 
   const [formData, setFormData] = useState({
     name: '',
@@ -61,66 +59,121 @@ export default function EditUserRolePage() {
     actions: [] as string[]
   })
   const [customAction, setCustomAction] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isTogglingPermission, setIsTogglingPermission] = useState(false)
+
+  // Debug permissions data safely in useEffect
+  useEffect(() => {
+    const roleData = role?.data || role
+    console.log('🔍 Edit page - Permissions loading:', permissionsLoading)
+    console.log('🔍 Edit page - Permissions data count:', availablePermissions?.length)
+    console.log('🔍 Edit page - Role data:', roleData?.name, roleData?.id)
+    console.log('🔍 Edit page - Permissions error:', permissionsError)
+  }, [availablePermissions, permissionsLoading, permissionsError, role])
 
   // Initialize form data when role loads
   useEffect(() => {
-    if (role && availablePermissions) {
+    if (role) {
+      // Extract actual role data from nested structure
+      const roleData = role.data || role
+      console.log('🔄 Initializing form data with role:', roleData.name)
+      console.log('🔍 Full role object:', role)
+      console.log('🔍 Extracted role data:', roleData)
+      console.log('🔍 Role permissions count:', roleData.permissions?.length)
+      console.log('🔍 Role permissions data:', roleData.permissions)
+
       setFormData({
-        name: role.name,
-        description: role.description || '',
-        status: role.status || 'ACTIVE'
+        name: roleData.name,
+        description: roleData.description || '',
+        status: roleData.status || 'ACTIVE'
       })
 
-      const rolePermissions = role.permissions?.map((perm: any) => {
-        const permissionDetails = availablePermissions.find((ap: any) => ap.id === perm.permissionID)
-        return {
-          permissionID: perm.permissionID,
-          permissions: perm.permissions || [],
-          scope: perm.scope,
-          actions: perm.actions || [],
-          name: permissionDetails?.name || '',
-          code: permissionDetails?.code || ''
-        }
-      }) || []
+      // Map enriched permissions to assignments
+      const rolePermissions = roleData.permissions?.map((perm: any) => ({
+        permissionID: perm.id, // Using 'id' from enriched permission
+        permissions: perm.type || [], // Using 'type' from enriched permission
+        scope: perm.scope,
+        actions: perm.actions || [],
+        name: perm.name, // Already available in enriched permission
+        code: perm.code  // Already available in enriched permission
+      })) || []
 
+      console.log('🔄 Setting assigned permissions count:', rolePermissions.length)
+      console.log('🔄 Mapped permissions:', rolePermissions)
       setAssignedPermissions(rolePermissions)
     }
-  }, [role, availablePermissions])
+  }, [role])
 
-  const handleInputChange = useCallback((field: string, value: string) => {
+  const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-  }, [])
+  }
 
   const handlePermissionTypeToggle = useCallback((type: PermissionType) => {
+    // Prevent multiple rapid clicks
+    if (isTogglingPermission) return
+
+    setIsTogglingPermission(true)
     setNewPermissionAssignment(prev => ({
       ...prev,
       permissions: prev.permissions.includes(type)
         ? prev.permissions.filter(t => t !== type)
         : [...prev.permissions, type]
     }))
-  }, [])
+
+    // Reset the debounce flag after a short delay
+    setTimeout(() => setIsTogglingPermission(false), 100)
+  }, [isTogglingPermission])
 
   const addCustomAction = useCallback(() => {
-    if (customAction.trim() && !newPermissionAssignment.actions.includes(customAction.trim())) {
-      setNewPermissionAssignment(prev => ({
-        ...prev,
-        actions: [...prev.actions, customAction.trim()]
-      }))
-      setCustomAction('')
+    console.log('🔧 ===== ADDCUSTOMACTION CALLED =====')
+    console.log('🔧 Current customAction value:', `"${customAction}"`)
+    console.log('🔧 Current actions array:', newPermissionAssignment.actions)
+
+    const trimmedAction = customAction.trim()
+    console.log('🔧 Trimmed action:', `"${trimmedAction}"`)
+
+    if (!trimmedAction) {
+      console.log('🔧 ❌ Action is empty, returning')
+      return
     }
+
+    if (newPermissionAssignment.actions.includes(trimmedAction)) {
+      console.log('🔧 ❌ Action already exists, returning')
+      return
+    }
+
+    console.log('🔧 ✅ Action is valid, updating state...')
+
+    setNewPermissionAssignment(prev => {
+      const newActions = [...prev.actions, trimmedAction]
+      const updated = { ...prev, actions: newActions }
+      console.log('🔧 📝 State update - Previous:', prev.actions)
+      console.log('🔧 📝 State update - New:', newActions)
+      console.log('🔧 📝 State update - Full object:', updated)
+      return updated
+    })
+
+    setCustomAction('')
+    console.log('🔧 📝 Cleared customAction input')
+    console.log('🔧 ===== ADDCUSTOMACTION FINISHED =====')
   }, [customAction, newPermissionAssignment.actions])
 
-  const removeCustomAction = useCallback((action: string) => {
+  // Efecto para ver cambios en newPermissionAssignment
+  useEffect(() => {
+    console.log('🔧 🔄 newPermissionAssignment changed:', newPermissionAssignment)
+  }, [newPermissionAssignment])
+
+  const removeCustomAction = (action: string) => {
     setNewPermissionAssignment(prev => ({
       ...prev,
       actions: prev.actions.filter(a => a !== action)
     }))
-  }, [])
+  }
 
-  const addPermissionAssignment = useCallback(() => {
+  const addPermissionAssignment = () => {
+    console.log('🔧 Adding permission assignment:', newPermissionAssignment)
+
     if (newPermissionAssignment.permissionID && newPermissionAssignment.permissions.length > 0) {
-      const selectedPermission = availablePermissions?.find((p: any) => p.id === newPermissionAssignment.permissionID)
+      const selectedPermission = availablePermissions?.find((p: SimpleUserPermission) => p.id === newPermissionAssignment.permissionID)
 
       const assignment: PermissionAssignment = {
         permissionID: newPermissionAssignment.permissionID,
@@ -131,7 +184,15 @@ export default function EditUserRolePage() {
         code: selectedPermission?.code
       }
 
-      setAssignedPermissions(prev => [...prev, assignment])
+      console.log('🔧 Final assignment to add:', assignment)
+      console.log('🔧 Actions in assignment:', assignment.actions)
+
+      setAssignedPermissions(prev => {
+        const newAssignments = [...prev, assignment]
+        console.log('🔧 All assignments after adding:', newAssignments)
+        return newAssignments
+      })
+
       setNewPermissionAssignment({
         permissionID: '',
         permissions: [],
@@ -139,56 +200,61 @@ export default function EditUserRolePage() {
         actions: []
       })
     }
-  }, [newPermissionAssignment, availablePermissions])
+  }
 
-  const removePermissionAssignment = useCallback((permissionID: string) => {
+  const removePermissionAssignment = (permissionID: string) => {
     setAssignedPermissions(prev => prev.filter(p => p.permissionID !== permissionID))
-  }, [])
+  }
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (isSubmitting) return
 
     if (!formData.name.trim()) {
       toast.error('El nombre del rol es requerido')
       return
     }
 
-    setIsSubmitting(true)
-
-    try {
-      const rolePermissions = assignedPermissions.map(assignment => ({
-        permissionID: assignment.permissionID,
-        permissions: assignment.permissions,
-        scope: assignment.scope,
-        actions: assignment.actions
-      }))
-
-      const updateData: any = {
-        name: formData.name.trim(),
-        description: formData.description.trim(),
-        status: formData.status,
-        permissions: rolePermissions
+    // Convert assignments to the format expected by backend
+    const rolePermissions = assignedPermissions.map(assignment => {
+      // Validate assignment data
+      if (!assignment.permissionID || assignment.permissionID.trim() === '') {
+        throw new Error('ID de permiso inválido')
       }
 
-      updateRole({ id: roleId, data: updateData }, {
-        onSuccess: () => {
-          toast.success('Rol actualizado correctamente')
-          router.push('/user-management/user-role')
-        },
-        onError: (error: any) => {
-          toast.error(error?.message || 'Error al actualizar el rol')
-        },
-        onSettled: () => {
-          setIsSubmitting(false)
-        }
-      })
-    } catch (error) {
-      setIsSubmitting(false)
-      toast.error('Error inesperado al actualizar el rol')
+      if (!Array.isArray(assignment.permissions) || assignment.permissions.length === 0) {
+        throw new Error('Tipos de permiso son requeridos')
+      }
+
+      return {
+        permissionID: assignment.permissionID.trim(),
+        permissions: assignment.permissions,
+        scope: assignment.scope,
+        actions: assignment.actions || []
+      }
+    })
+
+    const updateData = {
+      name: formData.name.trim(),
+      description: formData.description?.trim() || '',
+      status: formData.status,
+      permissions: rolePermissions
     }
-  }, [formData, assignedPermissions, roleId, updateRole, router, isSubmitting])
+
+    console.log('🚀 Updating role with data:', updateData)
+    console.log('📋 Role permissions:', JSON.stringify(rolePermissions, null, 2))
+
+    updateRole({ id: roleId, data: updateData as any }, {
+      onSuccess: () => {
+        console.log('✅ Role updated successfully')
+        toast.success('Rol actualizado correctamente')
+        router.push('/user-management/user-role')
+      },
+      onError: (error: any) => {
+        console.error('❌ Error updating role:', error)
+        toast.error(error?.message || 'Error al actualizar el rol')
+      }
+    })
+  }
 
   if (isLoading || permissionsLoading) {
     return (
@@ -209,6 +275,64 @@ export default function EditUserRolePage() {
             <div className="text-center">
               <h2 className="text-lg font-semibold text-red-600">Error al cargar el rol</h2>
               <p className="text-muted-foreground mt-2">No se pudo cargar la información del rol</p>
+              <Button
+                onClick={() => router.push('/user-management/user-role')}
+                className="mt-4"
+              >
+                Volver a Roles
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (isLoading || permissionsLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+              <h2 className="text-lg font-semibold">Cargando datos del rol...</h2>
+              <p className="text-muted-foreground mt-2">Por favor espera mientras cargamos la información</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <h2 className="text-lg font-semibold text-red-600">Error al cargar el rol</h2>
+              <p className="text-muted-foreground mt-2">No se pudo cargar la información del rol</p>
+              <Button
+                onClick={() => router.push('/user-management/user-role')}
+                className="mt-4"
+              >
+                Volver a Roles
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (permissionsError) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <h2 className="text-lg font-semibold text-red-600">Error al cargar permisos</h2>
+              <p className="text-muted-foreground mt-2">No se pudieron cargar los permisos del sistema</p>
               <Button
                 onClick={() => router.push('/user-management/user-role')}
                 className="mt-4"
@@ -321,9 +445,9 @@ export default function EditUserRolePage() {
                     <SelectValue placeholder="Selecciona un permiso..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {availablePermissions?.filter((p: any) =>
+                    {Array.isArray(availablePermissions) && availablePermissions.filter((p: SimpleUserPermission) =>
                       !assignedPermissions.find(ap => ap.permissionID === p.id)
-                    ).map((permission: any) => (
+                    ).map((permission: SimpleUserPermission) => (
                       <SelectItem key={permission.id} value={permission.id}>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{permission.name}</span>
@@ -331,6 +455,16 @@ export default function EditUserRolePage() {
                         </div>
                       </SelectItem>
                     ))}
+                    {!Array.isArray(availablePermissions) && availablePermissions && (
+                      <SelectItem value="" disabled>
+                        Error: Los permisos no están en el formato correcto
+                      </SelectItem>
+                    )}
+                    {!availablePermissions && (
+                      <SelectItem value="" disabled>
+                        Cargando permisos...
+                      </SelectItem>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -345,12 +479,15 @@ export default function EditUserRolePage() {
                       <div
                         key={permType.value}
                         className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${isSelected
-                          ? 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-200'
-                          : 'bg-background border-border hover:bg-accent hover:text-accent-foreground'
-                          }`}
+                          ? 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-200'
+                          : 'bg-gray-50 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:text-gray-200'
+                          } ${isTogglingPermission ? 'pointer-events-none opacity-50' : ''}`}
                         onClick={() => handlePermissionTypeToggle(permType.value)}
                       >
-                        <Checkbox checked={isSelected} onChange={() => { }} />
+                        <Checkbox
+                          checked={isSelected}
+                          className="pointer-events-none"
+                        />
                         <Icon className="h-4 w-4" />
                         <span className="text-sm font-medium">{permType.label}</span>
                       </div>
@@ -383,18 +520,42 @@ export default function EditUserRolePage() {
                 <div className="flex gap-2">
                   <Input
                     value={customAction}
-                    onChange={(e) => setCustomAction(e.target.value)}
+                    onChange={(e) => {
+                      console.log('🔧 Custom action input changed:', e.target.value)
+                      setCustomAction(e.target.value)
+                    }}
                     placeholder="Ej: approve, reject, export"
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomAction())}
+                    onKeyDown={(e) => {
+                      console.log('🔧 Key pressed:', e.key, 'Value:', customAction)
+                      if (e.key === 'Enter') {
+                        console.log('🔧 Enter pressed! Preventing default and calling addCustomAction')
+                        e.preventDefault()
+                        e.stopPropagation()
+                        addCustomAction()
+                      }
+                    }}
                   />
-                  <Button type="button" onClick={addCustomAction} variant="outline">
+                  <Button
+                    type="button"
+                    onClick={(e) => {
+                      console.log('🔧 Plus button clicked! Event:', e)
+                      e.preventDefault()
+                      e.stopPropagation()
+                      addCustomAction()
+                    }}
+                    variant="outline"
+                    disabled={!customAction.trim()}
+                  >
                     <Plus className="h-4 w-4" />
                   </Button>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Current actions: {JSON.stringify(newPermissionAssignment.actions)}
                 </div>
                 {newPermissionAssignment.actions.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2">
                     {newPermissionAssignment.actions.map((action, index) => (
-                      <Badge key={`action-${index}`} variant="secondary" className="flex items-center gap-1">
+                      <Badge key={`new-action-${index}`} variant="secondary" className="flex items-center gap-1">
                         {action}
                         <X
                           className="h-3 w-3 cursor-pointer"
@@ -495,15 +656,15 @@ export default function EditUserRolePage() {
           </Button>
           <Button
             type="submit"
-            disabled={isPending || isSubmitting}
+            disabled={isPending}
             className="flex items-center gap-2"
           >
-            {(isPending || isSubmitting) ? (
+            {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Save className="h-4 w-4" />
             )}
-            {(isPending || isSubmitting) ? 'Actualizando...' : 'Actualizar Rol'}
+            {isPending ? 'Actualizando...' : 'Actualizar Rol'}
           </Button>
         </div>
       </form>

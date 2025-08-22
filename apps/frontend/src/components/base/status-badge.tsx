@@ -19,7 +19,7 @@ export function getStatusLabel(status: UserStatus) {
     case 'ACTIVE':
       return 'Activo'
     case 'INACTIVE':
-      return 'Archivado'
+      return 'Inactivo'
     default:
       return status
   }

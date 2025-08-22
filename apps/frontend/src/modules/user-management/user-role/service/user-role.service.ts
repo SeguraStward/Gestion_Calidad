@@ -25,7 +25,17 @@ class UserRoleService extends GenericService<
 
   // Métodos personalizados para roles
   async getRolePermissions(roleId: string) {
-    return HttpClient.get<any>(`${this.resource}/roles-permissions/${roleId}`).then(res => res.data)
+    console.log('🔍 getRolePermissions called with roleId:', roleId)
+    console.log('🔍 Full URL:', `${this.resource}/roles-permissions/${roleId}`)
+    try {
+      const response = await HttpClient.get<any>(`${this.resource}/roles-permissions/${roleId}`)
+      console.log('🔍 getRolePermissions response:', response)
+      // Los datos están en response.data.data, no en response.data directamente
+      return response.data.data
+    } catch (error) {
+      console.error('❌ getRolePermissions error:', error)
+      throw error
+    }
   }
 
   // Custom delete method with better error handling and debugging
@@ -126,6 +136,26 @@ export function useGetRolePermissions(roleId: string) {
     queryKey: ['role-permissions', roleId],
     queryFn: () => userRoleService.getRolePermissions(roleId),
     enabled: !!roleId
+  })
+}
+
+// Hook específico para obtener rol con permisos enriquecidos (para edición)
+export function useUserRoleWithPermissions(roleId: string) {
+  console.log('🔍 useUserRoleWithPermissions called with roleId:', roleId)
+  return useQuery({
+    queryKey: ['user-role-with-permissions', roleId],
+    queryFn: async () => {
+      console.log('🔍 Executing queryFn for roleId:', roleId)
+      const result = await userRoleService.getRolePermissions(roleId)
+      console.log('🔍 useUserRoleWithPermissions result:', result)
+      return result
+    },
+    enabled: !!roleId,
+    retry: 1,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos
+    refetchOnWindowFocus: false
   })
 }
 

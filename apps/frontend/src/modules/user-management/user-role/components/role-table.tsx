@@ -53,15 +53,6 @@ export function RoleTable({
   const columns = useOptimizedColumns(() => {
     const cols: ColumnDef<UserRole>[] = [
       {
-        accessorKey: 'code',
-        header: 'Código',
-        cell: ({ row }) => (
-          <div className="font-mono text-sm bg-muted px-2 py-1 rounded">
-            {row.original.code}
-          </div>
-        )
-      },
-      {
         accessorKey: 'name',
         header: 'Nombre',
         cell: ({ row }) => (

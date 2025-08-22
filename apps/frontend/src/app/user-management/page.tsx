@@ -23,14 +23,6 @@ export default function UserManagement() {
       href: '/user-management/user-role',
       color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
       iconColor: 'text-blue-600 dark:text-blue-400'
-    },
-    {
-      title: 'Permisos de Usuario',
-      description: 'Administrar permisos y accesos',
-      icon: KeyRound,
-      href: '/user-management/user-permission',
-      color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
-      iconColor: 'text-purple-600 dark:text-purple-400'
     }
   ]
 

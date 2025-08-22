@@ -43,4 +43,6 @@ export interface UserFilters {
   role?: string
   page?: number
   limit?: number
+  sortBy?: 'fullName' | 'email' | 'createdAt' | 'updatedAt'
+  sortOrder?: 'asc' | 'desc'
 }

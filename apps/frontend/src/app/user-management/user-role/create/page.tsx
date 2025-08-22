@@ -309,7 +309,7 @@ export default function CreateUserRolePage() {
                       <SelectItem key={permission.id} value={permission.id}>
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{permission.name}</span>
-                          <Badge variant="outline" className="text-xs">{permission.code}</Badge>
+                          {permission.code && <Badge variant="outline" className="text-xs">{permission.code}</Badge>}
                         </div>
                       </SelectItem>
                     ))}
@@ -431,7 +431,7 @@ export default function CreateUserRolePage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{assignment.name}</span>
-                        <Badge variant="outline">{assignment.code}</Badge>
+                        {assignment.code && <Badge variant="outline">{assignment.code}</Badge>}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-500">Tipos:</span>

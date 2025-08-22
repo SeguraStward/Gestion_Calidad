@@ -9,7 +9,7 @@ export type UserRoleStatus = 'ACTIVE' | 'INACTIVE'
 export interface SimpleUserPermission {
   id: string
   name: string
-  code: string
+  code?: string // Make optional in case backend doesn't send it
   status: 'ACTIVE' | 'INACTIVE'
 }
 
@@ -23,7 +23,6 @@ export interface RolePermissionAssignment {
 
 export interface UserRole {
   id: string
-  code?: string // Make optional in case backend doesn't always send it
   name: string
   description?: string
   status?: UserRoleStatus // Make optional to handle malformed responses
@@ -58,4 +57,6 @@ export interface UserRoleFilters {
   status?: UserRoleStatus | 'ALL'
   page?: number
   limit?: number
+  sortBy?: 'name' | 'createdAt' | 'updatedAt'
+  sortOrder?: 'asc' | 'desc'
 }

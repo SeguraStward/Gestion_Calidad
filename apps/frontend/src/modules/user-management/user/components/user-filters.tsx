@@ -47,6 +47,26 @@ export function UserFiltersComponent({
         { value: 'ALL', label: 'Todos' },
         ...roles.map(role => ({ value: role.id, label: role.name }))
       ]
+    },
+    {
+      key: 'sortBy',
+      label: 'Ordenar por',
+      type: 'select',
+      options: [
+        { value: 'fullName', label: 'Nombre' },
+        { value: 'email', label: 'Email' },
+        { value: 'createdAt', label: 'Fecha de creación' },
+        { value: 'updatedAt', label: 'Última actualización' }
+      ]
+    },
+    {
+      key: 'sortOrder',
+      label: 'Orden',
+      type: 'select',
+      options: [
+        { value: 'asc', label: 'Ascendente' },
+        { value: 'desc', label: 'Descendente' }
+      ]
     }
   ]
 
