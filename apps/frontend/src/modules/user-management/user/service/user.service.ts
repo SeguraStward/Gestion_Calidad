@@ -32,6 +32,13 @@ class UserService extends GenericService<
     return HttpClient.patch(`${this.resource}/${userId}/roles`, { roleIds }).then(res => res.data)
   }
 
+  // Método para actualizar perfil básico usando endpoint específico
+  async updateProfile(userId: string, updateData: Partial<UpdateUserDto>) {
+    console.log('🔍 [UserService] updateProfile called with:', { userId, updateData })
+    console.log('🔍 [UserService] JSON payload:', JSON.stringify(updateData, null, 2))
+    return HttpClient.patch(`${this.resource}/${userId}/profile`, updateData).then(res => res.data)
+  }
+
   // Método para obtener roles de un usuario
   async getUserRoles(userId: string) {
     console.log('🔍 [DEBUG] Calling getUserRoles for user:', userId);
@@ -96,11 +103,48 @@ export function useUpdateUserRoles() {
   })
 }
 
+// Hook específico para actualizar perfil usando endpoint PATCH
+export function useUpdateUserProfile() {
+  return useMutation({
+    mutationFn: (payload: { userId: string, updateData: Partial<UpdateUserDto> }) =>
+      userService.updateProfile(payload.userId, payload.updateData),
+    onSuccess: () => {
+      // Invalidar queries relacionadas con usuarios
+    },
+    onError: (error: any) => {
+      console.error('❌ Error en profile update mutation:', error)
+    }
+  })
+}
+
 export function useGetUserRoles(userId: string) {
   return useQuery({
     queryKey: ['users', userId, 'roles'],
     queryFn: () => userService.getUserRoles(userId),
     enabled: !!userId
+  })
+}
+
+// Custom hook for user deletion with better error handling
+export function useDeleteUserWithCascade() {
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      try {
+        return await userService.remove(userId)
+      } catch (error: any) {
+        // Provide more descriptive error messages
+        if (error?.response?.status === 400 && error?.response?.data?.message?.includes('associated records')) {
+          throw new Error('No se puede eliminar el usuario porque tiene registros asociados (roles, cargas académicas, etc.)')
+        }
+        throw error
+      }
+    },
+    onSuccess: () => {
+      // You can add additional success handling here
+    },
+    onError: (error: any) => {
+      console.error('❌ Error en delete mutation:', error)
+    }
   })
 }
 

@@ -35,32 +35,84 @@ export class UsersService extends GenericService<User, UserDto, UserDto, UpdateU
   // * specific methods for user*
 
   async updateProfile(userId: string, updateUserDto: UpdateUserDto): Promise<UserDto> {
-    const user = await this.prisma.user.update({
-      where: { id: userId },
-      data: updateUserDto,
-      include: {
-        roles: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            status: true,
-            permissions: {
-              select: {
-                permissionID: true,
-                permissions: true,
-                scope: true,
-                actions: true,
+    this.logger.debug(`[updateProfile] Starting update for user ${userId}`);
+    this.logger.debug(`[updateProfile] Received DTO:`, JSON.stringify(updateUserDto, null, 2));
+
+    // Filter out empty or invalid values to prevent Prisma validation errors
+    const cleanedData: any = {}
+
+    // Only include fields that have valid values
+    if (updateUserDto.email && updateUserDto.email.trim()) {
+      cleanedData.email = updateUserDto.email.trim()
+      this.logger.debug(`[updateProfile] Including email: ${cleanedData.email}`);
+    }
+
+    if (updateUserDto.fullName && updateUserDto.fullName.trim()) {
+      cleanedData.fullName = updateUserDto.fullName.trim()
+      this.logger.debug(`[updateProfile] Including fullName: ${cleanedData.fullName}`);
+    }
+
+    if (updateUserDto.fullLastName && updateUserDto.fullLastName.trim()) {
+      cleanedData.fullLastName = updateUserDto.fullLastName.trim()
+      this.logger.debug(`[updateProfile] Including fullLastName: ${cleanedData.fullLastName}`);
+    }
+
+    if (updateUserDto.photoUrl && updateUserDto.photoUrl.trim()) {
+      cleanedData.photoUrl = updateUserDto.photoUrl.trim()
+      this.logger.debug(`[updateProfile] Including photoUrl: ${cleanedData.photoUrl}`);
+    }
+
+    // Only include status if it's a valid enum value
+    if (updateUserDto.status && ['ACTIVE', 'INACTIVE', 'PRE_REGISTRATION'].includes(updateUserDto.status)) {
+      cleanedData.status = updateUserDto.status
+      this.logger.debug(`[updateProfile] Including status: ${cleanedData.status}`);
+    }
+
+    // Copy other valid fields from the DTO if they exist and are not empty
+    const validFields = ['nationalId', 'birthDate', 'primaryPhone', 'phoneNumbers', 'province', 'canton', 'district', 'address', 'professionalTitle', 'hireDate', 'condition']
+    validFields.forEach(field => {
+      if (updateUserDto[field] !== undefined && updateUserDto[field] !== null && updateUserDto[field] !== '') {
+        cleanedData[field] = updateUserDto[field]
+        this.logger.debug(`[updateProfile] Including ${field}: ${cleanedData[field]}`);
+      }
+    })
+
+    this.logger.log(`[updateProfile] Final cleaned data for user ${userId}:`, JSON.stringify(cleanedData, null, 2))
+
+    try {
+      const user = await this.prisma.user.update({
+        where: { id: userId },
+        data: cleanedData,
+        include: {
+          roles: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              status: true,
+              permissions: {
+                select: {
+                  permissionID: true,
+                  permissions: true,
+                  scope: true,
+                  actions: true,
+                },
               },
             },
           },
         },
-      },
-    });
-    if (!user) {
-      throw new Error(`User with ID ${userId} not found`);
+      });
+
+      if (!user) {
+        throw new Error(`User with ID ${userId} not found`);
+      }
+
+      this.logger.debug(`[updateProfile] Update successful for user ${userId}`);
+      return user;
+    } catch (prismaError) {
+      this.logger.error(`[updateProfile] Prisma error for user ${userId}:`, prismaError);
+      throw prismaError;
     }
-    return user;
   }
 
   async getUserActiveRolesWithPermissions(userId: string): Promise<SimpleRoleWithPermissions[]> {
@@ -302,5 +354,68 @@ export class UsersService extends GenericService<User, UserDto, UserDto, UpdateU
           };
         }),
     }));
+  }
+
+  /**
+   * Override deleteById to handle cascade deletion of user roles
+   * This allows deleting users that have assigned roles
+   */
+  async deleteById(id: string): Promise<boolean> {
+    try {
+      this.logger.log(`Attempting to delete user with id: ${id}`);
+
+      // First check if user exists
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+        include: {
+          roles: true,
+          // Add other relations that might prevent deletion
+        }
+      });
+
+      if (!user) {
+        this.logger.error(`User with id ${id} not found`);
+        throw new Error(`User with id ${id} not found`);
+      }
+
+      this.logger.log(`User found: ${user.fullName} (${user.email}) with ${user.roles?.length || 0} roles`);
+
+      // Use a transaction to ensure data consistency
+      await this.prisma.$transaction(async (tx) => {
+        // 1. Remove user from all roles (disconnect relationships)
+        if (user.roles && user.roles.length > 0) {
+          this.logger.log(`Removing user from ${user.roles.length} roles`);
+
+          await tx.user.update({
+            where: { id },
+            data: {
+              roles: {
+                disconnect: user.roles.map(role => ({ id: role.id }))
+              }
+            }
+          });
+        }
+
+        // 2. Clear roleIds array
+        await tx.user.update({
+          where: { id },
+          data: {
+            roleIds: []
+          }
+        });
+
+        // 3. Now delete the user
+        await tx.user.delete({
+          where: { id }
+        });
+
+        this.logger.log(`User ${user.fullName} deleted successfully`);
+      });
+
+      return true;
+    } catch (error) {
+      this.logger.error(`Error deleting user with id ${id}:`, error);
+      throw error;
+    }
   }
 }

@@ -13,8 +13,8 @@ export class UserRolesService extends GenericService<UserRole, UserRoleDto, User
   protected readonly logger = new Logger(UserRolesService.name);
 
   protected readonly relationCheckConfig = {
-    relationFields: [''],
-    errorMessage: 'Cannot delete UserRole because it has associated: none.',
+    relationFields: [],
+    errorMessage: 'Cannot delete UserRole because it has associated relations.',
   };
 
   constructor(

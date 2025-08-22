@@ -2,9 +2,24 @@
  * Type definitions for user roles
  */
 
-import { Permission } from '@/modules/auth/types'
+import { Permission, PermissionType, PermissionScope } from '@/modules/auth/types'
 
 export type UserRoleStatus = 'ACTIVE' | 'INACTIVE'
+
+export interface SimpleUserPermission {
+  id: string
+  name: string
+  code: string
+  status: 'ACTIVE' | 'INACTIVE'
+}
+
+// Permission assignment for role creation (what we send to backend)
+export interface RolePermissionAssignment {
+  permissionID: string
+  permissions: PermissionType[]
+  scope: PermissionScope
+  actions: string[]
+}
 
 export interface UserRole {
   id: string
@@ -23,11 +38,10 @@ export interface UserRole {
 }
 
 export interface CreateUserRoleDto {
-  code: string
   name: string
   description?: string
   status: UserRoleStatus
-  permissionIds?: string[]
+  permissions?: RolePermissionAssignment[]
 }
 
 export interface UpdateUserRoleDto extends Partial<Omit<UserRole, 'id' | 'createdAt' | 'updatedAt'>> {

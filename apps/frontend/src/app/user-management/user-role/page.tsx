@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PlusCircle } from 'lucide-react'
+import { toast } from 'sonner'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card'
 import { Button } from '@una-gc/ui/components/button'
@@ -20,7 +21,7 @@ import {
 } from '@/modules/user-management/user-role/types/user-role.types'
 import {
   useUserRoles,
-  useDeleteUserRole,
+  useDeleteUserRoleCustom,
   useUpdateUserRole
 } from '@/modules/user-management/user-role/service/user-role.service'
 
@@ -44,8 +45,8 @@ export default function RoleListPage() {
   // Query for paginated roles with filters
   const { data, isLoading, refetch } = useUserRoles(filters)
 
-  // Delete mutation
-  const { mutate: deleteRole } = useDeleteUserRole()
+  // Delete mutation with improved error handling
+  const { mutate: deleteRole, isPending: isDeleting } = useDeleteUserRoleCustom()
 
   // Update mutation
   const { mutate: updateRole } = useUpdateUserRole()
@@ -62,11 +63,19 @@ export default function RoleListPage() {
    */
   const handleDeleteRole = () => {
     if (selectedRole) {
+      console.log('🗑️ Attempting to delete role:', selectedRole)
+
       deleteRole(selectedRole.id, {
         onSuccess: () => {
+          console.log('✅ Role deleted successfully')
+          toast.success('Rol eliminado correctamente')
           refetch()
           setShowDeleteDialog(false)
           setSelectedRole(null)
+        },
+        onError: (error: any) => {
+          console.error('❌ Failed to delete role:', error)
+          toast.error(`Error al eliminar el rol: ${error.message}`)
         }
       })
     }
@@ -105,7 +114,7 @@ export default function RoleListPage() {
         <h1 className="text-3xl font-bold tracking-tight">Gestión de Roles</h1>
 
         {canCreate && (
-          <Button onClick={() => router.push('/user-management/user-role/new')}>
+          <Button onClick={() => router.push('/user-management/user-role/create')}>
             <PlusCircle className="mr-2 h-4 w-4" /> Nuevo Rol
           </Button>
         )}

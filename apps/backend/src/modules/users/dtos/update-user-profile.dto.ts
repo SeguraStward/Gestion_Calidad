@@ -5,7 +5,7 @@ import { IsArray, IsDate, IsEmail, IsEnum, IsOptional, IsString, ValidateNested 
 
 import { UserPhoneDto } from './user-type.dto';
 
-export class UpdateUserDto {
+export class UpdateUserProfileDto {
   @ApiProperty({ description: 'User email address' })
   @IsEmail()
   email: string;

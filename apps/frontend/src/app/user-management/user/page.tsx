@@ -20,7 +20,7 @@ import {
 } from '@/modules/user-management/user/types/user.types'
 import {
   useUsers,
-  useDeleteUser,
+  useDeleteUserWithCascade,
   useUpdateUserStatus
 } from '@/modules/user-management/user/service/user.service'
 import { useUserRoles } from '@/modules/user-management/user-role/service/user-role.service'
@@ -48,8 +48,8 @@ export default function UserListPage() {
   // Get all roles for filter dropdown
   const { data: rolesData } = useUserRoles({ limit: 1000 })
 
-  // Delete mutation
-  const { mutate: deleteUser } = useDeleteUser()
+  // Delete mutation with cascade handling
+  const { mutate: deleteUser } = useDeleteUserWithCascade()
 
   // Status update mutation
   const { mutate: updateStatus } = useUpdateUserStatus()

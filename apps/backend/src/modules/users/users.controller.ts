@@ -45,7 +45,19 @@ export class UsersController extends GenericController<UserDto, UserDto> {
   @ApiResponse({ status: HttpStatus.OK, description: 'User profile updated successfully', type: UserDto })
   @AuthorizedEndpoint(PermissionType.UPDATE)
   async updateProfile(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<UserDto> {
-    return this.usersService.updateProfile(id, updateUserDto);
+    this.logger.debug(`🔍 [CONTROLLER] Received updateProfile request for user ${id}`);
+    this.logger.debug(`🔍 [CONTROLLER] Raw body:`, JSON.stringify(updateUserDto, null, 2));
+    this.logger.debug(`🔍 [CONTROLLER] Body type:`, typeof updateUserDto);
+    this.logger.debug(`🔍 [CONTROLLER] Status value:`, updateUserDto.status, 'Type:', typeof updateUserDto.status);
+
+    try {
+      const result = await this.usersService.updateProfile(id, updateUserDto);
+      this.logger.debug(`✅ [CONTROLLER] Profile update successful for user ${id}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`❌ [CONTROLLER] Profile update failed for user ${id}:`, error);
+      throw error;
+    }
   }
 
   @Get('by-role/:roleName')
