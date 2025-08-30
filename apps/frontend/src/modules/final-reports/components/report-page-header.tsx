@@ -3,7 +3,8 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@una-gc/ui/components/button'
-import { ArrowLeft, CheckCircle } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import { StepNavigation } from './enhanced-step-navigation'
 
 interface ReportPageHeaderProps {
   pageTitle: string
@@ -16,6 +17,8 @@ interface ReportPageHeaderProps {
   }
   isLoading?: boolean
   nrc?: string | null
+  onGoToStep?: (step: number) => void
+  completedSteps?: boolean[]
 }
 
 export function ReportPageHeader({
@@ -25,7 +28,9 @@ export function ReportPageHeader({
   currentStep,
   backButton,
   isLoading,
-  nrc
+  nrc,
+  onGoToStep,
+  completedSteps = []
 }: ReportPageHeaderProps) {
   const router = useRouter()
 
@@ -53,67 +58,17 @@ export function ReportPageHeader({
       <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">{pageTitle}</h1>
       <p className="text-muted-foreground text-xs sm:text-sm">{defaultDescription}</p>
 
-      {/* Indicador de Pasos */}
+      {/* Enhanced Step Navigation */}
       <div className="mt-4 sm:mt-6 w-full">
-        {/* MODIFIED: Added a wrapper for horizontal scrolling on small screens */}
-        <div className="overflow-x-auto pb-2 -mb-2">
-          {' '}
-          {/* pb-2 and -mb-2 to hide scrollbar visually if possible but keep functionality */}
-          <div className="flex justify-between items-center px-0 sm:px-1 min-w-max">
-            {' '}
-            {/* Added min-w-max to ensure flex items don't shrink too much before scrolling */}
-            {stepLabels.map((label, index) => {
-              const stepNumber = index + 1
-              const isCompleted = currentStep > stepNumber
-              const isCurrent = currentStep === stepNumber
-              return (
-                <React.Fragment key={stepNumber}>
-                  <div className="flex items-center flex-1 last:flex-grow-0">
-                    {' '}
-                    {/* last:flex-grow-0 to prevent last line from over-expanding */}
-                    <div
-                      className={`
-                        h-12 sm:h-14 md:h-16 
-                        rounded-full flex items-center justify-center 
-                        px-2 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 
-                        text-xs font-medium transition-all duration-300 text-center leading-tight 
-                        min-w-[60px] sm:min-w-[90px] md:min-w-[100px] 
-                        max-w-[100px] sm:max-w-[120px] md:max-w-[140px] 
-                        mx-0.5 sm:mx-1
-                        whitespace-nowrap /* Prevent text wrapping inside bubble */
-                        ${
-                          isCompleted
-                            ? 'bg-primary text-primary-foreground shadow-md'
-                            : isCurrent
-                              ? 'bg-primary text-primary-foreground ring-2 ring-primary/30 shadow-lg font-semibold'
-                              : 'bg-muted text-muted-foreground border border-muted-foreground/30'
-                        }`}
-                    >
-                      {isCompleted ? (
-                        <div className="flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 flex-shrink-0" />
-                          <span className="truncate">{label}</span>
-                        </div>
-                      ) : (
-                        <span className="truncate">{label}</span>
-                      )}
-                    </div>
-                    {index < stepLabels.length - 1 && (
-                      <div
-                        className={`
-                          flex-1 h-0.5 
-                          mx-0.5 sm:mx-1 md:mx-2 
-                          rounded-full 
-                          min-w-[5px] sm:min-w-[10px] md:min-w-[20px] 
-                          ${currentStep > stepNumber ? 'bg-primary' : 'bg-muted'}`}
-                      />
-                    )}
-                  </div>
-                </React.Fragment>
-              )
-            })}
-          </div>
-        </div>
+        <StepNavigation
+          currentStep={currentStep}
+          totalSteps={stepLabels.length}
+          stepLabels={stepLabels}
+          onGoToStep={onGoToStep}
+          completedSteps={completedSteps}
+          showNavigationButtons={false}
+          className="w-full"
+        />
       </div>
     </div>
   )

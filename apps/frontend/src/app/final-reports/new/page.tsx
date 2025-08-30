@@ -55,6 +55,25 @@ export default function NewFinalReportPage() {
   const createFinalReportMutation = useCreateFinalReport()
   const currentProfessorId = useSessionStore((state) => state.user?.id)
 
+  // Calculate completed steps
+  const completedSteps = [
+    !!step1Data,
+    !!step2Data,
+    !!step3Data,
+    !!step4Data,
+    !!step5Data,
+    !!step6Data,
+    !!step7Data
+  ]
+
+  // Handle navigation to specific step
+  const handleGoToStep = (step: number) => {
+    // Allow navigation to completed steps or current step
+    if (step <= currentStep || completedSteps[step - 1]) {
+      setCurrentStep(step)
+    }
+  }
+
   const formStep1Methods = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
     defaultValues: { enrolledCapacity: undefined }
@@ -280,20 +299,20 @@ export default function NewFinalReportPage() {
         }),
         ...(step6Data.otrasHerramientas && step6Data.otrasHerramientas.trim() !== ''
           ? [
-              {
-                questionId: OTHER_TOOLS_QUESTION_ID,
-                question:
-                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
-                  'Otras herramientas utilizadas (opcional)',
-                questionGroup:
-                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.group || 'herramientas',
-                responseType: 'TEXT' as const,
-                response: step6Data.otrasHerramientas,
-                multipleResponse: [],
-                options: [],
-                otherResponse: undefined
-              }
-            ]
+            {
+              questionId: OTHER_TOOLS_QUESTION_ID,
+              question:
+                step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
+                'Otras herramientas utilizadas (opcional)',
+              questionGroup:
+                step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.group || 'herramientas',
+              responseType: 'TEXT' as const,
+              response: step6Data.otrasHerramientas,
+              multipleResponse: [],
+              options: [],
+              otherResponse: undefined
+            }
+          ]
           : []),
         ...currentStep7DataFromForm.respuestasRadio.map((r) => {
           const questionDetails = step7QuestionsPageMock.find((p) => p.questionId === r.idPregunta)
@@ -459,6 +478,8 @@ export default function NewFinalReportPage() {
         currentStep={currentStep}
         backButton={{ href: '/final-reports', text: 'Volver a la Lista de Informes' }}
         nrc={step1Data?.nrc ?? null}
+        onGoToStep={handleGoToStep}
+        completedSteps={completedSteps}
       />
       <main className="flex-grow flex flex-col items-center overflow-hidden pt-2 pb-6 md:pt-4">
         <Card className="shadow-lg border-border/50 w-full max-w-5xl flex flex-col flex-grow overflow-hidden rounded-lg">

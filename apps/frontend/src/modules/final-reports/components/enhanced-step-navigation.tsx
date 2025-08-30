@@ -19,6 +19,7 @@ interface StepNavigationProps {
   canProceed?: boolean
   className?: string
   completedSteps?: boolean[]
+  showNavigationButtons?: boolean // New prop to control button visibility
 }
 
 /**
@@ -37,7 +38,8 @@ export function StepNavigation({
   isLastStep = false,
   canProceed = true,
   className,
-  completedSteps = []
+  completedSteps = [],
+  showNavigationButtons = true
 }: StepNavigationProps) {
   const handleStepClick = (step: number) => {
     // Allow navigation to completed steps or current step
@@ -94,50 +96,52 @@ export function StepNavigation({
       </div>
 
       {/* Navigation Controls */}
-      <Card>
-        <CardContent className="p-3">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={onPrev}
-              disabled={currentStep === 1 || isSubmitting}
-              className="flex items-center gap-2"
-            >
-              <ChevronRight className="w-4 h-4 rotate-180" />
-              Anterior
-            </Button>
- 
-            {isLastStep ? (
+      {showNavigationButtons && (
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
               <Button
-                onClick={onSubmit}
-                disabled={!canProceed || isSubmitting}
+                variant="outline"
+                onClick={onPrev}
+                disabled={currentStep === 1 || isSubmitting}
                 className="flex items-center gap-2"
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    Enviar Informe
-                    <Check className="w-4 h-4" />
-                  </>
-                )}
+                <ChevronRight className="w-4 h-4 rotate-180" />
+                Anterior
               </Button>
-            ) : (
-              <Button
-                onClick={onNext}
-                disabled={!canProceed || isSubmitting}
-                className="flex items-center gap-2"
-              >
-                Siguiente
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+
+              {isLastStep ? (
+                <Button
+                  onClick={onSubmit}
+                  disabled={!canProceed || isSubmitting}
+                  className="flex items-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      Enviar Informe
+                      <Check className="w-4 h-4" />
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  onClick={onNext}
+                  disabled={!canProceed || isSubmitting}
+                  className="flex items-center gap-2"
+                >
+                  Siguiente
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
