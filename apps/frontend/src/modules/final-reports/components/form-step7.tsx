@@ -150,9 +150,20 @@ export function Step7Form({
           Paso {totalSteps > 0 ? `7 de ${totalSteps}: ` : ''} Percepción General y Desempeño
         </h2>
         <p className="text-muted-foreground text-sm mt-1">
-          Evalúe su percepción sobre los aspectos del curso y desempeño estudiantil. ({flatDisplayedQuestionList.length} pregunta
-          {flatDisplayedQuestionList.length !== 1 ? 's' : ''})
+          Complete la evaluación y percepción general del curso{isEditing ? ' (Editando)' : ''}.
         </p>
+      </div>
+
+      {/* Fixed Navigation Buttons at Top */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/20 pb-4 mb-6">
+        <div className="flex justify-between">
+          <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8">
+            Anterior
+          </Button>
+          <Button type="submit" form="step7-form" disabled={isSubmitting} className="px-8">
+            {isEditing ? 'Actualizar Informe' : 'Enviar Informe'}
+          </Button>
+        </div>
       </div>
 
       {/* General Form Error Message */}
@@ -171,7 +182,7 @@ export function Step7Form({
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={handleSubmit(handleFormSubmitSuccess, handleFormSubmitError)} className="flex-1 flex flex-col min-h-0">
+          <form id="step7-form" onSubmit={handleSubmit(handleFormSubmitSuccess, handleFormSubmitError)} className="flex-1 flex flex-col min-h-0">
             {/* Scrollable Questions Area */}
             <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-2 sm:space-y-2.5 md:space-y-3">
               {flatDisplayedQuestionList.length === 0 ? (
@@ -263,25 +274,6 @@ export function Step7Form({
                   </div>
                 ))
               )}
-            </div>
-            {/* Navigation Buttons (Stays Visible at the bottom) */}
-            <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handlePreviousClick}
-                className="px-6 py-2 text-sm shadow-sm"
-                disabled={isSubmitting}
-              >
-                Anterior
-              </Button>
-              <Button
-                type="submit"
-                className="px-6 py-2 text-sm shadow-sm"
-                disabled={isSubmitting || flatDisplayedQuestionList.length === 0}
-              >
-                {isSubmitting ? 'Finalizando...' : 'Finalizar Informe'}
-              </Button>
             </div>
           </form>
         </Form>

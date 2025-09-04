@@ -87,9 +87,21 @@ export function Step5Form({
         </div>
       )}
 
+      {/* Fixed Navigation Buttons at Top */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/20 pb-4 mb-6">
+        <div className="flex justify-between">
+          <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8">
+            Anterior
+          </Button>
+          <Button type="submit" form="step5-form" className="px-8">
+            Siguiente
+          </Button>
+        </div>
+      </div>
+
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col min-h-0">
+          <form id="step5-form" onSubmit={handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 space-y-0 overflow-y-auto pr-2 pb-4">
               {step5QuestionsMock.map((pregunta, index) => (
                 <div key={pregunta.questionId}>
@@ -129,14 +141,6 @@ export function Step5Form({
                   {index < step5QuestionsMock.length - 1 && <Separator className="opacity-20 my-1" />}
                 </div>
               ))}
-            </div>
-            <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
-              <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8 shadow-sm">
-                Anterior
-              </Button>
-              <Button type="submit" className="px-8 shadow-sm">
-                Siguiente
-              </Button>
             </div>
           </form>
         </Form>

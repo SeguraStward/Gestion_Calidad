@@ -75,11 +75,11 @@ export function Step6EditForm({
         initialData.respuestasMultiples && initialData.respuestasMultiples.length > 0
           ? initialData.respuestasMultiples
           : [
-              {
-                idPregunta: toolsQuestion?.questionId || MAIN_TOOLS_QUESTION_ID_INTERNAL,
-                respuestasSeleccionadas: []
-              }
-            ]
+            {
+              idPregunta: toolsQuestion?.questionId || MAIN_TOOLS_QUESTION_ID_INTERNAL,
+              respuestasSeleccionadas: []
+            }
+          ]
 
       reset({
         respuestasMultiples: currentRespuestasMultiples,
@@ -160,6 +160,18 @@ export function Step6EditForm({
         </p>
       </div>
 
+      {/* Fixed Navigation Buttons at Top */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/20 pb-4 mb-6">
+        <div className="flex justify-between">
+          <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8">
+            Anterior
+          </Button>
+          <Button type="submit" form="step6-edit-form" className="px-8">
+            Siguiente
+          </Button>
+        </div>
+      </div>
+
       {/* General Form Error Message for array-level validation */}
       {formState.errors.respuestasMultiples?.message && !formState.errors.respuestasMultiples?.root?.message && (
         <div className="mb-3 p-3 rounded-md flex items-center text-sm bg-destructive/10 text-destructive border border-destructive/30">
@@ -182,7 +194,7 @@ export function Step6EditForm({
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={handleSubmit(onSaveAndNext, handleFormSubmitError)} className="flex-1 flex flex-col min-h-0">
+          <form id="step6-edit-form" onSubmit={handleSubmit(onSaveAndNext, handleFormSubmitError)} className="flex-1 flex flex-col min-h-0">
             {/* Scrollable content area */}
             <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-6">
               <Card>
@@ -264,16 +276,6 @@ export function Step6EditForm({
                   </FormItem>
                 )}
               />
-            </div>
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
-              <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8 shadow-sm">
-                Anterior
-              </Button>
-              <Button type="submit" className="px-8 shadow-sm">
-                Siguiente
-              </Button>
             </div>
           </form>
         </Form>

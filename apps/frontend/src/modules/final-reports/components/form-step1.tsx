@@ -158,7 +158,7 @@ export function Step1Form({
   const selectedNrc = watch('nrc')
   const selectedAcademicLoadId = watch('academicLoadId')
 
-  useEffect(() => {}, [selectedAcademicLoadId])
+  useEffect(() => { }, [selectedAcademicLoadId])
 
   // Efecto para poblar el formulario con initialData
   useEffect(() => {
@@ -245,9 +245,31 @@ export function Step1Form({
         </p>
       </div>
 
+      {/* Fixed Navigation Buttons at Top */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/20 pb-4 mb-6">
+        <div className="flex justify-between">
+          <div>
+            {/* Wrapper for optional cancel button */}
+            {onCancel && (
+              <Button type="button" variant="outline" onClick={onCancel} className="px-8">
+                Cancelar
+              </Button>
+            )}
+          </div>
+          <Button
+            type="submit"
+            form="step1-form"
+            disabled={!selectedAcademicLoadId || formState.isSubmitting}
+            className="px-8"
+          >
+            {isEditing ? 'Guardar y Continuar' : 'Siguiente'}
+          </Button>
+        </div>
+      </div>
+
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={handleSubmit(onSubmitHandler)} className="flex-1 flex flex-col">
+          <form id="step1-form" onSubmit={handleSubmit(onSubmitHandler)} className="flex-1 flex flex-col">
             {/* The content should not scroll on its own. The parent container will handle it. */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
               {/* Section 1: Selección de Curso */}
@@ -390,21 +412,6 @@ export function Step1Form({
                   )}
                 />
               </div>
-            </div>
-
-            {/* Standardized Navigation Buttons Container */}
-            <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
-              <div>
-                {/* Wrapper for optional cancel button */}
-                {onCancel && (
-                  <Button type="button" variant="outline" onClick={onCancel} className="px-8">
-                    Cancelar
-                  </Button>
-                )}
-              </div>
-              <Button type="submit" disabled={!selectedAcademicLoadId || formState.isSubmitting} className="px-8">
-                {isEditing ? 'Guardar y Continuar' : 'Siguiente'}
-              </Button>
             </div>
           </form>
         </Form>

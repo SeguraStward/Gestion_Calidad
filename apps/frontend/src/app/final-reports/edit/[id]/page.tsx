@@ -110,25 +110,6 @@ export default function EditFinalReportPage() {
   const { mutateAsync: updateReportMutation } = updateReportHook
   const isUpdatingReport = updateReportHook.status === 'pending'
 
-  // Calculate completed steps
-  const completedSteps = [
-    !!step1Data,
-    !!step2Data,
-    !!step3Data,
-    !!step4Data,
-    !!step5Data,
-    !!step6Data,
-    !!step7Data
-  ]
-
-  // Handle navigation to specific step
-  const handleGoToStep = (step: number) => {
-    // Allow navigation to completed steps or current step
-    if (step <= currentStep || completedSteps[step - 1]) {
-      setCurrentStep(step)
-    }
-  }
-
   const formStep1Methods = useForm<Step1FormData>({ resolver: zodResolver(step1Schema) })
   const formStep2Methods = useForm<Step2FormData>({ resolver: zodResolver(step2Schema) })
   const formStep3Methods = useForm<Step3FormData>({ resolver: zodResolver(step3Schema) })
@@ -292,38 +273,38 @@ export default function EditFinalReportPage() {
         })) || []),
         ...(step6Data?.respuestasMultiples?.[0]?.respuestasSeleccionadas?.length
           ? [
-            {
-              questionId: step6Data.respuestasMultiples[0].idPregunta,
-              question:
-                step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.question ||
-                step6Data.respuestasMultiples[0].idPregunta,
-              questionGroup:
-                step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.group ||
-                'herramientas',
-              responseType: 'SELECCION_MULTIPLE' as const,
-              response: null,
-              multipleResponse: step6Data.respuestasMultiples[0].respuestasSeleccionadas,
-              options: [],
-              otherResponse: undefined
-            }
-          ]
+              {
+                questionId: step6Data.respuestasMultiples[0].idPregunta,
+                question:
+                  step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.question ||
+                  step6Data.respuestasMultiples[0].idPregunta,
+                questionGroup:
+                  step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.group ||
+                  'herramientas',
+                responseType: 'SELECCION_MULTIPLE' as const,
+                response: null,
+                multipleResponse: step6Data.respuestasMultiples[0].respuestasSeleccionadas,
+                options: [],
+                otherResponse: undefined
+              }
+            ]
           : []),
         ...(step6Data?.otrasHerramientas && step6Data.otrasHerramientas.trim() !== ''
           ? [
-            {
-              questionId: OTHER_TOOLS_QUESTION_ID,
-              question:
-                step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
-                'Otras herramientas utilizadas (opcional)',
-              questionGroup:
-                step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.group || 'herramientas',
-              responseType: 'TEXT' as const,
-              response: step6Data.otrasHerramientas,
-              multipleResponse: [],
-              options: [],
-              otherResponse: undefined
-            }
-          ]
+              {
+                questionId: OTHER_TOOLS_QUESTION_ID,
+                question:
+                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
+                  'Otras herramientas utilizadas (opcional)',
+                questionGroup:
+                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.group || 'herramientas',
+                responseType: 'TEXT' as const,
+                response: step6Data.otrasHerramientas,
+                multipleResponse: [],
+                options: [],
+                otherResponse: undefined
+              }
+            ]
           : []),
         ...currentStep7ValuesFromForm.respuestasRadio.map((resp) => {
           const questionDetails = step7QuestionsPageMock.find((q) => q.questionId === resp.idPregunta)
@@ -453,7 +434,7 @@ export default function EditFinalReportPage() {
             totalSteps={TOTAL_STEPS}
             initialData={step1Data}
             onCancel={() => router.push('/final-reports')}
-          // onPrevious no se usa en el primer paso de edición si no hay a dónde ir antes
+            // onPrevious no se usa en el primer paso de edición si no hay a dónde ir antes
           />
         )
       case 2:
@@ -568,8 +549,7 @@ export default function EditFinalReportPage() {
         stepLabels={STEP_LABELS_SPANISH}
         currentStep={currentStep}
         backButton={{ href: '/final-reports', text: 'Volver a Informes' }}
-        onGoToStep={handleGoToStep}
-        completedSteps={completedSteps}
+        // nrc={step1Data?.nrc || fetchedReport?.academicLoad?.nrc} // Opcional, si quieres mostrar NRC
       />
       <main className="flex-grow flex flex-col items-center overflow-hidden pt-2 pb-6 md:pt-4">
         <Card className="shadow-lg border-border/50 w-full max-w-5xl flex flex-col flex-grow overflow-hidden rounded-lg">

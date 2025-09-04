@@ -161,9 +161,39 @@ export function Step2Form({
         </p>
       </div>
 
+      {/* Fixed Navigation Buttons at Top */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/20 pb-4 mb-6">
+        <div className="flex justify-between">
+          <Button type="button" variant="outline" onClick={handlePreviousClick} disabled={!onPrevious} className="px-8">
+            Anterior
+          </Button>
+          <Button
+            type="submit"
+            form="step2-form"
+            disabled={
+              !(
+                (typeof watchedValues.totalEnrolled === 'number' && isValidSum) ||
+                // Si totalEnrolled no está cargado, pero los otros campos están en 0 (su estado "vacío" por defecto)
+                // y no han sido modificados, permitir avanzar.
+                (typeof watchedValues.totalEnrolled !== 'number' &&
+                  (watchedValues.totalWithdrawn ?? 0) === 0 &&
+                  (watchedValues.totalPassed ?? 0) === 0 &&
+                  (watchedValues.totalFailed ?? 0) === 0 &&
+                  !formState.dirtyFields.totalWithdrawn &&
+                  !formState.dirtyFields.totalPassed &&
+                  !formState.dirtyFields.totalFailed)
+              ) || formState.isSubmitting
+            }
+            className="px-8"
+          >
+            Siguiente
+          </Button>
+        </div>
+      </div>
+
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={handleSubmit(onSubmitHandler)} className="flex-1 flex flex-col space-y-4">
+          <form id="step2-form" onSubmit={handleSubmit(onSubmitHandler)} className="flex-1 flex flex-col space-y-4">
             <div className="flex-1 space-y-4 md:space-y-6 overflow-y-auto pr-2">
               <div>
                 <h3 className="text-lg font-medium">Resumen Estadístico</h3>
@@ -287,59 +317,32 @@ export function Step2Form({
               {(typeof watchedValues.totalEnrolled === 'number' ||
                 currentSum > 0 ||
                 Object.values(formState.dirtyFields).some(Boolean)) && (
-                <div
-                  className={`p-3 rounded-md flex items-center text-sm ${
-                    isValidSum && typeof watchedValues.totalEnrolled === 'number'
-                      ? 'bg-green-100 text-green-700'
-                      : typeof watchedValues.totalEnrolled !== 'number' && currentSum === 0
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-red-100 text-red-700'
-                  }`}
-                >
-                  {isValidSum && typeof watchedValues.totalEnrolled === 'number' ? (
-                    <CheckCircle2 className="mr-2 h-5 w-5" />
-                  ) : typeof watchedValues.totalEnrolled !== 'number' && currentSum === 0 ? (
-                    <AlertCircle className="mr-2 h-5 w-5 text-blue-500" />
-                  ) : (
-                    <AlertTriangle className="mr-2 h-5 w-5" />
-                  )}
-                  <span>
-                    Suma (Retirados+Aprobados+Reprobados): <strong>{currentSum}</strong>. Matriculados:{' '}
-                    <strong>{typeof watchedValues.totalEnrolled === 'number' ? watchedValues.totalEnrolled : 'N/A'}</strong>.
-                    {isValidSum && typeof watchedValues.totalEnrolled === 'number'
-                      ? ' Los totales coinciden.'
-                      : typeof watchedValues.totalEnrolled !== 'number' && currentSum === 0
-                        ? ' Ingrese los datos. El total de matriculados se cargará.'
-                        : ' Los totales NO coinciden o faltan datos.'}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
-              <Button type="button" variant="outline" onClick={handlePreviousClick} disabled={!onPrevious} className="px-8">
-                Anterior
-              </Button>
-              <Button
-                type="submit"
-                disabled={
-                  !(
-                    (typeof watchedValues.totalEnrolled === 'number' && isValidSum) ||
-                    // Si totalEnrolled no está cargado, pero los otros campos están en 0 (su estado "vacío" por defecto)
-                    // y no han sido modificados, permitir avanzar.
-                    (typeof watchedValues.totalEnrolled !== 'number' &&
-                      (watchedValues.totalWithdrawn ?? 0) === 0 &&
-                      (watchedValues.totalPassed ?? 0) === 0 &&
-                      (watchedValues.totalFailed ?? 0) === 0 &&
-                      !formState.dirtyFields.totalWithdrawn &&
-                      !formState.dirtyFields.totalPassed &&
-                      !formState.dirtyFields.totalFailed)
-                  ) || formState.isSubmitting
-                }
-                className="px-8"
-              >
-                Siguiente
-              </Button>
+                  <div
+                    className={`p-3 rounded-md flex items-center text-sm ${isValidSum && typeof watchedValues.totalEnrolled === 'number'
+                        ? 'bg-green-100 text-green-700'
+                        : typeof watchedValues.totalEnrolled !== 'number' && currentSum === 0
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}
+                  >
+                    {isValidSum && typeof watchedValues.totalEnrolled === 'number' ? (
+                      <CheckCircle2 className="mr-2 h-5 w-5" />
+                    ) : typeof watchedValues.totalEnrolled !== 'number' && currentSum === 0 ? (
+                      <AlertCircle className="mr-2 h-5 w-5 text-blue-500" />
+                    ) : (
+                      <AlertTriangle className="mr-2 h-5 w-5" />
+                    )}
+                    <span>
+                      Suma (Retirados+Aprobados+Reprobados): <strong>{currentSum}</strong>. Matriculados:{' '}
+                      <strong>{typeof watchedValues.totalEnrolled === 'number' ? watchedValues.totalEnrolled : 'N/A'}</strong>.
+                      {isValidSum && typeof watchedValues.totalEnrolled === 'number'
+                        ? ' Los totales coinciden.'
+                        : typeof watchedValues.totalEnrolled !== 'number' && currentSum === 0
+                          ? ' Ingrese los datos. El total de matriculados se cargará.'
+                          : ' Los totales NO coinciden o faltan datos.'}
+                    </span>
+                  </div>
+                )}
             </div>
           </form>
         </Form>

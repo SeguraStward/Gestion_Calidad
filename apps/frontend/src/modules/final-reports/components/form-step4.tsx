@@ -114,9 +114,22 @@ export function Step4Form({
         </h2>
         <p className="text-muted-foreground text-sm">Estudiantes que requirieron algún tipo de adecuación o apoyo pedagógico.</p>
       </div>
+
+      {/* Fixed Navigation Buttons at Top */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/20 pb-4 mb-6">
+        <div className="flex justify-between">
+          <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8">
+            Anterior
+          </Button>
+          <Button type="submit" form="step4-form" className="px-8">
+            Siguiente
+          </Button>
+        </div>
+      </div>
+
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form onSubmit={handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col min-h-0">
+          <form id="step4-form" onSubmit={handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col min-h-0">
             {/* Scrollable content area for the student list card */}
             <div className="flex-1 space-y-3 md:space-y-4 overflow-y-auto pr-2 pb-4">
               <Card className="border-primary/20 bg-primary/5 h-fit">
@@ -332,18 +345,6 @@ export function Step4Form({
                   )}
                 </CardContent>
               </Card>
-            </div>
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between pt-4 border-t border-border/20 mt-auto">
-              {' '}
-              {/* Consistent padding and border */}
-              <Button type="button" variant="outline" onClick={handlePreviousClick} className="px-8">
-                Anterior
-              </Button>
-              <Button type="submit" className="px-8">
-                Siguiente
-              </Button>
             </div>
           </form>
         </Form>
