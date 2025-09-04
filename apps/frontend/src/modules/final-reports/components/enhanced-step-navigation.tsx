@@ -65,7 +65,6 @@ export function StepNavigation({
                 "relative cursor-pointer transition-all duration-200",
                 {
                   "ring-2 ring-primary border-primary": isActive,
-                  "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800": isCompleted && !isActive,
                   "hover:border-primary/50": isClickable && !isActive,
                   "opacity-60 cursor-not-allowed": !isClickable
                 }
@@ -78,70 +77,16 @@ export function StepNavigation({
                   "text-xs font-medium leading-tight",
                   {
                     "text-primary font-semibold": isActive,
-                    "text-green-700 dark:text-green-300": isCompleted && !isActive,
-                    "text-muted-foreground": !isActive && !isCompleted
+                    "text-muted-foreground": !isActive
                   }
                 )}>
                   {stepNumber}. {stepLabels[index] || `Paso ${stepNumber}`}
-                </div>
-
-                {/* Completion Check */}
-                {isCompleted && !isActive && (
-                  <Check className="w-3 h-3 mx-auto mt-1 text-green-600" />
-                )}
+                </div> 
               </CardContent>
             </Card>
           )
         })}
-      </div>
-
-      {/* Navigation Controls */}
-      {showNavigationButtons && (
-        <Card>
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                onClick={onPrev}
-                disabled={currentStep === 1 || isSubmitting}
-                className="flex items-center gap-2"
-              >
-                <ChevronRight className="w-4 h-4 rotate-180" />
-                Anterior
-              </Button>
-
-              {isLastStep ? (
-                <Button
-                  onClick={onSubmit}
-                  disabled={!canProceed || isSubmitting}
-                  className="flex items-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      Enviar Informe
-                      <Check className="w-4 h-4" />
-                    </>
-                  )}
-                </Button>
-              ) : (
-                <Button
-                  onClick={onNext}
-                  disabled={!canProceed || isSubmitting}
-                  className="flex items-center gap-2"
-                >
-                  Siguiente
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      </div> 
     </div>
   )
 }
