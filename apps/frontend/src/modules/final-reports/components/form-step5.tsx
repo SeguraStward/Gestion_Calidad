@@ -6,10 +6,16 @@ import * as z from 'zod'
 import { Button } from '@una-gc/ui/components/button'
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@una-gc/ui/components/form'
 import { Textarea } from '@una-gc/ui/components/textarea'
+import { Input } from '@una-gc/ui/components/input'
+import { RadioGroup, RadioGroupItem } from '@una-gc/ui/components/radio-group'
+import { Checkbox } from '@una-gc/ui/components/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
 import { Separator } from '@una-gc/ui/components/separator'
-import { MessageSquareText, AlertTriangle } from 'lucide-react'
-import { step5QuestionsMock } from '@/modules/final-reports/mocks/questions'
+import { MessageSquareText, AlertTriangle, Loader2 } from 'lucide-react'
 import { cn } from '@una-gc/ui/lib/utils'
+import { useQuestionGroupsWithQuestionsByStep } from '@/modules/final-reports/services/question-groups.service'
+import type { ReportType } from '@/modules/final-reports/types/final-reports.types'
+import type { Question, QuestionOption } from '@/modules/final-reports/types/question-management.types'
 
 const respuestaSchema = z.object({
   idPregunta: z.string(),
@@ -19,7 +25,7 @@ const respuestaSchema = z.object({
 export const step5Schema = z.object({
   respuestas: z
     .array(respuestaSchema)
-    .min(step5QuestionsMock.length, 'Debe responder todas las preguntas.')
+    .min(1, 'Debe responder todas las preguntas.')
     .refine((respuestas) => respuestas.every((r) => r.respuesta.trim() !== ''), {
       message: 'Todas las preguntas deben tener una respuesta.',
       path: ['respuestas']
@@ -35,6 +41,7 @@ interface Step5FormProps {
   totalSteps: number
   initialData?: Step5FormData | null
   isEditing?: boolean
+  reportType?: ReportType
 }
 
 export function Step5Form({
@@ -43,30 +50,259 @@ export function Step5Form({
   onPrevious,
   totalSteps,
   initialData,
-  isEditing = false
+  isEditing = false,
+  reportType = 'TODOS'
 }: Step5FormProps) {
   const { control, handleSubmit, reset, register, formState, getValues } = formMethods
 
-  useEffect(() => {
-    if (initialData) {
-      reset(initialData)
-    } else if (!isEditing) {
-      const initialFormValues = step5QuestionsMock.map((p) => ({
-        idPregunta: p.questionId,
-        respuesta: ''
-      }))
-      reset({ respuestas: initialFormValues })
+  // Cargar grupos de preguntas para el paso 5
+  const {
+    data: questionGroupsData,
+    isLoading: isLoadingQuestions,
+    error: questionsError
+  } = useQuestionGroupsWithQuestionsByStep(5, reportType)
+
+  // Procesar las preguntas de todos los grupos
+  const { questionGroups, allQuestions } = React.useMemo(() => {
+    if (!questionGroupsData) return { questionGroups: {}, allQuestions: [] }
+
+    const grupos: Record<string, Question[]> = {}
+    const allQuestionsFlat: Question[] = []
+
+    questionGroupsData.forEach(group => {
+      const activeQuestions = group.questions?.filter(q => q.status === 'ACTIVE').sort((a, b) => (a.order || 0) - (b.order || 0)) || []
+      if (activeQuestions.length > 0) {
+        grupos[group.questionTitle] = activeQuestions
+        allQuestionsFlat.push(...activeQuestions)
+      }
+    })
+
+    return {
+      questionGroups: grupos,
+      allQuestions: allQuestionsFlat.sort((a, b) => (a.order || 0) - (b.order || 0))
     }
-  }, [initialData, isEditing, reset])
+  }, [questionGroupsData])
+
+  useEffect(() => {
+    if (allQuestions.length > 0) {
+      if (initialData) {
+        reset(initialData)
+      } else if (!isEditing) {
+        const initialFormValues = allQuestions.map((q) => ({
+          idPregunta: q.id!,
+          respuesta: ''
+        }))
+        reset({ respuestas: initialFormValues })
+      }
+    }
+  }, [allQuestions, initialData, isEditing, reset])
 
   const handlePreviousClick = () => {
     const currentData = getValues()
     onPrevious(currentData)
   }
 
+  // Función para validar preguntas obligatorias
+  const validateRequiredQuestions = () => {
+    const currentValues = getValues()
+    const requiredQuestions = allQuestions.filter(q => q.isRequired)
+    const unansweredRequired: string[] = []
+
+    requiredQuestions.forEach((question, index) => {
+      const globalIndex = allQuestions.findIndex(q => q.id === question.id)
+      const answer = currentValues.respuestas?.[globalIndex]?.respuesta
+
+      if (!answer || answer.trim() === '') {
+        unansweredRequired.push(question.question)
+      }
+    })
+
+    return unansweredRequired
+  }
+
+  // Manejar submit con validación
+  const handleFormSubmit = (data: Step5FormData) => {
+    const unansweredRequired = validateRequiredQuestions()
+
+    if (unansweredRequired.length > 0) {
+      // Mostrar alerta con las preguntas faltantes
+      const questionsList = unansweredRequired
+        .slice(0, 3) // Mostrar máximo 3 preguntas
+        .map((q, i) => `${i + 1}. ${q.substring(0, 80)}${q.length > 80 ? '...' : ''}`)
+        .join('\n')
+
+      const moreQuestions = unansweredRequired.length > 3 ? `\n... y ${unansweredRequired.length - 3} más` : ''
+
+      alert(`⚠️ Faltan respuestas obligatorias:\n\n${questionsList}${moreQuestions}\n\nPor favor complete todas las preguntas marcadas con (*) antes de continuar.`)
+      return
+    }
+
+    onSaveAndNext(data)
+  }
+
+  // Función para renderizar el campo de respuesta según el tipo
+  const renderQuestionField = (question: Question, index: number) => {
+    return (
+      <FormField
+        control={control}
+        name={`respuestas.${index}.respuesta`}
+        render={({ field, fieldState }) => {
+          switch (question.responseType) {
+            case 'TEXT':
+              return (
+                <FormControl>
+                  <Textarea
+                    placeholder="Escriba su respuesta aquí..."
+                    rows={3}
+                    className={cn(
+                      'resize-y bg-background/60 border-border/60 focus:border-background transition-all duration-200 text-sm leading-relaxed shadow-sm',
+                      fieldState.error && 'border-destructive focus-visible:ring-destructive/50'
+                    )}
+                    {...field}
+                  />
+                </FormControl>
+              )
+
+            case 'NUMBER':
+              return (
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="Ingrese un número..."
+                    className={cn(
+                      'bg-background/60 border-border/60 focus:border-background transition-all duration-200 text-sm shadow-sm',
+                      fieldState.error && 'border-destructive focus-visible:ring-destructive/50'
+                    )}
+                    {...field}
+                  />
+                </FormControl>
+              )
+
+            case 'BOOLEAN':
+              return (
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    value={field.value || ''}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="true" id={`${question.id}-true`} />
+                      <label htmlFor={`${question.id}-true`} className="text-sm">Sí</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="false" id={`${question.id}-false`} />
+                      <label htmlFor={`${question.id}-false`} className="text-sm">No</label>
+                    </div>
+                  </RadioGroup>
+                </FormControl>
+              )
+
+            case 'SELECT':
+              return (
+                <FormControl>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <SelectTrigger className="bg-background/60 border-border/60">
+                      <SelectValue placeholder="Seleccione una opción..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {question.options?.map((option: QuestionOption) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+              )
+
+            case 'MULTISELECT':
+              return (
+                <div className="space-y-2">
+                  {question.options?.map((option: QuestionOption) => {
+                    const currentValues = field.value ? field.value.split(',') : []
+                    const isChecked = currentValues.includes(option.value)
+
+                    return (
+                      <div key={option.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`${question.id}-${option.value}`}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => {
+                            const newValues = checked
+                              ? [...currentValues.filter(v => v), option.value]
+                              : currentValues.filter(v => v !== option.value)
+                            field.onChange(newValues.join(','))
+                          }}
+                        />
+                        <label
+                          htmlFor={`${question.id}-${option.value}`}
+                          className="text-sm font-normal"
+                        >
+                          {option.label}
+                        </label>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+
+            default:
+              return (
+                <FormControl>
+                  <Textarea
+                    placeholder="Escriba su respuesta aquí..."
+                    rows={3}
+                    className={cn(
+                      'resize-y bg-background/60 border-border/60 focus:border-background transition-all duration-200 text-sm leading-relaxed shadow-sm',
+                      fieldState.error && 'border-destructive focus-visible:ring-destructive/50'
+                    )}
+                    {...field}
+                  />
+                </FormControl>
+              )
+          }
+        }}
+      />
+    )
+  }
+
   // Mensaje de error consolidado
   const formError =
     formState.errors.respuestas?.root?.message || formState.errors.respuestas?.message || formState.errors.root?.message
+
+  // Mostrar estado de carga
+  if (isLoadingQuestions) {
+    return (
+      <div className="p-4 md:p-6 h-full flex flex-col items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mb-4" />
+        <p className="text-muted-foreground">Cargando preguntas...</p>
+      </div>
+    )
+  }
+
+  // Mostrar error de carga
+  if (questionsError) {
+    return (
+      <div className="p-4 md:p-6 h-full flex flex-col items-center justify-center">
+        <AlertTriangle className="w-8 h-8 text-destructive mb-4" />
+        <p className="text-destructive">Error al cargar las preguntas</p>
+        <p className="text-muted-foreground text-sm mt-2">
+          {questionsError instanceof Error ? questionsError.message : 'Error desconocido'}
+        </p>
+      </div>
+    )
+  }
+
+  // Mostrar mensaje si no hay preguntas
+  if (allQuestions.length === 0) {
+    return (
+      <div className="p-4 md:p-6 h-full flex flex-col items-center justify-center">
+        <MessageSquareText className="w-8 h-8 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground">No hay preguntas disponibles para este paso</p>
+      </div>
+    )
+  }
 
   return (
     <div className="p-4 md:p-6 h-full flex flex-col">
@@ -101,44 +337,56 @@ export function Step5Form({
 
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
-          <form id="step5-form" onSubmit={handleSubmit(onSaveAndNext)} className="flex-1 flex flex-col min-h-0">
+          <form id="step5-form" onSubmit={handleSubmit(handleFormSubmit)} className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 space-y-0 overflow-y-auto pr-2 pb-4">
-              {step5QuestionsMock.map((pregunta, index) => (
-                <div key={pregunta.questionId}>
-                  <div className="py-4 px-1">
-                    <FormField
-                      control={control}
-                      name={`respuestas.${index}.respuesta`}
-                      render={({ field, fieldState }) => (
-                        <FormItem className="space-y-2.5">
-                          <FormLabel className="text-sm font-medium leading-relaxed text-foreground/90 block">
-                            <span className="inline-flex items-baseline gap-2">
-                              <span className="text-muted-foreground font-normal text-xs bg-muted/50 px-2 py-0.5 rounded-full min-w-[24px] text-center">
-                                {index + 1}
-                              </span>
-                              <span className="flex-1">{pregunta.question}</span>
-                              <span className="text-destructive ml-1">*</span>
-                            </span>
-                          </FormLabel>
-                          <div className="ml-6">
-                            <FormControl>
-                              <Textarea
-                                placeholder="Escriba su respuesta aquí..."
-                                rows={3}
-                                className={cn(
-                                  'resize-y bg-background/60 border-border/60 focus:border-background transition-all duration-200 text-sm leading-relaxed shadow-sm',
-                                  fieldState.error && 'border-destructive focus-visible:ring-destructive/50'
-                                )}
-                                {...field}
-                              />
-                            </FormControl>
-                          </div>
-                          <input type="hidden" {...register(`respuestas.${index}.idPregunta`)} value={pregunta.questionId} />
-                        </FormItem>
-                      )}
-                    />
+              {Object.entries(questionGroups).map(([groupTitle, groupQuestions], groupIndex) => (
+                <div key={groupTitle} className="mb-6">
+                  {/* Título del grupo */}
+                  <div className="mb-4 p-3 bg-muted/30 rounded-lg border-l-4 border-primary">
+                    <h3 className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+                      <MessageSquareText className="w-4 h-4" />
+                      {groupTitle}
+                    </h3>
                   </div>
-                  {index < step5QuestionsMock.length - 1 && <Separator className="opacity-20 my-1" />}
+
+                  {/* Preguntas del grupo */}
+                  <div className="space-y-0">
+                    {groupQuestions.map((pregunta, questionIndex) => {
+                      const globalIndex = allQuestions.findIndex(q => q.id === pregunta.id)
+                      return (
+                        <div key={pregunta.id}>
+                          <div className="py-4 px-1">
+                            <div className="space-y-2.5">
+                              <div className="text-sm font-medium leading-relaxed text-foreground/90 block">
+                                <span className="inline-flex items-baseline gap-2">
+                                  <span className="text-muted-foreground font-normal text-xs bg-muted/50 px-2 py-0.5 rounded-full min-w-[24px] text-center">
+                                    {globalIndex + 1}
+                                  </span>
+                                  <span className="flex-1">{pregunta.question}</span>
+                                  {pregunta.isRequired && <span className="text-destructive ml-1">*</span>}
+                                </span>
+                                {pregunta.description && (
+                                  <span className="block text-xs text-muted-foreground mt-1 ml-8">
+                                    {pregunta.description}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="ml-6">
+                                {renderQuestionField(pregunta, globalIndex)}
+                              </div>
+                              <input type="hidden" {...register(`respuestas.${globalIndex}.idPregunta`)} value={pregunta.id} />
+                            </div>
+                          </div>
+                          {questionIndex < groupQuestions.length - 1 && <Separator className="opacity-20 my-1" />}
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* Separador entre grupos */}
+                  {groupIndex < Object.entries(questionGroups).length - 1 && (
+                    <Separator className="opacity-40 my-6" />
+                  )}
                 </div>
               ))}
             </div>

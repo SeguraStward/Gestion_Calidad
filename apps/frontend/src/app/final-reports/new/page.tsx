@@ -50,7 +50,7 @@ export default function NewFinalReportPage() {
   const [step5Data, setStep5Data] = useState<Step5FormData | null>(null)
   const [step6Data, setStep6Data] = useState<Step6FormData | null>(null)
   const [step7Data, setStep7Data] = useState<Step7FormData | null>(null)
-  const [reportType] = useState<ReportType>('INFORME_FINAL_V1')
+  const [reportType] = useState<ReportType>('TODOS')
 
   const createFinalReportMutation = useCreateFinalReport()
   const currentProfessorId = useSessionStore((state) => state.user?.id)
@@ -436,6 +436,7 @@ export default function NewFinalReportPage() {
             onSaveAndNext={handleSaveStep5Data}
             onPrevious={(data) => handlePreviousStep(data)}
             totalSteps={TOTAL_STEPS}
+            reportType={reportType}
             initialData={step5Data}
             isEditing={false}
           />
