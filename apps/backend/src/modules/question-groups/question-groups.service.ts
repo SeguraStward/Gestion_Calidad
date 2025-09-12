@@ -21,4 +21,54 @@ export class QuestionGroupsService extends GenericService<QuestionGroup, Questio
   ) {
     super(questionGroupsRepository, QuestionGroupDto);
   }
+
+  /**
+   * Get question groups by step number with optional report type filter
+   */
+  async getQuestionGroupsByStep(stepNumber: number, reportType?: string) {
+    const whereClause: any = {
+      stepNumber,
+      status: 'ACTIVE'
+    };
+
+    if (reportType) {
+      whereClause.appliesTo = {
+        has: reportType
+      };
+    }
+
+    return this.questionGroupsRepository.findAll(
+      1, // page
+      100, // limit - high limit for now
+      whereClause,
+      { createdAt: 'asc' }
+    );
+  }
+
+  /**
+   * Get question groups with their questions by step number with optional report type filter
+   */
+  async getQuestionGroupsWithQuestionsByStep(stepNumber: number, reportType?: string) {
+    const whereClause: any = {
+      stepNumber,
+      status: 'ACTIVE'
+    };
+
+    if (reportType) {
+      whereClause.appliesTo = {
+        has: reportType
+      };
+    }
+
+    // Simplified include without complex filtering to avoid Prisma issues
+    return this.questionGroupsRepository.findAll(
+      1, // page
+      100, // limit
+      whereClause,
+      { createdAt: 'asc' },
+      {
+        questions: true
+      } // include
+    );
+  }
 }

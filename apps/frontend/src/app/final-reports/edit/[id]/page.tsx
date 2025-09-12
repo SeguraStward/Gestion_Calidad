@@ -144,7 +144,10 @@ export default function EditFinalReportPage() {
         formStep4Methods.reset(initialStep4)
       }
 
-      const initialStep5 = transformReportToStep5Data(fetchedReport)
+      // Para el paso 5, necesitamos cargar las preguntas primero
+      // Por ahora usamos un array vacío como placeholder ya que las preguntas
+      // se cargarán dinámicamente en el componente Step5EditForm
+      const initialStep5 = transformReportToStep5Data(fetchedReport, [])
       if (initialStep5) {
         setStep5Data(initialStep5)
         formStep5Methods.reset(initialStep5)
@@ -273,38 +276,38 @@ export default function EditFinalReportPage() {
         })) || []),
         ...(step6Data?.respuestasMultiples?.[0]?.respuestasSeleccionadas?.length
           ? [
-              {
-                questionId: step6Data.respuestasMultiples[0].idPregunta,
-                question:
-                  step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.question ||
-                  step6Data.respuestasMultiples[0].idPregunta,
-                questionGroup:
-                  step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.group ||
-                  'herramientas',
-                responseType: 'SELECCION_MULTIPLE' as const,
-                response: null,
-                multipleResponse: step6Data.respuestasMultiples[0].respuestasSeleccionadas,
-                options: [],
-                otherResponse: undefined
-              }
-            ]
+            {
+              questionId: step6Data.respuestasMultiples[0].idPregunta,
+              question:
+                step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.question ||
+                step6Data.respuestasMultiples[0].idPregunta,
+              questionGroup:
+                step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.group ||
+                'herramientas',
+              responseType: 'SELECCION_MULTIPLE' as const,
+              response: null,
+              multipleResponse: step6Data.respuestasMultiples[0].respuestasSeleccionadas,
+              options: [],
+              otherResponse: undefined
+            }
+          ]
           : []),
         ...(step6Data?.otrasHerramientas && step6Data.otrasHerramientas.trim() !== ''
           ? [
-              {
-                questionId: OTHER_TOOLS_QUESTION_ID,
-                question:
-                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
-                  'Otras herramientas utilizadas (opcional)',
-                questionGroup:
-                  step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.group || 'herramientas',
-                responseType: 'TEXT' as const,
-                response: step6Data.otrasHerramientas,
-                multipleResponse: [],
-                options: [],
-                otherResponse: undefined
-              }
-            ]
+            {
+              questionId: OTHER_TOOLS_QUESTION_ID,
+              question:
+                step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
+                'Otras herramientas utilizadas (opcional)',
+              questionGroup:
+                step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.group || 'herramientas',
+              responseType: 'TEXT' as const,
+              response: step6Data.otrasHerramientas,
+              multipleResponse: [],
+              options: [],
+              otherResponse: undefined
+            }
+          ]
           : []),
         ...currentStep7ValuesFromForm.respuestasRadio.map((resp) => {
           const questionDetails = step7QuestionsPageMock.find((q) => q.questionId === resp.idPregunta)
@@ -434,7 +437,7 @@ export default function EditFinalReportPage() {
             totalSteps={TOTAL_STEPS}
             initialData={step1Data}
             onCancel={() => router.push('/final-reports')}
-            // onPrevious no se usa en el primer paso de edición si no hay a dónde ir antes
+          // onPrevious no se usa en el primer paso de edición si no hay a dónde ir antes
           />
         )
       case 2:
@@ -527,7 +530,6 @@ export default function EditFinalReportPage() {
             totalSteps={TOTAL_STEPS}
             initialData={step7Data}
             isEditing={true}
-            reportType={reportType}
             onFinalSubmit={handleSubmitAllSteps} // Este es el que realmente guarda todo
           />
         )
@@ -549,7 +551,7 @@ export default function EditFinalReportPage() {
         stepLabels={STEP_LABELS_SPANISH}
         currentStep={currentStep}
         backButton={{ href: '/final-reports', text: 'Volver a Informes' }}
-        // nrc={step1Data?.nrc || fetchedReport?.academicLoad?.nrc} // Opcional, si quieres mostrar NRC
+      // nrc={step1Data?.nrc || fetchedReport?.academicLoad?.nrc} // Opcional, si quieres mostrar NRC
       />
       <main className="flex-grow flex flex-col items-center overflow-hidden pt-2 pb-6 md:pt-4">
         <Card className="shadow-lg border-border/50 w-full max-w-5xl flex flex-col flex-grow overflow-hidden rounded-lg">

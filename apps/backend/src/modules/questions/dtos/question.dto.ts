@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested, IsBoolean, IsInt, Min } from 'class-validator';
 
 import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { ResponseType, Status } from '@una-gc/database/prisma/generated/client';
@@ -59,6 +59,34 @@ export class QuestionDto extends AuditFields {
   @IsString()
   @IsOptional()
   questionVersion?: string;
+
+  @ApiPropertyOptional({ description: 'Step number (5 or 7 for final report steps)' })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  stepNumber?: number;
+
+  @ApiPropertyOptional({ description: 'Report types this question applies to', type: [String] })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  appliesTo?: string[];
+
+  @ApiPropertyOptional({ description: 'Additional description for the question' })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiPropertyOptional({ description: 'Whether this question is required', default: true })
+  @IsBoolean()
+  @IsOptional()
+  isRequired?: boolean;
+
+  @ApiPropertyOptional({ description: 'Order within the step/group' })
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  order?: number;
 
   @ApiPropertyOptional({ enum: Status, default: Status.ACTIVE })
   @IsEnum(Status)

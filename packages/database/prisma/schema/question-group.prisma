@@ -7,6 +7,11 @@ model QuestionGroup {
   questionTitle String
   description   String?
 
+  // New fields for step management
+  stepNumber Int? // 5 or 7 for final report steps
+  appliesTo  String[] // Report types this group applies to
+  order      Int? // Order within the step
+
   status Status @default(ACTIVE)
 
   // Relations
@@ -18,5 +23,6 @@ model QuestionGroup {
   createdBy String?  @db.ObjectId
   updatedBy String?  @db.ObjectId
 
+  @@index([stepNumber, status])
   @@map("question_groups")
 }

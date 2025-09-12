@@ -51,7 +51,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: 'Informe Final',
       url: '/final-report',
       icon: require('lucide-react').FileText,
-      items: [{ title: 'Lista de Informes', url: '/final-reports' }]
+      items: [
+        { title: 'Lista de Informes', url: '/final-reports' },
+        { title: 'Gestión de Preguntas', url: '/admin/question-management' }
+      ]
     },
     {
       title: 'Gestión de Evidencias',
