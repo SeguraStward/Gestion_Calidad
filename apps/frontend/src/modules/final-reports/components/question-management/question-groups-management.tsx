@@ -130,27 +130,120 @@ export function QuestionGroupsManagement({ stepNumber, reportType }: QuestionGro
 
   const handleSubmit = async (data: QuestionGroupFormData) => {
     try {
+      console.log('🏗️ Iniciando creación/edición de grupo:', { editingGroup, data })
+
       if (editingGroup) {
+        console.log('✏️ Editando grupo existente:', editingGroup.id)
         await updateGroupMutation.mutateAsync({
           id: editingGroup.id!,
           data
         })
+        console.log('✅ Grupo editado exitosamente')
       } else {
-        await createGroupMutation.mutateAsync(data)
+        console.log('🆕 Creando nuevo grupo con datos:', data)
+        const result = await createGroupMutation.mutateAsync(data)
+        console.log('✅ Grupo creado exitosamente:', result)
       }
       setDialogOpen(false)
       setEditingGroup(null)
       form.reset()
     } catch (error) {
-      console.error('Error saving group:', error)
+      console.error('❌ Error saving group:', error)
+      console.error('❌ Error type:', typeof error)
+      console.error('❌ Error details:', JSON.stringify(error, null, 2))
     }
   }
 
   const handleDeleteGroup = async (groupId: string) => {
     try {
-      await deleteGroupMutation.mutateAsync(groupId)
+      if (!groupId) {
+        console.error('❌ Error: ID del grupo no válido:', groupId)
+        toast.error('Error: ID del grupo no válido')
+        return
+      }
+
+      // Verificar si el grupo tiene preguntas asociadas antes de hacer la petición
+      const groupWithQuestions = groupsWithQuestionsData?.find(g => g.id === groupId)
+      const questionCount = groupWithQuestions?.questions?.length || 0
+
+      console.log('🔍 Debug - Verificando grupo:', {
+        groupId,
+        groupWithQuestions,
+        questionCount,
+        questions: groupWithQuestions?.questions,
+        allGroupsData: groupsWithQuestionsData
+      })
+
+      if (questionCount > 0) {
+        console.log('⚠️ Grupo tiene preguntas activas, bloqueando eliminación')
+        toast.error(`No se puede eliminar el grupo porque tiene ${questionCount} pregunta${questionCount !== 1 ? 's' : ''} asociada${questionCount !== 1 ? 's' : ''}. Elimina primero todas las preguntas del grupo desde la pestaña "Preguntas Individuales".`)
+        return
+      }
+
+      console.log('🗑️ Iniciando eliminación del grupo con ID:', groupId)
+      console.log('🔄 Mutation function:', deleteGroupMutation)
+      console.log('🔄 Mutation status:', deleteGroupMutation.status)
+      console.log('🔄 About to call mutateAsync...')
+
+      const result = await deleteGroupMutation.mutateAsync(groupId)
+      console.log('✅ Grupo eliminado exitosamente:', result)
+      toast.success('Grupo eliminado exitosamente')
     } catch (error) {
-      console.error('Error deleting group:', error)
+      console.error('❌ Error completo en delete mutation:', error)
+      console.error('❌ Error type:', typeof error)
+      console.error('❌ Error constructor:', error?.constructor?.name)
+      console.error('❌ Error keys:', Object.keys(error || {}))
+
+      // Extraer información específica del error
+      if (error && typeof error === 'object') {
+        if ('response' in error && error.response) {
+          console.error('❌ Response error:', error.response)
+          const response = error.response as any
+          console.error('❌ Response data:', response?.data)
+          console.error('❌ Response status:', response?.status)
+        }
+        if ('message' in error) {
+          console.error('❌ Error message:', error.message)
+        }
+        if ('status' in error) {
+          console.error('❌ Status:', error.status)
+        }
+        if ('request' in error) {
+          console.error('❌ Request details:', error.request)
+        }
+      }
+
+      // Extraer información específica del error
+      if (error && typeof error === 'object') {
+        if ('response' in error && error.response) {
+          console.error('❌ Response error:', error.response)
+        }
+        if ('message' in error) {
+          console.error('❌ Error message:', error.message)
+        }
+        if ('status' in error) {
+          console.error('❌ Status:', error.status)
+        }
+      }
+
+      // Mostrar error más específico
+      let errorMessage = 'Error desconocido'
+      if (error && typeof error === 'object' && 'response' in error && error.response) {
+        const response = error.response as any
+        if (response.data?.message) {
+          errorMessage = response.data.message
+        } else if (response.status === 403) {
+          errorMessage = 'No tienes permisos para eliminar este grupo'
+        } else if (response.status === 404) {
+          errorMessage = 'El grupo no fue encontrado'
+        } else if (response.status === 400) {
+          errorMessage = 'Datos inválidos para eliminar el grupo'
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+
+      toast.error(`Error al eliminar el grupo: ${errorMessage}`)
     }
   }
 
@@ -183,7 +276,7 @@ export function QuestionGroupsManagement({ stepNumber, reportType }: QuestionGro
   const groups = groupsData || []
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-visible">
       {/* Header Actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -361,85 +454,103 @@ export function QuestionGroupsManagement({ stepNumber, reportType }: QuestionGro
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 max-h-[500px] overflow-y-auto pr-2">
-            {groups.map((group) => {
-              const groupWithQuestions = groupsWithQuestionsData?.find(g => g.id === group.id)
-              const questionCount = groupWithQuestions?.questions?.length || 0
+          <div
+            className="overflow-y-auto overflow-x-visible pr-2 scroll-smooth"
+            style={{
+              height: '600px'
+            }}
+          >
+            <div className="grid gap-2 pb-96 pt-2">
+              {groups.map((group) => {
+                const groupWithQuestions = groupsWithQuestionsData?.find(g => g.id === group.id)
+                const questionCount = groupWithQuestions?.questions?.length || 0
 
-              return (
-                <Card key={group.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="text-lg">{group.name}</CardTitle>
-                        <CardDescription>{group.questionTitle}</CardDescription>
-                        {group.description && (
-                          <p className="text-sm text-muted-foreground mt-2">{group.description}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditGroup(group)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta acción eliminará permanentemente el grupo "{group.name}" y todas sus preguntas asociadas.
-                                Esta acción no se puede deshacer.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteGroup(group.id!)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Eliminar
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{questionCount} preguntas</span>
+                return (
+                  <Card key={group.id} className="hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2 pt-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <CardTitle className="text-base">{group.name}</CardTitle>
+                          <CardDescription className="text-sm">{group.questionTitle}</CardDescription>
+                          {group.description && (
+                            <p className="text-xs text-muted-foreground mt-1">{group.description}</p>
+                          )}
                         </div>
                         <div className="flex items-center gap-1">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">
-                            {group.appliesTo?.join(', ') || 'Todos los tipos'}
-                          </span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleEditGroup(group)}
+                            className="h-6 w-6"
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          {group.id && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="icon" className="h-6 w-6">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta acción eliminará permanentemente el grupo "{group.name}".
+                                    Esta acción no se puede deshacer.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => {
+                                      if (group.id) {
+                                        handleDeleteGroup(group.id)
+                                      } else {
+                                        toast.error('Error: No se pudo obtener el ID del grupo')
+                                      }
+                                    }}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Eliminar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={group.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                          {group.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
-                        </Badge>
-                        {group.order !== undefined && (
-                          <Badge variant="outline">Orden: {group.order}</Badge>
-                        )}
+                    </CardHeader>
+                    <CardContent className="pt-0 pb-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            <MessageSquare className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-xs">
+                              {questionCount} pregunta{questionCount !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Users className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-xs">
+                              {group.appliesTo?.join(', ') || 'Todos los tipos'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Badge variant={group.status === 'ACTIVE' ? 'default' : 'secondary'} className="text-xs px-1.5 py-0.5">
+                            {group.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
+                          </Badge>
+                          {group.order !== undefined && (
+                            <Badge variant="outline" className="text-xs px-1.5 py-0.5">Orden: {group.order}</Badge>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
           </div>
         )}
       </div>

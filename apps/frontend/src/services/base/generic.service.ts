@@ -2,7 +2,7 @@ import { HttpClient } from '@/lib/http-client'
 import type { ErrorResponse, PaginatedResponse } from '../interfaces'
 
 export class GenericService<T, CreateDTO, UpdateDTO = Partial<T>, Filters = unknown> {
-  constructor(protected readonly resource: string) {}
+  constructor(protected readonly resource: string) { }
 
   async list(filters?: Filters): Promise<PaginatedResponse<T>> {
     try {
@@ -43,8 +43,11 @@ export class GenericService<T, CreateDTO, UpdateDTO = Partial<T>, Filters = unkn
 
   async remove(id: string): Promise<void> {
     try {
-      await HttpClient.delete(`/${this.resource}/${id}`)
+      console.log(`🔥 GenericService: Attempting to delete ${this.resource}/${id}`)
+      const response = await HttpClient.delete(`/${this.resource}/${id}`)
+      console.log(`✅ GenericService: Delete successful for ${this.resource}/${id}`, response)
     } catch (err) {
+      console.error(`❌ GenericService: Delete failed for ${this.resource}/${id}`, err)
       this.handleError(err)
     }
   }

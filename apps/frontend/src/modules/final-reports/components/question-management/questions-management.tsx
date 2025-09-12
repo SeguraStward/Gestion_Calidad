@@ -52,6 +52,7 @@ import {
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
+import { toast } from 'sonner'
 
 import {
   useQuestionsByStep,
@@ -192,7 +193,7 @@ export function QuestionsManagement({ stepNumber, reportType }: QuestionsManagem
 
   // Group questions by group ID for better organization
   const questionsByGroup = useMemo(() => {
-    return questions.reduce((acc, question) => {
+    const grouped = questions.reduce((acc, question) => {
       const groupName = question.group?.name || 'Sin grupo'
       if (!acc[groupName]) {
         acc[groupName] = []
@@ -200,17 +201,24 @@ export function QuestionsManagement({ stepNumber, reportType }: QuestionsManagem
       acc[groupName].push(question)
       return acc
     }, {} as Record<string, Question[]>)
+
+    console.log('Questions grouped:', grouped)
+    return grouped
   }, [questions])
 
   // Event handlers
   const toggleGroupExpansion = (groupKey: string) => {
+    console.log('Toggling group:', groupKey, 'Current expanded:', expandedGroups)
     setExpandedGroups(prev => {
       const newSet = new Set(prev)
       if (newSet.has(groupKey)) {
         newSet.delete(groupKey)
+        console.log('Collapsing group:', groupKey)
       } else {
         newSet.add(groupKey)
+        console.log('Expanding group:', groupKey)
       }
+      console.log('New expanded groups:', newSet)
       return newSet
     })
   }
@@ -290,9 +298,53 @@ export function QuestionsManagement({ stepNumber, reportType }: QuestionsManagem
 
   const handleDeleteQuestion = async (questionId: string) => {
     try {
-      await deleteQuestionMutation.mutateAsync(questionId)
+      if (!questionId) {
+        console.error('❌ Error: ID de la pregunta no válido:', questionId)
+        toast.error('Error: ID de la pregunta no válido')
+        return
+      }
+
+      console.log('🗑️ Iniciando eliminación de la pregunta con ID:', questionId)
+
+      const result = await deleteQuestionMutation.mutateAsync(questionId)
+      console.log('✅ Pregunta eliminada exitosamente:', result)
+      toast.success('Pregunta eliminada exitosamente')
     } catch (error) {
-      console.error('Error deleting question:', error)
+      console.error('❌ Error completo en delete mutation:', error)
+
+      // Extraer información específica del error
+      if (error && typeof error === 'object') {
+        if ('response' in error && error.response) {
+          console.error('❌ Response error:', error.response)
+        }
+        if ('message' in error) {
+          console.error('❌ Error message:', error.message)
+        }
+        if ('status' in error) {
+          console.error('❌ Status:', error.status)
+        }
+      }
+
+      // Mostrar error más específico
+      let errorMessage = 'Error desconocido'
+      if (error && typeof error === 'object' && 'response' in error && error.response) {
+        const response = error.response as any
+        if (response.data?.message) {
+          errorMessage = response.data.message
+        } else if (response.status === 403) {
+          errorMessage = 'No tienes permisos para eliminar esta pregunta'
+        } else if (response.status === 404) {
+          errorMessage = 'La pregunta no fue encontrada'
+        } else if (response.status === 400) {
+          errorMessage = 'Datos inválidos para eliminar la pregunta'
+        } else if (response.status === 500) {
+          errorMessage = 'Error interno del servidor al eliminar la pregunta'
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+
+      toast.error(`Error al eliminar la pregunta: ${errorMessage}`)
     }
   }
 
@@ -640,152 +692,163 @@ export function QuestionsManagement({ stepNumber, reportType }: QuestionsManagem
       </div>
 
       {/* Questions List */}
-      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 pb-4">
-        {questions.length === 0 ? (
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No hay preguntas</h3>
-                <p className="text-muted-foreground mb-4">
-                  Cree la primera pregunta para el paso {stepNumber}
-                </p>
-                <Button onClick={handleCreateQuestion}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Crear Primera Pregunta
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            {Object.entries(questionsByGroup).map(([groupKey, groupQuestions]) => {
-              const isExpanded = expandedGroups.has(groupKey)
-
-              return (
-                <div key={groupKey} className="space-y-3">
-                  {/* Group Header - Clickeable */}
-                  <button
-                    onClick={() => toggleGroupExpansion(groupKey)}
-                    className="w-full flex items-center gap-2 sticky top-0 bg-background/80 backdrop-blur-sm z-10 py-2 hover:bg-background/90 transition-colors rounded-lg px-2"
-                  >
-                    {/* Expand/Collapse Icon */}
-                    {isExpanded ? (
-                      <ChevronDown className="h-5 w-5 text-primary" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5 text-primary" />
-                    )}
-                    <div className="h-1 w-6 bg-primary rounded-full" />
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {groupKey === 'Sin grupo' ? 'Preguntas sin agrupar' : groupKey}
-                    </h3>
-                    <div className="h-px bg-border flex-1" />
-                    <Badge variant="secondary" className="text-xs">
-                      {groupQuestions.length} pregunta{groupQuestions.length !== 1 ? 's' : ''}
-                    </Badge>
-                  </button>
-
-                  {/* Questions in this group - Solo se muestra si está expandido */}
-                  {isExpanded && (
-                    <div className="grid gap-2 pl-4 border-l-2 border-muted animate-in slide-in-from-top-2 duration-200">
-                      {groupQuestions.map((question) => (
-                        <Card key={question.id} className="hover:shadow-sm transition-shadow bg-card/50">
-                          <CardHeader className="pb-2 pt-3">
-                            <div className="flex items-start justify-between">
-                              <div className="space-y-1 flex-1">
-                                <div className="flex items-center gap-2">
-                                  {getResponseTypeIcon(question.responseType)}
-                                  <Badge variant="outline" className="text-xs">
-                                    {getResponseTypeLabel(question.responseType)}
-                                  </Badge>
-                                </div>
-                                <CardTitle className="text-base leading-tight">
-                                  {question.question}
-                                </CardTitle>
-                                {question.description && (
-                                  <CardDescription className="text-sm">{question.description}</CardDescription>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1 ml-3">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEditQuestion(question)}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Esta acción eliminará permanentemente la pregunta.
-                                        Esta acción no se puede deshacer.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => handleDeleteQuestion(question.id!)}
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      >
-                                        Eliminar
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0 pb-3">
-                            {/* Options preview for SELECT/MULTISELECT */}
-                            {['SELECT', 'MULTISELECT'].includes(question.responseType) && question.options && question.options.length > 0 && (
-                              <div className="mb-3">
-                                <p className="text-xs font-medium mb-1">Opciones:</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {question.options.map((option, idx) => (
-                                    <Badge key={idx} variant="outline" className="text-xs">
-                                      {option.label}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="flex items-center justify-between text-xs">
-                              <div className="flex items-center gap-3">
-                                <span className="text-muted-foreground">
-                                  {question.appliesTo?.join(', ') || 'Todos los tipos'}
-                                </span>
-                                {question.isRequired && (
-                                  <Badge variant="destructive" className="text-xs">Requerida</Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Badge variant={question.status === 'ACTIVE' ? 'default' : 'secondary'} className="text-xs">
-                                  {question.status === 'ACTIVE' ? 'Activa' : 'Inactiva'}
-                                </Badge>
-                                {question.order !== undefined && (
-                                  <Badge variant="outline" className="text-xs">Orden: {question.order}</Badge>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
+      <div className="overflow-y-auto pr-2" style={{ height: '600px' }}>
+        <div className="pb-96 space-y-4">
+          {questions.length === 0 ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No hay preguntas</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Cree la primera pregunta para el paso {stepNumber}
+                  </p>
+                  <Button onClick={handleCreateQuestion}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Crear Primera Pregunta
+                  </Button>
                 </div>
-              )
-            })}
-          </>
-        )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {Object.entries(questionsByGroup).map(([groupKey, groupQuestions]) => {
+                const isExpanded = expandedGroups.has(groupKey)
+
+                return (
+                  <Card key={groupKey} className="border-2 border-muted/50">
+                    <CardHeader className="pb-2">
+                      {/* Group Header - Clickeable */}
+                      <button
+                        onClick={() => toggleGroupExpansion(groupKey)}
+                        className="w-full flex items-center gap-3 py-2 hover:bg-muted/30 transition-colors rounded-lg px-2 -mx-2"
+                      >
+                        {/* Expand/Collapse Icon */}
+                        {isExpanded ? (
+                          <ChevronDown className="h-5 w-5 text-primary flex-shrink-0" />
+                        ) : (
+                          <ChevronRight className="h-5 w-5 text-primary flex-shrink-0" />
+                        )}
+                        <div className="h-1 w-8 bg-primary rounded-full flex-shrink-0" />
+                        <h3 className="text-lg font-semibold text-foreground flex-1 text-left">
+                          {groupKey === 'Sin grupo' ? 'Preguntas sin agrupar' : groupKey}
+                        </h3>
+                        <Badge variant="secondary" className="text-xs flex-shrink-0">
+                          {groupQuestions.length} pregunta{groupQuestions.length !== 1 ? 's' : ''}
+                        </Badge>
+                      </button>
+                    </CardHeader>
+
+                    {/* Questions in this group - Solo se muestra si está expandido */}
+                    {isExpanded && (
+                      <CardContent className="pt-0 pb-12">
+                        <div className="space-y-2 pl-4 border-l-2 border-primary/30 pb-8">
+                          {groupQuestions.map((question) => (
+                            <Card key={question.id} className="hover:shadow-sm transition-shadow bg-card/50">
+                              <CardHeader className="pb-1 pt-2">
+                                <div className="flex items-start justify-between">
+                                  <div className="space-y-1 flex-1">
+                                    <div className="flex items-center gap-2">
+                                      {getResponseTypeIcon(question.responseType)}
+                                      <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                                        {getResponseTypeLabel(question.responseType)}
+                                      </Badge>
+                                    </div>
+                                    <CardTitle className="text-sm leading-tight">
+                                      {question.question}
+                                    </CardTitle>
+                                    {question.description && (
+                                      <CardDescription className="text-xs">{question.description}</CardDescription>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-1 ml-3">
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => handleEditQuestion(question)}
+                                      className="h-6 w-6"
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="outline" size="icon" className="h-6 w-6">
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>¿Está seguro?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Esta acción eliminará permanentemente la pregunta.
+                                            Esta acción no se puede deshacer.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                          <AlertDialogAction
+                                            onClick={() => {
+                                              if (question.id) {
+                                                handleDeleteQuestion(question.id)
+                                              } else {
+                                                toast.error('Error: No se pudo obtener el ID de la pregunta')
+                                              }
+                                            }}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                          >
+                                            Eliminar
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                </div>
+                              </CardHeader>
+                              <CardContent className="pt-0 pb-2">
+                                {/* Options preview for SELECT/MULTISELECT */}
+                                {['SELECT', 'MULTISELECT'].includes(question.responseType) && question.options && question.options.length > 0 && (
+                                  <div className="mb-2">
+                                    <p className="text-xs font-medium mb-1">Opciones:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {question.options.map((option, idx) => (
+                                        <Badge key={idx} variant="outline" className="text-xs px-1.5 py-0.5">
+                                          {option.label}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="flex items-center justify-between text-xs">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground text-xs">
+                                      {question.appliesTo?.join(', ') || 'Todos los tipos'}
+                                    </span>
+                                    {question.isRequired && (
+                                      <Badge variant="destructive" className="text-xs px-1.5 py-0.5">Requerida</Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Badge variant={question.status === 'ACTIVE' ? 'default' : 'secondary'} className="text-xs px-1.5 py-0.5">
+                                      {question.status === 'ACTIVE' ? 'Activa' : 'Inactiva'}
+                                    </Badge>
+                                    {question.order !== undefined && (
+                                      <Badge variant="outline" className="text-xs px-1.5 py-0.5">Orden: {question.order}</Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </CardContent>
+                    )}
+                  </Card>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

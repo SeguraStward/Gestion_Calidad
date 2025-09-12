@@ -6,15 +6,14 @@ import { IGenericService } from './generic-service.interface';
 
 @Injectable()
 export abstract class GenericService<E extends Record<string, any>, D, C = any, U = any>
-  implements IGenericService<D, C, U>
-{
+  implements IGenericService<D, C, U> {
   protected abstract logger: Logger;
 
   constructor(
     protected readonly repository: GenericRepository<E>,
     protected readonly dtoClass?: new (...args: any[]) => D,
     protected readonly dtoValidator?: DtoValidator,
-  ) {}
+  ) { }
 
   private transformDto(entity: E): D;
   private transformDto(entity: E[]): D[];
@@ -76,11 +75,14 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
 
   async save(payload: C): Promise<D> {
     try {
+      this.logger.debug(`🏗️ Attempting to save entity:`, JSON.stringify(payload, null, 2));
       const result = await this.repository.save(payload);
+      this.logger.debug(`✅ Entity saved successfully:`, JSON.stringify(result, null, 2));
       const validatedResult = await this.dtoValidator.validate(result, this.dtoClass as any);
+      this.logger.debug(`✅ Entity validated successfully:`, JSON.stringify(validatedResult, null, 2));
       return this.transformDto(Array.isArray(validatedResult) ? validatedResult[0] : validatedResult);
     } catch (error) {
-      this.logger.error(`Error saving entity: ${JSON.stringify(payload)}`, error);
+      this.logger.error(`❌ Error saving entity: ${JSON.stringify(payload)}`, error);
       throw error;
     }
   }
@@ -124,7 +126,7 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
         if (activeRelations.length > 0) {
           throw new Error(
             this.relationCheckConfig.errorMessage ||
-              `Cannot ${operationType}: Entity has related ${relationField} records`,
+            `Cannot ${operationType}: Entity has related ${relationField} records`,
           );
         }
       } else if (relationData && typeof relationData === 'object') {
@@ -132,7 +134,7 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
         if (isActive) {
           throw new Error(
             this.relationCheckConfig.errorMessage ||
-              `Cannot ${operationType}: Entity has a related ${relationField} record`,
+            `Cannot ${operationType}: Entity has a related ${relationField} record`,
           );
         }
       }

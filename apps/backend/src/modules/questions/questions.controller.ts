@@ -1,11 +1,13 @@
 import { GenericController } from '@core/common/interfaces/generic.controller';
-import { Controller, Logger, Get, Param, ParseIntPipe, Query, Post, Body, HttpStatus, HttpCode } from '@nestjs/common';
+import { Controller, Logger, Get, Param, ParseIntPipe, Query, Post, Body, HttpStatus, HttpCode, Delete } from '@nestjs/common';
 
 import { QuestionDto } from './dtos/question.dto';
 import { QuestionsService } from './questions.service';
 
 import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AuthorizedEndpoint } from '@core/common/decorators/authorized-endpoint.decorator';
+import { PermissionType } from '@una-gc/database/prisma/generated/client';
 
 @ApiTags('Questions')
 @ResourceName('QUESTION')
@@ -61,5 +63,25 @@ export class QuestionsController extends GenericController<QuestionDto, Question
       ...result,
       question: createDto.question
     };
+  }
+
+  // Override delete method to add better error handling
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete question by id' })
+  @ApiParam({ name: 'id', description: 'Question ID', type: String })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Question successfully deleted' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Question not found' })
+  @AuthorizedEndpoint(PermissionType.DELETE)
+  async delete(@Param('id') id: string): Promise<void> {
+    try {
+      this.logger.log(`🗑️ Attempting to delete question with ID: ${id}`);
+
+      await this.questionsService.deleteById(id);
+      this.logger.log(`✅ Question with ID ${id} deleted successfully`);
+
+    } catch (error) {
+      this.logger.error(`❌ Error deleting question with ID ${id}:`, error instanceof Error ? error.message : 'Unknown error');
+      throw error;
+    }
   }
 }
