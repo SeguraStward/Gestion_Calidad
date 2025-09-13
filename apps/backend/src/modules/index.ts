@@ -33,3 +33,16 @@ export * from './user-permissions/user-permissions.module';
 export * from './user-roles/user-roles.module';
 export * from './user-work-experiences/user-work-experiences.module';
 export * from './users/users.module';
+
+// SINAES Quality Management Modules
+export * from './dimensions/dimensions.module';
+export * from './components/components.module';
+export * from './criteria/criteria.module';
+export * from './standards/standards.module';
+export * from './quality-evidences/quality-evidences.module';
+export * from './proof-document-types/proof-document-types.module';
+export * from './document-counters/document-counters.module';
+export * from './proof-documents/proof-documents.module';
+export * from './career-proof-documents/career-proof-documents.module';
+export * from './standard-evidences/standard-evidences.module';
+export * from './google-drive-folders/google-drive-folders.module';

@@ -44,6 +44,18 @@ import {
   UserRolesModule,
   UserWorkExperiencesModule,
   UsersModule,
+  // SINAES Quality Management Modules
+  DimensionsModule,
+  ComponentsModule,
+  CriteriaModule,
+  StandardsModule,
+  QualityEvidencesModule,
+  ProofDocumentTypesModule,
+  DocumentCountersModule,
+  ProofDocumentsModule,
+  CareerProofDocumentsModule,
+  StandardEvidencesModule,
+  GoogleDriveFoldersModule,
 } from '@modules/index';
 
 @Module({
@@ -87,6 +99,18 @@ import {
     UserRolesModule,
     UserWorkExperiencesModule,
     UsersModule,
+    // SINAES Quality Management Modules
+    DimensionsModule,
+    ComponentsModule,
+    CriteriaModule,
+    StandardsModule,
+    QualityEvidencesModule,
+    ProofDocumentTypesModule,
+    DocumentCountersModule,
+    ProofDocumentsModule,
+    CareerProofDocumentsModule,
+    StandardEvidencesModule,
+    GoogleDriveFoldersModule,
     ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
