@@ -17,6 +17,9 @@ export function ContentLayout({ children }: { children: ReactNode }) {
     (path) => pathname.startsWith(path)
   )
 
+  // Pages that need horizontal scroll
+  const needsHorizontalScroll = pathname.startsWith('/sinaes-management')
+
   // HomePage doesn't need sidebar scroll
   const isHomePage = pathname === '/'
 
@@ -32,9 +35,10 @@ export function ContentLayout({ children }: { children: ReactNode }) {
         <div
           className={`
             flex-1 transition-opacity transition-transform duration-700 ease-in opacity-0 animate-fadeInComponent
-            ${needsScroll ? 'overflow-y-auto custom-scrollbar' : 'overflow-hidden'}
+            ${needsScroll ? 'overflow-y-auto custom-scrollbar' : needsHorizontalScroll ? '' : 'overflow-hidden'}
             ${isHomePage ? 'p-0' : 'p-4 md:p-8'}
           `}
+          style={needsHorizontalScroll ? { overflow: 'visible' } : {}}
         >
           {children}
         </div>
