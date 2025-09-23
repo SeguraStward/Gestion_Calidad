@@ -8,6 +8,7 @@ import { Textarea } from '@una-gc/ui/components/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
 import { RefreshCw } from 'lucide-react'
 import { useCreateQualityEvidence, useUpdateQualityEvidence } from '../../services/quality-evidences.service'
+import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import type { QualityEvidence, CreateQualityEvidenceDto } from '../../types/quality-evidences.types'
 import { useAutoNumbering } from '../../hooks/use-auto-numbering'
 
@@ -19,11 +20,15 @@ interface QualityEvidenceFormProps {
 }
 
 export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: QualityEvidenceFormProps) => {
+  const { selectedStandard, selectedCriterion } = useSinaesNavigation()
+  
   const [formData, setFormData] = useState<CreateQualityEvidenceDto>({
     name: evidence?.name || '',
     code: evidence?.code || '',
     description: evidence?.description || '',
     order: evidence?.order || 0,
+    standardId: evidence?.standardId || selectedStandard?.id || undefined,
+    criterionId: evidence?.criterionId || (selectedStandard ? undefined : selectedCriterion?.id) || undefined,
     status: evidence?.status || 'ACTIVE'
   })
 
@@ -38,6 +43,17 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
     }
   }, [open, evidence])
 
+  // Update relation IDs when context changes
+  useEffect(() => {
+    if (open && !evidence) {
+      setFormData(prev => ({
+        ...prev,
+        standardId: selectedStandard?.id || undefined,
+        criterionId: selectedStandard ? undefined : selectedCriterion?.id || undefined,
+      }))
+    }
+  }, [open, selectedStandard, selectedCriterion, evidence])
+
   const handleGenerateCode = async () => {
     try {
       const code = await generateEvidenceCode()
@@ -49,6 +65,13 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    console.log('🔍 Enviando evidencia con datos:', {
+      ...formData,
+      selectedStandard: selectedStandard?.id,
+      selectedCriterion: selectedCriterion?.id,
+      context: selectedStandard ? 'ESTÁNDAR' : 'CRITERIO'
+    })
 
     try {
       if (evidence) {
@@ -66,6 +89,8 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
         code: '',
         description: '',
         order: 0,
+        standardId: selectedStandard?.id || undefined,
+        criterionId: selectedStandard ? undefined : selectedCriterion?.id || undefined,
         status: 'ACTIVE'
       })
     } catch (error) {
@@ -79,6 +104,8 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
       code: '',
       description: '',
       order: 0,
+      standardId: selectedStandard?.id || undefined,
+      criterionId: selectedStandard ? undefined : selectedCriterion?.id || undefined,
       status: 'ACTIVE'
     })
     onClose()
@@ -91,6 +118,12 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
           <DialogTitle>
             {evidence ? 'Editar Evidencia de Calidad' : 'Nueva Evidencia de Calidad'}
           </DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            {selectedStandard 
+              ? `Para el estándar: ${selectedStandard.code} - ${selectedStandard.name}`
+              : `Para el criterio: ${selectedCriterion?.code} - ${selectedCriterion?.name}`
+            }
+          </p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
