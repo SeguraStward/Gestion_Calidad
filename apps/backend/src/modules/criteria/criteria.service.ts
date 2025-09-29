@@ -23,4 +23,9 @@ export class CriteriaService extends GenericService<Criterion, CriterionDto, Cre
   ) {
     super(criteriaRepository, CriterionDto);
   }
+
+  async findByComponent(componentId: string): Promise<CriterionDto[]> {
+    const criteria = await this.criteriaRepository.findAll(1, 100, { componentId });
+    return criteria.data;
+  }
 }

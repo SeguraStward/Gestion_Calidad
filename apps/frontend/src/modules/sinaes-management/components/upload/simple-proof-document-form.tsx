@@ -16,6 +16,8 @@ import { SinaesEvidenceSelector } from './sinaes-evidence-selector'
 import { useQuery } from '@tanstack/react-query'
 import { careerService } from '../../../academic-management/academic-maintenance/services/career.service'
 import type { ProofDocumentType } from '../../types/proof-document-types.types'
+import { proofDocumentService } from '../../services/integrated-proof-documents.service'
+import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 
 // Schema simplificado del formulario
 const proofDocumentSchema = z.object({
@@ -35,6 +37,9 @@ interface SimpleProofDocumentFormProps {
 
 export function SimpleProofDocumentForm({ onSubmit, isSubmitting }: SimpleProofDocumentFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+
+  // Store de navegación SINAES
+  const { selectedDimension, selectedComponent, selectedCriterion, selectedStandard } = useSinaesNavigation()
 
   // Servicios de datos
   const { data: documentTypesResponse, isLoading: documentTypesLoading } = useProofDocumentTypes()

@@ -21,7 +21,7 @@ interface QualityEvidenceFormProps {
 
 export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: QualityEvidenceFormProps) => {
   const { selectedStandard, selectedCriterion } = useSinaesNavigation()
-  
+
   const [formData, setFormData] = useState<CreateQualityEvidenceDto>({
     name: evidence?.name || '',
     code: evidence?.code || '',
@@ -119,7 +119,7 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
             {evidence ? 'Editar Evidencia de Calidad' : 'Nueva Evidencia de Calidad'}
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            {selectedStandard 
+            {selectedStandard
               ? `Para el estándar: ${selectedStandard.code} - ${selectedStandard.name}`
               : `Para el criterio: ${selectedCriterion?.code} - ${selectedCriterion?.name}`
             }

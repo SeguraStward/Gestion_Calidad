@@ -2,42 +2,55 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { SinaesEvidenceForm } from './upload/sinaes-evidence-form'
-import type { EvidenceFormData } from '../../evidence-management/types/evidence.types'
+import { SimpleProofDocumentForm } from './upload/simple-proof-document-form'
+import { proofDocumentService } from '../services/integrated-proof-documents.service'
+import { useSinaesNavigation } from '../store/sinaes-navigation.store'
 
 export const UploadDocumentsTab = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { selectedDimension, selectedComponent, selectedCriterion, selectedStandard, selectedQualityEvidence } = useSinaesNavigation()
 
-  const handleSubmit = async (data: EvidenceFormData) => {
+  const handleSubmit = async (data: any) => {
     setIsSubmitting(true)
     try {
-      // TODO: Implementar la lógica real de guardado
-      console.log('Datos del formulario:', data)
+      // Validar que se haya seleccionado una evidencia
+      if (!selectedQualityEvidence) {
+        toast.error('Debe seleccionar una evidencia para asociar el documento')
+        return
+      }
 
-      // Simular guardado
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Preparar datos para el servicio integrado
+      const documentData = {
+        name: data.name,
+        evidenceId: selectedQualityEvidence.id,
+        proofDocumentTypeId: data.documentTypeId,
+        careerIds: data.careerIds,
+        file: data.file,
+        // Metadatos para estructura de carpetas
+        dimensionId: selectedDimension?.id || '',
+        componentId: selectedComponent?.id,
+        criterionId: selectedCriterion?.id,
+        standardId: selectedStandard?.id
+      }
 
-      toast.success('Evidencia guardada exitosamente')
+      // Crear documento con archivo en Google Drive
+      await proofDocumentService.createWithFile(documentData)
 
-      // Aquí podrías redirigir o resetear el formulario
+      toast.success('Documento probatorio creado y subido exitosamente')
     } catch (error) {
-      console.error('Error al guardar la evidencia:', error)
-      toast.error('Error al guardar la evidencia')
+      console.error('Error al crear el documento:', error)
+      toast.error('Error al crear el documento probatorio')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const handleCancel = () => {
-    // Lógica para cancelar o limpiar el formulario
-    toast.info('Formulario cancelado')
-  }
-
   return (
-    <SinaesEvidenceForm
-      onSubmit={handleSubmit}
-      isSubmitting={isSubmitting}
-      onCancel={handleCancel}
-    />
+    <div className="h-full">
+      <SimpleProofDocumentForm
+        onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
+      />
+    </div>
   )
 }

@@ -23,4 +23,18 @@ export class DocumentCountersService extends GenericService<DocumentCounter, Doc
   ) {
     super(documentCountersRepository, DocumentCounterDto);
   }
+
+  async getNextNumber(typeId: string) {
+    // TODO: Implementar búsqueda real del contador
+    const nextNumber = Math.floor(Math.random() * 100) + 1;
+    const code = `DOC-${nextNumber.toString().padStart(3, '0')}`;
+    return { nextNumber, code };
+  }
+
+  async incrementCounter(typeId: string) {
+    // TODO: Implementar incremento real del contador
+    const newNumber = Math.floor(Math.random() * 100) + 1;
+    const code = `DOC-${newNumber.toString().padStart(3, '0')}`;
+    return { newNumber, code };
+  }
 }
