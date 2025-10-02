@@ -56,6 +56,12 @@ import {
   CareerProofDocumentsModule,
   StandardEvidencesModule,
   GoogleDriveFoldersModule,
+  // Tiempos
+  AnnualJourneyTimeAllocationsModule,
+  CampusJourneyTimeAllocationsModule,
+  ProfessorAssignmentsModule,
+  JourneyTimeConfigsModule,
+  TimesModule,
 } from '@modules/index';
 
 @Module({
@@ -99,6 +105,7 @@ import {
     UserRolesModule,
     UserWorkExperiencesModule,
     UsersModule,
+    ProfessorAssignmentsModule,
     // SINAES Quality Management Modules
     DimensionsModule,
     ComponentsModule,
@@ -112,6 +119,12 @@ import {
     StandardEvidencesModule,
     GoogleDriveFoldersModule,
     ScheduleModule.forRoot(),
+    // TIEMPOS
+    AnnualJourneyTimeAllocationsModule,
+    CampusJourneyTimeAllocationsModule,
+    ProfessorAssignmentsModule,
+    JourneyTimeConfigsModule,
+    TimesModule,
   ],
   controllers: [AppController],
 })

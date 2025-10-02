@@ -1,35 +1,35 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsNumber, IsOptional, IsString, IsDate } from 'class-validator';
+import { Type } from 'class-transformer';
 import { AllocationStatus } from '@una-gc/database/prisma/generated/client';
 
 export class AnnualAllocationDto {
-  @ApiProperty() id!: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() id?: string;
 
-  @ApiProperty() version!: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() version?: number;
 
-  @ApiProperty({ description: 'Año numérico (si aplica en tu modelo)' })
-  year!: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() year?: number;
 
-  @ApiProperty({ description: 'Total de jornada disponible en el año' })
-  totalJourneyTime!: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() totalJourneyTime?: number;
 
-  @ApiProperty({ description: 'Descripción', required: false })
-  description?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() description?: string;
 
-  @ApiProperty({ enum: AllocationStatus })
-  status!: AllocationStatus;
+  @ApiPropertyOptional({ enum: AllocationStatus })
+  @IsOptional()
+  @IsEnum(AllocationStatus)
+  status?: AllocationStatus;
 
-  @ApiProperty({ description: 'Total asignado a campus' })
-  totalAllocatedToCampus!: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() totalAllocatedToCampus?: number;
 
-  @ApiProperty({ description: 'Total proveniente de proveedores externos' })
-  totalFromExternalProviders!: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() totalFromExternalProviders?: number;
 
-  @ApiProperty({ description: 'Derivado: disponible' })
-  availableTime!: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() availableJourneyTime?: number;
 
-  @ApiProperty() createdAt!: Date;
-  @ApiProperty() updatedAt!: Date;
+  @ApiPropertyOptional() @IsOptional() @Type(() => Date) @IsDate() createdAt?: Date;
 
-  @ApiProperty() createdBy!: string;
-  @ApiProperty() updatedBy!: string;
+  @ApiPropertyOptional() @IsOptional() @Type(() => Date) @IsDate() updatedAt?: Date;
+
+  @ApiPropertyOptional() @IsOptional() @IsString() createdBy?: string;
+
+  @ApiPropertyOptional() @IsOptional() @IsString() updatedBy?: string;
 }

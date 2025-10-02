@@ -46,3 +46,11 @@ export * from './proof-documents/proof-documents.module';
 export * from './career-proof-documents/career-proof-documents.module';
 export * from './standard-evidences/standard-evidences.module';
 export * from './google-drive-folders/google-drive-folders.module';
+
+// Tiempos
+
+export * from './annual-journey-time-allocations/annual-journey-time-allocations.module';
+export * from './campus-journey-time-allocations/campus-journey-time-allocations.module';
+export * from './professor-assignments/professor-assignments.module';
+export * from './journey-time-configs/journey-time-configs.module';
+export * from './times/times.module';

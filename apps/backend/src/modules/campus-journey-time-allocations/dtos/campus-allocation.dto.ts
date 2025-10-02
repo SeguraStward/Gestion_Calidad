@@ -1,43 +1,25 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsNumber, IsOptional, IsString, IsDate } from 'class-validator';
+import { Type } from 'class-transformer';
 import { AllocationStatus } from '@una-gc/database/prisma/generated/client';
 
 export class CampusAllocationDto {
-  @ApiProperty() id!: string;
-  @ApiProperty() version!: number;
+  @ApiPropertyOptional() @IsOptional() @IsString() id?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() annualAllocationId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() cycleId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() campusId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() meshId?: string;
 
-  @ApiProperty({ description: 'Referencia al Anual' })
-  annualAllocationId!: string;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() allocatedJourneyTime?: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() baseJourneyTimeConsumed?: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() additionalTime?: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() availableJourneyTime?: number;
 
-  @ApiProperty({ description: 'Ciclo académico' })
-  cycleId!: string;
+  @ApiPropertyOptional() @IsOptional() @IsEnum(AllocationStatus) status?: AllocationStatus;
+  @ApiPropertyOptional() @IsOptional() @IsString() description?: string;
 
-  @ApiProperty({ description: 'Campus' })
-  campusId!: string;
-
-  @ApiProperty({ description: 'Malla curricular' })
-  meshId!: string;
-
-  @ApiProperty({ description: 'Tiempo asignado a la sede' })
-  allocatedTime!: number;
-
-  @ApiProperty({ description: 'Tiempo base consumido' })
-  baseTimeConsumed!: number;
-
-  @ApiProperty({ description: 'Tiempo adicional (ej. refuerzos)' })
-  additionalTime!: number;
-
-  @ApiProperty({ description: 'Tiempo disponible (derivado)' })
-  availableTime!: number;
-
-  @ApiProperty({ enum: AllocationStatus })
-  status!: AllocationStatus;
-
-  @ApiProperty({ required: false })
-  description?: string;
-
-  @ApiProperty() createdAt!: Date;
-  @ApiProperty() updatedAt!: Date;
-
-  @ApiProperty() createdBy!: string;
-  @ApiProperty() updatedBy!: string;
+  @ApiPropertyOptional() @IsOptional() @Type(() => Date) @IsDate() createdAt?: Date;
+  @ApiPropertyOptional() @IsOptional() @Type(() => Date) @IsDate() updatedAt?: Date;
+  @ApiPropertyOptional() @IsOptional() @IsString() createdBy?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() updatedBy?: string;
 }

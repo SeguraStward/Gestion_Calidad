@@ -31,29 +31,28 @@ export class CampusJourneyTimeAllocationsService extends GenericService<
     super(repo, CampusAllocationDto);
   }
 
-  // Recalcula availableTime = allocatedTime + additionalTime - baseTimeConsumed
+  // Recalcula availableJourneyTime = allocatedJourneyTime + additionalTime - baseJourneyTimeConsumed
   private computeAvailable(payload: Partial<CreateCampusAllocationDto | UpdateCampusAllocationDto>) {
-    const allocated = Number(payload.allocatedTime ?? 0);
+    const allocated = Number(payload.allocatedJourneyTime ?? 0);
     const additional = Number(payload.additionalTime ?? 0);
-    const consumed = Number(payload.baseTimeConsumed ?? 0);
+    const consumed = Number(payload.baseJourneyTimeConsumed ?? 0);
     const available = allocated + additional - consumed;
     return available < 0 ? 0 : available;
   }
 
-  // Opcional: asegurar consistencia de derived fields en create
   async save(payload: CreateCampusAllocationDto) {
-    const withDerived = {
+    const withDerived: any = {
       ...payload,
-      availableTime: this.computeAvailable(payload),
+      availableJourneyTime: this.computeAvailable(payload),
+      annualAllocation: { connect: { id: payload.annualAllocationId } },
     };
-    return super.save(withDerived as any);
+    return super.save(withDerived);
   }
 
-  // Opcional: asegurar consistencia de derived fields en update
   async update(id: string, payload: UpdateCampusAllocationDto) {
     const withDerived = {
       ...payload,
-      availableTime: this.computeAvailable(payload),
+      availableJourneyTime: this.computeAvailable(payload),
     };
     return super.update(id, withDerived as any);
   }
