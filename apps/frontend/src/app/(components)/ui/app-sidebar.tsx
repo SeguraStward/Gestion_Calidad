@@ -41,20 +41,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: 'Gestión SINAES',
       url: '/sinaes-management',
       icon: require('lucide-react').BookCheck,
-      items: [
-        { title: 'Panel de Gestión', url: '/sinaes-management' }
-      ]
+      items: [{ title: 'Panel de Gestión', url: '/sinaes-management' }]
     },
-    // Only show User Management section if user has permission
-    ...(showUserManagement ? [{
-      title: 'Gestión de Usuarios',
-      url: '/user-management',
-      icon: require('lucide-react').Users,
-      items: [
-        { title: 'Usuarios', url: '/user-management/user' },
-        { title: 'Roles', url: '/user-management/user-role' }
-      ]
-    }] : []),
+
+    {
+      title: 'Gestión de Tiempos de Jornada',
+      url: '/times-management',
+      icon: require('lucide-react').Clock,
+      items: [{ title: 'Panel de Tiempos', url: '/times-management' }]
+    },
+
+    ...(showUserManagement
+      ? [
+          {
+            title: 'Gestión de Usuarios',
+            url: '/user-management',
+            icon: require('lucide-react').Users,
+            items: [
+              { title: 'Usuarios', url: '/user-management/user' },
+              { title: 'Roles', url: '/user-management/user-role' }
+            ]
+          }
+        ]
+      : []),
     {
       title: 'Informe Final',
       url: '/final-report',
