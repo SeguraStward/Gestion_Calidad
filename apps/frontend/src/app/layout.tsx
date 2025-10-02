@@ -27,7 +27,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <title>Gestión de Calidad - UNA</title>
         <meta name="description" content="Sistema de Gestión de Calidad de la Universidad Nacional" />
       </head>
-      <body className={`${inter.className} overflow-hidden`}>
+      <body className={`${inter.className}`}>
         <Providers>
           <HydrationGuard>
             {/* Layout configuration, is applied for all */}

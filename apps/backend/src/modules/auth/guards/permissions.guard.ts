@@ -30,6 +30,26 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
+    // Lista de recursos SINAES que tienen acceso libre
+    const SINAES_RESOURCES = [
+      'DIMENSION',
+      'COMPONENT',
+      'CRITERION',
+      'STANDARD',
+      'QUALITY_EVIDENCE',
+      'PROOF_DOCUMENT',
+      'PROOF_DOCUMENT_TYPE',
+      'STANDARD_EVIDENCE',
+      'CAREER_PROOF_DOCUMENT'
+    ];
+
+    // Verificar si el recurso es SINAES
+    const resourceName = this.reflector.getAllAndOverride<string>(RESOURCE_NAME_KEY, [context.getClass()]);
+    if (resourceName && SINAES_RESOURCES.includes(resourceName)) {
+      this.logger.debug(`SINAES resource ${resourceName} allowed without permission check`);
+      return true;
+    }
+
     try {
       this.logger.debug('Starting permissions verification');
 

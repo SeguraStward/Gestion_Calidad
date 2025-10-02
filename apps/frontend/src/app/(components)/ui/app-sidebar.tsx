@@ -37,6 +37,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         { title: 'Mantenimiento General', url: '/academic-management/academic-maintenance' }
       ]
     },
+    {
+      title: 'Gestión SINAES',
+      url: '/sinaes-management',
+      icon: require('lucide-react').BookCheck,
+      items: [
+        { title: 'Panel de Gestión', url: '/sinaes-management' }
+      ]
+    },
     // Only show User Management section if user has permission
     ...(showUserManagement ? [{
       title: 'Gestión de Usuarios',
