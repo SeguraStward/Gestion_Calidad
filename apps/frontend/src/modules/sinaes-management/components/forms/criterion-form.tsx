@@ -34,6 +34,29 @@ export const CriterionForm = ({ open, onClose, criterion, onSuccess }: Criterion
   const updateCriterion = useUpdateCriterion()
   const { generateCriterionCode, isGenerating } = useAutoNumbering()
 
+  // Sincronizar formData cuando cambie criterion
+  useEffect(() => {
+    if (criterion) {
+      setFormData({
+        name: criterion.name || '',
+        code: criterion.code || '',
+        description: criterion.description || '',
+        order: criterion.order || 0,
+        componentId: criterion.componentId || selectedComponent?.id || '',
+        status: criterion.status || 'ACTIVE'
+      })
+    } else {
+      setFormData({
+        name: '',
+        code: '',
+        description: '',
+        order: 0,
+        componentId: selectedComponent?.id || '',
+        status: 'ACTIVE'
+      })
+    }
+  }, [criterion, open, selectedComponent?.id])
+
   // Auto-generate code for new criteria
   useEffect(() => {
     if (!criterion && open && !formData.code && formData.componentId) {

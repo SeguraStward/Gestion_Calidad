@@ -34,6 +34,29 @@ export const StandardForm = ({ open, onClose, standard, onSuccess }: StandardFor
   const updateStandard = useUpdateStandard()
   const { generateStandardCode, isGenerating } = useAutoNumbering()
 
+  // Sincronizar formData cuando cambie standard
+  useEffect(() => {
+    if (standard) {
+      setFormData({
+        name: standard.name || '',
+        code: standard.code || '',
+        description: standard.description || '',
+        order: standard.order || 0,
+        criterionId: standard.criterionId || selectedCriterion?.id || '',
+        status: standard.status || 'ACTIVE'
+      })
+    } else {
+      setFormData({
+        name: '',
+        code: '',
+        description: '',
+        order: 0,
+        criterionId: selectedCriterion?.id || '',
+        status: 'ACTIVE'
+      })
+    }
+  }, [standard, open, selectedCriterion?.id])
+
   // Auto-generate code for new standards
   useEffect(() => {
     if (!standard && open && !formData.code && formData.criterionId) {

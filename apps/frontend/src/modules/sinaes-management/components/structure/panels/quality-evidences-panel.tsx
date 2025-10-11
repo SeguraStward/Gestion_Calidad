@@ -64,19 +64,19 @@ export const QualityEvidencesPanel = () => {
     <>
       <Card className="h-full flex flex-col">
         <CardHeader className="flex-shrink-0 pb-3">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-base">
-              {selectedStandard ? 'Evidencias del Estándar' : 'Evidencias Directas'}
-              <div className="text-xs font-normal text-muted-foreground mt-1">
-                {parentName}
+              {selectedStandard ? 'Evidencias' : 'Evidencias Directas'}
+              <div className="text-xs font-normal text-muted-foreground mt-0.5">
+                {selectedStandard?.code || selectedCriterion?.code}
               </div>
             </CardTitle>
             <Button
               size="sm"
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-1 h-7 px-2 text-xs flex-shrink-0"
+              className="flex items-center gap-1 h-8 px-3"
             >
-              <Plus className="h-3 w-3" />
+              <Plus className="h-4 w-4" />
               Nueva
             </Button>
           </div>
@@ -84,15 +84,15 @@ export const QualityEvidencesPanel = () => {
         <CardContent className="flex-1 overflow-y-auto px-3 pb-3">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
-              <div className="text-xs text-muted-foreground">Cargando...</div>
+              <div className="text-sm text-muted-foreground">Cargando...</div>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {evidences?.data?.map((evidence) => (
                 <div
                   key={evidence.id}
                   className={cn(
-                    "p-2 rounded-md border cursor-pointer transition-all hover:border-primary",
+                    "p-2.5 rounded-md border cursor-pointer transition-all hover:border-primary",
                     selectedQualityEvidence?.id === evidence.id
                       ? "border-primary bg-primary/5"
                       : "border-border hover:bg-muted/50"
@@ -101,20 +101,15 @@ export const QualityEvidencesPanel = () => {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-xs truncate">
-                        {evidence.code} - {evidence.name}
+                      <div className="font-medium text-sm">
+                        {evidence.code}
                       </div>
-                      {evidence.description && (
-                        <div className="text-xs text-muted-foreground mt-1 truncate">
-                          {evidence.description}
-                        </div>
-                      )}
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={(e) => handleEditEvidence(e, evidence)}
-                      className="h-5 w-5 p-0 text-xs flex-shrink-0"
+                      className="h-7 w-7 p-0 flex-shrink-0"
                     >
                       <span className="sr-only">Editar</span>
                       ✏️

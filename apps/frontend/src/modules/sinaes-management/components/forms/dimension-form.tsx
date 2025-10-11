@@ -31,6 +31,20 @@ export const DimensionForm = ({ open, onClose, dimension, onSuccess }: Dimension
   const updateDimension = useUpdateDimension()
   const { generateNextNumber } = useAutoNumbering()
 
+  // Sincronizar formData cuando cambie dimension
+  useEffect(() => {
+    if (dimension) {
+      setFormData({
+        name: dimension.name || '',
+        code: dimension.code || '',
+        description: dimension.description || '',
+        order: dimension.order || 0
+      })
+    } else {
+      setFormData({ name: '', code: '', description: '', order: 0 })
+    }
+  }, [dimension, open])
+
   // Auto-generate code for new dimensions
   useEffect(() => {
     const generateCodeForNewDimension = async () => {

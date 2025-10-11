@@ -14,7 +14,10 @@ interface ComponentsListProps {
 }
 
 export const ComponentsList = ({ dimensionId }: ComponentsListProps) => {
-  const { data: components, isLoading, refetch } = useComponents({ dimensionId })
+  const { data: components, isLoading, refetch } = useComponents(
+    { dimensionId },
+    { enabled: !!dimensionId }
+  )
   const { selectedComponent, selectComponent } = useSinaesNavigation()
   const deleteComponent = useDeleteComponent()
 
@@ -42,6 +45,10 @@ export const ComponentsList = ({ dimensionId }: ComponentsListProps) => {
   const handleFormClose = () => {
     setFormOpen(false)
     setEditingComponent(null)
+  }
+
+  if (!dimensionId) {
+    return <div className="text-sm text-muted-foreground">Selecciona una dimensión primero</div>
   }
 
   if (isLoading) {

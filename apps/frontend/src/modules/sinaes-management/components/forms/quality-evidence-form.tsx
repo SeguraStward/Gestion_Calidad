@@ -36,6 +36,31 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
   const updateEvidence = useUpdateQualityEvidence()
   const { generateEvidenceCode, isGenerating } = useAutoNumbering()
 
+  // Sincronizar formData cuando cambie evidence
+  useEffect(() => {
+    if (evidence) {
+      setFormData({
+        name: evidence.name || '',
+        code: evidence.code || '',
+        description: evidence.description || '',
+        order: evidence.order || 0,
+        standardId: evidence.standardId || selectedStandard?.id || undefined,
+        criterionId: evidence.criterionId || (selectedStandard ? undefined : selectedCriterion?.id) || undefined,
+        status: evidence.status || 'ACTIVE'
+      })
+    } else {
+      setFormData({
+        name: '',
+        code: '',
+        description: '',
+        order: 0,
+        standardId: selectedStandard?.id || undefined,
+        criterionId: selectedStandard ? undefined : selectedCriterion?.id || undefined,
+        status: 'ACTIVE'
+      })
+    }
+  }, [evidence, open, selectedStandard?.id, selectedCriterion?.id])
+
   // Auto-generate code for new evidences
   useEffect(() => {
     if (!evidence && open && !formData.code) {
@@ -43,7 +68,7 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
     }
   }, [open, evidence])
 
-  // Update relation IDs when context changes
+  // Update relation IDs when context changes (solo para nuevas evidencias)
   useEffect(() => {
     if (open && !evidence) {
       setFormData(prev => ({

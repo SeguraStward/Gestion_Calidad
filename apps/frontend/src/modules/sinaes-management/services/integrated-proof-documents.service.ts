@@ -39,16 +39,29 @@ class ProofDocumentService extends GenericService<ProofDocument, ProofDocumentWi
     super('proof-documents')
   }
 
-  async createWithFile(data: ProofDocumentWithUpload): Promise<ProofDocument> {
+  async createWithFile(data: ProofDocumentWithUpload & {
+    dimension: { code: string; name: string }
+    component: { code: string; name: string }
+    criterion: { code: string; name: string }
+    standard: { code: string; name: string }
+    evidence: { code: string; name: string }
+    career: { code: string; name: string }
+  }): Promise<ProofDocument> {
     try {
       // 1. Crear estructura de carpetas en Google Drive
       const folderStructure = await googleDriveService.createFolderStructure({
-        dimensionId: data.dimensionId,
-        componentId: data.componentId,
-        criterionId: data.criterionId,
-        standardId: data.standardId,
-        evidenceId: data.evidenceId,
-        careerCode: data.careerIds[0] || 'DEFAULT'
+        dimensionCode: data.dimension.code,
+        dimensionName: data.dimension.name,
+        componentCode: data.component.code,
+        componentName: data.component.name,
+        criterionCode: data.criterion.code,
+        criterionName: data.criterion.name,
+        standardCode: data.standard.code,
+        standardName: data.standard.name,
+        evidenceCode: data.evidence.code,
+        evidenceName: data.evidence.name,
+        careerCode: data.career.code,
+        careerName: data.career.name
       })
 
       // 2. Subir archivo a Google Drive
@@ -60,12 +73,12 @@ class ProofDocumentService extends GenericService<ProofDocument, ProofDocumentWi
         description: data.description,
         evidenceId: data.evidenceId,
         proofDocumentTypeId: data.proofDocumentTypeId,
-        careerIds: data.careerIds,
-        file: data.file,
-        dimensionId: data.dimensionId,
-        componentId: data.componentId,
-        criterionId: data.criterionId,
-        standardId: data.standardId
+        fileUrl: uploadedFile.url,
+        fileName: uploadedFile.name,
+        fileType: data.file.type,
+        fileSize: data.file.size,
+        googleDriveFileId: uploadedFile.id,
+        googleDriveFolderId: folderStructure.id
       } as any)
 
       // 4. Asociar con carreras

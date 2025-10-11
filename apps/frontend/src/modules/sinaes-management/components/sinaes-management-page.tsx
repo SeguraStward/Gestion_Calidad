@@ -1,31 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@una-gc/ui/components/tabs'
 import { SinaesStructureTab } from './structure/sinaes-structure-tab'
 import { DocumentTypesTab } from './document-types/document-types-tab'
-import { SimpleProofDocumentForm } from './upload/simple-proof-document-form'
+import { UploadDocumentsTab } from './upload-documents-tab'
 
 const SinaesManagementPage = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const handleDocumentSubmit = async (data: any) => {
-    setIsSubmitting(true)
-    try {
-      // TODO: Implementar la lógica de subida usando el servicio correspondiente
-      console.log('Submitting proof document data:', data)
-
-      // Simular delay
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      alert('Documento probatorio subido exitosamente!')
-    } catch (error) {
-      console.error('Error uploading proof document:', error)
-      alert('Error al subir el documento probatorio')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
 
   return (
     <div className="h-full flex flex-col">
@@ -41,14 +21,11 @@ const SinaesManagementPage = () => {
               Tipos de Documentos
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="structure" className="flex-1 overflow-hidden m-0">
+          <TabsContent value="structure" className="flex-1 m-0 overflow-hidden">
             <SinaesStructureTab />
           </TabsContent>
-          <TabsContent value="upload" className="flex-1 px-6">
-            <SimpleProofDocumentForm
-              onSubmit={handleDocumentSubmit}
-              isSubmitting={isSubmitting}
-            />
+          <TabsContent value="upload" className="flex-1 px-6 overflow-y-auto">
+            <UploadDocumentsTab />
           </TabsContent>
           <TabsContent value="document-types" className="flex-1 px-6">
             <DocumentTypesTab />

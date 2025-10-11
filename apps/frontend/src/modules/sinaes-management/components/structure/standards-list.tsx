@@ -14,7 +14,10 @@ interface StandardsListProps {
 }
 
 export const StandardsList = ({ criterionId }: StandardsListProps) => {
-  const { data: standards, isLoading, refetch } = useStandards({ criterionId })
+  const { data: standards, isLoading, refetch } = useStandards(
+    { criterionId },
+    { enabled: !!criterionId } // Solo ejecutar query si criterionId existe
+  )
   const { selectedStandard, selectStandard } = useSinaesNavigation()
   const deleteStandard = useDeleteStandard()
 
@@ -42,6 +45,11 @@ export const StandardsList = ({ criterionId }: StandardsListProps) => {
   const handleFormClose = () => {
     setFormOpen(false)
     setEditingStandard(null)
+  }
+
+  // No cargar si no hay criterionId
+  if (!criterionId) {
+    return <div className="text-sm text-muted-foreground">Selecciona un criterio primero</div>
   }
 
   if (isLoading) {

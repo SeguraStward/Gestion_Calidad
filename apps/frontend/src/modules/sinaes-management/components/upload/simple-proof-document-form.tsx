@@ -15,8 +15,7 @@ import { useProofDocumentTypes } from '../../services/proof-document-types.servi
 import { SinaesEvidenceSelector } from './sinaes-evidence-selector'
 import { useQuery } from '@tanstack/react-query'
 import { careerService } from '../../../academic-management/academic-maintenance/services/career.service'
-import type { ProofDocumentType } from '../../types/proof-document-types.types'
-import { proofDocumentService } from '../../services/integrated-proof-documents.service'
+import type { ProofDocumentType } from '../../types/proof-document-types.types' 
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 
 // Schema simplificado del formulario
@@ -33,9 +32,10 @@ type FormData = z.infer<typeof proofDocumentSchema>
 interface SimpleProofDocumentFormProps {
   onSubmit: (data: FormData) => Promise<void>
   isSubmitting: boolean
+  uploadProgress?: number
 }
 
-export function SimpleProofDocumentForm({ onSubmit, isSubmitting }: SimpleProofDocumentFormProps) {
+export function SimpleProofDocumentForm({ onSubmit, isSubmitting, uploadProgress }: SimpleProofDocumentFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   // Store de navegación SINAES
@@ -271,9 +271,25 @@ export function SimpleProofDocumentForm({ onSubmit, isSubmitting }: SimpleProofD
                 </div>
               </div>
 
+              {/* Progreso de subida */}
+              {isSubmitting && uploadProgress !== undefined && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Subiendo archivo...</span>
+                    <span className="font-medium">{Math.round(uploadProgress)}%</span>
+                  </div>
+                  <div className="w-full bg-secondary rounded-full h-2.5">
+                    <div
+                      className="bg-primary h-2.5 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Botones - Span completo */}
               <div className="flex justify-end space-x-2 pt-6 border-t">
-                <Button type="button" variant="outline" onClick={() => form.reset()}>
+                <Button type="button" variant="outline" onClick={() => form.reset()} disabled={isSubmitting}>
                   Limpiar
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>

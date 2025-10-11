@@ -34,6 +34,29 @@ export const ComponentForm = ({ open, onClose, component, onSuccess }: Component
   const updateComponent = useUpdateComponent()
   const { generateComponentCode, isGenerating } = useAutoNumbering()
 
+  // Sincronizar formData cuando cambie component
+  useEffect(() => {
+    if (component) {
+      setFormData({
+        name: component.name || '',
+        code: component.code || '',
+        description: component.description || '',
+        order: component.order || 0,
+        dimensionId: component.dimensionId || selectedDimension?.id || '',
+        status: component.status || 'ACTIVE'
+      })
+    } else {
+      setFormData({
+        name: '',
+        code: '',
+        description: '',
+        order: 0,
+        dimensionId: selectedDimension?.id || '',
+        status: 'ACTIVE'
+      })
+    }
+  }, [component, open, selectedDimension?.id])
+
   // Auto-generate code for new components
   useEffect(() => {
     if (!component && open && !formData.code && formData.dimensionId) {

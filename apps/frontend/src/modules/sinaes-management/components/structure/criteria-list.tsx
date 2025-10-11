@@ -14,7 +14,10 @@ interface CriteriaListProps {
 }
 
 export const CriteriaList = ({ componentId }: CriteriaListProps) => {
-  const { data: criteria, isLoading, refetch } = useCriteria({ componentId })
+  const { data: criteria, isLoading, refetch } = useCriteria(
+    { componentId },
+    { enabled: !!componentId }
+  )
   const { selectedCriterion, selectCriterion } = useSinaesNavigation()
   const deleteCriterion = useDeleteCriterion()
 
@@ -42,6 +45,10 @@ export const CriteriaList = ({ componentId }: CriteriaListProps) => {
   const handleFormClose = () => {
     setFormOpen(false)
     setEditingCriterion(null)
+  }
+
+  if (!componentId) {
+    return <div className="text-sm text-muted-foreground">Selecciona un componente primero</div>
   }
 
   if (isLoading) {

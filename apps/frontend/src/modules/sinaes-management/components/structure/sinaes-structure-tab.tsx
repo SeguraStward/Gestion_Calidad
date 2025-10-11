@@ -23,37 +23,37 @@ export const SinaesStructureTab = () => {
   const hasStandards = (standardsResponse?.data?.length || 0) > 0
 
   return (
-    <div className="h-full overflow-x-auto">
-      <div className="flex gap-3 p-4 min-w-fit">
+    <div className="h-full overflow-x-auto overflow-y-hidden">
+      <div className="flex gap-3 p-4 h-full" style={{ minWidth: 'max-content' }}>
         {/* Panel 1: Dimensiones */}
-        <div className="w-64 flex-shrink-0">
+        <div className="w-64 flex-shrink-0 h-full">
           <DimensionsPanel />
         </div>
 
         {/* Panel 2: Componentes */}
         {selectedDimension && (
-          <div className="w-64 flex-shrink-0">
+          <div className="w-64 flex-shrink-0 h-full">
             <ComponentsPanel />
           </div>
         )}
 
         {/* Panel 3: Criterios */}
         {selectedComponent && (
-          <div className="w-64 flex-shrink-0">
+          <div className="w-64 flex-shrink-0 h-full">
             <CriteriaPanel />
           </div>
         )}
 
         {/* Panel 4: Estándares o Evidencias Directas */}
         {selectedCriterion && (
-          <div className="w-64 flex-shrink-0">
+          <div className="w-64 flex-shrink-0 h-full">
             <StandardsPanel />
           </div>
         )}
 
         {/* Panel 5: Evidencias - Solo cuando hay un estándar seleccionado O cuando el criterio no tiene estándares */}
         {(selectedStandard || (selectedCriterion && !hasStandards)) && (
-          <div className="w-64 flex-shrink-0">
+          <div className="w-64 flex-shrink-0 h-full">
             <QualityEvidencesPanel />
           </div>
         )}
