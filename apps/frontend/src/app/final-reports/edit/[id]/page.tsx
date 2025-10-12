@@ -84,7 +84,7 @@ export default function EditFinalReportPage() {
   const queryClient = useQueryClient()
 
   const [currentStep, setCurrentStep] = useState(1)
-  const [reportType] = useState<ReportType>('INFORME_FINAL_V1')
+  const [reportType] = useState<ReportType>('TODOS') // Changed to match creation page
 
   const [step1Data, setStep1Data] = useState<Step1FormData | null>(null)
   const [step2Data, setStep2Data] = useState<Step2FormData | null>(null)
@@ -147,7 +147,7 @@ export default function EditFinalReportPage() {
       // Para el paso 5, necesitamos cargar las preguntas primero
       // Por ahora usamos un array vacío como placeholder ya que las preguntas
       // se cargarán dinámicamente en el componente Step5EditForm
-      const initialStep5 = transformReportToStep5Data(fetchedReport, [])
+      const initialStep5 = transformReportToStep5Data(fetchedReport)
       if (initialStep5) {
         setStep5Data(initialStep5)
         formStep5Methods.reset(initialStep5)
@@ -263,88 +263,77 @@ export default function EditFinalReportPage() {
     }
 
     try {
-      const evaluationData: FinalReportEvaluationFE[] = [
-        ...(step5Data?.respuestas.map((resp) => ({
-          questionId: resp.idPregunta,
-          response: resp.respuesta,
-          responseType: 'TEXT',
-          questionGroup: step5QuestionsMock.find((q) => q.questionId === resp.idPregunta)?.group || 'evaluacion_general_curso',
-          question: step5QuestionsMock.find((q) => q.questionId === resp.idPregunta)?.question || resp.idPregunta,
-          options: [],
-          multipleResponse: [],
-          otherResponse: undefined
-        })) || []),
-        ...(step6Data?.respuestasMultiples?.[0]?.respuestasSeleccionadas?.length
-          ? [
-            {
-              questionId: step6Data.respuestasMultiples[0].idPregunta,
-              question:
-                step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.question ||
-                step6Data.respuestasMultiples[0].idPregunta,
-              questionGroup:
-                step6QuestionsPageMock.find((q) => q.questionId === step6Data.respuestasMultiples[0]?.idPregunta)?.group ||
-                'herramientas',
-              responseType: 'SELECCION_MULTIPLE' as const,
-              response: null,
-              multipleResponse: step6Data.respuestasMultiples[0].respuestasSeleccionadas,
-              options: [],
-              otherResponse: undefined
-            }
-          ]
-          : []),
-        ...(step6Data?.otrasHerramientas && step6Data.otrasHerramientas.trim() !== ''
-          ? [
-            {
-              questionId: OTHER_TOOLS_QUESTION_ID,
-              question:
-                step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.question ||
-                'Otras herramientas utilizadas (opcional)',
-              questionGroup:
-                step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)?.group || 'herramientas',
-              responseType: 'TEXT' as const,
-              response: step6Data.otrasHerramientas,
-              multipleResponse: [],
-              options: [],
-              otherResponse: undefined
-            }
-          ]
-          : []),
-        ...currentStep7ValuesFromForm.respuestasRadio.map((resp) => {
-          const questionDetails = step7QuestionsPageMock.find((q) => q.questionId === resp.idPregunta)
-          let responseLabelToSend: string | undefined = undefined
+      // Build evaluation data preserving all question information from the original report
+      const evaluationData: FinalReportEvaluationFE[] = []
 
-          if (questionDetails) {
+      // Step 5 questions
+      if (step5Data?.respuestas && fetchedReport?.evaluation) {
+        step5Data.respuestas.forEach((resp) => {
+          const originalQuestion = fetchedReport.evaluation?.find(e => e.questionId === resp.idPregunta)
+          if (originalQuestion) {
+            evaluationData.push({
+              ...originalQuestion,
+              response: resp.respuesta,
+              multipleResponse: originalQuestion.multipleResponse || []
+            })
+          }
+        })
+      }
+
+      // Step 6 questions (herramientas)
+      if (step6Data && fetchedReport?.evaluation) {
+        // Main tools question (multiselect)
+        const mainToolsData = step6Data.respuestasMultiples?.[0]
+        if (mainToolsData?.respuestasSeleccionadas) {
+          const mainToolsQuestion = fetchedReport.evaluation?.find(
+            e => e.questionId === mainToolsData.idPregunta
+          )
+          if (mainToolsQuestion) {
+            evaluationData.push({
+              ...mainToolsQuestion,
+              response: undefined,
+              multipleResponse: mainToolsData.respuestasSeleccionadas
+            })
+          }
+        }
+
+        // Other tools question (text)
+        if (step6Data.otrasHerramientas && step6Data.otrasHerramientas.trim() !== '') {
+          const otherToolsQuestion = fetchedReport.evaluation?.find(
+            e => e.questionId === OTHER_TOOLS_QUESTION_ID
+          )
+          if (otherToolsQuestion) {
+            evaluationData.push({
+              ...otherToolsQuestion,
+              response: step6Data.otrasHerramientas,
+              multipleResponse: []
+            })
+          }
+        }
+      }
+
+      // Step 7 questions
+      if (currentStep7ValuesFromForm?.respuestasRadio && fetchedReport?.evaluation) {
+        currentStep7ValuesFromForm.respuestasRadio.forEach((resp) => {
+          const originalQuestion = fetchedReport.evaluation?.find(e => e.questionId === resp.idPregunta)
+          if (originalQuestion) {
+            // Convert value back to label for storage
+            let responseLabelToSend: string | undefined = undefined
             if (resp.respuesta && resp.respuesta.trim() !== '') {
-              const selectedOption = questionDetails.options.find((opt) => opt.value === resp.respuesta)
+              const selectedOption = originalQuestion.options?.find((opt) => opt.value === resp.respuesta)
               if (selectedOption) {
                 responseLabelToSend = selectedOption.label
               }
             }
-          }
-          return {
-            questionId: resp.idPregunta,
-            response: responseLabelToSend,
-            responseType: 'SELECCION_UNICA' as const,
-            questionGroup: questionDetails?.group || 'percepcion_general',
-            options:
-              questionDetails?.options?.map((opt) => ({
-                value: opt.value,
-                label: opt.label,
-                category: questionDetails?.group
-              })) || [],
-            question: questionDetails?.question || resp.idPregunta,
-            multipleResponse: [],
-            otherResponse: undefined
+
+            evaluationData.push({
+              ...originalQuestion,
+              response: responseLabelToSend,
+              multipleResponse: []
+            })
           }
         })
-      ].map((item) => ({
-        ...item,
-        response: item.response === undefined ? undefined : item.response,
-        multipleResponse: item.multipleResponse || [],
-        options: item.options || [],
-        questionGroup: item.questionGroup || 'general',
-        otherResponse: item.otherResponse === undefined ? undefined : item.otherResponse
-      })) as unknown as FinalReportEvaluationFE[]
+      }
 
       const updatePayload: UpdateFinalReportDto = {
         statistics: {
@@ -496,6 +485,8 @@ export default function EditFinalReportPage() {
             totalSteps={TOTAL_STEPS}
             initialData={step5Data}
             isEditing={true}
+            report={fetchedReport}
+            reportType={'TODOS'}
           />
         )
       case 6:
@@ -518,10 +509,6 @@ export default function EditFinalReportPage() {
             formMethods={formStep7Methods}
             onSaveAndNext={(dataFromStep7Form) => {
               setStep7Data(dataFromStep7Form)
-              // En edición, el "SaveAndNext" del último paso usualmente es el submit final
-              // o no hace nada si el submit es un botón separado.
-              // Si tienes un botón "Guardar" en el Step7EditForm que llama a esto,
-              // y otro "Finalizar Edición" que llama a onFinalSubmit, está bien.
             }}
             onPrevious={(data) => {
               setStep7Data(data)
@@ -530,7 +517,9 @@ export default function EditFinalReportPage() {
             totalSteps={TOTAL_STEPS}
             initialData={step7Data}
             isEditing={true}
-            onFinalSubmit={handleSubmitAllSteps} // Este es el que realmente guarda todo
+            reportType={reportType}
+            onFinalSubmit={handleSubmitAllSteps}
+            report={fetchedReport}
           />
         )
       default:

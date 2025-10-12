@@ -90,7 +90,7 @@ export interface FinalReportEvaluationFE {
   questionId: string
   response?: string
   multipleResponse?: string[]
-  responseType: 'TEXT' | 'SELECCION_UNICA' | 'SELECCION_MULTIPLE'
+  responseType: 'TEXT' | 'NUMBER' | 'DATE' | 'BOOLEAN' | 'SELECT' | 'MULTISELECT' | 'SELECCION_UNICA' | 'SELECCION_MULTIPLE'
   questionGroup?: string
   options?: { value: string; label: string; category?: string }[]
   question: string

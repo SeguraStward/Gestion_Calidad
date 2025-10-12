@@ -12,6 +12,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET'),
       callbackURL: configService.get<string>('GOOGLE_CALLBACK_URL'),
       scope: ['email', 'profile'],
+      prompt: 'select_account', // Fuerza a Google a mostrar el selector de cuentas
+      accessType: 'offline', // Permite obtener refresh tokens
     });
   }
 

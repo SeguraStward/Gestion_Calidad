@@ -1,6 +1,6 @@
 'use client'
 
-import { useSessionStore } from '@/modules/auth/sessionStore'
+import { useAuth } from '@/modules/auth/hooks'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@una-gc/ui/components/sidebar'
 import { Avatar, AvatarFallback, AvatarImage } from '@una-gc/ui/components/avatar'
 import {
@@ -16,8 +16,7 @@ import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from 'lucide-react'
 
 export function NavUser() {
   const { isMobile } = useSidebar()
-  const user = useSessionStore((state) => state.user)
-  const role = useSessionStore((state) => state.role)
+  const { user, role, logout } = useAuth()
 
   if (!user) return null
 
@@ -42,12 +41,8 @@ export function NavUser() {
     </div>
   )
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      import('@/modules/auth/utils/cookie.manager').then(({ CookieManager }) => {
-        CookieManager.clearAll()
-      })
-    }
+  const handleLogout = async () => {
+    await logout()
   }
 
   return (
