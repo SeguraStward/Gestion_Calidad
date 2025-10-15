@@ -271,9 +271,21 @@ export default function EditFinalReportPage() {
         step5Data.respuestas.forEach((resp) => {
           const originalQuestion = fetchedReport.evaluation?.find(e => e.questionId === resp.idPregunta)
           if (originalQuestion) {
+            // Determine the value to save based on question type
+            let responseToSave: string | undefined = resp.respuesta
+
+            // For SELECT questions with options, convert value back to label for storage
+            if (resp.respuesta && resp.respuesta.trim() !== '' && originalQuestion.options && originalQuestion.options.length > 0) {
+              const selectedOption = originalQuestion.options.find((opt) => opt.value === resp.respuesta)
+              if (selectedOption) {
+                responseToSave = selectedOption.label
+              }
+              // If option not found, keep the original value (backwards compatibility)
+            }
+
             evaluationData.push({
               ...originalQuestion,
-              response: resp.respuesta,
+              response: responseToSave,
               multipleResponse: originalQuestion.multipleResponse || []
             })
           }
@@ -317,12 +329,22 @@ export default function EditFinalReportPage() {
         currentStep7ValuesFromForm.respuestasRadio.forEach((resp) => {
           const originalQuestion = fetchedReport.evaluation?.find(e => e.questionId === resp.idPregunta)
           if (originalQuestion) {
-            // Convert value back to label for storage
+            // Determine the value to save based on question type
             let responseLabelToSend: string | undefined = undefined
+
             if (resp.respuesta && resp.respuesta.trim() !== '') {
-              const selectedOption = originalQuestion.options?.find((opt) => opt.value === resp.respuesta)
-              if (selectedOption) {
-                responseLabelToSend = selectedOption.label
+              // For SELECT questions with options, convert value back to label for storage
+              if (originalQuestion.options && originalQuestion.options.length > 0) {
+                const selectedOption = originalQuestion.options.find((opt) => opt.value === resp.respuesta)
+                if (selectedOption) {
+                  responseLabelToSend = selectedOption.label
+                } else {
+                  // Fallback: if option not found, use the value directly (backwards compatibility)
+                  responseLabelToSend = resp.respuesta
+                }
+              } else {
+                // For TEXT, NUMBER, BOOLEAN questions (no options), use the value directly
+                responseLabelToSend = resp.respuesta
               }
             }
 

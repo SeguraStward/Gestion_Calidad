@@ -56,21 +56,67 @@ const groupQuestionsFromReport = (evaluations: FinalReportEvaluationFE[]) => {
   return { gruposDePreguntas: grupos, todasLasPreguntasFiltradas: evaluations }
 }
 
-// Ensure getOptionColors is identical to form-step7.tsx
-const getOptionColors = (value: string, isSelected: boolean) => {
+// Color function for radio options - matches step 5 styling
+const getOptionColors = (value: string, isSelected: boolean): string => {
   if (!isSelected) {
-    return 'border-border/30 bg-transparent hover:border-border/50 hover:bg-muted/20 dark:hover:bg-muted/10'
+    return 'bg-background/40 border-border/40 hover:bg-background/60 hover:border-border/60'
   }
-  const colorMap = {
-    '5': 'border-emerald-500/80 bg-emerald-500/25 dark:border-emerald-600/80 dark:bg-emerald-600/30',
-    '4': 'border-green-500/80 bg-green-500/25 dark:border-green-600/80 dark:bg-green-600/30',
-    '3': 'border-amber-500/80 bg-yellow-500/25 dark:border-amber-600/80 dark:bg-yellow-600/30',
-    '2': 'border-orange-500/80 bg-orange-500/25 dark:border-orange-600/80 dark:bg-orange-600/30',
-    '1': 'border-red-500/80 bg-red-500/25 dark:border-red-600/80 dark:bg-red-600/30'
+
+  const lowerValue = value.toLowerCase()
+
+  // Positive/High values - Green/Emerald tones
+  if (
+    lowerValue.includes('excelente') ||
+    lowerValue.includes('muy_bueno') ||
+    lowerValue.includes('siempre') ||
+    lowerValue.includes('mas_90') ||
+    lowerValue.includes('todas')
+  ) {
+    return 'bg-emerald-500/20 border-emerald-500/60 hover:bg-emerald-500/30'
   }
-  return (
-    colorMap[value as keyof typeof colorMap] || 'border-blue-500/80 bg-blue-500/25 dark:border-blue-600/80 dark:bg-blue-600/30'
-  )
+
+  // Good/Medium-High values - Blue/Cyan tones
+  if (
+    lowerValue.includes('bueno') ||
+    lowerValue.includes('frecuentemente') ||
+    lowerValue.includes('70_89') ||
+    lowerValue.includes('mayoria') ||
+    lowerValue.includes('mensual')
+  ) {
+    return 'bg-blue-500/20 border-blue-500/60 hover:bg-blue-500/30'
+  }
+
+  // Medium values - Yellow/Amber tones
+  if (
+    lowerValue.includes('regular') ||
+    lowerValue.includes('ocasionalmente') ||
+    lowerValue.includes('50_69') ||
+    lowerValue.includes('algunas') ||
+    lowerValue.includes('trimestral') ||
+    lowerValue.includes('semestral')
+  ) {
+    return 'bg-amber-500/20 border-amber-500/60 hover:bg-amber-500/30'
+  }
+
+  // Low/Negative values - Orange/Red tones
+  if (
+    lowerValue.includes('deficiente') ||
+    lowerValue.includes('nunca') ||
+    lowerValue.includes('menos_50') ||
+    lowerValue.includes('pocas') ||
+    lowerValue.includes('ninguna') ||
+    lowerValue.includes('anual')
+  ) {
+    return 'bg-orange-500/20 border-orange-500/60 hover:bg-orange-500/30'
+  }
+
+  // Process-related or neutral
+  if (lowerValue.includes('proceso') || lowerValue.includes('bienal')) {
+    return 'bg-purple-500/20 border-purple-500/60 hover:bg-purple-500/30'
+  }
+
+  // Default for any other selected value
+  return 'bg-primary/20 border-primary/60 hover:bg-primary/30'
 }
 
 export function Step7EditForm({
@@ -107,18 +153,14 @@ export function Step7EditForm({
     return filtered
   }, [report, step7QuestionsDB])
 
-  const { gruposDePreguntas, todasLasPreguntasFiltradas } = useMemo(
-    () => groupQuestionsFromReport(step7Questions),
-    [step7Questions]
-  )
-
-  console.log('📊 Step 7 - Grouped questions:', Object.keys(gruposDePreguntas).length, 'groups')
+  console.log('📊 Step 7 - Questions loaded:', step7Questions.length)
   console.log('📊 Step 7 - Questions detail:', step7Questions.map(q => ({
     id: q.questionId,
     text: q.question?.substring(0, 50),
     type: q.responseType,
     hasOptions: !!q.options,
     optionsCount: q.options?.length,
+    response: q.response,
     group: q.questionGroup
   })))
 
@@ -126,7 +168,7 @@ export function Step7EditForm({
     if (step7Questions.length > 0) {
       if (initialData && initialData.respuestasRadio) {
         const formValuesForVisibleQuestions = {
-          respuestasRadio: todasLasPreguntasFiltradas.map((visibleQuestion) => {
+          respuestasRadio: step7Questions.map((visibleQuestion) => {
             const existingAnswer = initialData.respuestasRadio.find((r) => r.idPregunta === visibleQuestion.questionId)
 
             // Start with existing answer or the stored response
@@ -147,13 +189,13 @@ export function Step7EditForm({
                 availableOptions: visibleQuestion.options
               })
               // Try to find by label first (new format)
-              const matchingOptionByLabel = visibleQuestion.options.find(opt => opt.label === responseValue)
+              const matchingOptionByLabel = visibleQuestion.options.find((opt) => opt.label === responseValue)
               if (matchingOptionByLabel) {
                 console.log('✅ Found matching option by label:', matchingOptionByLabel)
                 responseValue = matchingOptionByLabel.value
               } else {
                 // If not found by label, check if it's already a value (backwards compatibility)
-                const matchingOptionByValue = visibleQuestion.options.find(opt => opt.value === responseValue)
+                const matchingOptionByValue = visibleQuestion.options.find((opt) => opt.value === responseValue)
                 console.log('⚠️ No match by label, trying by value:', matchingOptionByValue)
                 if (matchingOptionByValue) {
                   responseValue = matchingOptionByValue.value
@@ -171,7 +213,7 @@ export function Step7EditForm({
         reset(formValuesForVisibleQuestions)
       } else if (!isEditing) {
         const defaultValues = {
-          respuestasRadio: todasLasPreguntasFiltradas.map((q) => ({
+          respuestasRadio: step7Questions.map((q) => ({
             idPregunta: q.questionId,
             respuesta: ''
           }))
@@ -179,7 +221,7 @@ export function Step7EditForm({
         reset(defaultValues)
       }
     }
-  }, [initialData, reset, todasLasPreguntasFiltradas, isEditing, step7Questions])
+  }, [initialData, reset, step7Questions, isEditing])
 
   const handleValidationErrors = (errors: any) => {
     toast.error('Por favor, corrija los errores en el formulario del Paso 7.')
@@ -195,6 +237,184 @@ export function Step7EditForm({
     if (onPrevious) {
       onPrevious(currentData)
     }
+  }
+
+  const handlePreviousClick = () => {
+    if (onPrevious) {
+      const currentData = getValues()
+      onPrevious(currentData)
+    }
+  }
+
+  // Render field based on question responseType - matches step 5 structure
+  const renderQuestionField = (question: FinalReportEvaluationFE, index: number) => {
+    return (
+      <FormField
+        key={question.questionId}
+        control={control}
+        name={`respuestasRadio.${index}.respuesta`}
+        render={({ field, fieldState }) => {
+          // Log rendering for debugging
+          console.log(`🎨 Rendering ${question.responseType}:`, {
+            id: question.questionId,
+            value: field.value,
+            optionsCount: question.options?.length
+          })
+
+          switch (question.responseType) {
+            case 'TEXT':
+              return (
+                <FormControl>
+                  <Textarea
+                    placeholder="Escriba su respuesta aquí..."
+                    rows={3}
+                    className="resize-y bg-background/60 border-border/60"
+                    {...field}
+                  />
+                </FormControl>
+              )
+
+            case 'NUMBER':
+              return (
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder="Ingrese un número..."
+                    className="bg-background/60 border-border/60"
+                    {...field}
+                  />
+                </FormControl>
+              )
+
+            case 'BOOLEAN':
+              return (
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    value={field.value || ''}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="true" id={`${question.questionId}-true`} />
+                      <label htmlFor={`${question.questionId}-true`} className="text-sm">Sí</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="false" id={`${question.questionId}-false`} />
+                      <label htmlFor={`${question.questionId}-false`} className="text-sm">No</label>
+                    </div>
+                  </RadioGroup>
+                </FormControl>
+              )
+
+            case 'SELECT':
+            case 'SELECCION_UNICA':
+              // Use RadioGroup for 5 or fewer options (matches step 5 style)
+              if (question.options && question.options.length > 0 && question.options.length <= 5) {
+                return (
+                  <FormControl>
+                    <RadioGroup
+                      key={`${question.questionId}-${field.value}`}
+                      onValueChange={field.onChange}
+                      value={field.value || ''}
+                      className="flex flex-wrap items-center gap-2 sm:gap-3"
+                    >
+                      {question.options.map((option) => {
+                        const isSelected = field.value === option.value
+                        const colorClasses = getOptionColors(option.value, isSelected)
+                        return (
+                          <FormItem key={option.value} className="space-y-0">
+                            <div
+                              className={`flex items-center space-x-1 sm:space-x-1.5 p-1.5 sm:p-2 rounded-md border transition-all duration-200 cursor-pointer ${colorClasses}`}
+                            >
+                              <FormControl>
+                                <RadioGroupItem
+                                  value={option.value}
+                                  id={`${question.questionId}-${option.value}`}
+                                  className="mt-0 w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4"
+                                />
+                              </FormControl>
+                              <FormLabel
+                                htmlFor={`${question.questionId}-${option.value}`}
+                                className="text-xs sm:text-sm font-normal cursor-pointer flex-1 leading-snug text-foreground/90"
+                              >
+                                {option.label}
+                              </FormLabel>
+                            </div>
+                          </FormItem>
+                        )
+                      })}
+                    </RadioGroup>
+                  </FormControl>
+                )
+              }
+
+              // Use Select dropdown for more than 5 options
+              return (
+                <FormControl>
+                  <Select
+                    key={`${question.questionId}-${field.value}`}
+                    onValueChange={field.onChange}
+                    value={field.value || ''}
+                    defaultValue={field.value || ''}
+                  >
+                    <SelectTrigger className="bg-background/60 border-border/60">
+                      <SelectValue placeholder="Seleccione una opción..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {question.options?.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+              )
+
+            case 'MULTISELECT':
+            case 'SELECCION_MULTIPLE':
+              return (
+                <div className="space-y-2">
+                  {question.options?.map((option) => {
+                    const currentValues = field.value ? field.value.split(',') : []
+                    const isChecked = currentValues.includes(option.value)
+
+                    return (
+                      <div key={option.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`${question.questionId}-${option.value}`}
+                          checked={isChecked}
+                          onCheckedChange={(checked: boolean) => {
+                            const newValues = checked
+                              ? [...currentValues.filter((v) => v), option.value]
+                              : currentValues.filter((v) => v !== option.value)
+                            field.onChange(newValues.join(','))
+                          }}
+                        />
+                        <label htmlFor={`${question.questionId}-${option.value}`} className="text-sm font-normal cursor-pointer">
+                          {option.label}
+                        </label>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+
+            default:
+              return (
+                <FormControl>
+                  <Input
+                    type="text"
+                    placeholder="Ingrese su respuesta..."
+                    className="bg-background/60 border-border/60"
+                    {...field}
+                  />
+                </FormControl>
+              )
+          }
+        }}
+      />
+    )
   }
 
   // Show loading state while questions are being loaded
@@ -233,8 +453,8 @@ export function Step7EditForm({
           Percepción General y Desempeño (Editando)
         </h2>
         <p className="text-muted-foreground text-sm mt-1">
-          Modifique su percepción sobre los aspectos del curso y desempeño estudiantil. ({todasLasPreguntasFiltradas.length}{' '}
-          pregunta{todasLasPreguntasFiltradas.length !== 1 ? 's' : ''})
+          Modifique su percepción sobre los aspectos del curso y desempeño estudiantil. ({step7Questions.length}{' '}
+          pregunta{step7Questions.length !== 1 ? 's' : ''})
         </p>
       </div>
 
@@ -253,223 +473,34 @@ export function Step7EditForm({
       <FormProvider {...formMethods}>
         <Form {...formMethods}>
           <form id="step7-edit-form" onSubmit={handleSubmit(localSubmitAndFinalize, handleValidationErrors)} className="flex-1 flex flex-col min-h-0">
-            <div className="flex-1 overflow-y-auto pr-2 pb-4 space-y-2 sm:space-y-2.5 md:space-y-3">
-              {todasLasPreguntasFiltradas.length === 0 ? (
+            {/* Scrollable Questions Area */}
+            <div className="flex-1 space-y-0 overflow-y-auto pr-2 pb-4">
+              {step7Questions.length === 0 ? (
                 <div className="text-center py-4 sm:py-5 text-muted-foreground">
                   <Activity className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 mx-auto mb-1 sm:mb-1.5 md:mb-2 opacity-50" />
-                  <p className="text-xs sm:text-sm">No hay preguntas disponibles para este tipo de informe.</p>
+                  <p className="text-xs sm:text-sm">No hay preguntas disponibles para este paso.</p>
                 </div>
               ) : (
-                Object.entries(gruposDePreguntas).map(([nombreGrupo, preguntasDelGrupo], grupoIndex, arr) => (
-                  <div key={nombreGrupo}>
-                    <div className="py-1.5 sm:py-2 px-1">
-                      <div className="mb-1.5 sm:mb-2">
-                        <h3 className="text-xs sm:text-sm font-medium text-foreground/90 leading-normal flex items-center gap-1 sm:gap-1.5">
-                          <div className="w-1.5 h-1.5 bg-muted-foreground/70 rounded-full"></div>
-                          {nombreGrupo}
-                        </h3>
-                      </div>
-                      <div className="ml-1 sm:ml-2 space-y-2.5 sm:space-y-3">
-                        {preguntasDelGrupo.map((pregunta) => {
-                          const overallIndex = todasLasPreguntasFiltradas.findIndex((p) => p.questionId === pregunta.questionId)
-                          if (overallIndex === -1) return null
-
-                          const currentValue = watch(`respuestasRadio.${overallIndex}.respuesta`)
-
-                          // Para preguntas tipo SELECT/SELECCION_UNICA con 5 opciones o menos, usar RadioGroup
-                          if (
-                            (pregunta.responseType === 'SELECT' || pregunta.responseType === 'SELECCION_UNICA') &&
-                            pregunta.options &&
-                            pregunta.options.length > 0 &&
-                            pregunta.options.length <= 5
-                          ) {
-                            return (
-                              <FormField
-                                key={pregunta.questionId}
-                                control={control}
-                                name={`respuestasRadio.${overallIndex}.respuesta`}
-                                render={({ field }) => (
-                                  <FormItem className="space-y-1 sm:space-y-1.5">
-                                    <FormLabel className="text-xs sm:text-sm font-medium text-foreground/85 leading-normal block">
-                                      {pregunta.question}
-                                    </FormLabel>
-                                    <div className="ml-0.5 sm:ml-1">
-                                      <FormControl>
-                                        <RadioGroup
-                                          onValueChange={field.onChange}
-                                          value={field.value || ''}
-                                          className="flex flex-wrap items-center gap-2 sm:gap-3"
-                                        >
-                                          {pregunta.options?.map((opcion) => {
-                                            const isSelected = currentValue === opcion.value
-                                            const colorClasses = getOptionColors(opcion.value, isSelected)
-                                            return (
-                                              <FormItem key={opcion.value} className="space-y-0">
-                                                <div
-                                                  className={`flex items-center space-x-1 sm:space-x-1.5 p-1.5 sm:p-2 rounded-md border transition-all duration-200 cursor-pointer ${colorClasses}`}
-                                                >
-                                                  <FormControl>
-                                                    <RadioGroupItem
-                                                      value={opcion.value}
-                                                      id={`${field.name}-${overallIndex}-${opcion.value}`}
-                                                      className="mt-0 w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4"
-                                                    />
-                                                  </FormControl>
-                                                  <FormLabel
-                                                    htmlFor={`${field.name}-${overallIndex}-${opcion.value}`}
-                                                    className="text-xs sm:text-sm font-normal cursor-pointer flex-1 leading-snug text-foreground/90"
-                                                  >
-                                                    {opcion.label}
-                                                  </FormLabel>
-                                                </div>
-                                              </FormItem>
-                                            )
-                                          })}
-                                        </RadioGroup>
-                                      </FormControl>
-                                      <FormMessage className="text-xs mt-0.5 sm:mt-1 text-destructive" />
-                                      <input
-                                        type="hidden"
-                                        {...register(`respuestasRadio.${overallIndex}.idPregunta`)}
-                                        value={pregunta.questionId}
-                                      />
-                                    </div>
-                                  </FormItem>
-                                )}
-                              />
-                            )
-                          }
-
-                          // Para otros tipos de preguntas
-                          return (
-                            <FormField
-                              key={pregunta.questionId}
-                              control={control}
-                              name={`respuestasRadio.${overallIndex}.respuesta`}
-                              render={({ field }) => {
-                                // Log rendering for debugging
-                                if (pregunta.responseType === 'TEXT') {
-                                  console.log('🎨 Rendering TEXT:', { id: pregunta.questionId, value: field.value })
-                                } else if (pregunta.responseType === 'NUMBER') {
-                                  console.log('🎨 Rendering NUMBER:', { id: pregunta.questionId, value: field.value })
-                                } else if (pregunta.responseType === 'BOOLEAN') {
-                                  console.log('🎨 Rendering BOOLEAN:', { id: pregunta.questionId, value: field.value })
-                                }
-
-                                return (
-                                  <FormItem className="space-y-1 sm:space-y-1.5">
-                                    <FormLabel className="text-xs sm:text-sm font-medium text-foreground/85 leading-normal block">
-                                      <span className="inline-flex items-baseline gap-2">
-                                        <span className="text-muted-foreground font-normal text-xs bg-muted/50 px-2 py-0.5 rounded-full min-w-[24px] text-center">
-                                          {overallIndex + 1}
-                                        </span>
-                                        <span className="flex-1">{pregunta.question}</span>
-                                      </span>
-                                    </FormLabel>
-                                    <div className="ml-0.5 sm:ml-1">
-                                      {pregunta.responseType === 'TEXT' && (
-                                        <FormControl>
-                                          <Textarea
-                                            placeholder="Escriba su respuesta aquí..."
-                                            rows={3}
-                                            className="resize-y bg-background/60 border-border/60"
-                                            {...field}
-                                          />
-                                        </FormControl>
-                                      )}
-                                      {pregunta.responseType === 'NUMBER' && (
-                                        <FormControl>
-                                          <Input
-                                            type="number"
-                                            placeholder="Ingrese un número..."
-                                            className="bg-background/60 border-border/60"
-                                            {...field}
-                                          />
-                                        </FormControl>
-                                      )}
-                                      {pregunta.responseType === 'BOOLEAN' && (
-                                        <FormControl>
-                                          <RadioGroup
-                                            onValueChange={field.onChange}
-                                            value={field.value || ''}
-                                            className="flex gap-4"
-                                          >
-                                            <div className="flex items-center space-x-2">
-                                              <RadioGroupItem value="true" id={`${pregunta.questionId}-true`} />
-                                              <label htmlFor={`${pregunta.questionId}-true`} className="text-sm">Sí</label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                              <RadioGroupItem value="false" id={`${pregunta.questionId}-false`} />
-                                              <label htmlFor={`${pregunta.questionId}-false`} className="text-sm">No</label>
-                                            </div>
-                                          </RadioGroup>
-                                        </FormControl>
-                                      )}
-                                      {(pregunta.responseType === 'SELECT' || pregunta.responseType === 'SELECCION_UNICA') &&
-                                        pregunta.options &&
-                                        pregunta.options.length > 5 && (
-                                          <FormControl>
-                                            <Select onValueChange={field.onChange} value={field.value || ''}>
-                                              <SelectTrigger className="bg-background/60 border-border/60">
-                                                <SelectValue placeholder="Seleccione una opción..." />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                {pregunta.options.map((option) => (
-                                                  <SelectItem key={option.value} value={option.value}>
-                                                    {option.label}
-                                                  </SelectItem>
-                                                ))}
-                                              </SelectContent>
-                                            </Select>
-                                          </FormControl>
-                                        )}
-                                      {pregunta.responseType === 'MULTISELECT' && (
-                                        <FormControl>
-                                          <div className="space-y-2">
-                                            {pregunta.options?.map((option) => {
-                                              const currentValues = field.value ? field.value.split(',') : []
-                                              const isChecked = currentValues.includes(option.value)
-
-                                              return (
-                                                <div key={option.value} className="flex items-center space-x-2">
-                                                  <Checkbox
-                                                    id={`${pregunta.questionId}-${option.value}`}
-                                                    checked={isChecked}
-                                                    onCheckedChange={(checked: boolean) => {
-                                                      const newValues = checked
-                                                        ? [...currentValues.filter((v) => v), option.value]
-                                                        : currentValues.filter((v) => v !== option.value)
-                                                      field.onChange(newValues.join(','))
-                                                    }}
-                                                  />
-                                                  <label
-                                                    htmlFor={`${pregunta.questionId}-${option.value}`}
-                                                    className="text-sm font-normal"
-                                                  >
-                                                    {option.label}
-                                                  </label>
-                                                </div>
-                                              )
-                                            })}
-                                          </div>
-                                        </FormControl>
-                                      )}
-                                      <FormMessage className="text-xs mt-0.5 sm:mt-1 text-destructive" />
-                                      <input
-                                        type="hidden"
-                                        {...register(`respuestasRadio.${overallIndex}.idPregunta`)}
-                                        value={pregunta.questionId}
-                                      />
-                                    </div>
-                                  </FormItem>
-                                )
-                              }}
-                            />
-                          )
-                        })}
-                      </div>
+                step7Questions.map((question, index) => (
+                  <div key={question.questionId}>
+                    <div className="py-4 px-1">
+                      <FormItem className="space-y-2.5">
+                        <FormLabel className="text-sm font-medium leading-relaxed text-foreground/90 block">
+                          <span className="inline-flex items-baseline gap-2">
+                            <span className="text-muted-foreground font-normal text-xs bg-muted/50 px-2 py-0.5 rounded-full min-w-[24px] text-center">
+                              {index + 1}
+                            </span>
+                            <span className="flex-1">{question.question}</span>
+                            <span className="text-destructive ml-1">*</span>
+                          </span>
+                        </FormLabel>
+                        <div className="ml-6">
+                          {renderQuestionField(question, index)}
+                          <input type="hidden" {...register(`respuestasRadio.${index}.idPregunta`)} value={question.questionId} />
+                        </div>
+                      </FormItem>
                     </div>
-                    {grupoIndex < arr.length - 1 && <Separator className="opacity-20 my-3" />}
+                    {index < step7Questions.length - 1 && <Separator className="opacity-20 my-1" />}
                   </div>
                 ))
               )}

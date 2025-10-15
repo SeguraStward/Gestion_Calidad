@@ -278,6 +278,7 @@ export function Step5EditForm({
                 return (
                   <FormControl>
                     <RadioGroup
+                      key={`${question.questionId}-${field.value}`}
                       onValueChange={field.onChange}
                       value={field.value || ''}
                       className="flex flex-wrap items-center gap-2 sm:gap-3"
