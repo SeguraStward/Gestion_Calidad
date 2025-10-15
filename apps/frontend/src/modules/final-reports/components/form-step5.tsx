@@ -19,17 +19,13 @@ import type { Question, QuestionOption } from '@/modules/final-reports/types/que
 
 const respuestaSchema = z.object({
   idPregunta: z.string(),
-  respuesta: z.string().min(1, 'Este campo es requerido.')
+  respuesta: z.string().min(1, 'Este campo es requerido.').refine((val) => val.trim().length > 0, {
+    message: 'Este campo es requerido.'
+  })
 })
 
 export const step5Schema = z.object({
-  respuestas: z
-    .array(respuestaSchema)
-    .min(1, 'Debe responder todas las preguntas.')
-    .refine((respuestas) => respuestas.every((r) => r.respuesta.trim() !== ''), {
-      message: 'Todas las preguntas deben tener una respuesta.',
-      path: ['respuestas']
-    })
+  respuestas: z.array(respuestaSchema)
 })
 
 export type Step5FormData = z.infer<typeof step5Schema>
@@ -353,9 +349,10 @@ export function Step5Form({
                   <div className="space-y-0">
                     {groupQuestions.map((pregunta, questionIndex) => {
                       const globalIndex = allQuestions.findIndex(q => q.id === pregunta.id)
+                      const fieldError = formState.errors.respuestas?.[globalIndex]?.respuesta
                       return (
                         <div key={pregunta.id}>
-                          <div className="py-4 px-1">
+                          <div className={`py-4 px-1 rounded-lg transition-colors ${fieldError ? 'bg-destructive/5 border-2 border-destructive/50' : ''}`}>
                             <div className="space-y-2.5">
                               <div className="text-sm font-medium leading-relaxed text-foreground/90 block">
                                 <span className="inline-flex items-baseline gap-2">
@@ -363,7 +360,6 @@ export function Step5Form({
                                     {globalIndex + 1}
                                   </span>
                                   <span className="flex-1">{pregunta.question}</span>
-                                  {pregunta.isRequired && <span className="text-destructive ml-1">*</span>}
                                 </span>
                                 {pregunta.description && (
                                   <span className="block text-xs text-muted-foreground mt-1 ml-8">

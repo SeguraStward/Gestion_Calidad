@@ -19,7 +19,9 @@ import { useQuestionsByStep } from '@/modules/final-reports/services/questions.s
 // Schema for a single radio response item
 const respuestaRadioStep7Schema = z.object({
   idPregunta: z.string(),
-  respuesta: z.string().min(1, 'Debe seleccionar una opción.')
+  respuesta: z.string().min(1, 'Debe seleccionar una opción.').refine((val) => val.trim().length > 0, {
+    message: 'Debe seleccionar una opción.'
+  })
 })
 
 // Schema for the entire step 7 form data
@@ -56,67 +58,14 @@ const groupQuestionsFromReport = (evaluations: FinalReportEvaluationFE[]) => {
   return { gruposDePreguntas: grupos, todasLasPreguntasFiltradas: evaluations }
 }
 
-// Color function for radio options - matches step 5 styling
+// Neutral color function for radio options
 const getOptionColors = (value: string, isSelected: boolean): string => {
   if (!isSelected) {
-    return 'bg-background/40 border-border/40 hover:bg-background/60 hover:border-border/60'
+    return 'bg-background border-border hover:bg-muted/50'
   }
 
-  const lowerValue = value.toLowerCase()
-
-  // Positive/High values - Green/Emerald tones
-  if (
-    lowerValue.includes('excelente') ||
-    lowerValue.includes('muy_bueno') ||
-    lowerValue.includes('siempre') ||
-    lowerValue.includes('mas_90') ||
-    lowerValue.includes('todas')
-  ) {
-    return 'bg-emerald-500/20 border-emerald-500/60 hover:bg-emerald-500/30'
-  }
-
-  // Good/Medium-High values - Blue/Cyan tones
-  if (
-    lowerValue.includes('bueno') ||
-    lowerValue.includes('frecuentemente') ||
-    lowerValue.includes('70_89') ||
-    lowerValue.includes('mayoria') ||
-    lowerValue.includes('mensual')
-  ) {
-    return 'bg-blue-500/20 border-blue-500/60 hover:bg-blue-500/30'
-  }
-
-  // Medium values - Yellow/Amber tones
-  if (
-    lowerValue.includes('regular') ||
-    lowerValue.includes('ocasionalmente') ||
-    lowerValue.includes('50_69') ||
-    lowerValue.includes('algunas') ||
-    lowerValue.includes('trimestral') ||
-    lowerValue.includes('semestral')
-  ) {
-    return 'bg-amber-500/20 border-amber-500/60 hover:bg-amber-500/30'
-  }
-
-  // Low/Negative values - Orange/Red tones
-  if (
-    lowerValue.includes('deficiente') ||
-    lowerValue.includes('nunca') ||
-    lowerValue.includes('menos_50') ||
-    lowerValue.includes('pocas') ||
-    lowerValue.includes('ninguna') ||
-    lowerValue.includes('anual')
-  ) {
-    return 'bg-orange-500/20 border-orange-500/60 hover:bg-orange-500/30'
-  }
-
-  // Process-related or neutral
-  if (lowerValue.includes('proceso') || lowerValue.includes('bienal')) {
-    return 'bg-purple-500/20 border-purple-500/60 hover:bg-purple-500/30'
-  }
-
-  // Default for any other selected value
-  return 'bg-primary/20 border-primary/60 hover:bg-primary/30'
+  // Selected state - neutral blue/primary color
+  return 'bg-primary/10 border-primary hover:bg-primary/20'
 }
 
 export function Step7EditForm({
@@ -130,7 +79,7 @@ export function Step7EditForm({
   onFinalSubmit,
   report
 }: Step7EditFormProps) {
-  const { control, handleSubmit, reset, watch, register, getValues } = formMethods
+  const { control, handleSubmit, reset, watch, register, getValues, formState } = formMethods
 
   // Load step 7 questions from the database
   const { data: step7QuestionsDB, isLoading: loadingStep7Questions } = useQuestionsByStep(7, reportType)
@@ -481,28 +430,30 @@ export function Step7EditForm({
                   <p className="text-xs sm:text-sm">No hay preguntas disponibles para este paso.</p>
                 </div>
               ) : (
-                step7Questions.map((question, index) => (
-                  <div key={question.questionId}>
-                    <div className="py-4 px-1">
-                      <FormItem className="space-y-2.5">
-                        <FormLabel className="text-sm font-medium leading-relaxed text-foreground/90 block">
-                          <span className="inline-flex items-baseline gap-2">
-                            <span className="text-muted-foreground font-normal text-xs bg-muted/50 px-2 py-0.5 rounded-full min-w-[24px] text-center">
-                              {index + 1}
+                step7Questions.map((question, index) => {
+                  const fieldError = formState.errors.respuestasRadio?.[index]?.respuesta
+                  return (
+                    <div key={question.questionId}>
+                      <div className={`py-4 px-1 rounded-lg transition-colors ${fieldError ? 'bg-destructive/5 border-2 border-destructive/50' : ''}`}>
+                        <FormItem className="space-y-2.5">
+                          <FormLabel className="text-sm font-medium leading-relaxed text-foreground/90 block">
+                            <span className="inline-flex items-baseline gap-2">
+                              <span className="text-muted-foreground font-normal text-xs bg-muted/50 px-2 py-0.5 rounded-full min-w-[24px] text-center">
+                                {index + 1}
+                              </span>
+                              <span className="flex-1">{question.question}</span>
                             </span>
-                            <span className="flex-1">{question.question}</span>
-                            <span className="text-destructive ml-1">*</span>
-                          </span>
-                        </FormLabel>
-                        <div className="ml-6">
-                          {renderQuestionField(question, index)}
-                          <input type="hidden" {...register(`respuestasRadio.${index}.idPregunta`)} value={question.questionId} />
-                        </div>
-                      </FormItem>
+                          </FormLabel>
+                          <div className="ml-6">
+                            {renderQuestionField(question, index)}
+                            <input type="hidden" {...register(`respuestasRadio.${index}.idPregunta`)} value={question.questionId} />
+                          </div>
+                        </FormItem>
+                      </div>
+                      {index < step7Questions.length - 1 && <Separator className="opacity-20 my-1" />}
                     </div>
-                    {index < step7Questions.length - 1 && <Separator className="opacity-20 my-1" />}
-                  </div>
-                ))
+                  )
+                })
               )}
             </div>
           </form>
