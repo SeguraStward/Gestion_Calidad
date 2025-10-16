@@ -37,18 +37,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         { title: 'Mantenimiento General', url: '/academic-management/academic-maintenance' }
       ]
     },
-    {
-      title: 'Gestión SINAES',
-      url: '/sinaes-management',
-      icon: require('lucide-react').BookCheck,
-      items: [{ title: 'Panel de Gestión', url: '/sinaes-management' }]
-    },
 
     {
       title: 'Gestión de Tiempos de Jornada',
       url: '/times-management',
       icon: require('lucide-react').Clock,
       items: [{ title: 'Panel de Tiempos', url: '/times-management' }]
+    },
+
+    {
+      title: 'Gestión SINAES',
+      url: '/sinaes-management',
+      icon: require('lucide-react').BookCheck,
+      items: [{ title: 'Panel de Gestión', url: '/sinaes-management' }]
     },
 
     ...(showUserManagement
