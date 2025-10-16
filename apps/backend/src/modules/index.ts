@@ -54,3 +54,4 @@ export * from './campus-journey-time-allocations/campus-journey-time-allocations
 export * from './professor-assignments/professor-assignments.module';
 export * from './journey-time-configs/journey-time-configs.module';
 export * from './times/times.module';
+export * from './google-drive/google-drive.module';

@@ -7,6 +7,7 @@ import { Plus, ChevronRight, Edit, Trash2 } from 'lucide-react'
 import { useCriteria, useDeleteCriterion } from '../../services/criteria.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import { CriterionForm } from '../forms/criterion-form'
+import { formatCodeForDisplay } from '../../utils/code-utils'
 import type { Criterion } from '../../types/criteria.types'
 
 interface CriteriaListProps {
@@ -76,7 +77,7 @@ export const CriteriaList = ({ componentId }: CriteriaListProps) => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{criterion.code}</p>
+                  <p className="text-sm font-medium truncate">{formatCodeForDisplay(criterion.code)}</p>
                   <p className="text-xs text-muted-foreground truncate">{criterion.name}</p>
                 </div>
                 <div className="flex items-center space-x-1">
@@ -86,7 +87,7 @@ export const CriteriaList = ({ componentId }: CriteriaListProps) => {
                     onClick={(e) => handleEdit(criterion, e)}
                     className="h-6 w-6 p-0"
                   >
-                    <Edit className="h-3 w-3" />
+                    <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"

@@ -7,10 +7,11 @@ import { Label } from '@una-gc/ui/components/label'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
 import { RefreshCw } from 'lucide-react'
-import { useCreateStandard, useUpdateStandard } from '../../services/standards.service'
+import { useCreateStandard, useUpdateStandard, useStandards } from '../../services/standards.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import type { Standard, CreateStandardDto } from '../../types/standards.types'
 import { useAutoNumbering } from '../../hooks/use-auto-numbering'
+import { checkDuplicateName, showDuplicateAlert } from '../../utils/validation-utils'
 
 interface StandardFormProps {
   open: boolean
@@ -33,6 +34,12 @@ export const StandardForm = ({ open, onClose, standard, onSuccess }: StandardFor
   const createStandard = useCreateStandard()
   const updateStandard = useUpdateStandard()
   const { generateStandardCode, isGenerating } = useAutoNumbering()
+
+  // Get existing standards for validation
+  const { data: standards } = useStandards(
+    { criterionId: selectedCriterion?.id || '' },
+    { enabled: !!selectedCriterion?.id }
+  )
 
   // Sincronizar formData cuando cambie standard
   useEffect(() => {
@@ -83,6 +90,12 @@ export const StandardForm = ({ open, onClose, standard, onSuccess }: StandardFor
 
     if (!formData.criterionId) {
       alert('Debe seleccionar un criterio primero')
+      return
+    }
+
+    // Validate duplicate name
+    if (checkDuplicateName(formData.name, standards?.data, standard?.id)) {
+      showDuplicateAlert('estándar', formData.name)
       return
     }
 

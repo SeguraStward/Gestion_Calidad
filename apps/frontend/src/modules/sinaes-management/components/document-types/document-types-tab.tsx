@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Plus, Search, Edit, Trash2, FileText } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Plus, Search, Edit, Trash2, FileText, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   Button,
   Card,
@@ -23,6 +23,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  ScrollArea,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@una-gc/ui/components'
 import { ProofDocumentTypeForm } from './proof-document-type-form'
 import { useProofDocumentTypes } from '../../services/proof-document-types.service'
@@ -31,6 +37,8 @@ export const DocumentTypesTab = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<any>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   const { data: documentTypesResponse, isLoading } = useProofDocumentTypes()
 
@@ -45,6 +53,25 @@ export const DocumentTypesTab = () => {
     docType.prefix?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     docType.description?.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredDocumentTypes.length / itemsPerPage)
+  const paginatedDocumentTypes = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return filteredDocumentTypes.slice(startIndex, endIndex)
+  }, [filteredDocumentTypes, currentPage, itemsPerPage])
+
+  // Reset to page 1 when search term changes
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value)
+    setCurrentPage(1)
+  }
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value))
+    setCurrentPage(1)
+  }
 
   const handleCreate = () => {
     setEditingItem(null)
@@ -125,9 +152,23 @@ export const DocumentTypesTab = () => {
               <Input
                 placeholder="Buscar por nombre, código, prefijo o descripción..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10"
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Mostrar:</span>
+              <Select value={String(itemsPerPage)} onValueChange={handleItemsPerPageChange}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Badge variant="outline">
               {filteredDocumentTypes.length} resultado{filteredDocumentTypes.length !== 1 ? 's' : ''}
@@ -171,103 +212,100 @@ export const DocumentTypesTab = () => {
               )}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Prefijo</TableHead>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDocumentTypes.map((docType: any) => (
-                  <TableRow key={docType.id}>
-                    <TableCell className="font-medium">
-                      {docType.name}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="font-mono">
-                        {docType.prefix}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-xs">
-                      <span className="text-sm text-muted-foreground truncate">
-                        {docType.description || 'Sin descripción'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(docType.status === 'ACTIVE')}
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm font-mono">
-                        {docType.code || 'N/A'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(docType)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Prefijo</TableHead>
+                    <TableHead>Descripción</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Código</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedDocumentTypes.map((docType: any) => (
+                    <TableRow key={docType.id}>
+                      <TableCell className="font-medium">
+                        {docType.name}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="font-mono">
+                          {docType.prefix}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-xs">
+                        <span className="text-sm text-muted-foreground truncate">
+                          {docType.description || 'Sin descripción'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(docType.status === 'ACTIVE')}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-mono">
+                          {docType.code || 'N/A'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(docType)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 px-2">
+                  <div className="text-sm text-muted-foreground">
+                    Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, filteredDocumentTypes.length)} de {filteredDocumentTypes.length} resultados
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Anterior
+                    </Button>
+                    <div className="text-sm">
+                      Página {currentPage} de {totalPages}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Siguiente
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
-
-      {/* Summary Card */}
-      {filteredDocumentTypes.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Resumen</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">
-                  {filteredDocumentTypes.length}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Tipos configurados
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {filteredDocumentTypes.filter((dt: any) => dt.status === 'ACTIVE').length}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Tipos activos
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">
-                  {filteredDocumentTypes.filter((dt: any) => dt.status === 'INACTIVE').length}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Tipos inactivos
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }

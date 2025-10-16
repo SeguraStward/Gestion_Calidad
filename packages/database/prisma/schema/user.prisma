@@ -27,6 +27,11 @@ model User {
 
   googleId String? @unique
 
+  // Google OAuth tokens para Google Drive
+  googleAccessToken  String? // Token de acceso (válido 1 hora)
+  googleRefreshToken String? // Token para renovar el accessToken
+  googleTokenExpiry  DateTime? // Fecha de expiración del accessToken
+
   status UserStatus @default(PRE_REGISTRATION)
 
   // Relations

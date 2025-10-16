@@ -15,6 +15,8 @@ export interface GoogleUser {
   firstName: string;
   familyName?: string;
   picture?: string | null;
+  accessToken?: string; // Google OAuth access token
+  refreshToken?: string; // Google OAuth refresh token
 }
 
 export interface UserBasicInfo {

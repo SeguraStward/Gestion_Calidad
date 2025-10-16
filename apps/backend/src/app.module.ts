@@ -62,6 +62,7 @@ import {
   ProfessorAssignmentsModule,
   JourneyTimeConfigsModule,
   TimesModule,
+  GoogleDriveModule,
 } from '@modules/index';
 
 @Module({
@@ -118,6 +119,7 @@ import {
     CareerProofDocumentsModule,
     StandardEvidencesModule,
     GoogleDriveFoldersModule,
+    GoogleDriveModule,
     ScheduleModule.forRoot(),
     // TIEMPOS
     AnnualJourneyTimeAllocationsModule,

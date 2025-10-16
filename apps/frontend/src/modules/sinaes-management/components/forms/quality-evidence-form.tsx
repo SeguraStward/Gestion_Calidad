@@ -7,10 +7,11 @@ import { Label } from '@una-gc/ui/components/label'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
 import { RefreshCw } from 'lucide-react'
-import { useCreateQualityEvidence, useUpdateQualityEvidence } from '../../services/quality-evidences.service'
+import { useCreateQualityEvidence, useUpdateQualityEvidence, useQualityEvidences } from '../../services/quality-evidences.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import type { QualityEvidence, CreateQualityEvidenceDto } from '../../types/quality-evidences.types'
 import { useAutoNumbering } from '../../hooks/use-auto-numbering'
+import { checkDuplicateName, showDuplicateAlert } from '../../utils/validation-utils'
 
 interface QualityEvidenceFormProps {
   open: boolean
@@ -35,6 +36,17 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
   const createEvidence = useCreateQualityEvidence()
   const updateEvidence = useUpdateQualityEvidence()
   const { generateEvidenceCode, isGenerating } = useAutoNumbering()
+
+  // Fetch existing evidences for duplicate validation
+  const { data: evidences } = useQualityEvidences(
+    {
+      standardId: selectedStandard?.id,
+      criterionId: selectedStandard ? undefined : selectedCriterion?.id
+    },
+    {
+      enabled: !!(selectedStandard?.id || selectedCriterion?.id)
+    }
+  )
 
   // Sincronizar formData cuando cambie evidence
   useEffect(() => {
@@ -97,6 +109,12 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
       selectedCriterion: selectedCriterion?.id,
       context: selectedStandard ? 'ESTÁNDAR' : 'CRITERIO'
     })
+
+    // Validate duplicate name
+    if (checkDuplicateName(formData.name, evidences?.data, evidence?.id)) {
+      showDuplicateAlert('evidencia', formData.name)
+      return
+    }
 
     try {
       if (evidence) {

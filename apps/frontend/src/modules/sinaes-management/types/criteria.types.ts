@@ -5,6 +5,7 @@ export interface Criterion {
   description: string
   order: number
   componentId: string
+  hasDirectEvidences?: boolean // If true, criterion has direct evidences; if false, uses standards
   status: 'ACTIVE' | 'INACTIVE'
   createdAt: string
   updatedAt: string
@@ -18,6 +19,7 @@ export interface CreateCriterionDto {
   description: string
   order: number
   componentId: string
+  hasDirectEvidences?: boolean
   status?: 'ACTIVE' | 'INACTIVE'
 }
 
@@ -27,5 +29,6 @@ export interface UpdateCriterionDto {
   description?: string
   order?: number
   componentId?: string
+  hasDirectEvidences?: boolean
   status?: 'ACTIVE' | 'INACTIVE'
 }

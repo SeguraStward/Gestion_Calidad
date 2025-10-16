@@ -22,6 +22,9 @@ model Criterion {
   type        CriterionType @default(COMPONENT_BASED) // Predefined types
   customType  String? // Flexible field for custom types when type = CUSTOM
 
+  // Evidence type flag - determines if criterion has direct evidences or uses standards
+  hasDirectEvidences Boolean @default(false) // If true, use evidences directly; if false, use standards
+
   status Status @default(ACTIVE)
 
   // Relations

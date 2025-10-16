@@ -36,6 +36,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         fullName: true,
         fullLastName: true,
         status: true,
+        googleAccessToken: true,
+        googleRefreshToken: true,
+        googleTokenExpiry: true,
         roles: {
           where: { status: 'ACTIVE' },
           select: {
@@ -65,6 +68,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       fullName: user.fullName,
       fullLastName: user.fullLastName,
       roles: user.roles,
+      googleAccessToken: user.googleAccessToken,
+      googleRefreshToken: user.googleRefreshToken,
+      googleTokenExpiry: user.googleTokenExpiry,
     };
   }
 }

@@ -7,6 +7,7 @@ import { Plus, ChevronRight, Edit, Trash2 } from 'lucide-react'
 import { useStandards, useDeleteStandard } from '../../services/standards.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import { StandardForm } from '../forms/standard-form'
+import { formatCodeForDisplay } from '../../utils/code-utils'
 import type { Standard } from '../../types/standards.types'
 
 interface StandardsListProps {
@@ -77,7 +78,7 @@ export const StandardsList = ({ criterionId }: StandardsListProps) => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{standard.code}</p>
+                  <p className="text-sm font-medium truncate">{formatCodeForDisplay(standard.code)}</p>
                   <p className="text-xs text-muted-foreground truncate">{standard.name}</p>
                 </div>
                 <div className="flex items-center space-x-1">
@@ -87,7 +88,7 @@ export const StandardsList = ({ criterionId }: StandardsListProps) => {
                     onClick={(e) => handleEdit(standard, e)}
                     className="h-6 w-6 p-0"
                   >
-                    <Edit className="h-3 w-3" />
+                    <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"

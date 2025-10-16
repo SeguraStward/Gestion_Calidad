@@ -29,7 +29,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   private hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
@@ -62,6 +62,10 @@ export class AuthService {
       const fullName = googleUser.firstName || googleUser.email.split('@')[0];
       const fullLastName = googleUser.familyName || '';
 
+      // Calculate token expiry (Google access tokens typically last 1 hour)
+      const tokenExpiry = new Date();
+      tokenExpiry.setHours(tokenExpiry.getHours() + 1);
+
       user = await this.prisma.user.create({
         data: {
           email: googleUser.email,
@@ -71,10 +75,14 @@ export class AuthService {
           fullLastName: fullLastName,
           status: 'PRE_REGISTRATION', // Needs to complete profile
           roleIds: [],
+          // Save Google OAuth tokens for Drive integration
+          googleAccessToken: googleUser.accessToken,
+          googleRefreshToken: googleUser.refreshToken,
+          googleTokenExpiry: tokenExpiry,
         },
       });
 
-      this.logger.log(`User created with PRE_REGISTRATION status: ${user.email}`);
+      this.logger.log(`User created with PRE_REGISTRATION status and Google tokens: ${user.email}`);
     }
 
     // Check user status and handle accordingly
@@ -124,12 +132,26 @@ export class AuthService {
           shouldUpdate = true;
         }
 
+        // Always update Google OAuth tokens for Drive integration
+        if (googleUser.accessToken) {
+          updateData.googleAccessToken = googleUser.accessToken;
+          const tokenExpiry = new Date();
+          tokenExpiry.setHours(tokenExpiry.getHours() + 1); // Google tokens expire in 1 hour
+          updateData.googleTokenExpiry = tokenExpiry;
+          shouldUpdate = true;
+        }
+
+        if (googleUser.refreshToken) {
+          updateData.googleRefreshToken = googleUser.refreshToken;
+          shouldUpdate = true;
+        }
+
         if (shouldUpdate) {
           user = await this.prisma.user.update({
             where: { id: user.id },
             data: updateData,
           });
-          this.logger.log(`Updated user data for ${user.email}`);
+          this.logger.log(`Updated user data and Google tokens for ${user.email}`);
         }
 
         // Generate tokens for active users

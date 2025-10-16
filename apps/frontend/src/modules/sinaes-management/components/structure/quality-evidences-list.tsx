@@ -7,11 +7,19 @@ import { Plus, ChevronRight, Edit, Trash2 } from 'lucide-react'
 import { useQualityEvidences, useDeleteQualityEvidence } from '../../services/quality-evidences.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import { QualityEvidenceForm } from '../forms/quality-evidence-form'
+import { formatCodeForDisplay } from '../../utils/code-utils'
 import type { QualityEvidence } from '../../types/quality-evidences.types'
 
 export const QualityEvidencesList = () => {
-  const { data: evidences, isLoading, refetch } = useQualityEvidences()
-  const { selectedQualityEvidence, selectQualityEvidence } = useSinaesNavigation()
+  const { selectedCriterion, selectedStandard, selectedQualityEvidence, selectQualityEvidence } = useSinaesNavigation()
+
+  // Determine filter based on whether we're showing direct evidences or standard evidences
+  const hasDirectEvidences = selectedCriterion?.hasDirectEvidences === true
+  const filters = hasDirectEvidences
+    ? { criterionId: selectedCriterion?.id } // Direct evidences from criterion
+    : { standardId: selectedStandard?.id }    // Evidences from standard
+
+  const { data: evidences, isLoading, refetch } = useQualityEvidences(filters)
   const deleteEvidence = useDeleteQualityEvidence()
 
   const [formOpen, setFormOpen] = useState(false)
@@ -44,11 +52,22 @@ export const QualityEvidencesList = () => {
     return <div className="text-sm text-muted-foreground">Cargando evidencias...</div>
   }
 
+  // Show message if no filter is active
+  if (!hasDirectEvidences && !selectedStandard) {
+    return <div className="text-sm text-muted-foreground">Selecciona un estándar primero</div>
+  }
+
+  if (hasDirectEvidences && !selectedCriterion) {
+    return <div className="text-sm text-muted-foreground">Selecciona un criterio primero</div>
+  }
+
   return (
     <>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-medium">Evidencias</h4>
+          <h4 className="text-sm font-medium">
+            Evidencias {hasDirectEvidences ? '(Directas)' : ''}
+          </h4>
           <Button size="sm" variant="outline" onClick={() => setFormOpen(true)}>
             <Plus className="h-3 w-3 mr-1" />
             Nueva
@@ -65,7 +84,7 @@ export const QualityEvidencesList = () => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{evidence.code}</p>
+                  <p className="text-sm font-medium truncate">{formatCodeForDisplay(evidence.code)}</p>
                   <p className="text-xs text-muted-foreground truncate">{evidence.name}</p>
                 </div>
                 <div className="flex items-center space-x-1">
@@ -75,7 +94,7 @@ export const QualityEvidencesList = () => {
                     onClick={(e) => handleEdit(evidence, e)}
                     className="h-6 w-6 p-0"
                   >
-                    <Edit className="h-3 w-3" />
+                    <Edit className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"

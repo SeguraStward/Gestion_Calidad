@@ -75,16 +75,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ]
     },
     {
-      title: 'Gestión de Evidencias',
-      url: '/evidence-management',
-      icon: require('lucide-react').Files,
-      items: [
-        { title: 'Evidencias', url: '/evidence-management' },
-        { title: 'Subir Evidencia', url: '/evidence-management/upload' },
-        { title: 'Configuración', url: '/evidence-management/settings' }
-      ]
-    },
-    {
       title: 'Cambio de Rol',
       url: '/auth/select-role',
       icon: require('lucide-react').Users,

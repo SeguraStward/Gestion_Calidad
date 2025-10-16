@@ -7,10 +7,11 @@ import { Label } from '@una-gc/ui/components/label'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
 import { RefreshCw } from 'lucide-react'
-import { useCreateComponent, useUpdateComponent } from '../../services/components.service'
+import { useCreateComponent, useUpdateComponent, useComponents } from '../../services/components.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import type { Component, CreateComponentDto } from '../../types/components.types'
 import { useAutoNumbering } from '../../hooks/use-auto-numbering'
+import { checkDuplicateName, showDuplicateAlert } from '../../utils/validation-utils'
 
 interface ComponentFormProps {
   open: boolean
@@ -33,6 +34,12 @@ export const ComponentForm = ({ open, onClose, component, onSuccess }: Component
   const createComponent = useCreateComponent()
   const updateComponent = useUpdateComponent()
   const { generateComponentCode, isGenerating } = useAutoNumbering()
+
+  // Get existing components for validation
+  const { data: components } = useComponents(
+    { dimensionId: selectedDimension?.id || '' },
+    { enabled: !!selectedDimension?.id }
+  )
 
   // Sincronizar formData cuando cambie component
   useEffect(() => {
@@ -83,6 +90,12 @@ export const ComponentForm = ({ open, onClose, component, onSuccess }: Component
 
     if (!formData.dimensionId) {
       alert('Debe seleccionar una dimensión primero')
+      return
+    }
+
+    // Validación de duplicados
+    if (checkDuplicateName(formData.name, components?.data, component?.id)) {
+      showDuplicateAlert('componente', formData.name)
       return
     }
 

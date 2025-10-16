@@ -16,6 +16,9 @@ export const HierarchyNavigator = () => {
     selectedStandard
   } = useSinaesNavigation()
 
+  // Determine if criterion has direct evidences
+  const hasDirectEvidences = selectedCriterion?.hasDirectEvidences === true
+
   return (
     <ScrollArea className="h-[600px]">
       <div className="space-y-4">
@@ -32,14 +35,24 @@ export const HierarchyNavigator = () => {
           <CriteriaList componentId={selectedComponent.id} />
         )}
 
-        {/* Estándares - Solo si hay criterio seleccionado */}
+        {/* Conditional rendering based on criterion type */}
         {selectedCriterion && (
-          <StandardsList criterionId={selectedCriterion.id} />
-        )}
+          <>
+            {hasDirectEvidences ? (
+              /* Si el criterio tiene evidencias directas, mostrar solo evidencias */
+              <QualityEvidencesList />
+            ) : (
+              /* Si no tiene evidencias directas, mostrar estándares */
+              <>
+                <StandardsList criterionId={selectedCriterion.id} />
 
-        {/* Evidencias de Calidad - Solo si hay estándar seleccionado */}
-        {selectedStandard && (
-          <QualityEvidencesList />
+                {/* Evidencias de Calidad - Solo si hay estándar seleccionado */}
+                {selectedStandard && (
+                  <QualityEvidencesList />
+                )}
+              </>
+            )}
+          </>
         )}
       </div>
     </ScrollArea>
