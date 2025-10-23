@@ -94,7 +94,19 @@ class ProofDocumentUploadService {
 
       console.log('✅ [ProofDocumentUploadService] Upload successful:', response.data)
 
-      return response.data
+      // El backend envuelve la respuesta en un objeto "data"
+      // Estructura: { data: { proofDocument, careerRelations, folderPath } }
+      const actualData = response.data?.data || response.data
+
+      console.log('✅ [ProofDocumentUploadService] Response structure:', {
+        hasData: !!response.data,
+        hasNestedData: !!response.data?.data,
+        hasProofDocument: !!actualData?.proofDocument,
+        proofDocumentCode: actualData?.proofDocument?.code,
+        fullResponse: JSON.stringify(response.data, null, 2)
+      })
+
+      return actualData
     } catch (error: any) {
       console.error('❌ [ProofDocumentUploadService] Upload failed:', error)
       console.error('❌ Error response:', error.response?.data)

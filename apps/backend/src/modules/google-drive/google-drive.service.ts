@@ -160,9 +160,8 @@ export class GoogleDriveService {
       let currentPath = `/${this.rootFolderName}`;
       let level = 1;
 
-      // 2. Create Dimension folder
-      const dimensionNumber = structure.dimensionCode.split('-')[1] || structure.dimensionCode;
-      const dimensionFolderName = `${dimensionNumber} ${structure.dimensionName}`;
+      // 2. Create Dimension folder with full code prefix
+      const dimensionFolderName = `${structure.dimensionCode} ${structure.dimensionName}`;
       currentFolderId = await this.ensureFolderWithClient(drive, dimensionFolderName, currentFolderId);
       currentPath += `/${dimensionFolderName}`;
       level++;
@@ -178,10 +177,9 @@ export class GoogleDriveService {
         path: currentPath,
       });
 
-      // 3. Create Component folder (if provided)
+      // 3. Create Component folder with full code prefix (if provided)
       if (structure.componentCode && structure.componentName) {
-        const componentNumber = structure.componentCode.split('-')[1] || structure.componentCode;
-        const componentFolderName = `${componentNumber} ${structure.componentName}`;
+        const componentFolderName = `${structure.componentCode} ${structure.componentName}`;
         currentFolderId = await this.ensureFolderWithClient(drive, componentFolderName, currentFolderId);
         currentPath += `/${componentFolderName}`;
         level++;
@@ -197,10 +195,9 @@ export class GoogleDriveService {
         });
       }
 
-      // 4. Create Criterion folder (if provided)
+      // 4. Create Criterion folder with full code prefix (if provided)
       if (structure.criterionCode && structure.criterionName) {
-        const criterionNumber = structure.criterionCode.split('-')[1] || structure.criterionCode;
-        const criterionFolderName = `${criterionNumber} ${structure.criterionName}`;
+        const criterionFolderName = `${structure.criterionCode} ${structure.criterionName}`;
         currentFolderId = await this.ensureFolderWithClient(drive, criterionFolderName, currentFolderId);
         currentPath += `/${criterionFolderName}`;
         level++;
@@ -216,10 +213,9 @@ export class GoogleDriveService {
         });
       }
 
-      // 5. Create Standard folder (if provided - optional)
+      // 5. Create Standard folder with full code prefix (if provided - optional)
       if (structure.standardCode && structure.standardName) {
-        const standardNumber = structure.standardCode.split('-')[1] || structure.standardCode;
-        const standardFolderName = `${standardNumber} ${structure.standardName}`;
+        const standardFolderName = `${structure.standardCode} ${structure.standardName}`;
         currentFolderId = await this.ensureFolderWithClient(drive, standardFolderName, currentFolderId);
         currentPath += `/${standardFolderName}`;
         level++;
@@ -235,9 +231,8 @@ export class GoogleDriveService {
         });
       }
 
-      // 6. Create Evidence folder (always required)
-      const evidenceNumber = structure.evidenceCode.split('-')[1] || structure.evidenceCode;
-      const evidenceFolderName = `${evidenceNumber} ${structure.evidenceName}`;
+      // 6. Create Evidence folder with full code prefix (always required)
+      const evidenceFolderName = `${structure.evidenceCode} ${structure.evidenceName}`;
       currentFolderId = await this.ensureFolderWithClient(drive, evidenceFolderName, currentFolderId);
       currentPath += `/${evidenceFolderName}`;
       level++;

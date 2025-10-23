@@ -3,15 +3,19 @@ import {
   Controller,
   Logger,
   Post,
+  Get,
+  Query,
   UseInterceptors,
   UploadedFile,
   Body,
   Req,
   UnauthorizedException,
   BadRequestException,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiConsumes, ApiBody, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiConsumes, ApiBody, ApiOperation, ApiQuery } from '@nestjs/swagger';
 
 import { ProofDocumentDto } from './dtos/proof-document.dto';
 import { CreateProofDocumentDto } from './dtos/create-proof-document.dto';
@@ -42,6 +46,64 @@ export class ProofDocumentsController extends GenericController<
 
   constructor(private readonly proofDocumentsService: ProofDocumentsService) {
     super(proofDocumentsService);
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search proof documents with advanced filters' })
+  @ApiQuery({ name: 'search', required: false, description: 'Search by name or code' })
+  @ApiQuery({ name: 'dimensionId', required: false, description: 'Filter by dimension ID' })
+  @ApiQuery({ name: 'componentId', required: false, description: 'Filter by component ID' })
+  @ApiQuery({ name: 'criterionId', required: false, description: 'Filter by criterion ID' })
+  @ApiQuery({ name: 'standardId', required: false, description: 'Filter by standard ID' })
+  @ApiQuery({ name: 'evidenceId', required: false, description: 'Filter by evidence ID' })
+  @ApiQuery({ name: 'proofDocumentTypeId', required: false, description: 'Filter by document type ID' })
+  @ApiQuery({ name: 'careerIds', required: false, description: 'Filter by career IDs (comma-separated)' })
+  @ApiQuery({ name: 'dateFrom', required: false, description: 'Filter by date from (ISO string)' })
+  @ApiQuery({ name: 'dateTo', required: false, description: 'Filter by date to (ISO string)' })
+  @ApiQuery({ name: 'status', required: false, enum: ['ACTIVE', 'INACTIVE', 'ALL'], description: 'Filter by status (ALL to show all)' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number (default: 1)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page (default: 10)' })
+  @ApiQuery({ name: 'orderBy', required: false, description: 'Order by field (default: createdAt)' })
+  @ApiQuery({ name: 'orderDirection', required: false, enum: ['asc', 'desc'], description: 'Order direction (default: desc)' })
+  async searchProofDocuments(
+    @Query('search') search?: string,
+    @Query('dimensionId') dimensionId?: string,
+    @Query('componentId') componentId?: string,
+    @Query('criterionId') criterionId?: string,
+    @Query('standardId') standardId?: string,
+    @Query('evidenceId') evidenceId?: string,
+    @Query('proofDocumentTypeId') proofDocumentTypeId?: string,
+    @Query('careerIds') careerIds?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('status') status?: 'ACTIVE' | 'INACTIVE' | 'ALL',
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit?: number,
+    @Query('orderBy', new DefaultValuePipe('createdAt')) orderBy?: string,
+    @Query('orderDirection', new DefaultValuePipe('desc')) orderDirection?: 'asc' | 'desc',
+  ) {
+    this.logger.log('🔍 Searching proof documents with filters');
+
+    // Parse careerIds from comma-separated string
+    const careerIdsArray = careerIds ? careerIds.split(',').map(id => id.trim()) : undefined;
+
+    return this.proofDocumentsService.searchProofDocuments({
+      search,
+      dimensionId,
+      componentId,
+      criterionId,
+      standardId,
+      evidenceId,
+      proofDocumentTypeId,
+      careerIds: careerIdsArray,
+      dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+      dateTo: dateTo ? new Date(dateTo) : undefined,
+      status,
+      page,
+      limit,
+      orderBy,
+      orderDirection,
+    });
   }
 
   @Post('upload')

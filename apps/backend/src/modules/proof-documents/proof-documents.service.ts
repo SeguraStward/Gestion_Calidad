@@ -20,6 +20,24 @@ export interface UploadProofDocumentDto {
   careerIds: string[];
 }
 
+export interface ProofDocumentSearchFilters {
+  search?: string;
+  dimensionId?: string;
+  componentId?: string;
+  criterionId?: string;
+  standardId?: string;
+  evidenceId?: string;
+  proofDocumentTypeId?: string;
+  careerIds?: string[];
+  dateFrom?: Date;
+  dateTo?: Date;
+  status?: 'ACTIVE' | 'INACTIVE' | 'ALL';
+  page?: number;
+  limit?: number;
+  orderBy?: string;
+  orderDirection?: 'asc' | 'desc';
+}
+
 @Injectable()
 export class ProofDocumentsService extends GenericService<ProofDocument, ProofDocumentDto, CreateProofDocumentDto, UpdateProofDocumentDto> {
   protected readonly logger = new Logger(ProofDocumentsService.name);
@@ -161,7 +179,8 @@ export class ProofDocumentsService extends GenericService<ProofDocument, ProofDo
       };
 
       const proofDocument = await this.save(proofDocumentData);
-      this.logger.log(`✅ Proof document created: ${proofDocument.id} (${proofDocument.code})`);
+      this.logger.log(`✅ Proof document created: ${JSON.stringify(proofDocument, null, 2)}`);
+      this.logger.log(`✅ Proof document ID: ${proofDocument?.id}, Code: ${proofDocument?.code}`);
 
       // 8. Create career-proof-document relations
       this.logger.log('🔗 Step 7: Creating career-proof-document relations...');
@@ -179,11 +198,17 @@ export class ProofDocumentsService extends GenericService<ProofDocument, ProofDo
 
       this.logger.log('🎉 Upload completed successfully!');
 
-      return {
+      const result = {
         proofDocument,
         careerRelations,
         folderPath: driveFolder.path,
       };
+
+      this.logger.log('📦 Returning result:', JSON.stringify(result, null, 2));
+      this.logger.log('📦 ProofDocument in result:', !!result.proofDocument);
+      this.logger.log('📦 ProofDocument code:', result.proofDocument?.code);
+
+      return result;
     } catch (error: any) {
       this.logger.error('❌ Error uploading proof document:', error);
       throw new BadRequestException(`Error uploading proof document: ${error.message}`);
@@ -253,6 +278,187 @@ export class ProofDocumentsService extends GenericService<ProofDocument, ProofDo
       };
     } else {
       throw new BadRequestException('Evidence must be associated with either a standard or criterion');
+    }
+  }
+
+  /**
+   * Search proof documents with advanced filters
+   * Supports filtering by SINAES hierarchy, document type, careers, dates, and status
+   */
+  async searchProofDocuments(filters: ProofDocumentSearchFilters): Promise<{
+    data: ProofDocumentDto[];
+    meta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    const {
+      search,
+      dimensionId,
+      componentId,
+      criterionId,
+      standardId,
+      evidenceId,
+      proofDocumentTypeId,
+      careerIds,
+      dateFrom,
+      dateTo,
+      status,
+      page = 1,
+      limit = 10,
+      orderBy = 'createdAt',
+      orderDirection = 'desc',
+    } = filters;
+
+    this.logger.log('🔍 Searching proof documents with filters:', { ...filters, careerIds: careerIds?.length });
+
+    // Build Prisma where clause
+    const where: any = {};
+
+    // Text search (name or code) - case insensitive
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { code: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    // Status filter (only if not 'ALL')
+    if (status && status !== 'ALL') {
+      where.status = status;
+    }
+
+    // Document type filter
+    if (proofDocumentTypeId) {
+      where.proofDocumentTypeId = proofDocumentTypeId;
+    }
+
+    // Evidence filter (direct or through hierarchy)
+    if (evidenceId) {
+      where.evidenceId = evidenceId;
+    } else if (standardId || criterionId || componentId || dimensionId) {
+      // Need to filter through evidence relations
+      where.evidence = {};
+
+      if (standardId) {
+        // Filter by standard
+        where.evidence.standardId = standardId;
+      } else if (criterionId) {
+        // Filter by criterion - can be direct or through standard
+        where.evidence.OR = [
+          { criterionId }, // Evidence directly associated with criterion
+          { standard: { criterionId } }, // Evidence through standard
+        ];
+      } else if (componentId) {
+        // Filter by component - through criterion
+        where.evidence.OR = [
+          { criterion: { componentId } }, // Direct criterion
+          { standard: { criterion: { componentId } } }, // Through standard
+        ];
+      } else if (dimensionId) {
+        // Filter by dimension - through component -> criterion
+        where.evidence.OR = [
+          { criterion: { component: { dimensionId } } }, // Direct criterion
+          { standard: { criterion: { component: { dimensionId } } } }, // Through standard
+        ];
+      }
+    }
+
+    // Career filter (through careerProofDocuments)
+    if (careerIds && careerIds.length > 0) {
+      where.careerProofDocuments = {
+        some: {
+          careerId: { in: careerIds },
+        },
+      };
+    }
+
+    // Date range filter
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) where.createdAt.gte = dateFrom;
+      if (dateTo) {
+        // Set to end of day
+        const endOfDay = new Date(dateTo);
+        endOfDay.setHours(23, 59, 59, 999);
+        where.createdAt.lte = endOfDay;
+      }
+    }
+
+    this.logger.debug('Prisma where clause:', JSON.stringify(where, null, 2));
+
+    try {
+      // Execute query with pagination
+      const [data, total] = await Promise.all([
+        this.prisma.proofDocument.findMany({
+          where,
+          include: {
+            evidence: {
+              include: {
+                criterion: {
+                  include: {
+                    component: {
+                      include: {
+                        dimension: true,
+                      },
+                    },
+                  },
+                },
+                standard: {
+                  include: {
+                    criterion: {
+                      include: {
+                        component: {
+                          include: {
+                            dimension: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            proofDocumentType: true,
+            careerProofDocuments: {
+              include: {
+                career: true,
+              },
+            },
+          },
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: { [orderBy]: orderDirection },
+        }),
+        this.prisma.proofDocument.count({ where }),
+      ]);
+
+      this.logger.log(`✅ Found ${total} documents, returning page ${page} (${data.length} items)`);
+
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        data: data.map((doc) => {
+          const dto = new ProofDocumentDto();
+          Object.assign(dto, doc);
+          return dto;
+        }),
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
+      };
+    } catch (error) {
+      this.logger.error('❌ Error searching proof documents:', error);
+      throw error;
     }
   }
 }

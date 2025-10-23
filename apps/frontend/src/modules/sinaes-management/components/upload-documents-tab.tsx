@@ -52,6 +52,16 @@ export const UploadDocumentsTab = () => {
         careerIds: data.careerIds
       })
 
+      console.log('✅ [UploadDocumentsTab] Upload result received:', result)
+      console.log('✅ [UploadDocumentsTab] Result type:', typeof result)
+      console.log('✅ [UploadDocumentsTab] Has proofDocument?', !!result?.proofDocument)
+      console.log('✅ [UploadDocumentsTab] ProofDocument:', result?.proofDocument)
+
+      if (!result || !result.proofDocument) {
+        console.error('❌ [UploadDocumentsTab] Invalid response structure:', result)
+        throw new Error('El servidor no devolvió el documento probatorio. Por favor, verifica los logs del backend.')
+      }
+
       console.log('✅ [UploadDocumentsTab] First document uploaded:', result.proofDocument.code)
       setUploadProgress(50)
 

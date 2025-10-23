@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@una-gc/ui/components/
 import { SinaesStructureTab } from './structure/sinaes-structure-tab'
 import { DocumentTypesTab } from './document-types/document-types-tab'
 import { UploadDocumentsTab } from './upload-documents-tab'
+import { QueryDocumentsTab } from './query/query-documents-tab'
 
 const SinaesManagementPage = () => {
 
@@ -17,6 +18,7 @@ const SinaesManagementPage = () => {
           <TabsList className="mx-6 mb-3">
             <TabsTrigger value="structure">Estructura SINAES</TabsTrigger>
             <TabsTrigger value="upload">Subir Documentos</TabsTrigger>
+            <TabsTrigger value="query">Consultar Documentos</TabsTrigger>
             <TabsTrigger value="document-types">
               Tipos de Documentos
             </TabsTrigger>
@@ -26,6 +28,9 @@ const SinaesManagementPage = () => {
           </TabsContent>
           <TabsContent value="upload" className="flex-1 px-6 overflow-y-auto">
             <UploadDocumentsTab />
+          </TabsContent>
+          <TabsContent value="query" className="flex-1 px-6 overflow-y-auto">
+            <QueryDocumentsTab />
           </TabsContent>
           <TabsContent value="document-types" className="flex-1 px-6">
             <DocumentTypesTab />
