@@ -1,6 +1,6 @@
 import { GenericService } from '@core/common/interfaces/generic.service';
 import { DtoValidator } from '@core/common/dto-validator';
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 
 import { ComponentDto } from './dtos/component.dto';
 import { CreateComponentDto } from './dtos/create-component.dto';
@@ -22,5 +22,25 @@ export class ComponentsService extends GenericService<Component, ComponentDto, C
     protected readonly dtoValidator: DtoValidator,
   ) {
     super(componentsRepository, ComponentDto);
+  }
+
+  async save(dto: CreateComponentDto): Promise<ComponentDto> {
+    // Validate unique name
+    const exists = await this.componentsRepository.existsByName(dto.name);
+    if (exists) {
+      throw new ConflictException(`Ya existe un componente con el nombre "${dto.name}"`);
+    }
+    return super.save(dto);
+  }
+
+  async update(id: string, dto: UpdateComponentDto): Promise<ComponentDto> {
+    // Validate unique name (excluding current entity)
+    if (dto.name) {
+      const exists = await this.componentsRepository.existsByName(dto.name, id);
+      if (exists) {
+        throw new ConflictException(`Ya existe un componente con el nombre "${dto.name}"`);
+      }
+    }
+    return super.update(id, dto);
   }
 }

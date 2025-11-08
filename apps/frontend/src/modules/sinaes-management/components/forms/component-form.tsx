@@ -7,6 +7,7 @@ import { Label } from '@una-gc/ui/components/label'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
 import { RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
 import { useCreateComponent, useUpdateComponent, useComponents } from '../../services/components.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import type { Component, CreateComponentDto } from '../../types/components.types'
@@ -102,8 +103,16 @@ export const ComponentForm = ({ open, onClose, component, onSuccess }: Component
     try {
       if (component) {
         await updateComponent.mutateAsync({ id: component.id, data: formData })
+        toast.success('Componente actualizado correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       } else {
         await createComponent.mutateAsync(formData)
+        toast.success('Componente creado correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       }
 
       onSuccess?.()
@@ -118,8 +127,15 @@ export const ComponentForm = ({ open, onClose, component, onSuccess }: Component
         dimensionId: selectedDimension?.id || '',
         status: 'ACTIVE'
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving component:', error)
+
+      // Mostrar mensaje de error del servidor
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al guardar el componente'
+      toast.error(errorMessage, {
+        duration: 5000,
+        position: 'top-center'
+      })
     }
   }
 

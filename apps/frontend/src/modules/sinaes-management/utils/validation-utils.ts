@@ -2,6 +2,8 @@
  * Validation utilities for SINAES forms
  */
 
+import { toast } from 'sonner'
+
 /**
  * Check if a name already exists in a list of entities
  * Case-insensitive comparison
@@ -31,15 +33,23 @@ export function checkDuplicateName<T extends { id: string; name: string }>(
 }
 
 /**
- * Show alert message for duplicate name
+ * Show toast notification for duplicate name
  * 
  * @param entityType - Type of entity (dimension, component, etc.)
  * @param name - Duplicate name
  */
 export function showDuplicateAlert(entityType: string, name: string): void {
-  alert(
-    `Ya existe ${getArticle(entityType)} ${entityType} con el nombre "${name}".\n` +
-    `Por favor, elige un nombre diferente.`
+  toast.error(
+    `Ya existe ${getArticle(entityType)} ${entityType} con el nombre "${name}". Por favor, elige un nombre diferente.`,
+    {
+      duration: 4000,
+      position: 'top-center',
+      style: {
+        background: 'hsl(var(--destructive))',
+        color: 'hsl(var(--destructive-foreground))',
+        border: '1px solid hsl(var(--destructive))',
+      }
+    }
   )
 }
 

@@ -299,14 +299,43 @@ export default function NewFinalReportPage() {
               hasQuestionDetails: !!questionDetails,
               questionText: questionDetails?.question,
               responseType: questionDetails?.responseType,
-              optionsCount: questionDetails?.options?.length || 0
+              optionsCount: questionDetails?.options?.length || 0,
+              stepNumber: 5,
+              respuesta: r.respuesta
             })
 
-            // For SELECT fields, convert value to label before saving
-            let responseToSave = r.respuesta
-            if (questionDetails?.responseType === 'SELECT' && questionDetails.options) {
+            // For MULTISELECT/SELECCION_MULTIPLE, convert values to labels
+            let multipleResponseLabels: string[] = []
+            let responseToSave: string | undefined = undefined
+
+            // Check if it's a multiple selection question (using string comparison to avoid type issues)
+            const isMultiSelect = questionDetails?.responseType === 'MULTISELECT' ||
+              (questionDetails?.responseType as string) === 'SELECCION_MULTIPLE'
+
+            if (isMultiSelect) {
+              // Split the comma-separated values
+              const selectedValues = r.respuesta.split(',').map(v => v.trim()).filter(v => v)
+
+              // Convert each value to its label
+              multipleResponseLabels = selectedValues.map(value => {
+                const option = questionDetails?.options?.find(opt => opt.value === value)
+                const label = option?.label || value
+                console.log(`  - Step 5 MULTISELECT: Converting "${value}" → "${label}"`)
+                return label
+              })
+
+              console.log('💾 Step 5 Multiple Selection:', {
+                questionId: r.idPregunta,
+                selectedValues,
+                convertedToLabels: multipleResponseLabels
+              })
+            } else if (questionDetails?.responseType === 'SELECT' && questionDetails.options) {
+              // For SELECT fields, convert value to label before saving
               const selectedOption = questionDetails.options.find((opt) => opt.value === r.respuesta)
               responseToSave = selectedOption?.label || r.respuesta
+            } else {
+              // For TEXT and other types
+              responseToSave = r.respuesta
             }
 
             return {
@@ -315,7 +344,8 @@ export default function NewFinalReportPage() {
               questionGroup: questionDetails?.group?.name || 'evaluacion_general_curso',
               responseType: questionDetails?.responseType || ('TEXT' as const),
               response: responseToSave || undefined,
-              multipleResponse: [],
+              multipleResponse: multipleResponseLabels, // ✅ Now contains labels for MULTISELECT
+              stepNumber: 5, // ✅ Explicitly set step number
               options: questionDetails?.options?.map((op) => ({
                 value: op.value,
                 label: op.label,
@@ -326,13 +356,27 @@ export default function NewFinalReportPage() {
           }),
         ...step6Data.respuestasMultiples.map((r) => {
           const questionDetails = step6QuestionsPageMock.find((p) => p.questionId === r.idPregunta)
+
+          // Convert values to labels for multipleResponse
+          const multipleResponseLabels = (r.respuestasSeleccionadas || []).map(value => {
+            const option = questionDetails?.options?.find(opt => opt.value === value)
+            return option?.label || value // Use label if found, otherwise fallback to value
+          })
+
+          console.log('💾 Saving Step 6 Multiple Choice:', {
+            questionId: r.idPregunta,
+            selectedValues: r.respuestasSeleccionadas,
+            convertedToLabels: multipleResponseLabels
+          })
+
           return {
             questionId: r.idPregunta,
             question: questionDetails?.question || r.idPregunta,
             questionGroup: questionDetails?.group || 'herramientas',
             responseType: 'SELECCION_MULTIPLE' as const,
             response: undefined,
-            multipleResponse: r.respuestasSeleccionadas || [],
+            multipleResponse: multipleResponseLabels, // ✅ Save labels instead of values
+            stepNumber: 6, // ✅ Explicitly set step number
             options: questionDetails?.options?.map((op) => ({
               value: op.value,
               label: op.label,
@@ -353,6 +397,7 @@ export default function NewFinalReportPage() {
               responseType: 'TEXT' as const,
               response: step6Data.otrasHerramientas,
               multipleResponse: [],
+              stepNumber: 6, // ✅ Explicitly set step number
               options: [],
               otherResponse: undefined
             }
@@ -372,7 +417,8 @@ export default function NewFinalReportPage() {
               questionText: questionDetails?.question?.substring(0, 50),
               responseType: resolvedResponseType,
               optionsCount: questionDetails?.options?.length || 0,
-              response: r.respuesta
+              response: r.respuesta,
+              stepNumber: 7
             })
 
             const selectedOption = questionDetails?.options?.find((opt) => opt.value === r.respuesta)
@@ -385,6 +431,7 @@ export default function NewFinalReportPage() {
               responseType: resolvedResponseType,
               response: resolvedResponseType === 'MULTISELECT' ? undefined : responseValueToSend,
               multipleResponse: resolvedResponseType === 'MULTISELECT' ? (r.respuesta ? [responseValueToSend] : []) : [],
+              stepNumber: 7, // ✅ Explicitly set step number
               options: questionDetails?.options?.map((op) => ({
                 value: op.value,
                 label: op.label,

@@ -79,4 +79,14 @@ export class StandardsRepository extends GenericPrismaRepository<
       include: { ...(include || {}), criterion: true, evidences: true, standardEvidences: true },
     });
   }
+
+  async existsByName(name: string, excludeId?: string): Promise<boolean> {
+    const standard = await this.prisma.standard.findFirst({
+      where: {
+        name,
+        ...(excludeId && { id: { not: excludeId } }),
+      },
+    });
+    return !!standard;
+  }
 }

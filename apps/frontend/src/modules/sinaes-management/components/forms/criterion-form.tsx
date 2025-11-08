@@ -8,6 +8,7 @@ import { Textarea } from '@una-gc/ui/components/textarea'
 import { Checkbox } from '@una-gc/ui/components/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
 import { RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
 import { useCreateCriterion, useUpdateCriterion, useCriteria } from '../../services/criteria.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import type { Criterion, CreateCriterionDto } from '../../types/criteria.types'
@@ -106,8 +107,16 @@ export const CriterionForm = ({ open, onClose, criterion, onSuccess }: Criterion
     try {
       if (criterion) {
         await updateCriterion.mutateAsync({ id: criterion.id, data: formData })
+        toast.success('Criterio actualizado correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       } else {
         await createCriterion.mutateAsync(formData)
+        toast.success('Criterio creado correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       }
 
       onSuccess?.()
@@ -123,8 +132,15 @@ export const CriterionForm = ({ open, onClose, criterion, onSuccess }: Criterion
         hasDirectEvidences: false,
         status: 'ACTIVE'
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving criterion:', error)
+
+      // Mostrar mensaje de error del servidor
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al guardar el criterio'
+      toast.error(errorMessage, {
+        duration: 5000,
+        position: 'top-center'
+      })
     }
   }
 

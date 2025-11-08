@@ -41,10 +41,39 @@ export function transformReportToStep5Data(report: FullFinalReport): Step5FormDa
       e.questionGroup !== 'percepcion_general'
   }) || []
 
-  const respuestas = step5Evaluations.map((evaluation) => ({
-    idPregunta: evaluation.questionId,
-    respuesta: evaluation.response || ''
-  }))
+  const respuestas = step5Evaluations.map((evaluation) => {
+    // Check if it's a MULTISELECT question
+    const isMultiSelect = evaluation.responseType === 'MULTISELECT' ||
+      (evaluation.responseType as string) === 'SELECCION_MULTIPLE'
+
+    if (isMultiSelect && evaluation.multipleResponse && evaluation.multipleResponse.length > 0) {
+      // For MULTISELECT questions, convert stored labels back to values
+      const values = evaluation.multipleResponse.map(label => {
+        // Find the option that matches this label
+        const option = evaluation.options?.find(opt => opt.label === label)
+        // Return the value if found, otherwise return the label (backwards compatibility)
+        return option ? option.value : label
+      })
+
+      console.log('🔄 Transform Step 5 - Labels to Values:', {
+        questionId: evaluation.questionId,
+        storedLabels: evaluation.multipleResponse,
+        convertedToValues: values
+      })
+
+      // Join values with comma for the form field
+      return {
+        idPregunta: evaluation.questionId,
+        respuesta: values.join(',')
+      }
+    }
+
+    // For other question types, use response field
+    return {
+      idPregunta: evaluation.questionId,
+      respuesta: evaluation.response || ''
+    }
+  })
 
   return { respuestas }
 }

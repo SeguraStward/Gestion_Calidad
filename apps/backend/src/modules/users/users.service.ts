@@ -418,4 +418,108 @@ export class UsersService extends GenericService<User, UserDto, UserDto, UpdateU
       throw error;
     }
   }
+
+  /**
+   * Bulk import professors from Excel
+   * Creates or updates users with PROFESSOR role based on nationalId
+   */
+  async bulkImportProfessors(
+    professors: Array<{ cedula: string; nombre: string }>,
+  ): Promise<{
+    created: number;
+    updated: number;
+    errors: number;
+    errorDetails: string[];
+    userIds: string[];
+  }> {
+    this.logger.debug(`[bulkImportProfessors] Starting bulk import of ${professors.length} professors`);
+
+    let created = 0;
+    let updated = 0;
+    let errors = 0;
+    const errorDetails: string[] = [];
+    const userIds: string[] = [];
+
+    // Get PROFESSOR role
+    const professorRole = await this.prisma.userRole.findFirst({
+      where: { name: 'PROFESOR' },
+    });
+
+    if (!professorRole) {
+      throw new Error('Role PROFESOR not found in database');
+    }
+
+    for (const prof of professors) {
+      try {
+        const { cedula, nombre } = prof;
+
+        if (!cedula || !nombre) {
+          errors++;
+          errorDetails.push(`Fila con datos incompletos: cédula=${cedula}, nombre=${nombre}`);
+          continue;
+        }
+
+        // Check if user already exists by nationalId
+        const existingUser = await this.prisma.user.findFirst({
+          where: { nationalId: cedula.trim() },
+        });
+
+        if (existingUser) {
+          // Update existing user - add PROFESSOR role if not present
+          const hasRole = existingUser.roleIds.includes(professorRole.id);
+
+          if (!hasRole) {
+            await this.prisma.user.update({
+              where: { id: existingUser.id },
+              data: {
+                roleIds: [...existingUser.roleIds, professorRole.id],
+                fullName: nombre.trim(), // Update name if needed
+              },
+            });
+            updated++;
+            userIds.push(existingUser.id);
+            this.logger.debug(`[bulkImportProfessors] Updated user ${existingUser.id} with PROFESSOR role`);
+          } else {
+            // User already has PROFESSOR role, skip
+            this.logger.debug(`[bulkImportProfessors] User ${existingUser.id} already has PROFESSOR role`);
+          }
+        } else {
+          // Create new user with PROFESSOR role
+          // Generate a temporary email based on nationalId
+          const tempEmail = `profesor.${cedula}@una.cr`;
+
+          const newUser = await this.prisma.user.create({
+            data: {
+              email: tempEmail,
+              fullName: nombre.trim(),
+              nationalId: cedula.trim(),
+              roleIds: [professorRole.id],
+              status: UserStatus.PRE_REGISTRATION,
+            },
+          });
+
+          created++;
+          userIds.push(newUser.id);
+          this.logger.debug(`[bulkImportProfessors] Created new user ${newUser.id}`);
+        }
+      } catch (error) {
+        errors++;
+        const errorMsg = `Error procesando profesor ${prof.nombre} (${prof.cedula}): ${error instanceof Error ? error.message : String(error)}`;
+        errorDetails.push(errorMsg);
+        this.logger.error(`[bulkImportProfessors] ${errorMsg}`);
+      }
+    }
+
+    this.logger.log(
+      `[bulkImportProfessors] Completed: ${created} created, ${updated} updated, ${errors} errors`,
+    );
+
+    return {
+      created,
+      updated,
+      errors,
+      errorDetails,
+      userIds,
+    };
+  }
 }

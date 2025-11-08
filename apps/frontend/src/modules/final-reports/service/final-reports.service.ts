@@ -26,6 +26,14 @@ class FinalReportService extends GenericService<FullFinalReport, CreateFinalRepo
     return response.data
   }
 
+  async getAllForAdmin(filters?: FinalReportFilters): Promise<PaginatedResponse<FullFinalReport>> {
+    // Admin endpoint to get all reports with advanced filters
+    const response = await HttpClient.get<PaginatedResponse<FullFinalReport>>(`/${this.resource}/admin/all`, {
+      params: filters
+    })
+    return response.data
+  }
+
   /**
    * Example: Get a final report by its associated AcademicLoad ID.
    * This assumes your backend supports fetching/filtering by 'academicLoadId'.
@@ -97,5 +105,18 @@ export function useFinalReportsByProfessor(
     },
     enabled: options?.enabled !== undefined ? options.enabled : !!professorId,
     staleTime: 60_000
+  })
+}
+
+export function useFinalReportsForAdmin(filters?: FinalReportFilters, options?: { enabled?: boolean }) {
+  console.log('📊 useFinalReportsForAdmin called with filters:', filters)
+  return useQuery<PaginatedResponse<FullFinalReport>, Error>({
+    queryKey: ['finalReports', 'admin', filters],
+    queryFn: () => {
+      console.log('🚀 Fetching admin reports with filters:', filters)
+      return finalReportService.getAllForAdmin(filters)
+    },
+    enabled: options?.enabled !== undefined ? options.enabled : true,
+    staleTime: 0 // Temporarily disable cache for debugging
   })
 }

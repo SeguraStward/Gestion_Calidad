@@ -288,11 +288,31 @@ export function transformReportToStep6Data(report: FullFinalReport): Step6FormDa
   const herramientasEval = report.evaluation?.find((e) => e.questionId === MAIN_TOOLS_QUESTION_ID_INTERNAL)
   const otrasHerramientasEval = report.evaluation?.find((e) => e.questionId === OTHER_TOOLS_QUESTION_ID)
 
+  // Convert labels back to values for the form
+  let respuestasSeleccionadas: string[] = []
+  if (herramientasEval?.multipleResponse && herramientasEval.multipleResponse.length > 0) {
+    respuestasSeleccionadas = herramientasEval.multipleResponse.map(label => {
+      // Try to find the value for this label
+      const option = herramientasEval.options?.find(opt => opt.label === label)
+      if (option) {
+        return option.value
+      }
+      // If not found by label, check if it's already a value (backwards compatibility)
+      const optionByValue = herramientasEval.options?.find(opt => opt.value === label)
+      return optionByValue ? label : label // Return as-is if can't convert
+    })
+
+    console.log('🔄 Transform Step 6 - Labels to Values:', {
+      storedLabels: herramientasEval.multipleResponse,
+      convertedToValues: respuestasSeleccionadas
+    })
+  }
+
   return {
     respuestasMultiples: [
       {
         idPregunta: MAIN_TOOLS_QUESTION_ID_INTERNAL,
-        respuestasSeleccionadas: herramientasEval?.multipleResponse || []
+        respuestasSeleccionadas
       }
     ],
     otrasHerramientas: otrasHerramientasEval?.response || ''

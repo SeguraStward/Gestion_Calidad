@@ -7,6 +7,7 @@ import { Label } from '@una-gc/ui/components/label'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
 import { RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
 import { useCreateDimension, useUpdateDimension, useDimensions } from '../../services/dimensions.service'
 import { useAutoNumbering } from '../../services/auto-numbering.service'
 import { checkDuplicateName, showDuplicateAlert } from '../../utils/validation-utils'
@@ -98,8 +99,16 @@ export const DimensionForm = ({ open, onClose, dimension, onSuccess }: Dimension
 
       if (dimension) {
         await updateDimension.mutateAsync({ id: dimension.id, data: formData })
+        toast.success('Dimensión actualizada correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       } else {
         await createDimension.mutateAsync(formData)
+        toast.success('Dimensión creada correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       }
 
       onSuccess?.()
@@ -107,8 +116,15 @@ export const DimensionForm = ({ open, onClose, dimension, onSuccess }: Dimension
 
       // Reset form
       setFormData({ name: '', code: '', description: '', order: 0 })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving dimension:', error)
+
+      // Mostrar mensaje de error del servidor
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al guardar la dimensión'
+      toast.error(errorMessage, {
+        duration: 5000,
+        position: 'top-center'
+      })
     }
   }
 

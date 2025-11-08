@@ -4,7 +4,7 @@ import type { FullAcademicLoad } from '../../academic-loads/types/academic-loads
  * Status for Final Reports, aligning with Prisma's FinalReportStatus
  * and potentially including frontend-specific display values if needed.
  */
-export type FinalReportStatusFE = 'PENDING' | 'EVALUATED' | 'ACTIVE' // Matches backend
+export type FinalReportStatusFE = 'DRAFT' | 'PENDING' | 'EVALUATED' | 'APPROVED' | 'REJECTED' | 'ACTIVE' // Matches backend
 
 /**
  * Nested Course information within AcademicLoad.
@@ -95,6 +95,7 @@ export interface FinalReportEvaluationFE {
   options?: { value: string; label: string; category?: string }[]
   question: string
   otherResponse?: string
+  stepNumber?: number // 5, 6, or 7 - identifies which step this evaluation belongs to
 }
 
 export interface FinalReportStudentAdjustmentFE {

@@ -45,4 +45,14 @@ export class ComponentsRepository extends GenericPrismaRepository<
       include: { ...(include || {}), dimension: true, criteria: true },
     });
   }
+
+  async existsByName(name: string, excludeId?: string): Promise<boolean> {
+    const component = await this.prisma.component.findFirst({
+      where: {
+        name,
+        ...(excludeId && { id: { not: excludeId } }),
+      },
+    });
+    return !!component;
+  }
 }

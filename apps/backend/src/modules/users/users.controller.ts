@@ -7,6 +7,7 @@ import {
   Logger,
   Param,
   Patch,
+  Post,
   Query,
   Request,
 } from '@nestjs/common';
@@ -249,6 +250,22 @@ export class UsersController extends GenericController<UserDto, UserDto> {
     const updatedUser = await this.usersService.changeUserStatus(userId, changeUserStatusDto.status);
     this.logger.debug(`Successfully updated status for user ${userId}`);
     return updatedUser;
+  }
+
+  @Post('bulk-import/professors')
+  @ApiOperation({ summary: 'Bulk import professors from Excel' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Professors imported successfully',
+  })
+  @AuthorizedEndpoint(PermissionType.CREATE)
+  async bulkImportProfessors(
+    @Body() importDto: { professors: Array<{ cedula: string; nombre: string }> },
+  ) {
+    this.logger.log(`Starting bulk import of ${importDto.professors.length} professors`);
+    const result = await this.usersService.bulkImportProfessors(importDto.professors);
+    this.logger.log(`Bulk import completed: ${result.created} created, ${result.updated} updated, ${result.errors} errors`);
+    return result;
   }
 
   // ignore change status from generic controller

@@ -6,7 +6,14 @@ import Link from 'next/link'
 import { NavMain } from './nav-main'
 import { NavUser } from './nav-user'
 import { useAuth } from '@/modules/auth/hooks'
-import { USER_MANAGEMENT_PERMISSIONS, ACTIONS, SCOPES } from '@/modules/auth/constants/permissions'
+import {
+  USER_MANAGEMENT_PERMISSIONS,
+  FINAL_REPORT_PERMISSIONS,
+  ACTIONS,
+  SCOPES,
+  isFinalReportAdmin,
+  isFinalReportProfessor
+} from '@/modules/auth/constants/permissions'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { hasPermission, user, role } = useAuth()
@@ -14,66 +21,110 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Check if user has admin permission for user management
   const canManageUsers = hasPermission(USER_MANAGEMENT_PERMISSIONS.USER, ACTIONS.READ, SCOPES.ALL)
 
-  // Debug logging
-  console.debug('Sidebar permission check:', {
-    user,
-    role,
-    canManageUsers,
-    userPermission: USER_MANAGEMENT_PERMISSIONS.USER,
-    action: ACTIONS.READ,
-    scope: SCOPES.ALL
-  })
+  // Check permissions for final reports
+  const canViewAllFinalReports = isFinalReportAdmin(hasPermission)
+  const canViewOwnFinalReports = isFinalReportProfessor(hasPermission)
 
-  // Temporarily show user management for all authenticated users while debugging
-  const showUserManagement = true // !!user || canManageUsers
+  // Check if user is admin (can manage users = admin)
+  const isAdmin = canManageUsers
 
   const navMain = [
-    {
-      title: 'Gestión Académica',
-      url: '/gestion-academica',
-      icon: require('lucide-react').Building,
-      items: [
-        { title: 'Cargas Academicas', url: '/academic-management/academic-load' },
-        { title: 'Mantenimiento General', url: '/academic-management/academic-maintenance' }
-      ]
-    },
-
-    {
-      title: 'Gestión de Tiempos de Jornada',
-      url: '/times-management',
-      icon: require('lucide-react').Clock,
-      items: [{ title: 'Panel de Tiempos', url: '/times-management' }]
-    },
-
-    {
-      title: 'Gestión SINAES',
-      url: '/sinaes-management',
-      icon: require('lucide-react').BookCheck,
-      items: [{ title: 'Panel de Gestión', url: '/sinaes-management' }]
-    },
-
-    ...(showUserManagement
+    // Gestión Académica - Only for admins
+    ...(isAdmin
       ? [
-          {
-            title: 'Gestión de Usuarios',
-            url: '/user-management',
-            icon: require('lucide-react').Users,
-            items: [
-              { title: 'Usuarios', url: '/user-management/user' },
-              { title: 'Roles', url: '/user-management/user-role' }
-            ]
-          }
-        ]
-      : []),
-    {
-      title: 'Informe Final',
-      url: '/final-report',
-      icon: require('lucide-react').FileText,
-      items: [
-        { title: 'Lista de Informes', url: '/final-reports' },
-        { title: 'Gestión de Preguntas', url: '/admin/question-management' }
+        {
+          title: 'Gestión Académica',
+          url: '/gestion-academica',
+          icon: require('lucide-react').Building,
+          items: [
+            { title: 'Cargas Academicas', url: '/academic-management/academic-load' },
+            { title: 'Mantenimiento General', url: '/academic-management/academic-maintenance' }
+          ]
+        }
       ]
-    },
+      : []),
+
+    // Gestión de Tiempos de Jornada - Only for admins
+    ...(isAdmin
+      ? [
+        {
+          title: 'Gestión de Tiempos de Jornada',
+          url: '/times-management',
+          icon: require('lucide-react').Clock,
+          items: [{ title: 'Panel de Tiempos', url: '/times-management' }]
+        }
+      ]
+      : []),
+
+    // Gestión SINAES - Only for admins
+    ...(isAdmin
+      ? [
+        {
+          title: 'Gestión SINAES',
+          url: '/sinaes-management',
+          icon: require('lucide-react').BookCheck,
+          items: [{ title: 'Panel de Gestión', url: '/sinaes-management' }]
+        }
+      ]
+      : []),
+
+    // User Management - Only for admins
+    ...(canManageUsers
+      ? [
+        {
+          title: 'Gestión de Usuarios',
+          url: '/user-management',
+          icon: require('lucide-react').Users,
+          items: [
+            { title: 'Usuarios', url: '/user-management/user' },
+            { title: 'Roles', url: '/user-management/user-role' }
+          ]
+        }
+      ]
+      : []),
+
+    // Final Reports section - Admin view (can see all reports)
+    ...(canViewAllFinalReports
+      ? [
+        {
+          title: 'Informes Finales (Admin)',
+          url: '/admin/final-reports',
+          icon: require('lucide-react').FileCheck,
+          items: [
+            { title: 'Todos los Informes', url: '/admin/final-reports' },
+            { title: 'Gestión de Preguntas', url: '/admin/question-management' }
+          ]
+        }
+      ]
+      : []),
+
+    // Bulk Import - Only for admins
+    ...(isAdmin
+      ? [
+        {
+          title: 'Importación Masiva',
+          url: '/admin/bulk-import',
+          icon: require('lucide-react').FileSpreadsheet,
+          items: [
+            { title: 'Profesores', url: '/admin/bulk-import/professors' },
+            { title: 'Cargas Académicas', url: '/admin/bulk-import/academic-loads' }
+          ]
+        }
+      ]
+      : []),
+
+    // Final Reports section - Professor view (can see own reports)
+    ...(canViewOwnFinalReports && !canViewAllFinalReports
+      ? [
+        {
+          title: 'Mis Informes Finales',
+          url: '/final-reports',
+          icon: require('lucide-react').FileText,
+          items: [{ title: 'Mis Informes', url: '/final-reports' }]
+        }
+      ]
+      : []),
+
     {
       title: 'Cambio de Rol',
       url: '/auth/select-role',

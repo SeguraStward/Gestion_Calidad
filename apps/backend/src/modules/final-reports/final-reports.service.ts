@@ -74,6 +74,49 @@ export class FinalReportsService extends GenericService<FinalReport, FinalReport
     return super.findAll(page, limit, where, finalOrderBy, include);
   }
 
+  async findAllForAdmin(
+    page = 1,
+    limit = 10,
+    status?: FinalReportStatus,
+    professorId?: string,
+    search?: string,
+    orderBy?: Prisma.FinalReportOrderByWithRelationInput,
+    include?: Prisma.FinalReportInclude,
+  ): Promise<PaginatedResponse<FinalReportDto>> {
+    this.logger.debug(
+      `Admin: Finding all final reports - status: ${status}, professorId: ${professorId}, search: ${search}, page: ${page}, limit: ${limit}`,
+    );
+
+    const where: Prisma.FinalReportWhereInput = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (professorId) {
+      where.professorId = professorId;
+    }
+
+    // Búsqueda avanzada
+    if (search) {
+      where.OR = [
+        { academicLoad: { nrc: { equals: search, mode: 'insensitive' } } },
+        { academicLoad: { nrc: { startsWith: search, mode: 'insensitive' } } },
+        { academicLoad: { nrc: { contains: search, mode: 'insensitive' } } },
+        { academicLoad: { course: { name: { contains: search, mode: 'insensitive' } } } },
+        { academicLoad: { course: { code: { contains: search, mode: 'insensitive' } } } },
+        { professor: { fullName: { contains: search, mode: 'insensitive' } } },
+        { professor: { email: { contains: search, mode: 'insensitive' } } },
+        { academicLoad: { academicCycle: { name: { contains: search, mode: 'insensitive' } } } },
+        { academicLoad: { campus: { name: { contains: search, mode: 'insensitive' } } } },
+      ];
+    }
+
+    let finalOrderBy = orderBy || { createdAt: 'desc' };
+
+    return super.findAll(page, limit, where, finalOrderBy, include);
+  }
+
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async evaluatePendingFinalReports() {
     this.logger.log('Executing daily evaluation of pending final reports...');

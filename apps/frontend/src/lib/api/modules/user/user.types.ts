@@ -131,6 +131,25 @@ export interface UserFilters {
   roleId?: string
 }
 
+// Bulk Import Types - matching backend DTOs
+
+export interface ProfessorRowDto {
+  cedula: string
+  nombre: string
+}
+
+export interface BulkImportProfessorsDto {
+  professors: ProfessorRowDto[]
+}
+
+export interface BulkImportResultDto {
+  created: number
+  updated: number
+  errors: number
+  errorDetails: string[]
+  userIds: string[]
+}
+
 // Extended type alias for backward compatibility
 export type UserWithRelations = UserDto
 export type CurrentUserProfile = UserDto

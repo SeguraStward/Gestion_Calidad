@@ -114,6 +114,12 @@ export class FinalReportEvaluationDto {
   @IsString()
   responseType: string;
 
+  @ApiPropertyOptional({ description: 'Step Number (5, 6, or 7)' })
+  @Expose()
+  @IsNumber()
+  @IsOptional()
+  stepNumber?: number;
+
   constructor(partial: Partial<FinalReportEvaluationDto> | any = {}) {
     Object.assign(this, partial);
     if (partial.options && Array.isArray(partial.options)) {

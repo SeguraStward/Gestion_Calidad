@@ -1,5 +1,6 @@
 import { GenericController } from '@core/common/interfaces/generic.controller';
 import {
+  Body,
   Controller,
   DefaultValuePipe,
   Get,
@@ -7,6 +8,7 @@ import {
   Param,
   ParseEnumPipe,
   ParseIntPipe,
+  Post,
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -17,6 +19,7 @@ import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorat
 import { PermissionType } from '@una-gc/database/prisma/generated/client';
 import { AcademicLoadsService } from './academic-loads.service';
 import { AcademicLoadDto } from './dtos/academic-load.dto';
+import { BulkImportAcademicLoadsDto } from './dtos/bulk-import-academic-loads.dto';
 
 @ApiTags('Academic Loads')
 @ResourceName('ACADEMIC_LOAD')
@@ -98,5 +101,16 @@ export class AcademicLoadsController extends GenericController<AcademicLoadDto, 
     const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
 
     return this.academicLoadsService.findAllByProfessorId(professorId, page, limit, status, parsedOrderBy);
+  }
+
+  // Bulk import endpoint for academic loads
+  @Post('bulk-import')
+  @ApiOperation({ summary: 'Bulk import academic loads from Excel data' })
+  @ApiResponse({ status: 201, description: 'Academic loads successfully imported' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  @AuthorizedEndpoint(PermissionType.CREATE)
+  async bulkImportAcademicLoads(@Body() importDto: BulkImportAcademicLoadsDto) {
+    this.logger.debug(`Bulk importing ${importDto.loads.length} academic loads`);
+    return this.academicLoadsService.bulkImportAcademicLoads(importDto.loads);
   }
 }

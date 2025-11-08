@@ -45,4 +45,20 @@ export class DimensionsRepository extends GenericPrismaRepository<
       include: { ...(include || {}), components: true },
     });
   }
+
+  async findByName(name: string): Promise<Dimension | null> {
+    return this.prisma.dimension.findFirst({
+      where: { name },
+    });
+  }
+
+  async existsByName(name: string, excludeId?: string): Promise<boolean> {
+    const dimension = await this.prisma.dimension.findFirst({
+      where: {
+        name,
+        ...(excludeId && { id: { not: excludeId } }),
+      },
+    });
+    return !!dimension;
+  }
 }

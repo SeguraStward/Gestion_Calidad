@@ -7,6 +7,7 @@ import { Label } from '@una-gc/ui/components/label'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
 import { RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
 import { useCreateQualityEvidence, useUpdateQualityEvidence, useQualityEvidences } from '../../services/quality-evidences.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import type { QualityEvidence, CreateQualityEvidenceDto } from '../../types/quality-evidences.types'
@@ -119,8 +120,16 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
     try {
       if (evidence) {
         await updateEvidence.mutateAsync({ id: evidence.id, data: formData })
+        toast.success('Evidencia de calidad actualizada correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       } else {
         await createEvidence.mutateAsync(formData)
+        toast.success('Evidencia de calidad creada correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       }
 
       onSuccess?.()
@@ -136,8 +145,15 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
         criterionId: selectedStandard ? undefined : selectedCriterion?.id || undefined,
         status: 'ACTIVE'
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving evidence:', error)
+
+      // Mostrar mensaje de error del servidor
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al guardar la evidencia de calidad'
+      toast.error(errorMessage, {
+        duration: 5000,
+        position: 'top-center'
+      })
     }
   }
 

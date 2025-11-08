@@ -2,8 +2,8 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueryClient } from '@tanstack/react-query'
-import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
@@ -60,11 +60,27 @@ function transformReportToStep7Data(report: FullFinalReport, currentReportType: 
 
     if (existingEvaluation) {
       const questionDetails = step7QuestionsPageMock.find((mockQuestion) => mockQuestion.questionId === p.questionId)
-      if (questionDetails && questionDetails.options) {
+
+      // Check if it's a MULTISELECT question
+      const isMultiSelect = existingEvaluation.responseType === 'MULTISELECT' ||
+        (existingEvaluation.responseType as string) === 'SELECCION_MULTIPLE'
+
+      if (isMultiSelect && existingEvaluation.multipleResponse && existingEvaluation.multipleResponse.length > 0) {
+        // For MULTISELECT questions, convert stored labels back to values
+        const values = existingEvaluation.multipleResponse.map(label => {
+          const option = questionDetails?.options?.find(opt => opt.label === label)
+          return option ? option.value : label
+        })
+        formResponseValue = values.join(',')
+      } else if (questionDetails && questionDetails.options) {
+        // For SELECT questions, find the value from the label
         const matchedOption = questionDetails.options.find((opt) => opt.label === existingEvaluation.response)
         if (matchedOption) {
           formResponseValue = matchedOption.value
         }
+      } else {
+        // For TEXT and other types
+        formResponseValue = existingEvaluation.response || ''
       }
     }
 
@@ -76,10 +92,17 @@ function transformReportToStep7Data(report: FullFinalReport, currentReportType: 
   return { respuestasRadio: step7Responses }
 }
 
-export default function EditFinalReportPage() {
+function EditFinalReportContent() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const reportId = params.id as string
+
+  // Determine where to redirect based on returnTo parameter
+  const returnTo = searchParams.get('returnTo')
+  const backUrl = returnTo === 'admin' ? '/admin/final-reports' : '/final-reports'
+
+  console.log('🔍 EditFinalReportContent - returnTo:', returnTo, 'backUrl:', backUrl)
 
   const queryClient = useQueryClient()
 
@@ -272,21 +295,47 @@ export default function EditFinalReportPage() {
           const originalQuestion = fetchedReport.evaluation?.find(e => e.questionId === resp.idPregunta)
           if (originalQuestion) {
             // Determine the value to save based on question type
-            let responseToSave: string | undefined = resp.respuesta
+            let responseToSave: string | undefined = undefined
+            let multipleResponseToSave: string[] = []
 
-            // For SELECT questions with options, convert value back to label for storage
-            if (resp.respuesta && resp.respuesta.trim() !== '' && originalQuestion.options && originalQuestion.options.length > 0) {
+            // Check if it's a multiple selection question
+            const isMultiSelect = originalQuestion.responseType === 'MULTISELECT' ||
+              (originalQuestion.responseType as string) === 'SELECCION_MULTIPLE'
+
+            if (isMultiSelect && resp.respuesta && resp.respuesta.trim() !== '') {
+              // For MULTISELECT questions, split comma-separated values and convert to labels
+              const selectedValues = resp.respuesta.split(',').map(v => v.trim()).filter(v => v)
+
+              multipleResponseToSave = selectedValues.map(value => {
+                const option = originalQuestion.options?.find(opt => opt.value === value)
+                const label = option?.label || value
+                console.log(`  - Edit Step 5 MULTISELECT: Converting "${value}" → "${label}"`)
+                return label
+              })
+
+              console.log('💾 Edit - Saving Step 5 Multiple Selection:', {
+                questionId: originalQuestion.questionId,
+                selectedValues,
+                convertedToLabels: multipleResponseToSave
+              })
+            } else if (resp.respuesta && resp.respuesta.trim() !== '' && originalQuestion.options && originalQuestion.options.length > 0) {
+              // For SELECT questions with options, convert value back to label for storage
               const selectedOption = originalQuestion.options.find((opt) => opt.value === resp.respuesta)
               if (selectedOption) {
                 responseToSave = selectedOption.label
+              } else {
+                // If option not found, keep the original value (backwards compatibility)
+                responseToSave = resp.respuesta
               }
-              // If option not found, keep the original value (backwards compatibility)
+            } else {
+              // For TEXT and other types
+              responseToSave = resp.respuesta
             }
 
             evaluationData.push({
               ...originalQuestion,
               response: responseToSave,
-              multipleResponse: originalQuestion.multipleResponse || []
+              multipleResponse: multipleResponseToSave.length > 0 ? multipleResponseToSave : (originalQuestion.multipleResponse || [])
             })
           }
         })
@@ -301,10 +350,22 @@ export default function EditFinalReportPage() {
             e => e.questionId === mainToolsData.idPregunta
           )
           if (mainToolsQuestion) {
+            // Convert values back to labels before saving
+            const multipleResponseLabels = (mainToolsData.respuestasSeleccionadas || []).map(value => {
+              const option = mainToolsQuestion.options?.find(opt => opt.value === value)
+              return option?.label || value // Use label if found, otherwise fallback to value
+            })
+
+            console.log('💾 Edit - Saving Step 6:', {
+              questionId: mainToolsQuestion.questionId,
+              selectedValues: mainToolsData.respuestasSeleccionadas,
+              convertedToLabels: multipleResponseLabels
+            })
+
             evaluationData.push({
               ...mainToolsQuestion,
               response: undefined,
-              multipleResponse: mainToolsData.respuestasSeleccionadas
+              multipleResponse: multipleResponseLabels // ✅ Save labels instead of values
             })
           }
         }
@@ -389,7 +450,7 @@ export default function EditFinalReportPage() {
       await queryClient.invalidateQueries({ queryKey: ['finalReports', reportId] })
       toast.success('Informe actualizado exitosamente!') // Mover toast aquí para mejor flujo
 
-      router.push('/final-reports')
+      router.push(backUrl)
     } catch (error: any) {
       toast.error(`Error al actualizar el informe: ${error.message || 'Error desconocido'}`)
     }
@@ -414,7 +475,7 @@ export default function EditFinalReportPage() {
           </CardHeader>
           <CardContent>
             <p>{reportError.message}</p>
-            <Button onClick={() => router.push('/final-reports')} className="mt-4">
+            <Button onClick={() => router.push(backUrl)} className="mt-4">
               Volver a Informes
             </Button>
           </CardContent>
@@ -430,7 +491,7 @@ export default function EditFinalReportPage() {
           </CardHeader>
           <CardContent>
             <p>No se encontró el informe o el ID es inválido.</p>
-            <Button onClick={() => router.push('/final-reports')} className="mt-4">
+            <Button onClick={() => router.push(backUrl)} className="mt-4">
               Volver a Informes
             </Button>
           </CardContent>
@@ -447,7 +508,7 @@ export default function EditFinalReportPage() {
             isEditing={true}
             totalSteps={TOTAL_STEPS}
             initialData={step1Data}
-            onCancel={() => router.push('/final-reports')}
+            onCancel={() => router.push(backUrl)}
           // onPrevious no se usa en el primer paso de edición si no hay a dónde ir antes
           />
         )
@@ -561,7 +622,7 @@ export default function EditFinalReportPage() {
         }
         stepLabels={STEP_LABELS_SPANISH}
         currentStep={currentStep}
-        backButton={{ href: '/final-reports', text: 'Volver a Informes' }}
+        backButton={{ href: backUrl, text: 'Volver a lista de informes' }}
       // nrc={step1Data?.nrc || fetchedReport?.academicLoad?.nrc} // Opcional, si quieres mostrar NRC
       />
       <main className="flex-grow flex flex-col items-center overflow-hidden pt-2 pb-6 md:pt-4">
@@ -583,5 +644,13 @@ export default function EditFinalReportPage() {
         </Card>
       </main>
     </div>
+  )
+}
+
+export default function EditFinalReportPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}>
+      <EditFinalReportContent />
+    </Suspense>
   )
 }
