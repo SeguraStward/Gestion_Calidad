@@ -1,5 +1,5 @@
 import { GenericController } from '@core/common/interfaces/generic.controller';
-import { Controller, Get, HttpStatus, Logger, Param } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Logger, Param, Patch, Body } from '@nestjs/common';
 
 import { UserRoleDto } from './dtos/user-role.dto';
 import { UserRolesService } from './user-roles.service';
@@ -59,6 +59,39 @@ export class UserRolesController extends GenericController<UserRoleDto, UserRole
         this.logger.error(`Error fetching permissions:`, error.stack);
       } else {
         this.logger.error(`Error fetching permissions:`, JSON.stringify(error));
+      }
+      throw error;
+    }
+  }
+
+  // 3. Update role permissions
+  @Patch('/:roleId/permissions')
+  @AuthorizedEndpoint(PermissionType.UPDATE)
+  @ApiOperation({ summary: 'Update permissions for a role' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Role permissions updated successfully',
+    type: Object,
+  })
+  async updateRolePermissions(
+    @Param('roleId') roleId: string,
+    @Body() body: {
+      permissions: Array<{
+        permissionID: string;
+        permissions: string[];
+        scope: string;
+        actions: string[];
+      }>
+    }
+  ): Promise<RoleWithPermissions> {
+    try {
+      this.logger.log(`Updating permissions for role ${roleId}`);
+      return await this.userRolesService.updateRolePermissions(roleId, body.permissions);
+    } catch (error) {
+      if (error instanceof Error) {
+        this.logger.error(`Error updating role permissions:`, error.stack);
+      } else {
+        this.logger.error(`Error updating role permissions:`, JSON.stringify(error));
       }
       throw error;
     }

@@ -195,9 +195,24 @@ export const useGetAllPermissions = () => {
 
 export const useUpdateRolePermissions = () => {
   return useMutation({
-    mutationFn: (payload: { roleId: string, permissions: any[] }) =>
-      HttpClient.patch(`${API_RESOURCE_PATH}/${payload.roleId}/permissions`, { permissions: payload.permissions })
-        .then(res => res.data)
+    mutationFn: async (payload: { roleId: string, permissions: any[] }) => {
+      console.log('📝 Updating role permissions:', payload)
+      const response = await HttpClient.patch(
+        `/user-roles/${payload.roleId}/permissions`,
+        { permissions: payload.permissions }
+      )
+      console.log('✅ Permissions updated successfully:', response.data)
+      return response.data
+    },
+    onError: (error: any) => {
+      console.error('❌ Error updating permissions:', error)
+      console.error('Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url
+      })
+    }
   })
 }
 

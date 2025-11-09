@@ -198,6 +198,12 @@ export function useAuth(): UseAuthReturn {
           return false;
         }
 
+        // IMPORTANTE: El rol ADMINISTRADOR tiene acceso completo a todo
+        if (currentRole.name === 'ADMINISTRADOR') {
+          console.log('🔑 ADMINISTRADOR role detected - granting full access');
+          return true;
+        }
+
         // Buscar el permiso por código
         const permission = currentRole.permissions.find(p => {
           if (!p) return false;
@@ -214,17 +220,28 @@ export function useAuth(): UseAuthReturn {
           return false;
         }
 
+        // IMPORTANTE: En la base de datos, las acciones pueden estar en 'actions' o 'permissions'
+        // Verificar ambos campos para compatibilidad
+        const permissionActions = Array.isArray(permission.actions) && permission.actions.length > 0
+          ? permission.actions
+          : (permission as any).permissions || [];
+
         // Verificar si el action está en el array de actions del permiso
-        if (Array.isArray(permission.actions) && permission.actions.includes(action)) {
-          return true;
+        const hasAction = Array.isArray(permissionActions) && permissionActions.includes(action);
+        if (!hasAction) {
+          return false;
         }
 
-        // IMPORTANTE: Para el rol ADMINISTRADOR, asumir todas las acciones permitidas
-        if (currentRole.name === 'ADMINISTRADOR') {
-          return true;
+        // Si se especifica un scope, verificar que coincida
+        if (scope) {
+          // Si el permiso tiene un scope definido, debe coincidir con el solicitado
+          // Si el permiso no tiene scope definido, permitir acceso (backwards compatibility)
+          if (permission.scope && permission.scope !== scope) {
+            return false;
+          }
         }
 
-        return false;
+        return true;
       } catch (error) {
         console.error(`💥 Error en hasPermission para ${resource}.${action}:`, error);
         return false;
