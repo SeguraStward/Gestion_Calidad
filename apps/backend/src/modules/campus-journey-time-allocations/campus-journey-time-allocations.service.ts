@@ -56,4 +56,62 @@ export class CampusJourneyTimeAllocationsService extends GenericService<
     };
     return super.update(id, withDerived as any);
   }
+
+  /**
+   * Calcular tiempo disponible en tiempo real
+   * Considera asignaciones de profesores y proyectos institucionales
+   */
+  async calculateAvailableTime(id: string) {
+    const allocation: any = await this.repo.findById(id, {
+      professorAssignments: true,
+      institutionalProjects: true,
+    });
+
+    // Calcular tiempo consumido por profesores
+    const professorConsumed = (allocation.professorAssignments || [])
+      .filter((a: any) => a.status === 'ACTIVE')
+      .reduce((sum: number, assignment: any) => sum + (assignment.calculatedJourneyTime || 0), 0);
+
+    // Calcular tiempo consumido por proyectos
+    const projectsConsumed = (allocation.institutionalProjects || [])
+      .filter((p: any) => p.status === 'ACTIVE')
+      .reduce((sum: number, project: any) => sum + project.assignedJourneyTime, 0);
+
+    const totalConsumed = professorConsumed + projectsConsumed;
+    const available =
+      allocation.allocatedJourneyTime + (allocation.additionalJourneyTime || 0) - totalConsumed;
+
+    return {
+      campusAllocationId: id,
+      allocatedJourneyTime: allocation.allocatedJourneyTime,
+      additionalJourneyTime: allocation.additionalJourneyTime || 0,
+      totalAvailable: allocation.allocatedJourneyTime + (allocation.additionalJourneyTime || 0),
+      professorConsumed,
+      projectsConsumed,
+      totalConsumed,
+      availableJourneyTime: available < 0 ? 0 : available,
+      status: allocation.status,
+    };
+  }
+
+  /**
+   * Validar si hay suficiente tiempo disponible para una nueva asignación
+   */
+  async validateAvailability(id: string, requestedTime: number) {
+    const availability = await this.calculateAvailableTime(id);
+
+    const isAvailable = availability.availableJourneyTime >= requestedTime;
+    const deficit = isAvailable ? 0 : requestedTime - availability.availableJourneyTime;
+
+    return {
+      isAvailable,
+      requestedTime,
+      availableTime: availability.availableJourneyTime,
+      deficit,
+      message: isAvailable
+        ? `✅ Hay ${availability.availableJourneyTime} horas disponibles (se solicitan ${requestedTime})`
+        : `❌ Insuficiente: faltan ${deficit} horas (disponible: ${availability.availableJourneyTime}, solicitado: ${requestedTime})`,
+      details: availability,
+    };
+  }
 }

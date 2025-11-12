@@ -61,6 +61,8 @@ import {
   CampusJourneyTimeAllocationsModule,
   ProfessorAssignmentsModule,
   JourneyTimeConfigsModule,
+  ExternalProvidersModule,
+  InstitutionalProjectsModule,
   TimesModule,
 } from '@modules/index';
 
@@ -124,6 +126,8 @@ import {
     CampusJourneyTimeAllocationsModule,
     ProfessorAssignmentsModule,
     JourneyTimeConfigsModule,
+    ExternalProvidersModule,
+    InstitutionalProjectsModule,
     TimesModule,
   ],
   controllers: [AppController],

@@ -53,4 +53,6 @@ export * from './annual-journey-time-allocations/annual-journey-time-allocations
 export * from './campus-journey-time-allocations/campus-journey-time-allocations.module';
 export * from './professor-assignments/professor-assignments.module';
 export * from './journey-time-configs/journey-time-configs.module';
+export * from './external-providers/external-providers.module';
+export * from './institutional-projects/institutional-projects.module';
 export * from './times/times.module';

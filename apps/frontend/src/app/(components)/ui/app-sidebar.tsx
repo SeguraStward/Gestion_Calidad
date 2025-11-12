@@ -42,7 +42,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: 'Gestión de Tiempos de Jornada',
       url: '/times-management',
       icon: require('lucide-react').Clock,
-      items: [{ title: 'Panel de Tiempos', url: '/times-management' }]
+      isActive: true, // 👈 Mantener expandido por defecto
+      items: [
+        { title: 'Panel de Tiempos', url: '/times-management' },
+        { title: 'Proveedores y Proyectos', url: '/times-management/extensions' }
+      ]
     },
 
     {
