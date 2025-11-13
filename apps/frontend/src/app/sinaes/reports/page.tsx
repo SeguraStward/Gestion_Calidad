@@ -12,6 +12,7 @@ import { ComplianceTable } from '@/modules/sinaes-management/components/reports/
 import {
   useGenerateReport,
   useExportPdf,
+  useExportTempReportPdf,
   useReportsList,
 } from '@/modules/sinaes-management/services/sinaes-reports.service';
 import type {
@@ -26,11 +27,21 @@ export default function SinaesReportsPage() {
   // Hooks
   const generateReportMutation = useGenerateReport();
   const exportPdfMutation = useExportPdf();
+  const exportTempReportPdfMutation = useExportTempReportPdf();
   const { data: savedReports, isLoading: isLoadingReports } = useReportsList(1, 10);
 
   const handleGenerateReport = async (filters: GenerateReportFilters) => {
     try {
-      const report = await generateReportMutation.mutateAsync(filters);
+      const response = await generateReportMutation.mutateAsync(filters);
+      console.log('📊 Report received from backend:', response);
+
+      // El backend devuelve { data: { ... } }, necesitamos extraer el data
+      const report = (response as any).data || response;
+
+      console.log('📊 Extracted report:', report);
+      console.log('📊 Report dimensions:', report.dimensions);
+      console.log('📊 Report statistics:', report.statistics);
+
       setCurrentReport(report);
       setActiveTab('results');
     } catch (error) {
@@ -39,18 +50,25 @@ export default function SinaesReportsPage() {
   };
 
   const handleExportPdf = async () => {
-    if (!currentReport || !('reportId' in currentReport)) {
-      alert('Por favor, guarde el reporte primero');
+    if (!currentReport) {
+      alert('No hay reporte para exportar');
       return;
     }
 
     try {
-      await exportPdfMutation.mutateAsync({
-        id: (currentReport as any).reportId,
-        reportName: currentReport.reportName,
-      });
+      // Si el reporte tiene ID (está guardado), usar el endpoint con ID
+      if ('reportId' in currentReport && currentReport.reportId) {
+        await exportPdfMutation.mutateAsync({
+          id: currentReport.reportId,
+          reportName: currentReport.reportName,
+        });
+      } else {
+        // Si es un reporte temporal (recién generado), usar el nuevo endpoint
+        await exportTempReportPdfMutation.mutateAsync(currentReport);
+      }
     } catch (error) {
       console.error('Error exportando PDF:', error);
+      alert('Error al exportar el PDF. Por favor intente nuevamente.');
     }
   };
 
@@ -67,8 +85,11 @@ export default function SinaesReportsPage() {
           </p>
         </div>
         {currentReport && (
-          <Button onClick={handleExportPdf} disabled={exportPdfMutation.isPending}>
-            {exportPdfMutation.isPending ? (
+          <Button
+            onClick={handleExportPdf}
+            disabled={exportPdfMutation.isPending || exportTempReportPdfMutation.isPending}
+          >
+            {(exportPdfMutation.isPending || exportTempReportPdfMutation.isPending) ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Exportando...
@@ -117,7 +138,7 @@ export default function SinaesReportsPage() {
         </TabsContent>
 
         {/* Tab: Resultados */}
-        <TabsContent value="results" className="space-y-6">
+        <TabsContent value="results" className="max-h-[calc(100vh-200px)] overflow-y-auto space-y-6">
           {currentReport ? (
             <>
               {/* Información del reporte */}
@@ -148,7 +169,31 @@ export default function SinaesReportsPage() {
               <ComplianceSummary statistics={currentReport.statistics} />
 
               {/* Tabla de detalles */}
-              <ComplianceTable dimensions={currentReport.dimensions} />
+              {currentReport.dimensions && currentReport.dimensions.length > 0 ? (
+                <ComplianceTable dimensions={currentReport.dimensions} />
+              ) : (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center gap-3 py-8">
+                    <FileBarChart className="h-12 w-12 text-muted-foreground opacity-50" />
+                    <div className="text-center">
+                      <p className="font-medium text-muted-foreground">
+                        No se encontraron dimensiones para los filtros seleccionados
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Esto puede ocurrir si:
+                      </p>
+                      <ul className="text-sm text-muted-foreground mt-1 space-y-1">
+                        <li>• Los IDs seleccionados no existen en la base de datos</li>
+                        <li>• Los filtros de fecha excluyen todos los datos</li>
+                        <li>• No hay evidencias registradas para la carrera seleccionada</li>
+                      </ul>
+                      <p className="text-sm text-muted-foreground mt-3">
+                        Intenta generar un reporte sin filtros (selecciona "Todas" en cada campo)
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </>
           ) : (
             <Card>

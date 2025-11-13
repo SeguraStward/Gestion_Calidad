@@ -42,10 +42,67 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
   const { data: dimensionsData, isLoading: isLoadingDimensions } = useDimensionsWithFullHierarchy();
   const { data: careersData, isLoading: isLoadingCareers } = useListCareersFlat();
 
-  // Extraer arrays de datos
+  // Debug logs
+  console.log('📊 Dimensions Data:', dimensionsData);
+  console.log('📊 Is Loading Dimensions:', isLoadingDimensions);
+
+  // Log para ver la estructura completa
+  if (dimensionsData && Array.isArray(dimensionsData) && dimensionsData.length > 0) {
+    const firstDim = dimensionsData[0];
+    const firstComp = firstDim.components?.[0];
+    const firstCrit = firstComp?.criteria?.[0];
+    const firstStd = firstCrit?.standards?.[0];
+    const firstEvd = firstCrit?.evidences?.[0];
+
+    console.log('📊 First Dimension Structure:', {
+      id: firstDim.id,
+      name: firstDim.name,
+      hasComponents: !!firstDim.components,
+      componentCount: firstDim.components?.length || 0,
+      firstComponent: firstComp ? {
+        id: firstComp.id,
+        name: firstComp.name,
+        hasCriteria: !!firstComp.criteria,
+        criteriaCount: firstComp.criteria?.length || 0,
+        firstCriterion: firstCrit ? {
+          id: firstCrit.id,
+          name: firstCrit.name,
+          hasStandards: !!firstCrit.standards,
+          standardsCount: firstCrit.standards?.length || 0,
+          hasEvidences: !!firstCrit.evidences,
+          evidencesCount: firstCrit.evidences?.length || 0,
+          // 🔍 NUEVO: Ver contenido de standards y evidences
+          firstStandard: firstStd ? {
+            id: firstStd.id,
+            name: firstStd.name,
+            hasEvidences: !!firstStd.evidences,
+            evidencesCount: firstStd.evidences?.length || 0
+          } : null,
+          firstEvidence: firstEvd ? {
+            id: firstEvd.id,
+            name: firstEvd.name
+          } : null
+        } : null
+      } : null
+    });
+
+    // Log adicional para ver el RAW data del primer criterio
+    console.log('🔍 RAW First Criterion:', firstCrit);
+
+    // Log específico para standards
+    if (firstCrit?.standards && firstCrit.standards.length > 0) {
+      console.log('🔍 First Standard:', firstCrit.standards[0]);
+      console.log('🔍 First Standard has evidences?', !!firstCrit.standards[0].evidences);
+      console.log('🔍 First Standard evidences:', firstCrit.standards[0].evidences);
+    } else {
+      console.log('⚠️ No standards found in first criterion');
+    }
+  }  // Extraer arrays de datos
   const dimensions = useMemo(() => {
     if (!dimensionsData) return [];
-    return Array.isArray(dimensionsData) ? dimensionsData : (dimensionsData as any).data || [];
+    const result = Array.isArray(dimensionsData) ? dimensionsData : (dimensionsData as any).data || [];
+    console.log('✅ Processed dimensions:', result);
+    return result;
   }, [dimensionsData]);
 
   const careers = useMemo(() => {
@@ -65,6 +122,8 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
   const criteria = useMemo(() => {
     if (!componentId || componentId === 'all') return [];
     const selectedComponent = components.find((c: any) => c.id === componentId);
+    console.log('🔍 Selected Component:', selectedComponent);
+    console.log('🔍 Component Criteria:', selectedComponent?.criteria);
     return selectedComponent?.criteria || [];
   }, [componentId, components]);
 
@@ -72,14 +131,15 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
     const filters: GenerateReportFilters = {
       reportName: reportName || `Reporte ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`,
       description: description || undefined,
-      dimensionId: dimensionId || undefined,
-      componentId: componentId || undefined,
-      criterionId: criterionId || undefined,
-      careerId: careerId || undefined,
+      dimensionId: dimensionId && dimensionId !== 'all' ? dimensionId : undefined,
+      componentId: componentId && componentId !== 'all' ? componentId : undefined,
+      criterionId: criterionId && criterionId !== 'all' ? criterionId : undefined,
+      careerId: careerId && careerId !== 'all' ? careerId : undefined,
       dateFrom: dateFrom ? dateFrom.toISOString() : undefined,
       dateTo: dateTo ? dateTo.toISOString() : undefined,
     };
 
+    console.log('🔍 Generating report with filters:', filters);
     onGenerateReport(filters);
   };
 

@@ -143,4 +143,69 @@ export class SinaesReportsController {
       );
     }
   }
+
+  /**
+   * Export a temporary/generated compliance report as PDF (without saving)
+   */
+  @Post('compliance/export-pdf-temp')
+  @ApiOperation({ summary: 'Export a temporary compliance report as PDF' })
+  @ApiResponse({ status: 200, description: 'PDF generated successfully' })
+  async exportTempReportPdf(
+    @Body() report: ComplianceReportDto,
+    @Res() res: ResponseType,
+  ): Promise<void> {
+    this.logger.log(`📄 Exporting temporary report as PDF: ${report.reportName || 'Sin nombre'}`);
+
+    try {
+      // Validar y normalizar el reporte
+      const normalizedReport: ComplianceReportDto = {
+        ...report,
+        reportName: report.reportName || 'Reporte de Cumplimiento',
+        generatedAt: report.generatedAt || new Date(),
+        filters: report.filters || {},
+        statistics: report.statistics || {
+          totalDimensions: 0,
+          totalComponents: 0,
+          totalCriteria: 0,
+          totalEvidences: 0,
+          evidencesWithDocuments: 0,
+          evidencesMissing: 0,
+          totalDocuments: 0,
+          overallCompliance: 0,
+          overallStatus: 'POOR',
+        },
+        dimensions: report.dimensions || [],
+      };
+
+      this.logger.debug(`📋 Normalized report data:`, {
+        reportName: normalizedReport.reportName,
+        hasFilters: !!normalizedReport.filters,
+        hasStatistics: !!normalizedReport.statistics,
+        dimensionsCount: normalizedReport.dimensions.length,
+      });
+
+      // Generar el PDF directamente del reporte en memoria
+      const pdfBuffer = await this.pdfGeneratorService.generateCompliancePdf(normalizedReport);
+
+      // Configurar headers para descarga
+      const filename = `Reporte_Cumplimiento_SINAES_${normalizedReport.reportName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length': pdfBuffer.length,
+      });
+
+      res.send(pdfBuffer);
+      this.logger.log(`✅ Temporary PDF exported successfully: ${filename}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`❌ Error exporting temporary PDF: ${errorMessage}`, errorStack);
+      throw new HttpException(
+        'Error generating PDF',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

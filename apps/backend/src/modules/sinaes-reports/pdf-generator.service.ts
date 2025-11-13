@@ -78,6 +78,9 @@ export class PdfGeneratorService {
    */
   private generateReportHtml(report: ComplianceReportDto): string {
     const { statistics, dimensions, filters } = report;
+    const reportName = report.reportName || 'Reporte de Cumplimiento SINAES';
+    const generatedBy = report.generatedBy || 'Sistema';
+    const generatedAt = report.generatedAt || new Date();
 
     return `
 <!DOCTYPE html>
@@ -85,7 +88,7 @@ export class PdfGeneratorService {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${report.reportName}</title>
+  <title>${reportName}</title>
   <style>
     ${this.getStyles()}
   </style>
@@ -98,7 +101,7 @@ export class PdfGeneratorService {
       <h2>Sistema de Gestión de Calidad</h2>
     </div>
     <div class="report-title">
-      <h3>${report.reportName}</h3>
+      <h3>${reportName}</h3>
       ${report.description ? `<p class="description">${report.description}</p>` : ''}
     </div>
   </div>
@@ -107,16 +110,17 @@ export class PdfGeneratorService {
   <div class="report-info">
     <div class="info-row">
       <span class="label">Generado por:</span>
-      <span class="value">${report.generatedBy}</span>
+      <span class="value">${generatedBy}</span>
     </div>
     <div class="info-row">
       <span class="label">Fecha de generación:</span>
-      <span class="value">${new Date(report.generatedAt).toLocaleString('es-CR', { timeZone: 'America/Costa_Rica' })}</span>
+      <span class="value">${new Date(generatedAt).toLocaleString('es-CR', { timeZone: 'America/Costa_Rica' })}</span>
     </div>
-    ${this.generateFiltersHtml(filters)}
+    ${this.generateFiltersHtml(filters || {})}
   </div>
 
   <!-- Resumen de estadísticas -->
+  ${statistics ? `
   <div class="statistics-section">
     <h4>Resumen General</h4>
     <div class="stats-grid">
@@ -127,7 +131,7 @@ export class PdfGeneratorService {
       <div class="stat-card">
         <div class="stat-label">Total Componentes</div>
         <div class="stat-value">${statistics.totalComponents}</div>
-      </div>
+      </div>` : ''}
       <div class="stat-card">
         <div class="stat-label">Total Criterios</div>
         <div class="stat-value">${statistics.totalCriteria}</div>

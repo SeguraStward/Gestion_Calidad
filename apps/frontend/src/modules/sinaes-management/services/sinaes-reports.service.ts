@@ -91,6 +91,21 @@ class SinaesReportsService {
   }
 
   /**
+   * Exportar reporte temporal (generado sin guardar) como PDF
+   */
+  async exportTempReportPdf(report: ComplianceReport): Promise<Blob> {
+    const response = await HttpClient.post(
+      `${this.baseUrl}/export-pdf-temp`,
+      report,
+      {
+        responseType: 'blob',
+      }
+    );
+
+    return response.data;
+  }
+
+  /**
    * Helper para descargar PDF
    */
   async downloadPdf(id: string, reportName: string): Promise<void> {
@@ -99,6 +114,21 @@ class SinaesReportsService {
     const link = document.createElement('a');
     link.href = url;
     link.download = `Reporte_Cumplimiento_${reportName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Helper para descargar PDF de reporte temporal
+   */
+  async downloadTempReportPdf(report: ComplianceReport): Promise<void> {
+    const blob = await this.exportTempReportPdf(report);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Reporte_Cumplimiento_${report.reportName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -167,5 +197,15 @@ export function useExportPdf() {
   return useMutation({
     mutationFn: ({ id, reportName }: { id: string; reportName: string }) =>
       sinaesReportsService.downloadPdf(id, reportName),
+  });
+}
+
+/**
+ * Hook: Exportar PDF de reporte temporal (sin guardar)
+ */
+export function useExportTempReportPdf() {
+  return useMutation({
+    mutationFn: (report: ComplianceReport) =>
+      sinaesReportsService.downloadTempReportPdf(report),
   });
 }

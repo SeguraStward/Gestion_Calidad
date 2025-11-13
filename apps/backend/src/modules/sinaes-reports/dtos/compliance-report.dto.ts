@@ -197,17 +197,17 @@ export class ComplianceStatisticsDto {
  * Complete compliance report DTO
  */
 export class ComplianceReportDto {
-  @ApiProperty()
+  @ApiProperty({ required: false })
   id?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   reportName?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   description?: string;
 
-  @ApiProperty({ description: 'Filters used to generate this report' })
-  filters: {
+  @ApiProperty({ description: 'Filters used to generate this report', required: false })
+  filters?: {
     dimensionId?: string;
     componentId?: string;
     criterionId?: string;
@@ -216,19 +216,19 @@ export class ComplianceReportDto {
     dateTo?: Date;
   };
 
-  @ApiProperty({ description: 'Timestamp when report was generated' })
-  generatedAt: Date;
+  @ApiProperty({ description: 'Timestamp when report was generated', required: false })
+  generatedAt?: Date;
 
-  @ApiProperty({ description: 'User who generated the report' })
+  @ApiProperty({ description: 'User who generated the report', required: false })
   generatedBy?: string;
 
-  @ApiProperty({ description: 'Overall statistics', type: ComplianceStatisticsDto })
-  statistics: ComplianceStatisticsDto;
+  @ApiProperty({ description: 'Overall statistics', type: ComplianceStatisticsDto, required: false })
+  statistics?: ComplianceStatisticsDto;
 
   @ApiProperty({ description: 'Dimension data with full hierarchy', type: [DimensionComplianceDto] })
   dimensions: DimensionComplianceDto[];
 
-  @ApiProperty({ description: 'Career information if filtered by career' })
+  @ApiProperty({ description: 'Career information if filtered by career', required: false })
   career?: {
     id: string;
     name: string;

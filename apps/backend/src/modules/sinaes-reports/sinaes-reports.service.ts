@@ -108,6 +108,31 @@ export class SinaesReportsService {
 
     this.logger.log(`✅ Found ${dimensions.length} dimensions to process`);
 
+    // Log detallado de la primera dimensión para debug
+    if (dimensions.length > 0) {
+      const firstDim = dimensions[0];
+      this.logger.debug(`📊 First Dimension: ${firstDim.name} (ID: ${firstDim.id})`);
+      this.logger.debug(`   - Components: ${firstDim.components.length}`);
+      if (firstDim.components.length > 0) {
+        const firstComp = firstDim.components[0];
+        this.logger.debug(`   - First Component: ${firstComp.name} (${firstComp.criteria.length} criteria)`);
+        if (firstComp.criteria.length > 0) {
+          const firstCrit = firstComp.criteria[0];
+          this.logger.debug(`   - First Criterion: ${firstCrit.name}`);
+          this.logger.debug(`     * Standards: ${firstCrit.standards.length}`);
+          this.logger.debug(`     * Direct Evidences: ${firstCrit.evidences.length}`);
+          if (firstCrit.standards.length > 0) {
+            const firstStd = firstCrit.standards[0];
+            this.logger.debug(`     * First Standard: ${firstStd.name} (${firstStd.evidences.length} evidences)`);
+            if (firstStd.evidences.length > 0) {
+              const firstEvd = firstStd.evidences[0];
+              this.logger.debug(`       - First Evidence: ${firstEvd.name} (${firstEvd.proofDocuments.length} docs)`);
+            }
+          }
+        }
+      }
+    }
+
     // 3. Process each dimension and calculate compliance
     const processedDimensions: DimensionComplianceDto[] = [];
 

@@ -121,8 +121,8 @@ export interface ComplianceReport {
   generatedAt: string;
   generatedBy: string;
   filters: AppliedFilters;
-  statistics: ComplianceStatistics;
-  dimensions: DimensionCompliance[];
+  statistics?: ComplianceStatistics;
+  dimensions?: DimensionCompliance[];
 }
 
 /**
