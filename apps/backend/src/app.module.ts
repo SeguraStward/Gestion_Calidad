@@ -63,6 +63,8 @@ import {
   CampusJourneyTimeAllocationsModule,
   ProfessorAssignmentsModule,
   JourneyTimeConfigsModule,
+  ExternalProvidersModule,
+  InstitutionalProjectsModule,
   TimesModule,
   GoogleDriveModule,
 } from '@modules/index';
@@ -130,6 +132,8 @@ import {
     CampusJourneyTimeAllocationsModule,
     ProfessorAssignmentsModule,
     JourneyTimeConfigsModule,
+    ExternalProvidersModule,
+    InstitutionalProjectsModule,
     TimesModule,
   ],
   controllers: [AppController],

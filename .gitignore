@@ -39,3 +39,44 @@ npm-debug.log*
 
 # Files
 *.bat
+ANALISIS_COMPLETO_DOCUMENTACION_Y_CORRECIONES.md
+EXPLICACION_COMPLETA_PROYECTO_TIEMPOS_JORNADA.html
+EXPLICACION_COMPLETA_PROYECTO_TIEMPOS_JORNADA.md
+apps/frontend/src/modules/times-management/pages/times-admin.tsx
+docs/Plantilla_Cátedra___Ingeniería_Sistemas (12).pdf
+docs/Proyecto_ISII/Léeme.txt
+docs/Proyecto_ISII/TFM.tex
+docs/Proyecto_ISII/bib/ref.bib
+docs/Proyecto_ISII/chapters/anexos.tex
+docs/Proyecto_ISII/chapters/ch1.tex
+docs/Proyecto_ISII/chapters/ch2.tex
+docs/Proyecto_ISII/chapters/ch3.tex
+docs/Proyecto_ISII/chapters/ch4.tex
+docs/Proyecto_ISII/chapters/ch5.tex
+docs/Proyecto_ISII/chapters/ch12.tex
+docs/Proyecto_ISII/elements/portada.tex
+docs/Proyecto_ISII/figs/cronograma.png
+docs/Proyecto_ISII/figs/logo_una.jpg
+docs/Proyecto_ISII/figs/Sinaes_Module_Diagram.png
+docs/Proyecto_ISII/figs/Tiempos_Diagrama.png
+docs/Proyecto_ISII/figs/wbs_chart.png
+docs/Proyecto_ISII/figs/annexes/Anexo-01-Carta-de-presentacion.pdf
+docs/Proyecto_ISII/figs/annexes/Anexo-02-Carta-de-intenciones.pdf
+docs/Proyecto_ISII/figs/annexes/Anexo-03-Codigo-de-Etica.pdf
+docs/Proyecto_ISII/figs/annexes/Anexo-04-Gestion-de-Riesgos.pdf
+docs/Proyecto_ISII/figs/annexes/Anexo-05-Diccionario-Evidencias-SINAES.pdf
+docs/Proyecto_ISII/figs/annexes/Anexo-06-Diccionario-Tiempos-Jornada.pdf
+docs/Proyecto_ISII/figs/annexes/Anexo-07-Analisis.tex
+docs/Proyecto_ISII/figs/annexes/Anexo-08-Glosario.tex
+docs/Proyecto_ISII/figs/annexes/Anexo-09-Diseno.tex
+docs/Proyecto_ISII/include/colores.tex
+docs/Proyecto_ISII/include/configuracion.tex
+docs/Proyecto_ISII/chapters/ch6.tex
+docs/Proyecto_ISII/chapters/ch7.tex
+docs/Proyecto_ISII/chapters/ch8.tex
+docs/Proyecto_ISII/chapters/ch9.tex
+docs/Proyecto_ISII/chapters/ch10.tex
+docs/Proyecto_ISII/chapters/ch11.tex
+docs/Proyecto_ISII/TFM.log
+docs/Cronograma (2).xlsx
+DOCUMENTACION_CORREGIDA_RESUMEN.md
