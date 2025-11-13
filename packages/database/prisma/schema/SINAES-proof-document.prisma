@@ -21,9 +21,10 @@ model ProofDocument {
   status Status @default(ACTIVE)
 
   // Relations
-  evidence             QualityEvidence       @relation(fields: [evidenceId], references: [id])
-  proofDocumentType    ProofDocumentType     @relation(fields: [proofDocumentTypeId], references: [id])
-  careerProofDocuments CareerProofDocument[] @relation("ProofDocumentToCareers")
+  evidence             QualityEvidence         @relation(fields: [evidenceId], references: [id])
+  proofDocumentType    ProofDocumentType       @relation(fields: [proofDocumentTypeId], references: [id])
+  careerProofDocuments CareerProofDocument[]   @relation("ProofDocumentToCareers")
+  documentHistory      SinaesDocumentHistory[] // Historial de cambios
 
   // Audit fields
   createdAt DateTime @default(now())

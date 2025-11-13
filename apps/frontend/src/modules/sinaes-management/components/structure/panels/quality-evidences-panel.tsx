@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, PenLine } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components'
 import { Button } from '@una-gc/ui/components/button'
 import { useQualityEvidences } from '../../../services/quality-evidences.service'
@@ -112,7 +112,7 @@ export const QualityEvidencesPanel = () => {
                       className="h-7 w-7 p-0 flex-shrink-0"
                     >
                       <span className="sr-only">Editar</span>
-                      ✏️
+                      <PenLine className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>

@@ -1,0 +1,47 @@
+// SinaesComplianceReport model for storing generated compliance reports
+model SinaesComplianceReport {
+  version Int    @default(0) @map("__v")
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // Report identification
+  reportName  String?
+  description String?
+
+  // Filters used to generate the report
+  dimensionId String?   @db.ObjectId
+  componentId String?   @db.ObjectId
+  criterionId String?   @db.ObjectId
+  careerId    String?   @db.ObjectId
+  dateFrom    DateTime?
+  dateTo      DateTime?
+
+  // Generated report data (stored as JSON for flexibility)
+  reportData Json // Contains the complete compliance report structure
+
+  // Statistics summary
+  totalEvidences         Int
+  evidencesWithDocuments Int
+  totalDocuments         Int
+  compliancePercentage   Float
+  complianceStatus       String // "EXCELLENT", "GOOD", "FAIR", "POOR"
+
+  status Status @default(ACTIVE)
+
+  // Relations (optional - for filtering)
+  dimension Dimension? @relation(fields: [dimensionId], references: [id])
+  component Component? @relation(fields: [componentId], references: [id])
+  criterion Criterion? @relation(fields: [criterionId], references: [id])
+  career    Career?    @relation(fields: [careerId], references: [id])
+
+  // Audit fields
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  generatedBy     String?  @db.ObjectId
+  generatedByUser User?    @relation(fields: [generatedBy], references: [id])
+
+  @@index([dimensionId])
+  @@index([careerId])
+  @@index([generatedBy])
+  @@index([createdAt])
+  @@map("sinaes_compliance_reports")
+}

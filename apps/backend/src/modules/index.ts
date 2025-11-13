@@ -46,6 +46,8 @@ export * from './proof-documents/proof-documents.module';
 export * from './career-proof-documents/career-proof-documents.module';
 export * from './standard-evidences/standard-evidences.module';
 export * from './google-drive-folders/google-drive-folders.module';
+export * from './sinaes-reports/sinaes-reports.module';
+export * from './sinaes-document-history/sinaes-document-history.module';
 
 // Tiempos
 

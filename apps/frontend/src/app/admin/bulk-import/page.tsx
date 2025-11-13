@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Users, GraduationCap, FileSpreadsheet, ArrowLeft } from 'lucide-react'
+import { Users, GraduationCap, FileSpreadsheet, ArrowLeft, BookOpen } from 'lucide-react'
 
 import { Button } from '@una-gc/ui/components/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card'
@@ -28,6 +28,44 @@ export default function BulkImportIndexPage() {
 
       {/* Import Options */}
       <div className="grid md:grid-cols-2 gap-6">
+        {/* Courses Import */}
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/admin/bulk-import/courses')}>
+          <CardHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <BookOpen className="h-6 w-6 text-purple-600" />
+              </div>
+              <CardTitle>Cursos</CardTitle>
+            </div>
+            <CardDescription>
+              Importa múltiples cursos desde un archivo Excel
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="text-sm">
+                <strong>Columnas requeridas:</strong>
+                <ul className="list-disc list-inside mt-1 text-muted-foreground">
+                  <li>Código, Nombre, Créditos</li>
+                  <li>Nivel (1-5)</li>
+                  <li>Horas de Contacto</li>
+                  <li>Horas Independientes (opcional)</li>
+                  <li>Descripción (opcional)</li>
+                </ul>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                ⚠️ Los cursos deben importarse ANTES que las cargas académicas
+              </div>
+              <Button className="w-full" onClick={(e) => {
+                e.stopPropagation()
+                router.push('/admin/bulk-import/courses')
+              }}>
+                Importar Cursos
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Professors Import */}
         <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/admin/bulk-import/professors')}>
           <CardHeader>

@@ -131,3 +131,38 @@ export const useProofDocuments = (filters?: ProofDocumentFilters) => {
 export const downloadProofDocument = (document: { fileUrl: string }) => {
   window.open(document.fileUrl, '_blank')
 }
+
+/**
+ * Update document careers
+ */
+export const updateDocumentCareers = async (
+  documentId: string,
+  careerIds: string[]
+): Promise<{ success: boolean; message: string }> => {
+  const response = await HttpClient.post(`/proof-documents/${documentId}/careers`, {
+    careerIds,
+  })
+  return response.data
+}
+
+/**
+ * Replace document file
+ */
+export const replaceDocumentFile = async (
+  documentId: string,
+  file: File
+): Promise<ProofDocument> => {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await HttpClient.post<ProofDocument>(
+    `/proof-documents/${documentId}/replace-file`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  )
+  return response.data
+}

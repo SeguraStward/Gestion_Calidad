@@ -28,9 +28,10 @@ model Criterion {
   status Status @default(ACTIVE)
 
   // Relations
-  component Component?        @relation(fields: [componentId], references: [id]) // Optional relation
-  standards Standard[] // Optional standards
-  evidences QualityEvidence[] // Direct evidences when no standards exist
+  component         Component?               @relation(fields: [componentId], references: [id]) // Optional relation
+  standards         Standard[] // Optional standards
+  evidences         QualityEvidence[] // Direct evidences when no standards exist
+  complianceReports SinaesComplianceReport[]
 
   // Audit fields
   createdAt DateTime @default(now())

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@una-gc/ui/components'
 import { Card } from '@una-gc/ui/components'
-import { Plus, ChevronRight, Edit, Trash2 } from 'lucide-react'
+import { Plus, ChevronRight, PenLine, Trash2 } from 'lucide-react'
 import { useComponents, useDeleteComponent } from '../../services/components.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import { ComponentForm } from '../forms/component-form'
@@ -86,14 +86,16 @@ export const ComponentsList = ({ dimensionId }: ComponentsListProps) => {
                     variant="ghost"
                     onClick={(e) => handleEdit(component, e)}
                     className="h-6 w-6 p-0"
+                    title="Editar componente"
                   >
-                    <Edit className="h-4 w-4" />
+                    <PenLine className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={(e) => handleDelete(component, e)}
                     className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                    title="Eliminar componente"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

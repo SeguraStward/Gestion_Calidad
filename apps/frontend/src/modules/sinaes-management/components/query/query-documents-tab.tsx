@@ -13,7 +13,12 @@ import {
 } from '@una-gc/ui/components/select'
 import { ProofDocumentsFilters } from './proof-documents-filters'
 import { ProofDocumentsTable } from './proof-documents-table'
+import { DocumentDetailsDialog } from './document-details-dialog'
+import { EditDocumentDialog } from './edit-document-dialog'
+import { DeleteDocumentDialog } from './delete-document-dialog'
+import { ReplaceFileDialog } from './replace-file-dialog'
 import { useProofDocuments, type ProofDocumentFilters } from '../../services/proof-documents.service'
+import type { ProofDocument } from '../../types/proof-documents.types'
 
 export const QueryDocumentsTab = () => {
   const [filters, setFilters] = useState<ProofDocumentFilters>({
@@ -23,6 +28,12 @@ export const QueryDocumentsTab = () => {
     orderBy: 'createdAt',
     orderDirection: 'desc'
   })
+
+  const [selectedDocument, setSelectedDocument] = useState<ProofDocument | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isReplaceFileDialogOpen, setIsReplaceFileDialogOpen] = useState(false)
 
   // Fetch documents with current filters
   const { data, isLoading, refetch } = useProofDocuments(filters)
@@ -51,6 +62,26 @@ export const QueryDocumentsTab = () => {
 
   const handlePageChange = useCallback((newPage: number) => {
     setFilters(prev => ({ ...prev, page: newPage }))
+  }, [])
+
+  const handleViewDetails = useCallback((document: ProofDocument) => {
+    setSelectedDocument(document)
+    setIsDialogOpen(true)
+  }, [])
+
+  const handleEdit = useCallback((document: ProofDocument) => {
+    setSelectedDocument(document)
+    setIsEditDialogOpen(true)
+  }, [])
+
+  const handleDelete = useCallback((document: ProofDocument) => {
+    setSelectedDocument(document)
+    setIsDeleteDialogOpen(true)
+  }, [])
+
+  const handleReplaceFile = useCallback((document: ProofDocument) => {
+    setSelectedDocument(document)
+    setIsReplaceFileDialogOpen(true)
   }, [])
 
   const totalPages = data?.meta?.totalPages || 1
@@ -90,6 +121,10 @@ export const QueryDocumentsTab = () => {
           <ProofDocumentsTable
             documents={data?.data || []}
             isLoading={isLoading}
+            onViewDetails={handleViewDetails}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onReplaceFile={handleReplaceFile}
           />
         </div>
 
@@ -126,6 +161,34 @@ export const QueryDocumentsTab = () => {
           </div>
         )}
       </Card>
+
+      {/* Document Details Dialog with History */}
+      <DocumentDetailsDialog
+        document={selectedDocument}
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+      />
+
+      {/* Edit Document Dialog */}
+      <EditDocumentDialog
+        document={selectedDocument}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+      />
+
+      {/* Delete Document Dialog */}
+      <DeleteDocumentDialog
+        document={selectedDocument}
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      />
+
+      {/* Replace File Dialog */}
+      <ReplaceFileDialog
+        document={selectedDocument}
+        open={isReplaceFileDialogOpen}
+        onOpenChange={setIsReplaceFileDialogOpen}
+      />
     </div>
   )
 }

@@ -18,13 +18,17 @@ export class DimensionsRepository extends GenericPrismaRepository<
   }
 
   async findAll(page?: number, limit?: number, where?: any, orderBy?: any, include?: Record<string, any>) {
+    // Si se proporciona un include personalizado, usarlo completamente
+    // De lo contrario, usar el include por defecto (components: true)
+    const effectiveInclude = include || { components: true };
+
     const [data, total] = await Promise.all([
       this.prisma.dimension.findMany({
         where,
         orderBy: orderBy || { order: 'asc' },
         skip: page && limit ? (page - 1) * limit : undefined,
         take: limit,
-        include: { ...(include || {}), components: true },
+        include: effectiveInclude,
       }),
       this.prisma.dimension.count({ where }),
     ]);
@@ -40,9 +44,10 @@ export class DimensionsRepository extends GenericPrismaRepository<
   }
 
   async findById(id: string, include?: Record<string, any>) {
+    const effectiveInclude = include || { components: true };
     return this.prisma.dimension.findUnique({
       where: { id },
-      include: { ...(include || {}), components: true },
+      include: effectiveInclude,
     });
   }
 

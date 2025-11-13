@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@una-gc/ui/components'
 import { Card } from '@una-gc/ui/components'
-import { Plus, ChevronRight, Edit, Trash2 } from 'lucide-react'
+import { Plus, ChevronRight, PenLine, Trash2 } from 'lucide-react'
 import { useDimensions, useDeleteDimension } from '../../services/dimensions.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import { DimensionForm } from '../forms/dimension-form'
@@ -75,14 +75,16 @@ export const DimensionsList = () => {
                     variant="ghost"
                     onClick={(e) => handleEdit(dimension, e)}
                     className="h-6 w-6 p-0"
+                    title="Editar dimensión"
                   >
-                    <Edit className="h-4 w-4" />
+                    <PenLine className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={(e) => handleDelete(dimension, e)}
                     className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                    title="Eliminar dimensión"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

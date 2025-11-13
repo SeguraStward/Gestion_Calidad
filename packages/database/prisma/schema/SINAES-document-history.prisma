@@ -1,0 +1,46 @@
+model SinaesDocumentHistory {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  // Relación con el documento
+  documentId String        @db.ObjectId
+  document   ProofDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  // Tipo de cambio
+  changeType ChangeType
+
+  // Usuario que realizó el cambio
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Datos del cambio
+  fieldChanged String? // Campo que cambió (ej: "status", "documentTypeId", "careers")
+  oldValue     String? // Valor anterior (JSON string si es complejo)
+  newValue     String? // Valor nuevo (JSON string si es complejo)
+
+  // Metadata
+  reason      String? // Razón del cambio (opcional)
+  ipAddress   String? // IP desde donde se hizo el cambio
+  userAgent   String? // Navegador/cliente usado
+  description String? // Descripción detallada del cambio
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // Índices para búsquedas rápidas
+  @@index([documentId])
+  @@index([userId])
+  @@index([changeType])
+  @@index([createdAt])
+  @@map("sinaes_document_history")
+}
+
+enum ChangeType {
+  CREATED // Documento creado
+  UPDATED // Documento actualizado
+  DELETED // Documento eliminado (soft delete)
+  RESTORED // Documento restaurado
+  STATUS_CHANGED // Cambio de estado
+  CAREERS_UPDATED // Carreras asociadas actualizadas
+  FILE_REPLACED // Archivo reemplazado
+  METADATA_UPDATED // Metadatos actualizados
+}

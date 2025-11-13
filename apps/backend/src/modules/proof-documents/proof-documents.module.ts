@@ -8,9 +8,16 @@ import { ProofDocumentsRepository } from './proof-documents.repository';
 import { GoogleDriveModule } from '../google-drive/google-drive.module';
 import { QualityEvidencesModule } from '../quality-evidences/quality-evidences.module';
 import { CareersModule } from '../careers/careers.module';
+import { SinaesDocumentHistoryModule } from '../sinaes-document-history/sinaes-document-history.module';
 
 @Module({
-  imports: [PrismaModule, GoogleDriveModule, QualityEvidencesModule, CareersModule],
+  imports: [
+    PrismaModule,
+    GoogleDriveModule,
+    QualityEvidencesModule,
+    CareersModule,
+    SinaesDocumentHistoryModule,
+  ],
   controllers: [ProofDocumentsController],
   providers: [ProofDocumentsService, ProofDocumentsRepository, DtoValidator],
   exports: [ProofDocumentsService, ProofDocumentsRepository],

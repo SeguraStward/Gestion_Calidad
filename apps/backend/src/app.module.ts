@@ -56,6 +56,8 @@ import {
   CareerProofDocumentsModule,
   StandardEvidencesModule,
   GoogleDriveFoldersModule,
+  SinaesReportsModule,
+  SinaesDocumentHistoryModule,
   // Tiempos
   AnnualJourneyTimeAllocationsModule,
   CampusJourneyTimeAllocationsModule,
@@ -119,6 +121,8 @@ import {
     CareerProofDocumentsModule,
     StandardEvidencesModule,
     GoogleDriveFoldersModule,
+    SinaesReportsModule,
+    SinaesDocumentHistoryModule,
     GoogleDriveModule,
     ScheduleModule.forRoot(),
     // TIEMPOS

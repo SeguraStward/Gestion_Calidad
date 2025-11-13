@@ -5,29 +5,33 @@ import { Search, GraduationCap } from 'lucide-react'
 import { Button, Checkbox, Input, ScrollArea } from '@una-gc/ui/components'
 import { useQuery } from '@tanstack/react-query'
 import { useDocumentAssignment } from '../../store/document-assignment.store'
+import { HttpClient } from '@/lib/http-client'
 
 interface Career {
   id: string
   name: string
   code: string
-  isActive: boolean
+  status: 'ACTIVE' | 'INACTIVE'
 }
 
 export const CareerSelector = () => {
   const { selectedCareerIds, setCareerIds } = useDocumentAssignment()
   const [searchTerm, setSearchTerm] = useState('')
 
-  const { data: careers = [], isLoading } = useQuery<Career[]>({
+  const { data: careersData, isLoading } = useQuery<{ data: Career[]; meta: any }>({
     queryKey: ['careers'],
     queryFn: async () => {
-      const response = await fetch('/api/careers')
-      if (!response.ok) throw new Error('Error loading careers')
-      return response.json()
+      const response = await HttpClient.get('/careers', {
+        params: { limit: 1000 }
+      })
+      return response.data
     }
   })
 
+  const careers = careersData?.data || []
+
   const filteredCareers = careers.filter(career =>
-    career.isActive && (
+    career.status === 'ACTIVE' && (
       career.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       career.code.toLowerCase().includes(searchTerm.toLowerCase())
     )

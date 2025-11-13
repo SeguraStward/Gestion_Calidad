@@ -23,6 +23,7 @@ import { UpdateProofDocumentDto } from './dtos/update-proof-document.dto';
 import { ProofDocumentsService } from './proof-documents.service';
 
 import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
+import { RequestContextInterceptor } from '@src/core/interceptors/request-context.interceptor';
 import type { Request } from 'express';
 
 export class UploadProofDocumentDto {
@@ -35,6 +36,7 @@ export class UploadProofDocumentDto {
 
 @ApiTags('Proof Documents')
 @ResourceName('PROOF_DOCUMENT')
+@UseInterceptors(RequestContextInterceptor)
 @Controller('proof-documents')
 export class ProofDocumentsController extends GenericController<
   ProofDocumentDto,
@@ -176,6 +178,77 @@ export class ProofDocumentsController extends GenericController<
     return this.proofDocumentsService.uploadProofDocumentWithDrive(
       file,
       uploadDto,
+      user.googleAccessToken,
+      user.googleRefreshToken,
+    );
+  }
+
+  @Post(':id/careers')
+  @ApiOperation({ summary: 'Update document careers' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        careerIds: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of career IDs',
+        },
+      },
+    },
+  })
+  async updateDocumentCareers(
+    @Req() req: Request,
+    @Body('careerIds') careerIds: string[],
+  ) {
+    const documentId = req.params.id;
+
+    if (!careerIds || careerIds.length === 0) {
+      throw new BadRequestException('At least one career must be specified');
+    }
+
+    await this.proofDocumentsService.updateDocumentCareers(documentId, careerIds);
+
+    return {
+      success: true,
+      message: 'Careers updated successfully',
+    };
+  }
+
+  @Post(':id/replace-file')
+  @ApiOperation({ summary: 'Replace document file in Google Drive' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'New file to upload',
+        },
+      },
+    },
+  })
+  async replaceDocumentFile(
+    @Req() req: any,
+    @UploadedFile() file: any,
+  ) {
+    const documentId = req.params.id;
+
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
+    const user = req.user;
+    if (!user?.googleAccessToken) {
+      throw new UnauthorizedException('Google Drive authentication required');
+    }
+
+    return this.proofDocumentsService.replaceDocumentFile(
+      documentId,
+      file,
       user.googleAccessToken,
       user.googleRefreshToken,
     );

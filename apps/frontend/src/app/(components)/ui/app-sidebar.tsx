@@ -88,7 +88,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: 'Gestión SINAES',
           url: '/sinaes-management',
           icon: require('lucide-react').BookCheck,
-          items: [{ title: 'Panel de Gestión', url: '/sinaes-management' }]
+          items: [
+            { title: 'Panel de Gestión', url: '/sinaes-management' },
+            { title: 'Reportes de Cumplimiento', url: '/sinaes/reports' }
+          ]
         }
       ]
       : []),
@@ -131,14 +134,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: '/admin/bulk-import',
           icon: require('lucide-react').FileSpreadsheet,
           items: [
+            { title: 'Cursos', url: '/admin/bulk-import/courses' },
             { title: 'Profesores', url: '/admin/bulk-import/professors' },
             { title: 'Cargas Académicas', url: '/admin/bulk-import/academic-loads' }
           ]
         }
       ]
-      : []),
-
-    // Final Reports section - Professor view (can see own reports)
+      : []),    // Final Reports section - Professor view (can see own reports)
     // Show if user has professor permissions (even if they also have admin permissions)
     ...(canViewAnyFinalReports && !canViewAllFinalReports
       ? [

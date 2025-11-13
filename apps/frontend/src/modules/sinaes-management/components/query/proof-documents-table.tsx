@@ -11,7 +11,7 @@ import {
 } from '@una-gc/ui/components/table'
 import { Button } from '@una-gc/ui/components/button'
 import { Badge } from '@una-gc/ui/components/badge'
-import { Download, Eye, FileText, Calendar } from 'lucide-react'
+import { Download, Eye, FileText, Calendar, Edit, Trash2, FileUp } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { ProofDocument } from '../../types/proof-documents.types'
@@ -21,12 +21,18 @@ interface ProofDocumentsTableProps {
   documents: ProofDocument[]
   isLoading: boolean
   onViewDetails?: (document: ProofDocument) => void
+  onEdit?: (document: ProofDocument) => void
+  onDelete?: (document: ProofDocument) => void
+  onReplaceFile?: (document: ProofDocument) => void
 }
 
 export const ProofDocumentsTable = ({
   documents,
   isLoading,
-  onViewDetails
+  onViewDetails,
+  onEdit,
+  onDelete,
+  onReplaceFile
 }: ProofDocumentsTableProps) => {
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return 'N/A'
@@ -89,7 +95,7 @@ export const ProofDocumentsTable = ({
             <TableHead className="w-[100px]">Tamaño</TableHead>
             <TableHead className="w-[150px]">Fecha</TableHead>
             <TableHead className="w-[100px]">Estado</TableHead>
-            <TableHead className="w-[120px] text-right">Acciones</TableHead>
+            <TableHead className="w-[220px] text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -151,6 +157,28 @@ export const ProofDocumentsTable = ({
                       <Eye className="h-4 w-4" />
                     </Button>
                   )}
+                  {onEdit && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onEdit(document)}
+                      className="h-8 w-8 p-0"
+                      title="Editar documento"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {onReplaceFile && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onReplaceFile(document)}
+                      className="h-8 w-8 p-0 hover:bg-purple-50 hover:text-purple-600"
+                      title="Reemplazar archivo"
+                    >
+                      <FileUp className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="ghost"
@@ -160,6 +188,17 @@ export const ProofDocumentsTable = ({
                   >
                     <Download className="h-4 w-4" />
                   </Button>
+                  {onDelete && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onDelete(document)}
+                      className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                      title="Eliminar documento"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@una-gc/ui/components'
 import { Card } from '@una-gc/ui/components'
-import { Plus, ChevronRight, Edit, Trash2 } from 'lucide-react'
+import { Plus, ChevronRight, PenLine, Trash2 } from 'lucide-react'
 import { useQualityEvidences, useDeleteQualityEvidence } from '../../services/quality-evidences.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import { QualityEvidenceForm } from '../forms/quality-evidence-form'
@@ -93,8 +93,9 @@ export const QualityEvidencesList = () => {
                     variant="ghost"
                     onClick={(e) => handleEdit(evidence, e)}
                     className="h-6 w-6 p-0"
+                    title="Editar evidencia"
                   >
-                    <Edit className="h-4 w-4" />
+                    <PenLine className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"

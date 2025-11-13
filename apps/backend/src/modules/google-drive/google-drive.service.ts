@@ -321,7 +321,26 @@ export class GoogleDriveService {
     try {
       const drive = this.createDriveClient(accessToken, refreshToken);
 
-      // 1. Upload the main file
+      // 1. Check if file already exists in the folder
+      this.logger.log('🔍 Checking for duplicate files in folder...');
+      const existingFiles = await drive.files.list({
+        q: `name='${file.originalname}' and '${folderId}' in parents and trashed=false`,
+        fields: 'files(id, name, webViewLink, size, mimeType)',
+        spaces: 'drive',
+      });
+
+      if (existingFiles.data.files && existingFiles.data.files.length > 0) {
+        const existingFile = existingFiles.data.files[0]!;
+        this.logger.warn(`⚠️ File already exists in folder: ${existingFile.name} (ID: ${existingFile.id})`);
+        throw new BadRequestException(
+          `El archivo "${file.originalname}" ya existe en esta carpeta de Google Drive. ` +
+          `Por favor, elimina el archivo existente primero o usa la función de reemplazar archivo.`
+        );
+      }
+
+      this.logger.log('✅ No duplicate found, proceeding with upload...');
+
+      // 2. Upload the main file
       const fileMetadata = {
         name: file.originalname,
         parents: [folderId],
@@ -341,7 +360,7 @@ export class GoogleDriveService {
       const uploadedFile = uploadResponse.data;
       this.logger.log(`✅ File uploaded: ${uploadedFile.id}`);
 
-      // 2. Make file publicly accessible (or set specific permissions)
+      // 3. Make file publicly accessible (or set specific permissions)
       await drive.permissions.create({
         fileId: uploadedFile.id!,
         requestBody: {
@@ -350,7 +369,7 @@ export class GoogleDriveService {
         },
       });
 
-      // 3. Create _carreras.txt file with career information
+      // 4. Create _carreras.txt file with career information
       if (careerNames.length > 0) {
         await this.createCarrerasFile(drive, folderId, file.originalname, careerNames);
       }
@@ -481,6 +500,28 @@ Generado automáticamente por el Sistema de Gestión de Calidad - UNA
     } catch (error: any) {
       this.logger.error('❌ Error deleting file:', error);
       throw new BadRequestException(`Error deleting file: ${error.message}`);
+    }
+  }
+
+  /**
+   * Updates the _carreras.txt file for a specific document
+   */
+  async updateCarrerasFile(
+    folderId: string,
+    documentCode: string,
+    careerNames: string[],
+    accessToken: string,
+    refreshToken?: string,
+  ): Promise<void> {
+    this.logger.log(`📝 Updating _carreras.txt file for document: ${documentCode}`);
+
+    try {
+      const drive = this.createDriveClient(accessToken, refreshToken);
+      await this.createCarrerasFile(drive, folderId, documentCode, careerNames);
+      this.logger.log('✅ _carreras.txt file updated successfully');
+    } catch (error: any) {
+      this.logger.error('❌ Error updating _carreras.txt file:', error);
+      throw new BadRequestException(`Error updating _carreras.txt file: ${error.message}`);
     }
   }
 

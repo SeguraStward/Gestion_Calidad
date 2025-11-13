@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@una-gc/ui/components'
 import { Card } from '@una-gc/ui/components'
-import { Plus, ChevronRight, Edit, Trash2 } from 'lucide-react'
+import { Plus, ChevronRight, PenLine, Trash2 } from 'lucide-react'
 import { useStandards, useDeleteStandard } from '../../services/standards.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import { StandardForm } from '../forms/standard-form'
@@ -87,14 +87,16 @@ export const StandardsList = ({ criterionId }: StandardsListProps) => {
                     variant="ghost"
                     onClick={(e) => handleEdit(standard, e)}
                     className="h-6 w-6 p-0"
+                    title="Editar estándar"
                   >
-                    <Edit className="h-4 w-4" />
+                    <PenLine className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={(e) => handleDelete(standard, e)}
                     className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                    title="Eliminar estándar"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

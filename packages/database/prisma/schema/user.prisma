@@ -65,8 +65,10 @@ model User {
   commMember     CommMember[]
 
   // Relations with Journey Time Management
-  professorAssignments ProfessorAssignment[]  @relation("ProfessorJourneyAssignments")
-  directedProjects     InstitutionalProject[] @relation("ProjectDirector")
+  professorAssignments ProfessorAssignment[]    @relation("ProfessorJourneyAssignments")
+  directedProjects     InstitutionalProject[]   @relation("ProjectDirector")
+  generatedReports     SinaesComplianceReport[]
+  documentChanges      SinaesDocumentHistory[] // Historial de cambios en documentos
 
   // Audit fields
   createdAt    DateTime       @default(now())
