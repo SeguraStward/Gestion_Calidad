@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Logger, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Param, Post, Query } from '@nestjs/common';
 import { GenericController } from '@core/common/interfaces/generic.controller';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
@@ -25,6 +25,30 @@ export class CampusJourneyTimeAllocationsController extends GenericController<
 
   constructor(private readonly serviceImpl: CampusJourneyTimeAllocationsService) {
     super(serviceImpl);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all campus allocations with populated relations' })
+  @ApiResponse({ status: 200, description: 'Campus allocations retrieved successfully' })
+  async findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query() where: Record<string, any> = {},
+    @Query('orderBy') orderBy?: string,
+    @Query('include') includeQueryParam?: string,
+  ) {
+    this.logger.debug('🎯 Custom findAll() called in controller');
+    const result = await this.serviceImpl.findAll(page, limit, where, orderBy, includeQueryParam);
+    this.logger.debug(`🎯 Got ${result.data.length} allocations from service`);
+    return result;
+  }
+
+  @Get('raw/:id')
+  @ApiOperation({ summary: 'Get campus allocation without DTO transformation' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiResponse({ status: 200, description: 'Campus allocation retrieved successfully' })
+  async getRaw(@Param('id') id: string) {
+    return this.serviceImpl.findByIdRaw(id);
   }
 
   @Get(':id/available-time')

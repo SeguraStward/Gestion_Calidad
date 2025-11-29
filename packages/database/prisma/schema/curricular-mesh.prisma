@@ -20,6 +20,7 @@ model CurricularMesh {
   courses              CurricularMeshCourse[]        @relation("MeshCourses")
   professorAssignments ProfessorAssignment[]         @relation("MeshAssignments")
   allocations          CampusJourneyTimeAllocation[] @relation("MeshAllocations")
+  repitencias          Repitencia[]                  @relation("MeshRepitencias")
 
   // Campos de auditoría
   createdAt DateTime @default(now())

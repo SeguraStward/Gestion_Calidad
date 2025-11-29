@@ -13,10 +13,8 @@ export interface ProfessorAssignment {
   campusAllocationId: string
   campusName?: string
   careerName?: string
-  assignedJourneyTime: number
-  journeyType?: string
-  academicPeriod?: string
-  assignmentDate?: string
+  calculatedJourneyTime?: number
+  assignmentType?: 'FULL' | 'THREE_QUARTER' | 'HALF' | 'QUARTER'
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'COMPLETED'
   notes?: string
   createdAt?: string
@@ -25,12 +23,12 @@ export interface ProfessorAssignment {
 
 export interface CreateProfessorAssignmentDto {
   professorId: string
-  campusAllocationId: string
-  assignedJourneyTime: number
-  journeyType?: string
-  academicPeriod?: string
-  assignmentDate?: string
-  status?: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'COMPLETED'
+  academicCycleId: string
+  campusId: string
+  curricularMeshCourseId?: string // ✅ OPCIONAL (no siempre hay curso asignado)
+  assignmentType: 'FULL' | 'THREE_QUARTER' | 'HALF' | 'QUARTER'
+  campusAllocationId?: string
+  institutionalProjectId?: string
   notes?: string
 }
 

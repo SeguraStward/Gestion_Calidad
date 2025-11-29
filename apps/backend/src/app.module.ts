@@ -65,6 +65,7 @@ import {
   InstitutionalProjectsModule,
   TimesModule,
 } from '@modules/index';
+import { SetupModule } from '@modules/setup/setup.module';
 
 @Module({
   imports: [
@@ -129,6 +130,7 @@ import {
     ExternalProvidersModule,
     InstitutionalProjectsModule,
     TimesModule,
+    SetupModule,
   ],
   controllers: [AppController],
 })

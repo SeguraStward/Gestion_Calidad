@@ -60,7 +60,6 @@ export default function CampusAllocationsTable({ allocations, loading }: CampusA
             <tr className="bg-gray-100">
               <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Campus</th>
               <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Ciclo</th>
-              <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Carrera</th>
               <th className="border border-gray-300 px-4 py-2 text-center font-semibold">Horas Totales</th>
               <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Estado</th>
             </tr>
@@ -70,7 +69,6 @@ export default function CampusAllocationsTable({ allocations, loading }: CampusA
               <tr key={idx} className="hover:bg-gray-50">
                 <td className="border border-gray-300 px-4 py-2 font-medium">{allocation.campus}</td>
                 <td className="border border-gray-300 px-4 py-2">{allocation.cycle}</td>
-                <td className="border border-gray-300 px-4 py-2">{allocation.career}</td>
                 <td className="border border-gray-300 px-4 py-2 text-center">
                   <span className="font-semibold text-lg">{allocation.totalHours}h</span>
                 </td>
@@ -89,19 +87,16 @@ export default function CampusAllocationsTable({ allocations, loading }: CampusA
         </table>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
-        <div className="p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-gray-600">Total Sede Brunca</p>
-          <p className="text-2xl font-bold text-blue-700">{totalBrunca}h</p>
-        </div>
-        <div className="p-4 bg-purple-50 rounded-lg">
-          <p className="text-sm text-gray-600">Total Sede Coto</p>
-          <p className="text-2xl font-bold text-purple-700">{totalCoto}h</p>
-        </div>
-        <div className="p-4 bg-green-50 rounded-lg">
-          <p className="text-sm text-gray-600">Total General</p>
-          <p className="text-2xl font-bold text-green-700">{totalGeneral}h</p>
+      {/* Summary Card - Solo mostrar total general */}
+      <div className="pt-4 border-t">
+        <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-green-700 font-medium">Total General Asignado</p>
+              <p className="text-xs text-green-600 mt-1">Suma de todas las asignaciones de campus</p>
+            </div>
+            <p className="text-3xl font-bold text-green-800">{totalGeneral}h</p>
+          </div>
         </div>
       </div>
     </div>

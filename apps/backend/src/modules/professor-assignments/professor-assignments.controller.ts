@@ -1,4 +1,4 @@
-import { Controller, Logger } from '@nestjs/common';
+import { Controller, Logger, Get, Query } from '@nestjs/common';
 import { GenericController } from '@core/common/interfaces/generic.controller';
 
 import { ProfessorAssignmentsService } from './professor-assignments.service';
@@ -20,5 +20,19 @@ export class ProfessorAssignmentsController extends GenericController<
 
   constructor(private readonly serviceImpl: ProfessorAssignmentsService) {
     super(serviceImpl);
+  }
+
+  @Get()
+  async findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query() where: Record<string, any> = {},
+    @Query('orderBy') orderBy?: string,
+    @Query('include') includeQueryParam?: string,
+  ) {
+    this.logger.debug('🎯 Custom findAll() called in controller');
+    const result = await this.serviceImpl.findAll(page, limit, where, orderBy, includeQueryParam);
+    this.logger.debug(`🎯 Got ${result.data.length} assignments from service`);
+    return result;
   }
 }

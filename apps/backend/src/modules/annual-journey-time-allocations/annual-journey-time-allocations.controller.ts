@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, Param } from '@nestjs/common';
+import { Controller, Get, Logger, Param, Query } from '@nestjs/common';
 import { GenericController } from '@core/common/interfaces/generic.controller';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
@@ -24,6 +24,30 @@ export class AnnualJourneyTimeAllocationsController extends GenericController<
 
   constructor(private readonly serviceImpl: AnnualJourneyTimeAllocationsService) {
     super(serviceImpl);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all annual allocations with data' })
+  @ApiResponse({ status: 200, description: 'Annual allocations retrieved successfully' })
+  async findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query() where: Record<string, any> = {},
+    @Query('orderBy') orderBy?: string,
+    @Query('include') includeQueryParam?: string,
+  ) {
+    this.logger.debug('🎯 Custom findAll() called in controller');
+    const result = await this.serviceImpl.findAll(page, limit, where, orderBy, includeQueryParam);
+    this.logger.debug(`🎯 Got ${result.data.length} allocations from service`);
+    return result;
+  }
+
+  @Get('active')
+  @ApiOperation({ summary: 'Get active annual allocation' })
+  @ApiResponse({ status: 200, description: 'Active allocation retrieved successfully' })
+  @AuthorizedEndpoint(PermissionType.READ)
+  async getActive() {
+    return this.serviceImpl.getActive();
   }
 
   @Get('summary/:year')

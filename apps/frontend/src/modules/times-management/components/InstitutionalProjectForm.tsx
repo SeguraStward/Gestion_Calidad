@@ -9,8 +9,23 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
 import type { InstitutionalProject, CreateInstitutionalProjectDto } from '../services/institutional-projects.service'
 
+interface CampusAllocation {
+  id: string
+  campusName: string
+  cycleName: string
+  careerName?: string
+}
+
+interface Director {
+  id: string
+  name: string
+  email: string
+}
+
 interface InstitutionalProjectFormProps {
   project?: InstitutionalProject | null
+  campusAllocations: CampusAllocation[]
+  directors: Director[]
   campusAllocationId?: string
   directorId?: string
   onSubmit: (data: CreateInstitutionalProjectDto) => Promise<void>
@@ -20,6 +35,8 @@ interface InstitutionalProjectFormProps {
 
 export default function InstitutionalProjectForm({
   project,
+  campusAllocations,
+  directors,
   campusAllocationId,
   directorId,
   onSubmit,
@@ -37,8 +54,8 @@ export default function InstitutionalProjectForm({
       assignedJourneyTime: project?.assignedJourneyTime || 0,
       startDate: project?.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
       endDate: project?.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
-      campusAllocationId: project?.campusAllocationId || campusAllocationId || '',
-      directorId: project?.directorId || directorId || ''
+      campusAllocationId: project?.campusAllocationId || campusAllocationId || campusAllocations[0]?.id || '',
+      directorId: project?.directorId || directorId || directors[0]?.id || ''
     }
   })
 
@@ -142,6 +159,75 @@ export default function InstitutionalProjectForm({
               <FormControl>
                 <Textarea placeholder="Objetivos principales del proyecto..." rows={3} {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Asignación de Campus */}
+        <FormField
+          control={form.control}
+          name="campusAllocationId"
+          rules={{ required: 'La asignación de campus es obligatoria' }}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Asignación de Campus *</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona la asignación de campus" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {campusAllocations.length > 0 ? (
+                    campusAllocations.map((allocation) => (
+                      <SelectItem key={allocation.id} value={allocation.id}>
+                        {allocation.campusName} - {allocation.cycleName}
+                        {allocation.careerName && ` - ${allocation.careerName}`}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>
+                      No hay asignaciones disponibles
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <FormDescription>Campus y ciclo donde se ejecutará el proyecto</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Director */}
+        <FormField
+          control={form.control}
+          name="directorId"
+          rules={{ required: 'El director es obligatorio' }}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Director del Proyecto *</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona el director" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {directors.length > 0 ? (
+                    directors.map((director) => (
+                      <SelectItem key={director.id} value={director.id}>
+                        {director.name || director.email} {director.name && `(${director.email})`}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>
+                      No hay directores disponibles
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <FormDescription>Coordinador o responsable del proyecto</FormDescription>
               <FormMessage />
             </FormItem>
           )}

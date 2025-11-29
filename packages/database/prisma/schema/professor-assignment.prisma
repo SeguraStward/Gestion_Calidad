@@ -9,12 +9,12 @@ model ProfessorAssignment {
   academicCycleId String @db.ObjectId
   campusId        String @db.ObjectId
 
-  professor     User          @relation("ProfessorJourneyAssignments", fields: [professorId], references: [id])
+  professor     User?         @relation("ProfessorJourneyAssignments", fields: [professorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   academicCycle AcademicCycle @relation("CycleAssignments", fields: [academicCycleId], references: [id])
   campus        Campus        @relation("CampusAssignments", fields: [campusId], references: [id])
 
-  // Tipo de asignación
-  assignmentType AssignmentType
+  // Tipo de jornada
+  assignmentType JourneyTimeType
 
   // Relaciones condicionales según tipo de asignación
   // Para cursos (regulares y de repitencia)

@@ -13,9 +13,14 @@ export function ContentLayout({ children }: { children: ReactNode }) {
   const isCallbackPage = pathname === '/auth/callback'
 
   // Pages that need scroll
-  const needsScroll = ['/final-reports', '/user-management', '/academic-management', '/academic-load', '/bulk-import'].some(
-    (path) => pathname.startsWith(path)
-  )
+  const needsScroll = [
+    '/final-reports',
+    '/user-management',
+    '/academic-management',
+    '/academic-load',
+    '/bulk-import',
+    '/times-management'
+  ].some((path) => pathname.startsWith(path))
 
   // Pages that need horizontal scroll
   const needsHorizontalScroll = pathname.startsWith('/sinaes-management')
