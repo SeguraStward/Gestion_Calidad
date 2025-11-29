@@ -1,0 +1,370 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import { Button } from '@una-gc/ui/components/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card';
+import { Label } from '@una-gc/ui/components/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@una-gc/ui/components/select';
+import { CalendarIcon, FileBarChart, Loader2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@una-gc/ui/components/popover';
+import { Calendar } from '@una-gc/ui/components/calendar';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { cn } from '@una-gc/ui/lib/utils';
+import { Input } from '@una-gc/ui/components/input';
+import { Textarea } from '@una-gc/ui/components/textarea';
+import type { GenerateReportFilters } from '../../types/sinaes-reports.types';
+import { useDimensionsWithFullHierarchy } from '../../services/dimensions.service';
+import { useListCareersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useCareer';
+
+interface ComplianceFiltersProps {
+  onGenerateReport: (filters: GenerateReportFilters) => void;
+  isGenerating?: boolean;
+}
+
+export function ComplianceFilters({ onGenerateReport, isGenerating = false }: ComplianceFiltersProps) {
+  const [reportName, setReportName] = useState('');
+  const [description, setDescription] = useState('');
+  const [dimensionId, setDimensionId] = useState<string>('');
+  const [componentId, setComponentId] = useState<string>('');
+  const [criterionId, setCriterionId] = useState<string>('');
+  const [careerId, setCareerId] = useState<string>('');
+  const [dateFrom, setDateFrom] = useState<Date>();
+  const [dateTo, setDateTo] = useState<Date>();
+
+  // Cargar datos reales
+  const { data: dimensionsData, isLoading: isLoadingDimensions } = useDimensionsWithFullHierarchy();
+  const { data: careersData, isLoading: isLoadingCareers } = useListCareersFlat();
+
+  // Debug logs
+  console.log('📊 Dimensions Data:', dimensionsData);
+  console.log('📊 Is Loading Dimensions:', isLoadingDimensions);
+
+  // Log para ver la estructura completa
+  if (dimensionsData && Array.isArray(dimensionsData) && dimensionsData.length > 0) {
+    const firstDim = dimensionsData[0];
+    const firstComp = firstDim.components?.[0];
+    const firstCrit = firstComp?.criteria?.[0];
+    const firstStd = firstCrit?.standards?.[0];
+    const firstEvd = firstCrit?.evidences?.[0];
+
+    console.log('📊 First Dimension Structure:', {
+      id: firstDim.id,
+      name: firstDim.name,
+      hasComponents: !!firstDim.components,
+      componentCount: firstDim.components?.length || 0,
+      firstComponent: firstComp ? {
+        id: firstComp.id,
+        name: firstComp.name,
+        hasCriteria: !!firstComp.criteria,
+        criteriaCount: firstComp.criteria?.length || 0,
+        firstCriterion: firstCrit ? {
+          id: firstCrit.id,
+          name: firstCrit.name,
+          hasStandards: !!firstCrit.standards,
+          standardsCount: firstCrit.standards?.length || 0,
+          hasEvidences: !!firstCrit.evidences,
+          evidencesCount: firstCrit.evidences?.length || 0,
+          // 🔍 NUEVO: Ver contenido de standards y evidences
+          firstStandard: firstStd ? {
+            id: firstStd.id,
+            name: firstStd.name,
+            hasEvidences: !!firstStd.evidences,
+            evidencesCount: firstStd.evidences?.length || 0
+          } : null,
+          firstEvidence: firstEvd ? {
+            id: firstEvd.id,
+            name: firstEvd.name
+          } : null
+        } : null
+      } : null
+    });
+
+    // Log adicional para ver el RAW data del primer criterio
+    console.log('🔍 RAW First Criterion:', firstCrit);
+
+    // Log específico para standards
+    if (firstCrit?.standards && firstCrit.standards.length > 0) {
+      console.log('🔍 First Standard:', firstCrit.standards[0]);
+      console.log('🔍 First Standard has evidences?', !!firstCrit.standards[0].evidences);
+      console.log('🔍 First Standard evidences:', firstCrit.standards[0].evidences);
+    } else {
+      console.log('⚠️ No standards found in first criterion');
+    }
+  }  // Extraer arrays de datos
+  const dimensions = useMemo(() => {
+    if (!dimensionsData) return [];
+    const result = Array.isArray(dimensionsData) ? dimensionsData : (dimensionsData as any).data || [];
+    console.log('✅ Processed dimensions:', result);
+    return result;
+  }, [dimensionsData]);
+
+  const careers = useMemo(() => {
+    if (!careersData) return [];
+    // Filtrar solo carreras activas
+    const careersList = Array.isArray(careersData) ? careersData : [];
+    return careersList.filter((c: any) => c.status === 'ACTIVE');
+  }, [careersData]);
+
+  // Filtrar componentes y criterios según selección
+  const components = useMemo(() => {
+    if (!dimensionId || dimensionId === 'all') return [];
+    const selectedDimension = dimensions.find((d: any) => d.id === dimensionId);
+    return selectedDimension?.components || [];
+  }, [dimensionId, dimensions]);
+
+  const criteria = useMemo(() => {
+    if (!componentId || componentId === 'all') return [];
+    const selectedComponent = components.find((c: any) => c.id === componentId);
+    console.log('🔍 Selected Component:', selectedComponent);
+    console.log('🔍 Component Criteria:', selectedComponent?.criteria);
+    return selectedComponent?.criteria || [];
+  }, [componentId, components]);
+
+  const handleGenerateReport = () => {
+    const filters: GenerateReportFilters = {
+      reportName: reportName || `Reporte ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`,
+      description: description || undefined,
+      dimensionId: dimensionId && dimensionId !== 'all' ? dimensionId : undefined,
+      componentId: componentId && componentId !== 'all' ? componentId : undefined,
+      criterionId: criterionId && criterionId !== 'all' ? criterionId : undefined,
+      careerId: careerId && careerId !== 'all' ? careerId : undefined,
+      dateFrom: dateFrom ? dateFrom.toISOString() : undefined,
+      dateTo: dateTo ? dateTo.toISOString() : undefined,
+    };
+
+    console.log('🔍 Generating report with filters:', filters);
+    onGenerateReport(filters);
+  };
+
+  const handleReset = () => {
+    setReportName('');
+    setDescription('');
+    setDimensionId('');
+    setComponentId('');
+    setCriterionId('');
+    setCareerId('');
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileBarChart className="h-5 w-5" />
+          Filtros de Reporte de Cumplimiento
+        </CardTitle>
+        <CardDescription>
+          Configure los filtros para generar un reporte de cumplimiento SINAES personalizado
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Información básica del reporte */}
+        <div className="space-y-4">
+          <div className="grid gap-2">
+            <Label htmlFor="reportName">Nombre del Reporte</Label>
+            <Input
+              id="reportName"
+              placeholder="Ej: Reporte Trimestral Q1 2025"
+              value={reportName}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReportName(e.target.value)}
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="description">Descripción (Opcional)</Label>
+            <Textarea
+              id="description"
+              placeholder="Descripción breve del propósito del reporte..."
+              value={description}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
+              rows={3}
+            />
+          </div>
+        </div>
+
+        {/* Filtros de estructura SINAES */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-semibold text-muted-foreground">Filtros de Estructura SINAES</h4>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="dimension">Dimensión</Label>
+              <Select value={dimensionId} onValueChange={setDimensionId} disabled={isLoadingDimensions}>
+                <SelectTrigger id="dimension">
+                  <SelectValue placeholder={isLoadingDimensions ? "Cargando dimensiones..." : "Todas las dimensiones"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las dimensiones</SelectItem>
+                  {dimensions.map((dim: any) => (
+                    <SelectItem key={dim.id} value={dim.id}>
+                      {dim.code ? `${dim.code} - ${dim.name}` : dim.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="component">Componente</Label>
+              <Select
+                value={componentId}
+                onValueChange={setComponentId}
+                disabled={!dimensionId || dimensionId === 'all' || isLoadingDimensions}
+              >
+                <SelectTrigger id="component">
+                  <SelectValue placeholder="Todos los componentes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los componentes</SelectItem>
+                  {components.map((comp: any) => (
+                    <SelectItem key={comp.id} value={comp.id}>
+                      {comp.code ? `${comp.code} - ${comp.name}` : comp.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="criterion">Criterio</Label>
+              <Select
+                value={criterionId}
+                onValueChange={setCriterionId}
+                disabled={!componentId || componentId === 'all'}
+              >
+                <SelectTrigger id="criterion">
+                  <SelectValue placeholder="Todos los criterios" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los criterios</SelectItem>
+                  {criteria.map((crit: any) => (
+                    <SelectItem key={crit.id} value={crit.id}>
+                      {crit.code ? `${crit.code} - ${crit.name}` : crit.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="career">Carrera</Label>
+              <Select value={careerId} onValueChange={setCareerId} disabled={isLoadingCareers}>
+                <SelectTrigger id="career">
+                  <SelectValue placeholder={isLoadingCareers ? "Cargando carreras..." : "Todas las carreras"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las carreras</SelectItem>
+                  {careers.map((career: any) => (
+                    <SelectItem key={career.id} value={career.id}>
+                      {career.code ? `${career.code} - ${career.name}` : career.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Filtros de rango de fechas */}
+        <div className="space-y-4">
+          <h4 className="text-sm font-semibold text-muted-foreground">Rango de Fechas (Documentos)</h4>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-2">
+              <Label>Desde</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      'w-full justify-start text-left font-normal',
+                      !dateFrom && 'text-muted-foreground'
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFrom ? format(dateFrom, 'PPP', { locale: es }) : 'Seleccionar fecha'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateFrom}
+                    onSelect={setDateFrom}
+                    locale={es}
+                    weekStartsOn={1}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Hasta</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      'w-full justify-start text-left font-normal',
+                      !dateTo && 'text-muted-foreground'
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateTo ? format(dateTo, 'PPP', { locale: es }) : 'Seleccionar fecha'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateTo}
+                    onSelect={setDateTo}
+                    locale={es}
+                    weekStartsOn={1}
+                    initialFocus
+                    disabled={(date: Date) => dateFrom ? date < dateFrom : false}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        </div>
+
+        {/* Acciones */}
+        <div className="flex gap-3 pt-4">
+          <Button
+            onClick={handleGenerateReport}
+            disabled={isGenerating}
+            className="flex-1"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generando reporte...
+              </>
+            ) : (
+              <>
+                <FileBarChart className="mr-2 h-4 w-4" />
+                Generar Reporte
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={handleReset}
+            variant="outline"
+            disabled={isGenerating}
+          >
+            Limpiar
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

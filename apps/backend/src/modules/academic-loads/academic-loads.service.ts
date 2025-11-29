@@ -3,6 +3,7 @@ import { GenericService } from '@core/common/interfaces/generic.service';
 import { PaginatedResponse } from '@core/http/interfaces/paginated-response.interface';
 import { Injectable, Logger } from '@nestjs/common';
 import { AcademicLoad, Prisma, Status } from '@una-gc/database/prisma/generated/client';
+import { PrismaService } from '@src/prisma/prisma.service';
 import { AcademicLoadsRepository } from './academic-loads.repository';
 import { AcademicLoadDto } from './dtos/academic-load.dto';
 
@@ -40,6 +41,7 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
   constructor(
     protected readonly academicLoadsRepository: AcademicLoadsRepository,
     protected readonly dtoValidator: DtoValidator,
+    protected readonly prisma: PrismaService,
   ) {
     super(academicLoadsRepository, AcademicLoadDto, dtoValidator);
   }
@@ -192,5 +194,240 @@ export class AcademicLoadsService extends GenericService<AcademicLoad, AcademicL
 
     // Perform the deletion
     return super.delete(id);
+  }
+
+  /**
+   * Bulk import academic loads from Excel
+   * Creates schedules if they don't exist, finds professors by nationalId, finds courses by code
+   */
+  async bulkImportAcademicLoads(
+    loads: Array<{
+      numeroAula?: string;
+      campus: string;
+      ciclo: string;
+      cupoDisponible: number;
+      cupoMatricula: number;
+      cupoMaximo: number;
+      curso: string;
+      grupo: string;
+      horario?: string;
+      nrc: string;
+      profesorCedula: string;
+    }>,
+  ): Promise<{
+    created: number;
+    updated: number;
+    errors: number;
+    errorDetails: string[];
+    loadIds: string[];
+    stats: {
+      professorsCreated: number;
+      coursesFound: number;
+      schedulesCreated: number;
+      groupsFound: number;
+    };
+  }> {
+    this.logger.debug(`[bulkImportAcademicLoads] Starting bulk import of ${loads.length} academic loads`);
+
+    let created = 0;
+    let updated = 0;
+    let errors = 0;
+    const errorDetails: string[] = [];
+    const loadIds: string[] = [];
+    const stats = {
+      professorsCreated: 0,
+      coursesFound: 0,
+      schedulesCreated: 0,
+      groupsFound: 0,
+    };
+
+    for (const load of loads) {
+      try {
+        const { numeroAula, campus, ciclo, cupoDisponible, cupoMatricula, cupoMaximo, curso, grupo, horario, nrc, profesorCedula } = load;
+
+        // Validate required fields
+        if (!campus || !ciclo || !curso || !grupo || !nrc || !profesorCedula) {
+          errors++;
+          errorDetails.push(`NRC ${nrc}: Datos incompletos`);
+          continue;
+        }
+
+        // 1. Find or get Campus
+        const campusRecord = await this.prisma.campus.findFirst({
+          where: { name: { equals: campus.trim(), mode: 'insensitive' } },
+        });
+
+        if (!campusRecord) {
+          errors++;
+          errorDetails.push(`NRC ${nrc}: Campus "${campus}" no encontrado`);
+          continue;
+        }
+
+        // 2. Find or get AcademicCycle
+        const academicCycleRecord = await this.prisma.academicCycle.findFirst({
+          where: { name: { equals: ciclo.trim(), mode: 'insensitive' } },
+        });
+
+        if (!academicCycleRecord) {
+          errors++;
+          errorDetails.push(`NRC ${nrc}: Ciclo académico "${ciclo}" no encontrado`);
+          continue;
+        }
+
+        // 3. Find Course by code
+        const courseRecord = await this.prisma.course.findFirst({
+          where: { code: { equals: curso.trim(), mode: 'insensitive' } },
+        });
+
+        if (!courseRecord) {
+          errors++;
+          errorDetails.push(`NRC ${nrc}: Curso con código "${curso}" no encontrado`);
+          continue;
+        }
+        stats.coursesFound++;
+
+        // 4. Find or Create AcademicLoadGroup
+        let groupRecord = await this.prisma.academicLoadGroup.findFirst({
+          where: { number: { equals: grupo.trim(), mode: 'insensitive' } },
+        });
+
+        if (!groupRecord) {
+          // Create new group if it doesn't exist
+          try {
+            groupRecord = await this.prisma.academicLoadGroup.create({
+              data: {
+                number: grupo.trim().toUpperCase(),
+                status: Status.ACTIVE,
+              },
+            });
+            stats.groupsFound++;
+          } catch (error) {
+            errors++;
+            errorDetails.push(`NRC ${nrc}: Error al crear grupo "${grupo}": ${error instanceof Error ? error.message : String(error)}`);
+            continue;
+          }
+        } else {
+          stats.groupsFound++;
+        }
+
+        // 5. Find Professor by nationalId (cedula)
+        const professorRecord = await this.prisma.user.findFirst({
+          where: { nationalId: profesorCedula.trim() },
+        });
+
+        if (!professorRecord) {
+          errors++;
+          errorDetails.push(`NRC ${nrc}: Profesor con cédula "${profesorCedula}" no encontrado. Debe importar profesores primero.`);
+          continue;
+        }
+
+        // 6. Handle Schedule (create if doesn't exist and horario is provided)
+        let scheduleId: string | undefined = undefined;
+        if (horario && horario.trim()) {
+          // Try to find existing schedule
+          const scheduleRecord = await this.prisma.schedule.findFirst({
+            where: { name: { equals: horario.trim(), mode: 'insensitive' } },
+          });
+
+          if (scheduleRecord) {
+            scheduleId = scheduleRecord.id;
+          } else {
+            // Create new schedule with the horario string as name
+            // Note: day, startTime, endTime are required fields in schema
+            // For now, using default values - should be parsed from horario string in production
+            const newSchedule = await this.prisma.schedule.create({
+              data: {
+                name: horario.trim(),
+                day: 'MONDAY', // TODO: Parse from horario string
+                startTime: '08:00', // TODO: Parse from horario string
+                endTime: '10:00', // TODO: Parse from horario string
+              },
+            });
+            scheduleId = newSchedule.id;
+            stats.schedulesCreated++;
+          }
+        }
+
+        // 7. Handle Classroom (optional)
+        let classroomId: string | undefined = undefined;
+        if (numeroAula && numeroAula.trim()) {
+          const classroomRecord = await this.prisma.classroom.findFirst({
+            where: {
+              roomNumber: { equals: numeroAula.trim(), mode: 'insensitive' },
+              campusId: campusRecord.id,
+            },
+          });
+          if (classroomRecord) {
+            classroomId = classroomRecord.id;
+          }
+        }
+
+        // 8. Check if Academic Load already exists by NRC
+        const existingLoad = await this.prisma.academicLoad.findFirst({
+          where: { nrc: nrc.trim() },
+        });
+
+        const loadData = {
+          nrc: nrc.trim(),
+          maximumCapacity: Number(cupoMaximo),
+          enrolledCapacity: Number(cupoMatricula),
+          availableSeats: Number(cupoDisponible),
+          status: Status.ACTIVE,
+        };
+
+        if (existingLoad) {
+          // Update existing load
+          await this.prisma.academicLoad.update({
+            where: { id: existingLoad.id },
+            data: {
+              ...loadData,
+              academicCycle: { connect: { id: academicCycleRecord.id } },
+              campus: { connect: { id: campusRecord.id } },
+              course: { connect: { id: courseRecord.id } },
+              group: { connect: { id: groupRecord.id } },
+              professor: { connect: { id: professorRecord.id } },
+              ...(classroomId && { classroom: { connect: { id: classroomId } } }),
+              ...(scheduleId && { schedule: { connect: { id: scheduleId } } }),
+            },
+          });
+          updated++;
+          loadIds.push(existingLoad.id);
+        } else {
+          // Create new load
+          const newLoad = await this.prisma.academicLoad.create({
+            data: {
+              ...loadData,
+              academicCycle: { connect: { id: academicCycleRecord.id } },
+              campus: { connect: { id: campusRecord.id } },
+              course: { connect: { id: courseRecord.id } },
+              group: { connect: { id: groupRecord.id } },
+              professor: { connect: { id: professorRecord.id } },
+              ...(classroomId && { classroom: { connect: { id: classroomId } } }),
+              ...(scheduleId && { schedule: { connect: { id: scheduleId } } }),
+            },
+          });
+          created++;
+          loadIds.push(newLoad.id);
+        }
+      } catch (error) {
+        errors++;
+        const errorMsg = `NRC ${load.nrc}: ${error instanceof Error ? error.message : String(error)}`;
+        errorDetails.push(errorMsg);
+        this.logger.error(`[bulkImportAcademicLoads] ${errorMsg}`);
+      }
+    }
+
+    this.logger.log(
+      `[bulkImportAcademicLoads] Completed: ${created} created, ${updated} updated, ${errors} errors`,
+    );
+
+    return {
+      created,
+      updated,
+      errors,
+      errorDetails,
+      loadIds,
+      stats,
+    };
   }
 }

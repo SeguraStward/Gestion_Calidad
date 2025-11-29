@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname, '../../'),
   staticPageGenerationTimeout: 180,
 
+  // Optimización de chunks para evitar ChunkLoadError
+  experimental: {
+    optimizePackageImports: ['@una-gc/ui', 'lucide-react']
+  },
+
   eslint: {
     ignoreDuringBuilds: true
   },

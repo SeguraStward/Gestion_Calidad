@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { DtoValidator } from '../dto-validator';
 import type { GenericRepository } from './generic-repository.interface';
@@ -120,19 +120,23 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
     for (const relationField of this.relationCheckConfig.relationFields) {
       const relationData = (entity as any)[relationField];
 
-      if (Array.isArray(relationData) && relationData.length > 0) {
-        const activeRelations = relationData.filter((item) => !item.status || item.status !== 'INACTIVE');
+      if (Array.isArray(relationData)) {
+        if (relationData.length > 0) {
+          const activeRelations = relationData.filter((item) => !item.status || item.status !== 'INACTIVE');
 
-        if (activeRelations.length > 0) {
-          throw new Error(
-            this.relationCheckConfig.errorMessage ||
-            `Cannot ${operationType}: Entity has related ${relationField} records`,
-          );
+          if (activeRelations.length > 0) {
+            throw new BadRequestException(
+              this.relationCheckConfig.errorMessage ||
+              `Cannot ${operationType}: Entity has related ${relationField} records`,
+            );
+          }
         }
+        // Si es un array vacío, no hacer nada (está bien eliminar)
       } else if (relationData && typeof relationData === 'object') {
+        // Solo para relaciones 1-a-1 (no arrays)
         const isActive = !relationData.status || relationData.status !== 'INACTIVE';
         if (isActive) {
-          throw new Error(
+          throw new BadRequestException(
             this.relationCheckConfig.errorMessage ||
             `Cannot ${operationType}: Entity has a related ${relationField} record`,
           );

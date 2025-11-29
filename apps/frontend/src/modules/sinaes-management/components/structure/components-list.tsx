@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { Button } from '@una-gc/ui/components'
 import { Card } from '@una-gc/ui/components'
-import { Plus, ChevronRight, Edit, Trash2 } from 'lucide-react'
+import { Plus, ChevronRight, PenLine, Trash2 } from 'lucide-react'
 import { useComponents, useDeleteComponent } from '../../services/components.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import { ComponentForm } from '../forms/component-form'
+import { formatCodeForDisplay } from '../../utils/code-utils'
 import type { Component } from '../../types/components.types'
 
 interface ComponentsListProps {
@@ -14,7 +15,10 @@ interface ComponentsListProps {
 }
 
 export const ComponentsList = ({ dimensionId }: ComponentsListProps) => {
-  const { data: components, isLoading, refetch } = useComponents({ dimensionId })
+  const { data: components, isLoading, refetch } = useComponents(
+    { dimensionId },
+    { enabled: !!dimensionId }
+  )
   const { selectedComponent, selectComponent } = useSinaesNavigation()
   const deleteComponent = useDeleteComponent()
 
@@ -44,6 +48,10 @@ export const ComponentsList = ({ dimensionId }: ComponentsListProps) => {
     setEditingComponent(null)
   }
 
+  if (!dimensionId) {
+    return <div className="text-sm text-muted-foreground">Selecciona una dimensión primero</div>
+  }
+
   if (isLoading) {
     return <div className="text-sm text-muted-foreground">Cargando componentes...</div>
   }
@@ -69,7 +77,7 @@ export const ComponentsList = ({ dimensionId }: ComponentsListProps) => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{component.code}</p>
+                  <p className="text-sm font-medium truncate">{formatCodeForDisplay(component.code)}</p>
                   <p className="text-xs text-muted-foreground truncate">{component.name}</p>
                 </div>
                 <div className="flex items-center space-x-1">
@@ -78,14 +86,16 @@ export const ComponentsList = ({ dimensionId }: ComponentsListProps) => {
                     variant="ghost"
                     onClick={(e) => handleEdit(component, e)}
                     className="h-6 w-6 p-0"
+                    title="Editar componente"
                   >
-                    <Edit className="h-3 w-3" />
+                    <PenLine className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={(e) => handleDelete(component, e)}
                     className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                    title="Eliminar componente"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

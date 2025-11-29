@@ -19,6 +19,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.config.json"
   },
   "dependencies": {
+    "@googleapis/drive": "^18.0.0",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^10.4.19",
     "@nestjs/config": "^3.3.0",
@@ -37,6 +38,7 @@
     "class-validator": "^0.14.2",
     "cookie-parser": "^1.4.7",
     "dotenv": "^16.6.0",
+    "google-auth-library": "^10.4.0",
     "helmet": "^8.1.0",
     "lodash": "^4.17.21",
     "passport": "^0.7.0",
@@ -44,6 +46,7 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "prisma": "^6.10.1",
+    "puppeteer": "^24.29.1",
     "rxjs": "^7.8.2",
     "swagger-ui-express": "^5.0.1"
   },

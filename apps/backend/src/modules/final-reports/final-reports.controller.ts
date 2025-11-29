@@ -11,12 +11,13 @@ import {
 } from '@nestjs/common';
 
 import { buildPrismaInclude } from '@src/core/common/utils';
-import { FinalReportStatus } from '@una-gc/database/prisma/generated/client';
+import { FinalReportStatus, PermissionType, PermissionScope } from '@una-gc/database/prisma/generated/client';
 
 import { FinalReportDto } from './dtos/final-report.dto';
 import { FinalReportsService } from './final-reports.service';
 
 import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
+import { RequirePermissions, RESOURCE_NAME_TOKEN } from '@src/modules/auth/decorators/require-permissions.decorator';
 
 @ResourceName('FINAL_REPORT')
 @Controller('final-reports')
@@ -27,7 +28,37 @@ export class FinalReportsController extends GenericController<FinalReportDto, Fi
     super(finalReportsService);
   }
 
+  @Get('admin/all')
+  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.READ, scope: PermissionScope.ALL })
+  async findAllForAdmin(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit?: number,
+    @Query('status', new ParseEnumPipe(FinalReportStatus, { optional: true })) status?: FinalReportStatus,
+    @Query('professorId') professorId?: string,
+    @Query('search') search?: string,
+    @Query('orderBy') orderBy?: string,
+    @Query('include') includeQueryParam?: string,
+  ) {
+    this.logger.log(
+      `Admin request: Find all final reports - status: ${status}, professorId: ${professorId}, page: ${page}, limit: ${limit}, search: ${search}`,
+    );
+
+    const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
+    const prismaInclude = buildPrismaInclude(includeQueryParam);
+
+    return this.finalReportsService.findAllForAdmin(
+      page,
+      limit,
+      status,
+      professorId,
+      search,
+      parsedOrderBy,
+      prismaInclude,
+    );
+  }
+
   @Get('professor/:professorId')
+  @RequirePermissions({ resource: RESOURCE_NAME_TOKEN, action: PermissionType.READ, scope: PermissionScope.OWN })
   async findAllByProfessorId(
     @Param('professorId') professorId: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,

@@ -22,7 +22,7 @@ export const dimensionServiceExtended = {
    */
   async getWithFullHierarchy(): Promise<any[]> {
     try {
-      const response = await HttpClient.get('/dimensions?include=components.criteria.standards.qualityEvidences')
+      const response = await HttpClient.get('/dimensions?include=components.criteria.standards.evidences')
       // Handle response format (could be paginated or direct array)
       const data = response.data
       if (data && typeof data === 'object' && 'data' in data) {

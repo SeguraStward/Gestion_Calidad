@@ -7,10 +7,12 @@ import { Label } from '@una-gc/ui/components/label'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
 import { RefreshCw } from 'lucide-react'
-import { useCreateStandard, useUpdateStandard } from '../../services/standards.service'
+import { toast } from 'sonner'
+import { useCreateStandard, useUpdateStandard, useStandards } from '../../services/standards.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import type { Standard, CreateStandardDto } from '../../types/standards.types'
 import { useAutoNumbering } from '../../hooks/use-auto-numbering'
+import { checkDuplicateName, showDuplicateAlert } from '../../utils/validation-utils'
 
 interface StandardFormProps {
   open: boolean
@@ -33,6 +35,35 @@ export const StandardForm = ({ open, onClose, standard, onSuccess }: StandardFor
   const createStandard = useCreateStandard()
   const updateStandard = useUpdateStandard()
   const { generateStandardCode, isGenerating } = useAutoNumbering()
+
+  // Get existing standards for validation
+  const { data: standards } = useStandards(
+    { criterionId: selectedCriterion?.id || '' },
+    { enabled: !!selectedCriterion?.id }
+  )
+
+  // Sincronizar formData cuando cambie standard
+  useEffect(() => {
+    if (standard) {
+      setFormData({
+        name: standard.name || '',
+        code: standard.code || '',
+        description: standard.description || '',
+        order: standard.order || 0,
+        criterionId: standard.criterionId || selectedCriterion?.id || '',
+        status: standard.status || 'ACTIVE'
+      })
+    } else {
+      setFormData({
+        name: '',
+        code: '',
+        description: '',
+        order: 0,
+        criterionId: selectedCriterion?.id || '',
+        status: 'ACTIVE'
+      })
+    }
+  }, [standard, open, selectedCriterion?.id])
 
   // Auto-generate code for new standards
   useEffect(() => {
@@ -63,11 +94,25 @@ export const StandardForm = ({ open, onClose, standard, onSuccess }: StandardFor
       return
     }
 
+    // Validate duplicate name
+    if (checkDuplicateName(formData.name, standards?.data, standard?.id)) {
+      showDuplicateAlert('estándar', formData.name)
+      return
+    }
+
     try {
       if (standard) {
         await updateStandard.mutateAsync({ id: standard.id, data: formData })
+        toast.success('Estándar actualizado correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       } else {
         await createStandard.mutateAsync(formData)
+        toast.success('Estándar creado correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       }
 
       onSuccess?.()
@@ -82,8 +127,15 @@ export const StandardForm = ({ open, onClose, standard, onSuccess }: StandardFor
         criterionId: selectedCriterion?.id || '',
         status: 'ACTIVE'
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving standard:', error)
+
+      // Mostrar mensaje de error del servidor
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al guardar el estándar'
+      toast.error(errorMessage, {
+        duration: 5000,
+        position: 'top-center'
+      })
     }
   }
 

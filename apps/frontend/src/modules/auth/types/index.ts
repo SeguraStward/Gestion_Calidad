@@ -57,7 +57,8 @@ export interface Permission {
   status: Status;
   type: PermissionType[];
   scope: PermissionScope;
-  actions: string[];
+  actions: string[]; // Campo nuevo que usa el frontend
+  permissions?: string[]; // Campo legacy de la base de datos (compatible con estructura antigua)
 }
 
 export interface Role {

@@ -3,10 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components'
 import { Badge, Button } from '@una-gc/ui/components'
 import { CheckCircle, ExternalLink, FileText } from 'lucide-react'
-import type { UploadDocumentResponse } from '../../services/document-upload.service'
+import type { UploadProofDocumentResponse } from '../../services/proof-document-upload.service'
 
 interface UploadSuccessDisplayProps {
-  result: UploadDocumentResponse
+  result: UploadProofDocumentResponse
   onClose: () => void
 }
 
@@ -44,19 +44,11 @@ export const UploadSuccessDisplay = ({ result, onClose }: UploadSuccessDisplayPr
         {/* Relaciones Creadas */}
         <div className="space-y-2">
           <h4 className="font-medium">Relaciones Creadas:</h4>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-blue-50 p-2 rounded text-center">
-              <p className="text-sm font-medium text-blue-700">
-                {result.careerRelations.length}
-              </p>
-              <p className="text-xs text-blue-600">Carreras Vinculadas</p>
-            </div>
-            <div className="bg-purple-50 p-2 rounded text-center">
-              <p className="text-sm font-medium text-purple-700">
-                {result.standardEvidenceRelations.length}
-              </p>
-              <p className="text-xs text-purple-600">Evidencias Vinculadas</p>
-            </div>
+          <div className="bg-blue-50 p-3 rounded text-center">
+            <p className="text-lg font-medium text-blue-700">
+              {result.careerRelations.length}
+            </p>
+            <p className="text-sm text-blue-600">Carreras Vinculadas</p>
           </div>
         </div>
 

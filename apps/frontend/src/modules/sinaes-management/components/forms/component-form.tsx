@@ -7,10 +7,12 @@ import { Label } from '@una-gc/ui/components/label'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
 import { RefreshCw } from 'lucide-react'
-import { useCreateComponent, useUpdateComponent } from '../../services/components.service'
+import { toast } from 'sonner'
+import { useCreateComponent, useUpdateComponent, useComponents } from '../../services/components.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import type { Component, CreateComponentDto } from '../../types/components.types'
 import { useAutoNumbering } from '../../hooks/use-auto-numbering'
+import { checkDuplicateName, showDuplicateAlert } from '../../utils/validation-utils'
 
 interface ComponentFormProps {
   open: boolean
@@ -33,6 +35,35 @@ export const ComponentForm = ({ open, onClose, component, onSuccess }: Component
   const createComponent = useCreateComponent()
   const updateComponent = useUpdateComponent()
   const { generateComponentCode, isGenerating } = useAutoNumbering()
+
+  // Get existing components for validation
+  const { data: components } = useComponents(
+    { dimensionId: selectedDimension?.id || '' },
+    { enabled: !!selectedDimension?.id }
+  )
+
+  // Sincronizar formData cuando cambie component
+  useEffect(() => {
+    if (component) {
+      setFormData({
+        name: component.name || '',
+        code: component.code || '',
+        description: component.description || '',
+        order: component.order || 0,
+        dimensionId: component.dimensionId || selectedDimension?.id || '',
+        status: component.status || 'ACTIVE'
+      })
+    } else {
+      setFormData({
+        name: '',
+        code: '',
+        description: '',
+        order: 0,
+        dimensionId: selectedDimension?.id || '',
+        status: 'ACTIVE'
+      })
+    }
+  }, [component, open, selectedDimension?.id])
 
   // Auto-generate code for new components
   useEffect(() => {
@@ -63,11 +94,25 @@ export const ComponentForm = ({ open, onClose, component, onSuccess }: Component
       return
     }
 
+    // Validación de duplicados
+    if (checkDuplicateName(formData.name, components?.data, component?.id)) {
+      showDuplicateAlert('componente', formData.name)
+      return
+    }
+
     try {
       if (component) {
         await updateComponent.mutateAsync({ id: component.id, data: formData })
+        toast.success('Componente actualizado correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       } else {
         await createComponent.mutateAsync(formData)
+        toast.success('Componente creado correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       }
 
       onSuccess?.()
@@ -82,8 +127,15 @@ export const ComponentForm = ({ open, onClose, component, onSuccess }: Component
         dimensionId: selectedDimension?.id || '',
         status: 'ACTIVE'
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving component:', error)
+
+      // Mostrar mensaje de error del servidor
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al guardar el componente'
+      toast.error(errorMessage, {
+        duration: 5000,
+        position: 'top-center'
+      })
     }
   }
 

@@ -12,8 +12,9 @@ model Component {
   status Status @default(ACTIVE)
 
   // Relations
-  dimension Dimension   @relation(fields: [dimensionId], references: [id])
-  criteria  Criterion[]
+  dimension         Dimension                @relation(fields: [dimensionId], references: [id])
+  criteria          Criterion[]
+  complianceReports SinaesComplianceReport[]
 
   // Audit fields
   createdAt DateTime @default(now())

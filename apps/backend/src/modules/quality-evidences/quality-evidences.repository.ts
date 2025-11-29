@@ -45,4 +45,14 @@ export class QualityEvidencesRepository extends GenericPrismaRepository<
       include: { ...(include || {}), standard: true, criterion: true, proofDocuments: true, standardEvidences: true },
     });
   }
+
+  async existsByName(name: string, excludeId?: string): Promise<boolean> {
+    const evidence = await this.prisma.qualityEvidence.findFirst({
+      where: {
+        name,
+        ...(excludeId && { id: { not: excludeId } }),
+      },
+    });
+    return !!evidence;
+  }
 }

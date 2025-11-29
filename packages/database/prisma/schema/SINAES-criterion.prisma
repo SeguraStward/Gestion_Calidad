@@ -22,12 +22,16 @@ model Criterion {
   type        CriterionType @default(COMPONENT_BASED) // Predefined types
   customType  String? // Flexible field for custom types when type = CUSTOM
 
+  // Evidence type flag - determines if criterion has direct evidences or uses standards
+  hasDirectEvidences Boolean @default(false) // If true, use evidences directly; if false, use standards
+
   status Status @default(ACTIVE)
 
   // Relations
-  component Component?        @relation(fields: [componentId], references: [id]) // Optional relation
-  standards Standard[] // Optional standards
-  evidences QualityEvidence[] // Direct evidences when no standards exist
+  component         Component?               @relation(fields: [componentId], references: [id]) // Optional relation
+  standards         Standard[] // Optional standards
+  evidences         QualityEvidence[] // Direct evidences when no standards exist
+  complianceReports SinaesComplianceReport[]
 
   // Audit fields
   createdAt DateTime @default(now())

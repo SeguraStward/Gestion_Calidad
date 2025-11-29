@@ -1,6 +1,6 @@
 import { GenericService } from '@core/common/interfaces/generic.service';
 import { DtoValidator } from '@core/common/dto-validator';
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 
 import { DimensionDto } from './dtos/dimension.dto';
 import { CreateDimensionDto } from './dtos/create-dimension.dto';
@@ -22,5 +22,25 @@ export class DimensionsService extends GenericService<Dimension, DimensionDto, C
     protected readonly dtoValidator: DtoValidator,
   ) {
     super(dimensionsRepository, DimensionDto);
+  }
+
+  async save(dto: CreateDimensionDto): Promise<DimensionDto> {
+    // Validate unique name
+    const exists = await this.dimensionsRepository.existsByName(dto.name);
+    if (exists) {
+      throw new ConflictException(`Ya existe una dimensión con el nombre "${dto.name}"`);
+    }
+    return super.save(dto);
+  }
+
+  async update(id: string, dto: UpdateDimensionDto): Promise<DimensionDto> {
+    // Validate unique name (excluding current entity)
+    if (dto.name) {
+      const exists = await this.dimensionsRepository.existsByName(dto.name, id);
+      if (exists) {
+        throw new ConflictException(`Ya existe una dimensión con el nombre "${dto.name}"`);
+      }
+    }
+    return super.update(id, dto);
   }
 }

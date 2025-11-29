@@ -1,5 +1,7 @@
 import { BaseApiService } from '@/lib/api/base-api.service'
 import {
+  BulkImportProfessorsDto,
+  BulkImportResultDto,
   ChangeUserStatusDto,
   CreateUserDto,
   MeUpdateUserDto,
@@ -113,6 +115,17 @@ export class UserApiService extends BaseApiService<UserDto, CreateUserDto, Updat
    */
   async softDeleteUser(id: string): Promise<UserDto> {
     return this.softDelete(id)
+  }
+
+  /**
+   * Bulk import professors from Excel data - matches POST /users/bulk-import/professors
+   */
+  async bulkImportProfessors(importDto: BulkImportProfessorsDto): Promise<BulkImportResultDto> {
+    const response = await HttpClient.post<BulkImportResultDto>(
+      `${this.resourcePath}/bulk-import/professors`,
+      importDto
+    )
+    return response.data
   }
 }
 

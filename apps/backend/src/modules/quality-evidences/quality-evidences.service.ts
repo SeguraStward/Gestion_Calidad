@@ -1,6 +1,6 @@
 import { GenericService } from '@core/common/interfaces/generic.service';
 import { DtoValidator } from '@core/common/dto-validator';
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 
 import { QualityEvidenceDto } from './dtos/quality-evidence.dto';
 import { CreateQualityEvidenceDto } from './dtos/create-quality-evidence.dto';
@@ -22,5 +22,25 @@ export class QualityEvidencesService extends GenericService<QualityEvidence, Qua
     protected readonly dtoValidator: DtoValidator,
   ) {
     super(qualityEvidencesRepository, QualityEvidenceDto);
+  }
+
+  async save(dto: CreateQualityEvidenceDto): Promise<QualityEvidenceDto> {
+    // Validate unique name
+    const exists = await this.qualityEvidencesRepository.existsByName(dto.name);
+    if (exists) {
+      throw new ConflictException(`Ya existe una evidencia de calidad con el nombre "${dto.name}"`);
+    }
+    return super.save(dto);
+  }
+
+  async update(id: string, dto: UpdateQualityEvidenceDto): Promise<QualityEvidenceDto> {
+    // Validate unique name (excluding current entity)
+    if (dto.name) {
+      const exists = await this.qualityEvidencesRepository.existsByName(dto.name, id);
+      if (exists) {
+        throw new ConflictException(`Ya existe una evidencia de calidad con el nombre "${dto.name}"`);
+      }
+    }
+    return super.update(id, dto);
   }
 }

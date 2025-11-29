@@ -4,8 +4,11 @@ import HttpClient from '@/lib/http-client'
  * Servicio para manejar la numeración automática de entidades SINAES
  * 
  * REGLAS:
- * - Evidencias: Numeración secuencial global (1, 2, 3, 4, 5...)
- * - Otras entidades: Numeración jerárquica (1.1, 1.2, 2.1, 2.1.1, etc.)
+ * - Dimensiones: DIM-01, DIM-02, DIM-03...
+ * - Componentes: COMP-01, COMP-02, COMP-03...
+ * - Criterios: CRIT-01, CRIT-02, CRIT-03...
+ * - Estándares: STD-01, STD-02, STD-03...
+ * - Evidencias: EV-001, EV-002, EV-003... (Global, 3 dígitos)
  */
 
 export interface NumberingContext {
@@ -78,7 +81,7 @@ class AutoNumberingService {
   }
 
   /**
-   * Genera número para dimensión: 1, 2, 3, 4...
+   * Genera número para dimensión: DIM-01, DIM-02, DIM-03...
    */
   private async generateDimensionNumber(): Promise<NumberingResult> {
     const response = await HttpClient.get('/dimensions')
@@ -90,19 +93,15 @@ class AutoNumberingService {
     const nextOrder = maxOrder + 1
 
     return {
-      code: nextOrder.toString(),
+      code: `DIM-${nextOrder.toString().padStart(2, '0')}`,
       order: nextOrder
     }
   }
 
   /**
-   * Genera número para componente: 1.1, 1.2, 2.1, 2.2...
+   * Genera número para componente: COMP-01, COMP-02, COMP-03...
    */
   private async generateComponentNumber(dimensionId: string): Promise<NumberingResult> {
-    // Obtener la dimensión padre
-    const dimensionResponse = await HttpClient.get(`/dimensions/${dimensionId}`)
-    const dimension = dimensionResponse.data
-
     // Obtener componentes existentes de esta dimensión
     const componentsResponse = await HttpClient.get('/components', {
       params: { dimensionId }
@@ -113,22 +112,17 @@ class AutoNumberingService {
       Math.max(max, comp.order || 0), 0)
 
     const nextOrder = maxOrder + 1
-    const code = `${dimension.code}.${nextOrder}`
 
     return {
-      code,
+      code: `COMP-${nextOrder.toString().padStart(2, '0')}`,
       order: nextOrder
     }
   }
 
   /**
-   * Genera número para criterio: 1.1.1, 1.1.2, 1.2.1, 2.1.1...
+   * Genera número para criterio: CRIT-01, CRIT-02, CRIT-03...
    */
   private async generateCriterionNumber(componentId: string): Promise<NumberingResult> {
-    // Obtener el componente padre
-    const componentResponse = await HttpClient.get(`/components/${componentId}`)
-    const component = componentResponse.data
-
     // Obtener criterios existentes de este componente
     const criteriaResponse = await HttpClient.get('/criteria', {
       params: { componentId }
@@ -139,22 +133,17 @@ class AutoNumberingService {
       Math.max(max, crit.order || 0), 0)
 
     const nextOrder = maxOrder + 1
-    const code = `${component.code}.${nextOrder}`
 
     return {
-      code,
+      code: `CRIT-${nextOrder.toString().padStart(2, '0')}`,
       order: nextOrder
     }
   }
 
   /**
-   * Genera número para estándar: 1.1.1.1, 1.1.1.2, 1.1.2.1, 2.1.1.1...
+   * Genera número para estándar: STD-01, STD-02, STD-03...
    */
   private async generateStandardNumber(criterionId: string): Promise<NumberingResult> {
-    // Obtener el criterio padre
-    const criterionResponse = await HttpClient.get(`/criteria/${criterionId}`)
-    const criterion = criterionResponse.data
-
     // Obtener estándares existentes de este criterio
     const standardsResponse = await HttpClient.get('/standards', {
       params: { criterionId }
@@ -165,16 +154,15 @@ class AutoNumberingService {
       Math.max(max, std.order || 0), 0)
 
     const nextOrder = maxOrder + 1
-    const code = `${criterion.code}.${nextOrder}`
 
     return {
-      code,
+      code: `STD-${nextOrder.toString().padStart(2, '0')}`,
       order: nextOrder
     }
   }
 
   /**
-   * Genera número para evidencia: 1, 2, 3, 4, 5... (GLOBAL, no jerárquico)
+   * Genera número para evidencia: EV-001, EV-002, EV-003... (GLOBAL, no jerárquico)
    */
   private async generateEvidenceNumber(): Promise<NumberingResult> {
     // Obtener TODAS las evidencias del sistema
@@ -188,7 +176,7 @@ class AutoNumberingService {
     const nextOrder = maxOrder + 1
 
     return {
-      code: nextOrder.toString(), // Evidencias usan numeración simple: "1", "2", "3"
+      code: `EV-${nextOrder.toString().padStart(3, '0')}`,
       order: nextOrder
     }
   }

@@ -301,14 +301,56 @@ const capitalizeFirstLetter = (text: string): string => {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
+// Helper function to convert boolean string values to Yes/No in Spanish
+const formatBooleanResponse = (response: string | undefined): string => {
+  if (!response) return 'N/R'
+
+  const lowerResponse = response.toLowerCase().trim()
+
+  // Handle boolean values
+  if (lowerResponse === 'true' || lowerResponse === 'yes' || lowerResponse === 'sí' || lowerResponse === 'si') {
+    return 'Sí'
+  }
+  if (lowerResponse === 'false' || lowerResponse === 'no') {
+    return 'No'
+  }
+
+  // Return original value if not a boolean
+  return capitalizeFirstLetter(response)
+}
+
 export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ report }) => {
   const stats = report.statistics
   const studentInfo = report.studentInformation
   const evaluations = report.evaluation || []
 
-  const groupedEvaluations = evaluations.reduce(
+  console.log('📊 PDF - Total evaluations:', evaluations.length)
+  console.log('📊 PDF - Evaluations detail:', evaluations.map(e => ({
+    id: e.questionId,
+    type: e.responseType,
+    group: e.questionGroup,
+    step: e.stepNumber,
+    hasResponse: !!e.response,
+    hasMultipleResponse: !!(e.multipleResponse && e.multipleResponse.length > 0)
+  })))
+
+  // Step 5: Questions with stepNumber === 5
+  const step5Evaluations = evaluations.filter(e => e.stepNumber === 5)
+
+  // Step 6: Questions with stepNumber === 6 (tools/herramientas)
+  const step6Evaluations = evaluations.filter(e => e.stepNumber === 6)
+
+  // Step 7: Questions with stepNumber === 7 (perception/quality)
+  const step7Evaluations = evaluations.filter(e => e.stepNumber === 7)
+
+  console.log('📊 PDF - Step 5 (Evaluation):', step5Evaluations.length)
+  console.log('📊 PDF - Step 6 (Tools):', step6Evaluations.length)
+  console.log('📊 PDF - Step 7 (Quality):', step7Evaluations.length)
+
+  // Group step 7 evaluations by question group
+  const groupedStep7Evaluations = step7Evaluations.reduce(
     (acc, question) => {
-      const groupName = question.questionGroup || 'Evaluación General'
+      const groupName = question.questionGroup || 'Percepción General'
       if (!acc[groupName]) {
         acc[groupName] = []
       }
@@ -529,17 +571,190 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
           </View>
         )}
 
-        {/* Sección 4: Evaluación - Comienza en una nueva página */}
+        {/* Sección 4: Evaluación General del Curso (Paso 5) */}
         <View break>
-          <Text style={styles.sectionTitle}>Evaluación y Percepción del Curso</Text>
-          {Object.entries(groupedEvaluations).length > 0 ? (
-            Object.entries(groupedEvaluations).map(([groupName, questions], groupIndex) => (
+          <Text style={styles.sectionTitle}>Evaluación General del Curso</Text>
+          {step5Evaluations.length > 0 ? (
+            <View style={styles.evalGroupTable} wrap={false}>
+              <View style={styles.evalGroupHeaderRow} fixed>
+                <Text style={styles.evalGroupHeaderText}>Análisis y Reflexión del Profesor</Text>
+              </View>
+              {step5Evaluations.map((q, qIndex, arr) => (
+                <React.Fragment key={`step5-${q.questionId}-${qIndex}`}>
+                  <View style={styles.evalQuestionRow} wrap={false}>
+                    <Text style={styles.evalQuestionTextCell}>
+                      {qIndex + 1}. {q.question}
+                    </Text>
+                  </View>
+                  <View style={[styles.evalAnswerRow, qIndex === arr.length - 1 ? { borderBottomWidth: 0 } : {}]} wrap={false}>
+                    <View style={styles.evalAnswerTextCell}>
+                      {/* Handle MULTISELECT and SELECCION_MULTIPLE (multiple choice questions) */}
+                      {(q.responseType === 'SELECCION_MULTIPLE' || q.responseType === 'MULTISELECT') && q.multipleResponse && q.multipleResponse.length > 0 ? (
+                        (() => {
+                          console.log('🔍 PDF Step 5 - Processing multipleResponse:', {
+                            questionId: q.questionId,
+                            multipleResponse: q.multipleResponse,
+                            hasOptions: !!q.options,
+                            optionsCount: q.options?.length || 0
+                          })
+                          return q.multipleResponse.map((value, tIndex) => {
+                            let displayText = value
+
+                            // Try multiple strategies to find the matching option (backwards compatibility)
+                            if (q.options && q.options.length > 0) {
+                              // 1. Try exact match by value
+                              let option = q.options.find(opt => opt.value === value)
+
+                              // 2. Try case-insensitive match by value
+                              if (!option) {
+                                option = q.options.find(opt =>
+                                  opt.value?.toLowerCase() === value?.toLowerCase()
+                                )
+                              }
+
+                              // 3. Try to find by label (partial match for backwards compatibility)
+                              if (!option) {
+                                option = q.options.find(opt =>
+                                  opt.label?.toLowerCase().includes(value?.toLowerCase()) ||
+                                  value?.toLowerCase().includes(opt.value?.toLowerCase())
+                                )
+                              }
+
+                              if (option) {
+                                displayText = option.label
+                                console.log(`  - Step 5: Converted "${value}" → "${displayText}"`)
+                              } else {
+                                console.log(`  - Step 5: No match found for "${value}", using as-is`)
+                              }
+                            }
+
+                            return (
+                              <Text key={tIndex} style={styles.evalListItem}>
+                                • {displayText}
+                              </Text>
+                            )
+                          })
+                        })()
+                      ) : q.responseType === 'SELECT' && q.response ? (
+                        (() => {
+                          // Handle SELECT questions - convert value to label
+                          let displayText = q.response
+
+                          if (q.options && q.options.length > 0) {
+                            const option = q.options.find(opt => opt.value === q.response)
+                            if (option) {
+                              displayText = option.label
+                            }
+                          }
+
+                          // Format boolean responses (true/false → Sí/No)
+                          displayText = formatBooleanResponse(displayText)
+
+                          return <Text>{displayText}</Text>
+                        })()
+                      ) : (
+                        <Text>{formatBooleanResponse(q.response || q.otherResponse || 'N/R')}</Text>
+                      )}
+                    </View>
+                  </View>
+                </React.Fragment>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.noDataText}>No hay datos de evaluación general disponibles.</Text>
+          )}
+        </View>
+
+        {/* Sección 5: Herramientas Tecnológicas Utilizadas (Paso 6) */}
+        {step6Evaluations.length > 0 && (
+          <View break>
+            <Text style={styles.sectionTitle}>Herramientas Tecnológicas Utilizadas</Text>
+            <View style={styles.evalGroupTable} wrap={false}>
+              <View style={styles.evalGroupHeaderRow} fixed>
+                <Text style={styles.evalGroupHeaderText}>Recursos y Metodologías Aplicadas</Text>
+              </View>
+              {step6Evaluations.map((q, qIndex, arr) => (
+                <React.Fragment key={`step6-${q.questionId}-${qIndex}`}>
+                  <View style={styles.evalQuestionRow} wrap={false}>
+                    <Text style={styles.evalQuestionTextCell}>
+                      {q.question}
+                    </Text>
+                  </View>
+                  <View style={[styles.evalAnswerRow, qIndex === arr.length - 1 ? { borderBottomWidth: 0 } : {}]} wrap={false}>
+                    <View style={styles.evalAnswerTextCell}>
+                      {/* For multiple selection (tools list) */}
+                      {q.responseType === 'SELECCION_MULTIPLE' && q.multipleResponse && q.multipleResponse.length > 0 ? (
+                        (() => {
+                          console.log('🔍 PDF - Processing multipleResponse:', {
+                            questionId: q.questionId,
+                            multipleResponse: q.multipleResponse,
+                            hasOptions: !!q.options,
+                            optionsCount: q.options?.length || 0
+                          })
+                          return q.multipleResponse.map((toolLabel, tIndex) => {
+                            // multipleResponse now contains labels directly (since we save labels instead of values)
+                            // But for backwards compatibility, try to find the option if it looks like a value
+                            let displayText = toolLabel
+
+                            // Try multiple strategies to find the matching option (backwards compatibility)
+                            if (q.options && q.options.length > 0) {
+                              // 1. Try exact match by value
+                              let option = q.options.find(opt => opt.value === toolLabel)
+
+                              // 2. Try case-insensitive match by value
+                              if (!option) {
+                                option = q.options.find(opt =>
+                                  opt.value?.toLowerCase() === toolLabel?.toLowerCase()
+                                )
+                              }
+
+                              // 3. Try to find by label (partial match for backwards compatibility)
+                              if (!option) {
+                                option = q.options.find(opt =>
+                                  opt.label?.toLowerCase().includes(toolLabel?.toLowerCase()) ||
+                                  toolLabel?.toLowerCase().includes(opt.value?.toLowerCase())
+                                )
+                              }
+
+                              if (option) {
+                                displayText = option.label
+                                console.log(`  - Converted "${toolLabel}" → "${displayText}"`)
+                              } else {
+                                console.log(`  - No match found for "${toolLabel}", using as-is`)
+                              }
+                            }
+
+                            return (
+                              <Text key={tIndex} style={styles.evalListItem}>
+                                • {displayText}
+                              </Text>
+                            )
+                          })
+                        })()
+                      ) : q.responseType === 'TEXT' ? (
+                        <Text>{formatBooleanResponse(q.response || 'N/R')}</Text>
+                      ) : (
+                        <Text>N/R</Text>
+                      )}
+                    </View>
+                  </View>
+                </React.Fragment>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Sección 6: Percepción de Calidad del Curso (Paso 7) */}
+        <View break>
+          <Text style={styles.sectionTitle}>Percepción de Calidad del Curso</Text>
+          {Object.entries(groupedStep7Evaluations).length > 0 ? (
+            Object.entries(groupedStep7Evaluations).map(([groupName, questions], groupIndex) => (
               <View style={styles.evalGroupTable} key={groupName} wrap={false}>
                 <View style={styles.evalGroupHeaderRow} fixed>
                   <Text style={styles.evalGroupHeaderText}>{groupName.replace(/_/g, ' ')}</Text>
                 </View>
                 {questions.map((q, qIndex, arr) => (
-                  <React.Fragment key={`${groupName}-${q.questionId}-${qIndex}`}>
+                  <React.Fragment key={`step7-${groupName}-${q.questionId}-${qIndex}`}>
                     <View style={styles.evalQuestionRow} wrap={false}>
                       <Text style={styles.evalQuestionTextCell}>
                         {qIndex + 1}. {q.question}
@@ -547,31 +762,48 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
                     </View>
                     <View style={[styles.evalAnswerRow, qIndex === arr.length - 1 ? { borderBottomWidth: 0 } : {}]} wrap={false}>
                       <View style={styles.evalAnswerTextCell}>
-                        {q.responseType === 'TEXT' && (
-                          <Text>{capitalizeFirstLetter(q.response || q.otherResponse || 'N/R')}</Text>
-                        )}
-                        {q.responseType === 'SELECCION_UNICA' && (
-                          <Text>{getOptionLabel(q.options, q.response || '') || 'N/R'}</Text>
-                        )}
-                        {q.responseType === 'SELECCION_MULTIPLE' &&
-                          (q.multipleResponse && q.multipleResponse.length > 0 ? (
-                            q.multipleResponse.map((respValue, rIndex) => (
-                              <Text key={rIndex} style={styles.evalListItem}>
-                                • {getOptionLabel(q.options, respValue)}
-                              </Text>
-                            ))
-                          ) : q.otherResponse ? (
-                            <Text>{q.otherResponse}</Text>
+                        {/* Handle MULTISELECT questions with bullets */}
+                        {q.responseType === 'MULTISELECT' || (q.responseType as string) === 'SELECCION_MULTIPLE' ? (
+                          q.multipleResponse && q.multipleResponse.length > 0 ? (
+                            <View>
+                              {q.multipleResponse.map((item, idx) => {
+                                // Try to convert value to label if options are available (backwards compatibility)
+                                let displayItem = item
+                                if (q.options && q.options.length > 0) {
+                                  const option = q.options.find(opt => opt.value === item)
+                                  if (option) {
+                                    displayItem = option.label
+                                  }
+                                }
+                                return (
+                                  <Text key={idx} style={{ marginBottom: idx < q.multipleResponse!.length - 1 ? 2 : 0 }}>
+                                    • {displayItem}
+                                  </Text>
+                                )
+                              })}
+                            </View>
                           ) : (
                             <Text>N/R</Text>
-                          ))}
-                        {q.questionId === 'otras_herramientas' && q.response && q.responseType !== 'TEXT' && (
-                          <Text>{capitalizeFirstLetter(q.response)}</Text>
+                          )
+                        ) : (
+                          /* For SELECT and other question types */
+                          (() => {
+                            let displayText = q.response || 'N/R'
+
+                            // Try to convert value to label if options are available
+                            if (q.responseType === 'SELECT' && q.options && q.options.length > 0 && q.response) {
+                              const option = q.options.find(opt => opt.value === q.response)
+                              if (option) {
+                                displayText = option.label
+                              }
+                            }
+
+                            // Format boolean responses (true/false → Sí/No)
+                            displayText = formatBooleanResponse(displayText)
+
+                            return <Text>{displayText}</Text>
+                          })()
                         )}
-                        {!q.response &&
-                          !q.otherResponse &&
-                          (!q.multipleResponse || q.multipleResponse.length === 0) &&
-                          !(q.questionId === 'otras_herramientas' && q.response) && <Text>N/R</Text>}
                       </View>
                     </View>
                   </React.Fragment>
@@ -579,7 +811,7 @@ export const FinalReportPDFDocument: React.FC<FinalReportPDFDocumentProps> = ({ 
               </View>
             ))
           ) : (
-            <Text style={styles.noDataText}>No hay datos de evaluación disponibles.</Text>
+            <Text style={styles.noDataText}>No hay datos de percepción de calidad disponibles.</Text>
           )}
         </View>
 

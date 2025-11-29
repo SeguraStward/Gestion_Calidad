@@ -7,9 +7,12 @@ import { Label } from '@una-gc/ui/components/label'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
 import { RefreshCw } from 'lucide-react'
-import { useCreateQualityEvidence, useUpdateQualityEvidence } from '../../services/quality-evidences.service'
+import { toast } from 'sonner'
+import { useCreateQualityEvidence, useUpdateQualityEvidence, useQualityEvidences } from '../../services/quality-evidences.service'
+import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import type { QualityEvidence, CreateQualityEvidenceDto } from '../../types/quality-evidences.types'
 import { useAutoNumbering } from '../../hooks/use-auto-numbering'
+import { checkDuplicateName, showDuplicateAlert } from '../../utils/validation-utils'
 
 interface QualityEvidenceFormProps {
   open: boolean
@@ -19,11 +22,15 @@ interface QualityEvidenceFormProps {
 }
 
 export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: QualityEvidenceFormProps) => {
+  const { selectedStandard, selectedCriterion } = useSinaesNavigation()
+
   const [formData, setFormData] = useState<CreateQualityEvidenceDto>({
     name: evidence?.name || '',
     code: evidence?.code || '',
     description: evidence?.description || '',
     order: evidence?.order || 0,
+    standardId: evidence?.standardId || selectedStandard?.id || undefined,
+    criterionId: evidence?.criterionId || (selectedStandard ? undefined : selectedCriterion?.id) || undefined,
     status: evidence?.status || 'ACTIVE'
   })
 
@@ -31,12 +38,59 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
   const updateEvidence = useUpdateQualityEvidence()
   const { generateEvidenceCode, isGenerating } = useAutoNumbering()
 
+  // Fetch existing evidences for duplicate validation
+  const { data: evidences } = useQualityEvidences(
+    {
+      standardId: selectedStandard?.id,
+      criterionId: selectedStandard ? undefined : selectedCriterion?.id
+    },
+    {
+      enabled: !!(selectedStandard?.id || selectedCriterion?.id)
+    }
+  )
+
+  // Sincronizar formData cuando cambie evidence
+  useEffect(() => {
+    if (evidence) {
+      setFormData({
+        name: evidence.name || '',
+        code: evidence.code || '',
+        description: evidence.description || '',
+        order: evidence.order || 0,
+        standardId: evidence.standardId || selectedStandard?.id || undefined,
+        criterionId: evidence.criterionId || (selectedStandard ? undefined : selectedCriterion?.id) || undefined,
+        status: evidence.status || 'ACTIVE'
+      })
+    } else {
+      setFormData({
+        name: '',
+        code: '',
+        description: '',
+        order: 0,
+        standardId: selectedStandard?.id || undefined,
+        criterionId: selectedStandard ? undefined : selectedCriterion?.id || undefined,
+        status: 'ACTIVE'
+      })
+    }
+  }, [evidence, open, selectedStandard?.id, selectedCriterion?.id])
+
   // Auto-generate code for new evidences
   useEffect(() => {
     if (!evidence && open && !formData.code) {
       handleGenerateCode()
     }
   }, [open, evidence])
+
+  // Update relation IDs when context changes (solo para nuevas evidencias)
+  useEffect(() => {
+    if (open && !evidence) {
+      setFormData(prev => ({
+        ...prev,
+        standardId: selectedStandard?.id || undefined,
+        criterionId: selectedStandard ? undefined : selectedCriterion?.id || undefined,
+      }))
+    }
+  }, [open, selectedStandard, selectedCriterion, evidence])
 
   const handleGenerateCode = async () => {
     try {
@@ -50,11 +104,32 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    console.log('🔍 Enviando evidencia con datos:', {
+      ...formData,
+      selectedStandard: selectedStandard?.id,
+      selectedCriterion: selectedCriterion?.id,
+      context: selectedStandard ? 'ESTÁNDAR' : 'CRITERIO'
+    })
+
+    // Validate duplicate name
+    if (checkDuplicateName(formData.name, evidences?.data, evidence?.id)) {
+      showDuplicateAlert('evidencia', formData.name)
+      return
+    }
+
     try {
       if (evidence) {
         await updateEvidence.mutateAsync({ id: evidence.id, data: formData })
+        toast.success('Evidencia de calidad actualizada correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       } else {
         await createEvidence.mutateAsync(formData)
+        toast.success('Evidencia de calidad creada correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       }
 
       onSuccess?.()
@@ -66,10 +141,19 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
         code: '',
         description: '',
         order: 0,
+        standardId: selectedStandard?.id || undefined,
+        criterionId: selectedStandard ? undefined : selectedCriterion?.id || undefined,
         status: 'ACTIVE'
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving evidence:', error)
+
+      // Mostrar mensaje de error del servidor
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al guardar la evidencia de calidad'
+      toast.error(errorMessage, {
+        duration: 5000,
+        position: 'top-center'
+      })
     }
   }
 
@@ -79,6 +163,8 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
       code: '',
       description: '',
       order: 0,
+      standardId: selectedStandard?.id || undefined,
+      criterionId: selectedStandard ? undefined : selectedCriterion?.id || undefined,
       status: 'ACTIVE'
     })
     onClose()
@@ -91,6 +177,12 @@ export const QualityEvidenceForm = ({ open, onClose, evidence, onSuccess }: Qual
           <DialogTitle>
             {evidence ? 'Editar Evidencia de Calidad' : 'Nueva Evidencia de Calidad'}
           </DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            {selectedStandard
+              ? `Para el estándar: ${selectedStandard.code} - ${selectedStandard.name}`
+              : `Para el criterio: ${selectedCriterion?.code} - ${selectedCriterion?.name}`
+            }
+          </p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

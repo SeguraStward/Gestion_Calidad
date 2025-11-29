@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, PenLine } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components'
 import { Button } from '@una-gc/ui/components/button'
 import { useCriteria } from '../../../services/criteria.service'
@@ -57,19 +57,19 @@ export const CriteriaPanel = () => {
     <>
       <Card className="h-full flex flex-col">
         <CardHeader className="flex-shrink-0 pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-base">
               Criterios
-              <div className="text-xs font-normal text-muted-foreground mt-1 truncate">
-                {selectedComponent.name}
+              <div className="text-xs font-normal text-muted-foreground mt-0.5">
+                {selectedComponent.code}
               </div>
             </CardTitle>
             <Button
               size="sm"
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-1 h-7 px-2 text-xs"
+              className="flex items-center gap-1 h-8 px-3"
             >
-              <Plus className="h-3 w-3" />
+              <Plus className="h-4 w-4" />
               Nuevo
             </Button>
           </div>
@@ -80,37 +80,32 @@ export const CriteriaPanel = () => {
               <div className="text-sm text-muted-foreground">Cargando...</div>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {criteria?.data?.map((criterion) => (
                 <div
                   key={criterion.id}
                   className={cn(
-                    "p-2 rounded-md border cursor-pointer transition-all hover:border-primary",
+                    "p-2.5 rounded-md border cursor-pointer transition-all hover:border-primary",
                     selectedCriterion?.id === criterion.id
                       ? "border-primary bg-primary/5"
                       : "border-border hover:bg-muted/50"
                   )}
                   onClick={() => handleSelectCriterion(criterion)}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm truncate">
-                        {criterion.code} - {criterion.name}
+                      <div className="font-medium text-sm">
+                        {criterion.code}
                       </div>
-                      {criterion.description && (
-                        <div className="text-xs text-muted-foreground mt-1 truncate">
-                          {criterion.description}
-                        </div>
-                      )}
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={(e) => handleEditCriterion(e, criterion)}
-                      className="ml-2 h-5 w-5 p-0 text-xs flex-shrink-0"
+                      className="h-7 w-7 p-0 flex-shrink-0"
                     >
                       <span className="sr-only">Editar</span>
-                      ✏️
+                      <PenLine className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>

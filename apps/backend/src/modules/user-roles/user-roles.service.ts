@@ -102,4 +102,68 @@ export class UserRolesService extends GenericService<UserRole, UserRoleDto, User
       actions: [], // Default actions, can be customized
     }));
   }
+
+  /**
+   * Update permissions for a role
+   * @param roleId - The ID of the role to update
+   * @param permissions - Array of permission assignments
+   * @returns Updated role with permissions
+   */
+  async updateRolePermissions(
+    roleId: string,
+    permissions: Array<{
+      permissionID: string;
+      permissions: string[];
+      scope: string;
+      actions: string[];
+    }>,
+  ): Promise<RoleWithPermissions> {
+    this.logger.log(`Updating permissions for role ${roleId}`);
+    this.logger.log(`Permissions to update: ${JSON.stringify(permissions, null, 2)}`);
+    this.logger.log(`Number of permissions to set: ${permissions.length}`);
+
+    // Validate that the role exists
+    const role = await this.prisma.userRole.findUnique({
+      where: { id: roleId },
+    });
+
+    if (!role) {
+      const errorMsg = `Role with id ${roleId} not found`;
+      this.logger.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    this.logger.log(`Current role permissions count: ${role.permissions.length}`);
+
+    // Prepare permissions for update
+    const formattedPermissions = permissions.map((p) => ({
+      permissionID: p.permissionID,
+      permissions: p.permissions as any, // Cast to match PermissionType[]
+      scope: p.scope as any, // Cast to match PermissionScope
+      actions: p.actions,
+    }));
+
+    this.logger.log(`Formatted permissions: ${JSON.stringify(formattedPermissions, null, 2)}`);
+
+    // Update the role with new permissions
+    await this.prisma.userRole.update({
+      where: { id: roleId },
+      data: {
+        permissions: formattedPermissions,
+        updatedAt: new Date(),
+      },
+    });
+
+    this.logger.log(`Permissions updated successfully for role ${roleId}`);
+
+    // Return the role with enriched permissions
+    const updatedRole = await this.getRoleWithPermissions(roleId);
+    if (!updatedRole) {
+      throw new Error(`Failed to retrieve updated role ${roleId}`);
+    }
+
+    this.logger.log(`Updated role permissions count: ${updatedRole.permissions.length}`);
+    return updatedRole;
+  }
 }
+

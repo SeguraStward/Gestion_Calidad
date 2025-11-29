@@ -141,8 +141,7 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
     return useMutation({
       mutationFn: (payload: { id: string; data: UpdateDTO }) => service.update(payload.id, payload.data),
       onSuccess: (data: T) => {
-        console.log('✅ Actualización exitosa, invalidando queries...', data)
-
+ 
         // Invalidar todas las queries relacionadas
         qc.invalidateQueries({
           queryKey: [queryKeyPrefix],
@@ -177,9 +176,7 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
     const qc = useQueryClient()
     return useMutation({
       mutationFn: (id: string) => service.remove(id),
-      onSuccess: () => {
-        console.log('✅ Eliminación exitosa, invalidando queries...')
-
+      onSuccess: () => { 
         qc.invalidateQueries({
           queryKey: [queryKeyPrefix],
           exact: false
@@ -189,8 +186,7 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
       },
       onError: (error: any) => {
         const errorMessage = getApiErrorMessage(error)
-        console.error('❌ Error en delete mutation:', error.response?.data || error.message || error)
-        toast.error(`Error al eliminar: ${errorMessage}`) // User-facing: Spanish
+         toast.error(`Error al eliminar: ${errorMessage}`) // User-facing: Spanish
       }
     })
   }

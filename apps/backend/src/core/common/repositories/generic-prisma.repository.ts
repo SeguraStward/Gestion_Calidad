@@ -8,7 +8,22 @@ function filterValidFields(where: any, validFields: string[]): any {
   const filtered: any = {};
   for (const key of Object.keys(where)) {
     if (validFields.includes(key)) {
-      filtered[key] = where[key];
+      const value = where[key];
+
+      // Skip empty strings, null, and undefined to avoid Prisma ObjectID errors
+      if (value === '' || value === null || value === undefined) {
+        continue;
+      }
+
+      // Recursively clean nested objects
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        const cleanedNested = filterValidFields(value, validFields);
+        if (cleanedNested && Object.keys(cleanedNested).length > 0) {
+          filtered[key] = cleanedNested;
+        }
+      } else {
+        filtered[key] = value;
+      }
     }
   }
   return Object.keys(filtered).length > 0 ? filtered : undefined;
@@ -17,14 +32,13 @@ function filterValidFields(where: any, validFields: string[]): any {
 @Injectable()
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 export abstract class GenericPrismaRepository<T, CreateInput, UpdateInput, WhereUniqueInput>
-  implements GenericRepository<T>
-{
+  implements GenericRepository<T> {
   protected abstract readonly modelName: string;
 
   // Optional include relations configuration
   protected readonly defaultIncludes: Record<string, boolean | object> = {};
   protected readonly internalLogger = new Logger(GenericPrismaRepository.name);
-  constructor(protected readonly prismaService: PrismaService) {}
+  constructor(protected readonly prismaService: PrismaService) { }
 
   async findAll(
     page = 1,

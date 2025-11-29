@@ -19,20 +19,26 @@ import type { Question, QuestionOption } from '@/modules/final-reports/types/que
 
 const respuestaSchema = z.object({
   idPregunta: z.string(),
-  respuesta: z.string().min(1, 'Este campo es requerido.')
+  respuesta: z.string().min(1, 'Este campo es requerido.').refine((val) => val.trim().length > 0, {
+    message: 'Este campo es requerido.'
+  })
 })
 
 export const step5Schema = z.object({
-  respuestas: z
-    .array(respuestaSchema)
-    .min(1, 'Debe responder todas las preguntas.')
-    .refine((respuestas) => respuestas.every((r) => r.respuesta.trim() !== ''), {
-      message: 'Todas las preguntas deben tener una respuesta.',
-      path: ['respuestas']
-    })
+  respuestas: z.array(respuestaSchema)
 })
 
 export type Step5FormData = z.infer<typeof step5Schema>
+
+// Neutral color function for radio options
+const getOptionColors = (value: string, isSelected: boolean): string => {
+  if (!isSelected) {
+    return 'bg-background border-border hover:bg-muted/50'
+  }
+
+  // Selected state - neutral blue/primary color
+  return 'bg-primary/10 border-primary hover:bg-primary/20'
+}
 
 interface Step5FormProps {
   formMethods: UseFormReturn<Step5FormData>
@@ -199,6 +205,45 @@ export function Step5Form({
               )
 
             case 'SELECT':
+            case 'SELECCION_UNICA':
+              // Use RadioGroup for 5 or fewer options (matches edit style)
+              if (question.options && question.options.length > 0 && question.options.length <= 5) {
+                return (
+                  <FormControl>
+                    <RadioGroup
+                      key={`${question.id}-${field.value}`}
+                      onValueChange={field.onChange}
+                      value={field.value || ''}
+                      className="flex flex-wrap items-center gap-2 sm:gap-3"
+                    >
+                      {question.options.map((option: QuestionOption) => {
+                        const isSelected = field.value === option.value
+                        const colorClasses = getOptionColors(option.value, isSelected)
+                        return (
+                          <div
+                            key={option.value}
+                            className={`flex items-center space-x-1 sm:space-x-1.5 p-1.5 sm:p-2 rounded-md border transition-all duration-200 cursor-pointer ${colorClasses}`}
+                          >
+                            <RadioGroupItem
+                              value={option.value}
+                              id={`${question.id}-${option.value}`}
+                              className="mt-0 w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4"
+                            />
+                            <label
+                              htmlFor={`${question.id}-${option.value}`}
+                              className="text-xs sm:text-sm font-normal cursor-pointer flex-1 leading-snug text-foreground/90"
+                            >
+                              {option.label}
+                            </label>
+                          </div>
+                        )
+                      })}
+                    </RadioGroup>
+                  </FormControl>
+                )
+              }
+
+              // Use Select dropdown for more than 5 options
               return (
                 <FormControl>
                   <Select onValueChange={field.onChange} value={field.value || ''}>
@@ -353,9 +398,10 @@ export function Step5Form({
                   <div className="space-y-0">
                     {groupQuestions.map((pregunta, questionIndex) => {
                       const globalIndex = allQuestions.findIndex(q => q.id === pregunta.id)
+                      const fieldError = formState.errors.respuestas?.[globalIndex]?.respuesta
                       return (
                         <div key={pregunta.id}>
-                          <div className="py-4 px-1">
+                          <div className={`py-4 px-1 rounded-lg transition-colors ${fieldError ? 'bg-destructive/5 border-2 border-destructive/50' : ''}`}>
                             <div className="space-y-2.5">
                               <div className="text-sm font-medium leading-relaxed text-foreground/90 block">
                                 <span className="inline-flex items-baseline gap-2">
@@ -363,7 +409,6 @@ export function Step5Form({
                                     {globalIndex + 1}
                                   </span>
                                   <span className="flex-1">{pregunta.question}</span>
-                                  {pregunta.isRequired && <span className="text-destructive ml-1">*</span>}
                                 </span>
                                 {pregunta.description && (
                                   <span className="block text-xs text-muted-foreground mt-1 ml-8">

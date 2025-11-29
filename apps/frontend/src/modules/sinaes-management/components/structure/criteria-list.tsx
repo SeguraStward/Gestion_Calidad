@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { Button } from '@una-gc/ui/components'
 import { Card } from '@una-gc/ui/components'
-import { Plus, ChevronRight, Edit, Trash2 } from 'lucide-react'
+import { Plus, ChevronRight, PenLine, Trash2 } from 'lucide-react'
 import { useCriteria, useDeleteCriterion } from '../../services/criteria.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import { CriterionForm } from '../forms/criterion-form'
+import { formatCodeForDisplay } from '../../utils/code-utils'
 import type { Criterion } from '../../types/criteria.types'
 
 interface CriteriaListProps {
@@ -14,7 +15,10 @@ interface CriteriaListProps {
 }
 
 export const CriteriaList = ({ componentId }: CriteriaListProps) => {
-  const { data: criteria, isLoading, refetch } = useCriteria({ componentId })
+  const { data: criteria, isLoading, refetch } = useCriteria(
+    { componentId },
+    { enabled: !!componentId }
+  )
   const { selectedCriterion, selectCriterion } = useSinaesNavigation()
   const deleteCriterion = useDeleteCriterion()
 
@@ -44,6 +48,10 @@ export const CriteriaList = ({ componentId }: CriteriaListProps) => {
     setEditingCriterion(null)
   }
 
+  if (!componentId) {
+    return <div className="text-sm text-muted-foreground">Selecciona un componente primero</div>
+  }
+
   if (isLoading) {
     return <div className="text-sm text-muted-foreground">Cargando criterios...</div>
   }
@@ -69,7 +77,7 @@ export const CriteriaList = ({ componentId }: CriteriaListProps) => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{criterion.code}</p>
+                  <p className="text-sm font-medium truncate">{formatCodeForDisplay(criterion.code)}</p>
                   <p className="text-xs text-muted-foreground truncate">{criterion.name}</p>
                 </div>
                 <div className="flex items-center space-x-1">
@@ -78,14 +86,16 @@ export const CriteriaList = ({ componentId }: CriteriaListProps) => {
                     variant="ghost"
                     onClick={(e) => handleEdit(criterion, e)}
                     className="h-6 w-6 p-0"
+                    title="Editar criterio"
                   >
-                    <Edit className="h-3 w-3" />
+                    <PenLine className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={(e) => handleDelete(criterion, e)}
                     className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                    title="Eliminar criterio"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

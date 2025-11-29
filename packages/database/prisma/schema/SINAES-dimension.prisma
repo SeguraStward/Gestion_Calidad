@@ -11,7 +11,8 @@ model Dimension {
   status Status @default(ACTIVE)
 
   // Relations
-  components Component[]
+  components        Component[]
+  complianceReports SinaesComplianceReport[]
 
   // Audit fields
   createdAt DateTime @default(now())

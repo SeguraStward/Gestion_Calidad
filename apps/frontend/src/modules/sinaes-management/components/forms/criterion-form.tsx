@@ -5,12 +5,15 @@ import { Button } from '@una-gc/ui/components/button'
 import { Input } from '@una-gc/ui/components/input'
 import { Label } from '@una-gc/ui/components/label'
 import { Textarea } from '@una-gc/ui/components/textarea'
+import { Checkbox } from '@una-gc/ui/components/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
 import { RefreshCw } from 'lucide-react'
-import { useCreateCriterion, useUpdateCriterion } from '../../services/criteria.service'
+import { toast } from 'sonner'
+import { useCreateCriterion, useUpdateCriterion, useCriteria } from '../../services/criteria.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import type { Criterion, CreateCriterionDto } from '../../types/criteria.types'
 import { useAutoNumbering } from '../../hooks/use-auto-numbering'
+import { checkDuplicateName, showDuplicateAlert } from '../../utils/validation-utils'
 
 interface CriterionFormProps {
   open: boolean
@@ -27,12 +30,44 @@ export const CriterionForm = ({ open, onClose, criterion, onSuccess }: Criterion
     description: criterion?.description || '',
     order: criterion?.order || 0,
     componentId: criterion?.componentId || selectedComponent?.id || '',
+    hasDirectEvidences: criterion?.hasDirectEvidences || false,
     status: criterion?.status || 'ACTIVE'
   })
 
   const createCriterion = useCreateCriterion()
   const updateCriterion = useUpdateCriterion()
   const { generateCriterionCode, isGenerating } = useAutoNumbering()
+
+  // Get existing criteria for validation
+  const { data: criteria } = useCriteria(
+    { componentId: selectedComponent?.id || '' },
+    { enabled: !!selectedComponent?.id }
+  )
+
+  // Sincronizar formData cuando cambie criterion
+  useEffect(() => {
+    if (criterion) {
+      setFormData({
+        name: criterion.name || '',
+        code: criterion.code || '',
+        description: criterion.description || '',
+        order: criterion.order || 0,
+        componentId: criterion.componentId || selectedComponent?.id || '',
+        hasDirectEvidences: criterion.hasDirectEvidences || false,
+        status: criterion.status || 'ACTIVE'
+      })
+    } else {
+      setFormData({
+        name: '',
+        code: '',
+        description: '',
+        order: 0,
+        componentId: selectedComponent?.id || '',
+        hasDirectEvidences: false,
+        status: 'ACTIVE'
+      })
+    }
+  }, [criterion, open, selectedComponent?.id])
 
   // Auto-generate code for new criteria
   useEffect(() => {
@@ -63,11 +98,25 @@ export const CriterionForm = ({ open, onClose, criterion, onSuccess }: Criterion
       return
     }
 
+    // Validación de duplicados
+    if (checkDuplicateName(formData.name, criteria?.data, criterion?.id)) {
+      showDuplicateAlert('criterio', formData.name)
+      return
+    }
+
     try {
       if (criterion) {
         await updateCriterion.mutateAsync({ id: criterion.id, data: formData })
+        toast.success('Criterio actualizado correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       } else {
         await createCriterion.mutateAsync(formData)
+        toast.success('Criterio creado correctamente', {
+          duration: 3000,
+          position: 'top-center'
+        })
       }
 
       onSuccess?.()
@@ -80,10 +129,18 @@ export const CriterionForm = ({ open, onClose, criterion, onSuccess }: Criterion
         description: '',
         order: 0,
         componentId: selectedComponent?.id || '',
+        hasDirectEvidences: false,
         status: 'ACTIVE'
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving criterion:', error)
+
+      // Mostrar mensaje de error del servidor
+      const errorMessage = error?.response?.data?.message || error?.message || 'Error al guardar el criterio'
+      toast.error(errorMessage, {
+        duration: 5000,
+        position: 'top-center'
+      })
     }
   }
 
@@ -94,6 +151,7 @@ export const CriterionForm = ({ open, onClose, criterion, onSuccess }: Criterion
       description: '',
       order: 0,
       componentId: selectedComponent?.id || '',
+      hasDirectEvidences: false,
       status: 'ACTIVE'
     })
     onClose()
@@ -150,6 +208,24 @@ export const CriterionForm = ({ open, onClose, criterion, onSuccess }: Criterion
                 placeholder="Nombre del criterio"
                 required
               />
+            </div>
+
+            <div className="flex items-center space-x-2 border rounded-md p-3 bg-muted/50">
+              <Checkbox
+                id="hasDirectEvidences"
+                checked={formData.hasDirectEvidences}
+                onCheckedChange={(checked) =>
+                  setFormData(prev => ({ ...prev, hasDirectEvidences: checked === true }))
+                }
+              />
+              <div className="flex-1">
+                <Label htmlFor="hasDirectEvidences" className="cursor-pointer">
+                  Evidencias directas
+                </Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Si se activa, este criterio tendrá evidencias directas en lugar de estándares
+                </p>
+              </div>
             </div>
 
             <div className="grid gap-2">

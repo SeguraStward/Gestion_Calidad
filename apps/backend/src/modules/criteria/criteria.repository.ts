@@ -45,4 +45,14 @@ export class CriteriaRepository extends GenericPrismaRepository<
       include: { ...(include || {}), component: true, standards: true, evidences: true },
     });
   }
+
+  async existsByName(name: string, excludeId?: string): Promise<boolean> {
+    const criterion = await this.prisma.criterion.findFirst({
+      where: {
+        name,
+        ...(excludeId && { id: { not: excludeId } }),
+      },
+    });
+    return !!criterion;
+  }
 }

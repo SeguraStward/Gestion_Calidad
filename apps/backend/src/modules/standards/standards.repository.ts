@@ -18,15 +18,18 @@ export class StandardsRepository extends GenericPrismaRepository<
   }
 
   async findAll(page?: number, limit?: number, where?: any, orderBy?: any, include?: Record<string, any>) {
+    // Clean empty strings from where clause to avoid Prisma ObjectID errors
+    const cleanWhere = this.cleanWhereClause(where);
+
     const [data, total] = await Promise.all([
       this.prisma.standard.findMany({
-        where,
+        where: cleanWhere,
         orderBy: orderBy || { order: 'asc' },
         skip: page && limit ? (page - 1) * limit : undefined,
         take: limit,
         include: { ...(include || {}), criterion: true, evidences: true, standardEvidences: true },
       }),
-      this.prisma.standard.count({ where }),
+      this.prisma.standard.count({ where: cleanWhere }),
     ]);
     return {
       data,
@@ -39,10 +42,51 @@ export class StandardsRepository extends GenericPrismaRepository<
     };
   }
 
+  /**
+   * Remove empty strings and null values from where clause
+   * to avoid Prisma validation errors with ObjectIDs
+   */
+  private cleanWhereClause(where?: any): any {
+    if (!where) return where;
+
+    const cleaned: any = {};
+
+    for (const key in where) {
+      const value = where[key];
+
+      // Skip empty strings, null, and undefined
+      if (value === '' || value === null || value === undefined) {
+        continue;
+      }
+
+      // Recursively clean nested objects
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        const cleanedNested = this.cleanWhereClause(value);
+        if (Object.keys(cleanedNested).length > 0) {
+          cleaned[key] = cleanedNested;
+        }
+      } else {
+        cleaned[key] = value;
+      }
+    }
+
+    return Object.keys(cleaned).length > 0 ? cleaned : undefined;
+  }
+
   async findById(id: string, include?: Record<string, any>) {
     return this.prisma.standard.findUnique({
       where: { id },
       include: { ...(include || {}), criterion: true, evidences: true, standardEvidences: true },
     });
+  }
+
+  async existsByName(name: string, excludeId?: string): Promise<boolean> {
+    const standard = await this.prisma.standard.findFirst({
+      where: {
+        name,
+        ...(excludeId && { id: { not: excludeId } }),
+      },
+    });
+    return !!standard;
   }
 }

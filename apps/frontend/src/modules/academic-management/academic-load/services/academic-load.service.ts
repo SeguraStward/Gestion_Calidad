@@ -1,7 +1,13 @@
 import HttpClient from '@/lib/http-client'
 import { GenericService } from '@/services/base/generic.service'
 
-import type { AcademicLoadWithRelations, CreateAcademicLoadInput, UpdateAcademicLoadInput } from '../types/academic-load'
+import type {
+  AcademicLoadWithRelations,
+  BulkImportAcademicLoadsDto,
+  BulkImportAcademicLoadsResultDto,
+  CreateAcademicLoadInput,
+  UpdateAcademicLoadInput
+} from '../types/academic-load'
 
 // Define the include parameter for relations
 const FULL_INCLUDE = {
@@ -94,6 +100,15 @@ export class AcademicLoadService extends GenericService<
       }
     })
     return response.data
+  }
+
+  // Bulk import academic loads from Excel data
+  async bulkImportAcademicLoads(importDto: BulkImportAcademicLoadsDto): Promise<BulkImportAcademicLoadsResultDto> {
+    console.log('Bulk importing academic loads:', importDto) // Debug log
+    const response = await HttpClient.post(`/${this.resource}/bulk-import`, importDto)
+    const result = response.data?.data || response.data
+    console.log('Bulk import response:', result) // Debug log
+    return result
   }
 }
 

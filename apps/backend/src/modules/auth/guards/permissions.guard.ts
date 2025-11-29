@@ -102,6 +102,12 @@ export class PermissionsGuard implements CanActivate {
         throw new ForbiddenException('Role not found or not active');
       }
 
+      // IMPORTANTE: Si el rol es ADMINISTRADOR, permitir acceso total
+      if (activeRole.name === 'ADMINISTRADOR') {
+        this.logger.debug(`User ${user.email} has ADMINISTRADOR role - granting full access`);
+        return true;
+      }
+
       const resourceName = this.reflector.getAllAndOverride<string>(RESOURCE_NAME_KEY, [context.getClass()]);
 
       const processedPermissions = requiredPermissions.map((permission) => {

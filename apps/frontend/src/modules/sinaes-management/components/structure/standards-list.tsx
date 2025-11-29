@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { Button } from '@una-gc/ui/components'
 import { Card } from '@una-gc/ui/components'
-import { Plus, ChevronRight, Edit, Trash2 } from 'lucide-react'
+import { Plus, ChevronRight, PenLine, Trash2 } from 'lucide-react'
 import { useStandards, useDeleteStandard } from '../../services/standards.service'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 import { StandardForm } from '../forms/standard-form'
+import { formatCodeForDisplay } from '../../utils/code-utils'
 import type { Standard } from '../../types/standards.types'
 
 interface StandardsListProps {
@@ -14,7 +15,10 @@ interface StandardsListProps {
 }
 
 export const StandardsList = ({ criterionId }: StandardsListProps) => {
-  const { data: standards, isLoading, refetch } = useStandards({ criterionId })
+  const { data: standards, isLoading, refetch } = useStandards(
+    { criterionId },
+    { enabled: !!criterionId } // Solo ejecutar query si criterionId existe
+  )
   const { selectedStandard, selectStandard } = useSinaesNavigation()
   const deleteStandard = useDeleteStandard()
 
@@ -44,6 +48,11 @@ export const StandardsList = ({ criterionId }: StandardsListProps) => {
     setEditingStandard(null)
   }
 
+  // No cargar si no hay criterionId
+  if (!criterionId) {
+    return <div className="text-sm text-muted-foreground">Selecciona un criterio primero</div>
+  }
+
   if (isLoading) {
     return <div className="text-sm text-muted-foreground">Cargando estándares...</div>
   }
@@ -69,7 +78,7 @@ export const StandardsList = ({ criterionId }: StandardsListProps) => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{standard.code}</p>
+                  <p className="text-sm font-medium truncate">{formatCodeForDisplay(standard.code)}</p>
                   <p className="text-xs text-muted-foreground truncate">{standard.name}</p>
                 </div>
                 <div className="flex items-center space-x-1">
@@ -78,14 +87,16 @@ export const StandardsList = ({ criterionId }: StandardsListProps) => {
                     variant="ghost"
                     onClick={(e) => handleEdit(standard, e)}
                     className="h-6 w-6 p-0"
+                    title="Editar estándar"
                   >
-                    <Edit className="h-3 w-3" />
+                    <PenLine className="h-4 w-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={(e) => handleDelete(standard, e)}
                     className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                    title="Eliminar estándar"
                   >
                     <Trash2 className="h-3 w-3" />
                   </Button>

@@ -79,5 +79,38 @@ export type CreateAcademicLoadInput = Omit<
 // Type for updating an AcademicLoad.
 export type UpdateAcademicLoadInput = Partial<CreateAcademicLoadInput>
 
+// Bulk Import Types - matching backend DTOs
+export interface AcademicLoadRowDto {
+  numeroAula?: string // Column 1 - Optional
+  campus: string // Column 2
+  ciclo: string // Column 3 (Ciclo I, Ciclo II)
+  cupoDisponible: string // Column 4
+  cupoMatricula: string // Column 5
+  cupoMaximo: string // Column 6
+  curso: string // Column 7 - Course code
+  grupo: string // Column 8
+  horario?: string // Column 9 - Optional
+  nrc: string // Column 10
+  profesorCedula: string // Column 11
+}
+
+export interface BulkImportAcademicLoadsDto {
+  loads: AcademicLoadRowDto[]
+}
+
+export interface BulkImportAcademicLoadsResultDto {
+  created: number
+  updated: number
+  errors: number
+  errorDetails: string[]
+  loadIds: string[]
+  stats: {
+    professorsCreated: number
+    coursesFound: number
+    schedulesCreated: number
+    groupsFound: number
+  }
+}
+
 // Re-exporting simplified types for selection lists, if still needed
 export type { SimpleCourse as CourseSelectOption, SimpleProfessor as ProfessorSelectOption }

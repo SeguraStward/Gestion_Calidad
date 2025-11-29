@@ -23,6 +23,7 @@ import { ReportPageHeader } from '@/modules/final-reports/components/report-page
 // Import service hook and DTO type
 import { useSessionStore } from '@/modules/auth/sessionStore'
 import { useCreateFinalReport } from '@/modules/final-reports/service/final-reports.service'
+import { useQuestionsByStep } from '@/modules/final-reports/services/questions.service'
 import type { CreateFinalReportDto, FinalReportEvaluationFE, ReportType } from '@/modules/final-reports/types/final-reports.types' // Renamed TipoInforme, Added FinalReportEvaluationFE
 
 // Import translated mock data
@@ -54,6 +55,10 @@ export default function NewFinalReportPage() {
 
   const createFinalReportMutation = useCreateFinalReport()
   const currentProfessorId = useSessionStore((state) => state.user?.id)
+
+  // Load questions from database for steps 5 and 7
+  const { data: step5QuestionsDB } = useQuestionsByStep(5, reportType)
+  const { data: step7QuestionsDB } = useQuestionsByStep(7, reportType)
 
   // Calculate completed steps
   const completedSteps = [
@@ -235,6 +240,17 @@ export default function NewFinalReportPage() {
       toast.error('Faltan datos de pasos anteriores. Por favor, revise el formulario.')
       return
     }
+
+    // Verify that questions from DB are loaded
+    if (!step5QuestionsDB || step5QuestionsDB.length === 0) {
+      toast.error('Las preguntas del paso 5 no están cargadas. Por favor, espere un momento e intente nuevamente.')
+      return
+    }
+    if (!step7QuestionsDB || step7QuestionsDB.length === 0) {
+      toast.error('Las preguntas del paso 7 no están cargadas. Por favor, espere un momento e intente nuevamente.')
+      return
+    }
+
     const professorIdToUse = currentProfessorId
     if (!professorIdToUse) {
       toast.error('ID del profesor no disponible. No se puede crear el informe.')
@@ -271,29 +287,101 @@ export default function NewFinalReportPage() {
         }))
       },
       evaluation: [
-        ...step5Data.respuestas.map((r) => {
-          const questionDetails = step5QuestionsMock.find((p) => p.questionId === r.idPregunta)
-          return {
-            questionId: r.idPregunta,
-            question: questionDetails?.question || r.idPregunta,
-            questionGroup: questionDetails?.group || 'evaluacion_general_curso',
-            responseType: questionDetails?.responseType || ('TEXT' as const),
-            response: r.respuesta || undefined,
-            multipleResponse: [],
-            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
-            otherResponse: undefined
-          }
-        }),
+        // Filter out questions with empty responses for Step 5
+        ...step5Data.respuestas
+          .filter((r) => r.respuesta && r.respuesta.trim() !== '')
+          .map((r) => {
+            // Use questions from DB instead of mocks
+            const questionDetails = step5QuestionsDB?.find((p) => p.id === r.idPregunta)
+
+            console.log('💾 Saving Step 5 Question:', {
+              id: r.idPregunta,
+              hasQuestionDetails: !!questionDetails,
+              questionText: questionDetails?.question,
+              responseType: questionDetails?.responseType,
+              optionsCount: questionDetails?.options?.length || 0,
+              stepNumber: 5,
+              respuesta: r.respuesta
+            })
+
+            // For MULTISELECT/SELECCION_MULTIPLE, convert values to labels
+            let multipleResponseLabels: string[] = []
+            let responseToSave: string | undefined = undefined
+
+            // Check if it's a multiple selection question (using string comparison to avoid type issues)
+            const isMultiSelect = questionDetails?.responseType === 'MULTISELECT' ||
+              (questionDetails?.responseType as string) === 'SELECCION_MULTIPLE'
+
+            if (isMultiSelect) {
+              // Split the comma-separated values
+              const selectedValues = r.respuesta.split(',').map(v => v.trim()).filter(v => v)
+
+              // Convert each value to its label
+              multipleResponseLabels = selectedValues.map(value => {
+                const option = questionDetails?.options?.find(opt => opt.value === value)
+                const label = option?.label || value
+                console.log(`  - Step 5 MULTISELECT: Converting "${value}" → "${label}"`)
+                return label
+              })
+
+              console.log('💾 Step 5 Multiple Selection:', {
+                questionId: r.idPregunta,
+                selectedValues,
+                convertedToLabels: multipleResponseLabels
+              })
+            } else if (questionDetails?.responseType === 'SELECT' && questionDetails.options) {
+              // For SELECT fields, convert value to label before saving
+              const selectedOption = questionDetails.options.find((opt) => opt.value === r.respuesta)
+              responseToSave = selectedOption?.label || r.respuesta
+            } else {
+              // For TEXT and other types
+              responseToSave = r.respuesta
+            }
+
+            return {
+              questionId: r.idPregunta,
+              question: questionDetails?.question || r.idPregunta,
+              questionGroup: questionDetails?.group?.name || 'evaluacion_general_curso',
+              responseType: questionDetails?.responseType || ('TEXT' as const),
+              response: responseToSave || undefined,
+              multipleResponse: multipleResponseLabels, // ✅ Now contains labels for MULTISELECT
+              stepNumber: 5, // ✅ Explicitly set step number
+              options: questionDetails?.options?.map((op) => ({
+                value: op.value,
+                label: op.label,
+                category: op.category
+              })) || [],
+              otherResponse: undefined
+            }
+          }),
         ...step6Data.respuestasMultiples.map((r) => {
           const questionDetails = step6QuestionsPageMock.find((p) => p.questionId === r.idPregunta)
+
+          // Convert values to labels for multipleResponse
+          const multipleResponseLabels = (r.respuestasSeleccionadas || []).map(value => {
+            const option = questionDetails?.options?.find(opt => opt.value === value)
+            return option?.label || value // Use label if found, otherwise fallback to value
+          })
+
+          console.log('💾 Saving Step 6 Multiple Choice:', {
+            questionId: r.idPregunta,
+            selectedValues: r.respuestasSeleccionadas,
+            convertedToLabels: multipleResponseLabels
+          })
+
           return {
             questionId: r.idPregunta,
             question: questionDetails?.question || r.idPregunta,
             questionGroup: questionDetails?.group || 'herramientas',
             responseType: 'SELECCION_MULTIPLE' as const,
-            response: 'undefined',
-            multipleResponse: r.respuestasSeleccionadas || [],
-            options: questionDetails?.options?.map((op) => ({ value: op.value, label: op.label, category: op.category })) || [],
+            response: undefined,
+            multipleResponse: multipleResponseLabels, // ✅ Save labels instead of values
+            stepNumber: 6, // ✅ Explicitly set step number
+            options: questionDetails?.options?.map((op) => ({
+              value: op.value,
+              label: op.label,
+              category: op.category
+            })) || [],
             otherResponse: undefined
           }
         }),
@@ -309,34 +397,54 @@ export default function NewFinalReportPage() {
               responseType: 'TEXT' as const,
               response: step6Data.otrasHerramientas,
               multipleResponse: [],
+              stepNumber: 6, // ✅ Explicitly set step number
               options: [],
               otherResponse: undefined
             }
           ]
           : []),
-        ...currentStep7DataFromForm.respuestasRadio.map((r) => {
-          const questionDetails = step7QuestionsPageMock.find((p) => p.questionId === r.idPregunta)
-          const resolvedResponseType = questionDetails?.responseType || ('SELECCION_UNICA' as const)
+        // Filter out questions with empty responses for Step 7
+        ...currentStep7DataFromForm.respuestasRadio
+          .filter((r) => r.respuesta && r.respuesta.trim() !== '')
+          .map((r) => {
+            // Use questions from DB instead of mocks
+            const questionDetails = step7QuestionsDB?.find((p) => p.id === r.idPregunta)
+            const resolvedResponseType = questionDetails?.responseType || ('SELECT' as const)
 
-          const selectedOption = questionDetails?.options.find((opt) => opt.value === r.respuesta)
-          const responseValueToSend = selectedOption?.label || r.respuesta
+            console.log('💾 Saving Step 7 Question:', {
+              id: r.idPregunta,
+              hasQuestionDetails: !!questionDetails,
+              questionText: questionDetails?.question?.substring(0, 50),
+              responseType: resolvedResponseType,
+              optionsCount: questionDetails?.options?.length || 0,
+              response: r.respuesta,
+              stepNumber: 7
+            })
 
-          return {
-            questionId: r.idPregunta,
-            question: questionDetails?.question || r.idPregunta,
-            questionGroup: questionDetails?.group || 'percepcion_calidad',
-            responseType: resolvedResponseType,
-            response: resolvedResponseType === 'SELECCION_MULTIPLE' ? undefined : responseValueToSend,
-            multipleResponse: resolvedResponseType === 'SELECCION_MULTIPLE' ? (r.respuesta ? [responseValueToSend] : []) : [],
-            options: [],
-            otherResponse: undefined
-          }
-        })
+            const selectedOption = questionDetails?.options?.find((opt) => opt.value === r.respuesta)
+            const responseValueToSend = selectedOption?.label || r.respuesta
+
+            return {
+              questionId: r.idPregunta,
+              question: questionDetails?.question || r.idPregunta,
+              questionGroup: questionDetails?.group?.name || 'percepcion_calidad',
+              responseType: resolvedResponseType,
+              response: resolvedResponseType === 'MULTISELECT' ? undefined : responseValueToSend,
+              multipleResponse: resolvedResponseType === 'MULTISELECT' ? (r.respuesta ? [responseValueToSend] : []) : [],
+              stepNumber: 7, // ✅ Explicitly set step number
+              options: questionDetails?.options?.map((op) => ({
+                value: op.value,
+                label: op.label,
+                category: op.category
+              })) || [],
+              otherResponse: undefined
+            }
+          })
       ].map((item) => ({
         ...item,
         response: item.response === undefined ? undefined : item.response,
         multipleResponse: item.multipleResponse || [],
-        options: [],
+        options: item.options || [], // KEEP options, don't delete them!
         questionGroup: item.questionGroup || 'general',
         otherResponse: item.otherResponse === undefined ? undefined : item.otherResponse
       })) as unknown as FinalReportEvaluationFE[]

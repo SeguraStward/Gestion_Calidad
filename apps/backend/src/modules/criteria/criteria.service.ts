@@ -1,6 +1,6 @@
 import { GenericService } from '@core/common/interfaces/generic.service';
 import { DtoValidator } from '@core/common/dto-validator';
-import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
 
 import { CriterionDto } from './dtos/criterion.dto';
 import { CreateCriterionDto } from './dtos/create-criterion.dto';
@@ -22,5 +22,30 @@ export class CriteriaService extends GenericService<Criterion, CriterionDto, Cre
     protected readonly dtoValidator: DtoValidator,
   ) {
     super(criteriaRepository, CriterionDto);
+  }
+
+  async save(dto: CreateCriterionDto): Promise<CriterionDto> {
+    // Validate unique name
+    const exists = await this.criteriaRepository.existsByName(dto.name);
+    if (exists) {
+      throw new ConflictException(`Ya existe un criterio con el nombre "${dto.name}"`);
+    }
+    return super.save(dto);
+  }
+
+  async update(id: string, dto: UpdateCriterionDto): Promise<CriterionDto> {
+    // Validate unique name (excluding current entity)
+    if (dto.name) {
+      const exists = await this.criteriaRepository.existsByName(dto.name, id);
+      if (exists) {
+        throw new ConflictException(`Ya existe un criterio con el nombre "${dto.name}"`);
+      }
+    }
+    return super.update(id, dto);
+  }
+
+  async findByComponent(componentId: string): Promise<CriterionDto[]> {
+    const criteria = await this.criteriaRepository.findAll(1, 100, { componentId });
+    return criteria.data;
   }
 }

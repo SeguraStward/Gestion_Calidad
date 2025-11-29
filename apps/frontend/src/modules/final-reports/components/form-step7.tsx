@@ -20,19 +20,13 @@ import type { Question, QuestionOption, QuestionGroupWithQuestions } from '@/mod
 
 const radioResponseSchema = z.object({
   idPregunta: z.string(), // This will map to questionId from the mock
-  respuesta: z.string().min(1, 'Debe seleccionar una opción.') // User-facing: Spanish
+  respuesta: z.string().min(1, 'Debe seleccionar una opción.').refine((val) => val.trim().length > 0, {
+    message: 'Debe seleccionar una opción.'
+  })
 })
 
 export const step7Schema = z.object({
-  respuestasRadio: z
-    .array(radioResponseSchema)
-    // Este refine asegura que cada respuesta en el array (que corresponde a una pregunta mostrada)
-    // tenga un valor seleccionado.
-    .refine((respuestas) => respuestas.every((r) => r.respuesta.trim() !== ''), {
-      message: 'Debe seleccionar una opción para todas las preguntas mostradas.',
-      // Adjuntar a 'respuestasRadio' para que se muestre en un lugar general del paso.
-      path: ['respuestasRadio']
-    })
+  respuestasRadio: z.array(radioResponseSchema)
 })
 
 export type Step7FormData = z.infer<typeof step7Schema>
@@ -48,35 +42,14 @@ interface Step7FormProps {
   isEditing?: boolean
 }
 
-// Define getOptionColors - MODIFIED to match form-step7-edit.tsx styling
-// This assumes option values '1' through '5' map semantically as:
-// '5': "Muy de acuerdo" (most positive)
-// '4': "De acuerdo"
-// '3': "Neutral"
-// '2': "En desacuerdo"
-// '1': "Muy en desacuerdo" (most negative)
+// Neutral color function for radio options
 function getOptionColors(optionValue: string, isSelected: boolean): string {
   if (!isSelected) {
-    // Consistent unselected style (matches form-step7-edit.tsx's unselected style)
-    return 'border-border/30 bg-transparent hover:border-border/50 hover:bg-muted/20 dark:hover:bg-muted/10'
+    return 'bg-background border-border hover:bg-muted/50'
   }
-  // Color mapping based on value, similar to form-step7-edit.tsx
-  // Using a similar palette but with the Tailwind CSS color names from the original form-step7.tsx for simplicity,
-  // adjust if you want the exact emerald/amber etc. colors from form-step7-edit.tsx
-  switch (optionValue) {
-    case '5': // "Muy de acuerdo"
-      return 'border-green-500/80 bg-green-500/25 text-green-700 hover:bg-green-500/30 dark:border-green-600/80 dark:bg-green-600/30 dark:text-green-300'
-    case '4': // "De acuerdo"
-      return 'border-lime-500/80 bg-lime-500/25 text-lime-700 hover:bg-lime-500/30 dark:border-lime-600/80 dark:bg-lime-600/30 dark:text-lime-300'
-    case '3': // "Neutral"
-      return 'border-yellow-500/80 bg-yellow-500/25 text-yellow-700 hover:bg-yellow-500/30 dark:border-yellow-600/80 dark:bg-yellow-600/30 dark:text-yellow-300'
-    case '2': // "En desacuerdo"
-      return 'border-orange-500/80 bg-orange-500/25 text-orange-700 hover:bg-orange-500/30 dark:border-orange-600/80 dark:bg-orange-600/30 dark:text-orange-300'
-    case '1': // "Muy en desacuerdo"
-      return 'border-red-500/80 bg-red-500/25 text-red-700 hover:bg-red-500/30 dark:border-red-600/80 dark:bg-red-600/30 dark:text-red-300'
-    default: // Fallback, though ideally all values are covered
-      return 'border-slate-500/80 bg-slate-500/25 text-slate-700 hover:bg-slate-500/30 dark:border-slate-600/80 dark:bg-slate-600/30 dark:text-slate-300'
-  }
+
+  // Selected state - neutral blue/primary color
+  return 'bg-primary/10 border-primary hover:bg-primary/20'
 }
 
 export function Step7Form({
@@ -189,7 +162,6 @@ export function Step7Form({
                     {index + 1}
                   </span>
                   <span className="flex-1">{question.question}</span>
-                  {question.isRequired && <span className="text-destructive ml-1">*</span>}
                 </span>
                 {question.description && (
                   <span className="block text-xs text-muted-foreground mt-1 ml-8">
@@ -232,7 +204,6 @@ export function Step7Form({
                     })}
                   </RadioGroup>
                 </FormControl>
-                <FormMessage className="text-xs mt-0.5 sm:mt-1 text-destructive" />
                 <input
                   type="hidden"
                   {...register(`respuestasRadio.${index}.idPregunta`)}
@@ -259,7 +230,6 @@ export function Step7Form({
                   {index + 1}
                 </span>
                 <span className="flex-1">{question.question}</span>
-                {question.isRequired && <span className="text-destructive ml-1">*</span>}
               </span>
               {question.description && (
                 <span className="block text-xs text-muted-foreground mt-1 ml-8">
@@ -353,7 +323,6 @@ export function Step7Form({
                   </div>
                 </FormControl>
               )}
-              <FormMessage className="text-xs mt-0.5 sm:mt-1 text-destructive" />
               <input
                 type="hidden"
                 {...register(`respuestasRadio.${index}.idPregunta`)}
@@ -457,9 +426,11 @@ export function Step7Form({
                         )
                         if (globalQuestionIndex === -1) return null
 
+                        const fieldError = formState.errors.respuestasRadio?.[globalQuestionIndex]?.respuesta
+
                         return (
                           <div key={questionItem.id}>
-                            <div className="py-4 px-1">
+                            <div className={`py-4 px-1 rounded-lg transition-colors ${fieldError ? 'bg-destructive/5 border-2 border-destructive/50' : ''}`}>
                               {renderQuestionField(questionItem, globalQuestionIndex)}
                             </div>
                             {questionIndex < questionsInGroup.length - 1 && <Separator className="opacity-20 my-1" />}
