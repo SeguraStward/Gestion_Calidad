@@ -133,6 +133,9 @@ export function useRoleSelection(): UseRoleSelectionReturn {
 
       // Small delay for UX before redirect
       await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      // Redirect to home
+      router.push('/')
     } catch (error) {
       console.error('Error setting active role:', error)
       setShowTransition(false)

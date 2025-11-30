@@ -12,6 +12,8 @@ function isPublicPath(pathname: string): boolean {
     '/auth/login',
     '/auth/register',
     '/auth/callback',
+    '/auth/select-role',
+    '/auth/no-role',
     '/auth/error',
     '/favicon.ico',
     '/robots.txt',

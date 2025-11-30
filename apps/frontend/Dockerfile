@@ -42,6 +42,9 @@ WORKDIR /app
 COPY --from=dev-deps /app/ .
 COPY --from=pruner /app/out/full/ .
 COPY turbo.json* ./
+# Copy .env file to make NEXT_PUBLIC variables available during build
+# Try to copy .env, if it doesn't exist copy .env.production
+COPY apps/frontend/.env* ./apps/frontend/
 RUN pnpm turbo run build --filter=@una-gc/frontend...
 
 # Uncomment and use build args to enable remote caching
@@ -60,8 +63,8 @@ RUN adduser --system --uid 1001 nextjs
 
 # Create public directory before switching users
 RUN mkdir -p ./apps/frontend/public && \
-    echo '{"name": "frontend", "short_name": "FE", "start_url": "/", "display": "standalone"}' > ./apps/frontend/public/manifest.json && \
-    echo 'User-agent: *\nDisallow:' > ./apps/frontend/public/robots.txt
+  echo '{"name": "frontend", "short_name": "FE", "start_url": "/", "display": "standalone"}' > ./apps/frontend/public/manifest.json && \
+  echo 'User-agent: *\nDisallow:' > ./apps/frontend/public/robots.txt
 
 USER nextjs
 
@@ -70,11 +73,11 @@ COPY --from=prod-deps /app/ .
 COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/standalone/apps/frontend ./apps/frontend
 COPY --from=builder --chown=nextjs:nodejs /app/apps/frontend/.next/static        ./apps/frontend/.next/static
 
-ENV PORT=80
+ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 ENV NODE_ENV=production
 
-EXPOSE 80
+EXPOSE 3000
 
 CMD ["node", "apps/frontend/server.js"]
