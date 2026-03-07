@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GenericService } from '@core/common/interfaces/generic.service';
 import { DtoValidator } from '@core/common/dto-validator';
+import { PrismaService } from '@src/prisma/prisma.service';
 
 import { CampusJourneyTimeAllocationsRepository } from './campus-journey-time-allocations.repository';
 import { CampusAllocationDto } from './dtos/campus-allocation.dto';
@@ -27,8 +28,51 @@ export class CampusJourneyTimeAllocationsService extends GenericService<
   constructor(
     protected readonly repo: CampusJourneyTimeAllocationsRepository,
     protected readonly dtoValidator: DtoValidator,
+    private readonly prisma: PrismaService,
   ) {
     super(repo, CampusAllocationDto);
+  }
+
+  /**
+   * 🔍 Override findAll para incluir relaciones pobladas
+   */
+  async findAll(page = 1, limit = 10, where: any = {}, orderBy?: any, include?: any): Promise<any> {
+    this.logger.debug('🎯 Custom findAll() called with includes');
+
+    const allocations = await this.prisma.campusJourneyTimeAllocation.findMany({
+      include: {
+        campus: true,
+        academicCycle: true,
+        curricularMesh: {
+          include: {
+            career: true,
+          },
+        },
+      },
+    });
+
+    const mapped = allocations.map((allocation) => ({
+      id: allocation.id,
+      campusName: allocation.campus?.name || 'Sin campus',
+      campusId: allocation.campusId,
+      cycleName: allocation.academicCycle?.name || 'Sin ciclo',
+      academicCycleId: allocation.academicCycleId,
+      careerName: allocation.curricularMesh?.career?.name || 'Sin carrera',
+      careerId: allocation.curricularMesh?.career?.id,
+      totalAllocatedTime: allocation.allocatedJourneyTime,
+      additionalTime: allocation.additionalJourneyTime || 0,
+      availableTime: allocation.availableJourneyTime || 0,
+      status: allocation.status,
+      createdAt: allocation.createdAt,
+      updatedAt: allocation.updatedAt,
+    }));
+
+    this.logger.debug(`🎯 Returning ${mapped.length} campus allocations with populated data`);
+    return { data: mapped as any, meta: { limit, page, total: mapped.length } };
+  }
+
+  async findByIdRaw(id: string) {
+    return this.repo.findById(id);
   }
 
   // Recalcula availableJourneyTime = allocatedJourneyTime + additionalTime - baseJourneyTimeConsumed

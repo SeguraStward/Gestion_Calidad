@@ -62,6 +62,7 @@ model CampusJourneyTimeAllocation {
   // Relaciones
   professorAssignments  ProfessorAssignment[]  @relation("AllocationAssignments")
   institutionalProjects InstitutionalProject[] @relation("AllocationProjects")
+  repitencias           Repitencia[]           @relation("AllocationRepitencias")
 
   // Campos de auditoría
   createdAt DateTime @default(now())

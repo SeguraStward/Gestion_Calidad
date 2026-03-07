@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GenericService } from '@core/common/interfaces/generic.service';
 import { DtoValidator } from '@core/common/dto-validator';
+import { PrismaService } from '@src/prisma/prisma.service';
 
 import { AnnualJourneyTimeAllocationsRepository } from './annual-journey-time-allocations.repository';
 import { AnnualAllocationDto } from './dtos/annual-allocation.dto';
@@ -26,9 +27,51 @@ export class AnnualJourneyTimeAllocationsService extends GenericService<
   constructor(
     protected readonly repo: AnnualJourneyTimeAllocationsRepository,
     protected readonly dtoValidator: DtoValidator,
+    private readonly prisma: PrismaService,
   ) {
     // OJO: tu GenericService espera (repository, DtoClass)
     super(repo, AnnualAllocationDto);
+  }
+
+  /**
+   * 🔍 Override findAll para incluir datos poblados
+   */
+  async findAll(page = 1, limit = 10, where: any = {}, orderBy?: any, include?: any): Promise<any> {
+    this.logger.debug('🎯 Custom findAll() called for AnnualAllocations');
+
+    const allocations = await this.prisma.annualJourneyTimeAllocation.findMany({
+      orderBy: { year: 'desc' },
+    });
+
+    const mapped = allocations.map((allocation) => ({
+      id: allocation.id,
+      year: allocation.year,
+      totalJourneyTime: allocation.totalJourneyTime,
+      status: allocation.status,
+      createdAt: allocation.createdAt,
+      updatedAt: allocation.updatedAt,
+    }));
+
+    this.logger.debug(`🎯 Returning ${mapped.length} annual allocations`);
+    return { data: mapped as any, meta: { limit, page, total: mapped.length } };
+  }
+
+  /**
+   * Obtener asignación activa
+   */
+  async getActive() {
+    this.logger.log('Buscando asignación anual activa');
+
+    const result = await this.repo.findAll();
+    const active = result.data.find((a: any) => a.status === 'ACTIVE');
+
+    if (!active) {
+      this.logger.warn('No se encontró asignación activa');
+      return null;
+    }
+
+    this.logger.log(`Asignación activa encontrada: ${active.id} (Año ${active.year})`);
+    return active;
   }
 
   /**

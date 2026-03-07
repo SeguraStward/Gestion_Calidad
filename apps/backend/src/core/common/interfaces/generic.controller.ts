@@ -46,15 +46,36 @@ export abstract class GenericController<D, C, U = Partial<C>> {
   ) {
     const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
     const { page: _p, limit: _l, orderBy: _o, include: _i, ...filters } = where;
+
+    // Transformar valores numéricos que vienen como strings
+    const transformedFilters = this.transformNumericFilters(filters);
+
     const prismaInclude = buildPrismaInclude(includeQueryParam);
 
     return this.service.findAll(
       Number(page),
       Number(limit),
-      Object.keys(filters).length ? filters : undefined,
+      Object.keys(transformedFilters).length ? transformedFilters : undefined,
       parsedOrderBy,
       prismaInclude,
     );
+  }
+
+  /**
+   * Helper para transformar strings numéricos en números
+   */
+  protected transformNumericFilters(filters: Record<string, any>): Record<string, any> {
+    const transformed: Record<string, any> = {};
+
+    for (const [key, value] of Object.entries(filters)) {
+      if (typeof value === 'string' && !isNaN(Number(value)) && value.trim() !== '') {
+        transformed[key] = Number(value);
+      } else {
+        transformed[key] = value;
+      }
+    }
+
+    return transformed;
   }
 
   @Get('count')

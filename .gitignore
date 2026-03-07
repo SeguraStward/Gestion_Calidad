@@ -80,3 +80,15 @@ docs/Proyecto_ISII/chapters/ch11.tex
 docs/Proyecto_ISII/TFM.log
 docs/Cronograma (2).xlsx
 DOCUMENTACION_CORREGIDA_RESUMEN.md
+ANALISIS_ACTUALIZADO.md
+apps/backend/TEST_ENDPOINTS.md
+EJEMPLO_STORE.md
+ENDPOINTS_TIEMPOS_JORNADA.md
+MODULO_COMPLETADO_SUMMARY.md
+packages/database/prisma/seed-complete.ts
+packages/database/prisma/seed-my-module.ts
+packages/database/prisma/seed-simple.ts
+packages/database/prisma/seed-times-module.ts
+pnpm-lock.yaml
+test-assignment.ps1
+test-endpoints.ps1

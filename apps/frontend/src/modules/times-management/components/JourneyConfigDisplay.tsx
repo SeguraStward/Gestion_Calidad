@@ -128,8 +128,9 @@ export default function JourneyConfigDisplay({ config, loading, onUploadConfig, 
         </div>
       </div>
 
-      {/* Upload Section (Admin only) */}
-      {canEdit && onUploadConfig && (
+      {/* Upload Section - TEMPORARILY DISABLED */}
+      {/* TODO: Re-enable after validation is completed */}
+      {false && canEdit && onUploadConfig && (
         <div className="border-t pt-6">
           <div className="flex items-start gap-4">
             <Upload className="h-5 w-5 text-gray-600 mt-1" />

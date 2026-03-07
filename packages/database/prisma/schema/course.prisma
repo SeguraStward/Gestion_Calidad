@@ -25,6 +25,7 @@ model Course {
 
   // Relations with Journey Time Management - Optimized
   meshCourses CurricularMeshCourse[] @relation("CourseMeshes")
+  repitencias Repitencia[]           @relation("CourseRepitencias")
 
   // Audit fields
   createdAt DateTime @default(now())

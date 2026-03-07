@@ -74,11 +74,15 @@ export class InstitutionalProjectsRepository extends GenericPrismaRepository<
     const projects = await this.prismaService.institutionalProject.findMany({
       where: {
         status: 'ACTIVE',
-        projectStatus: { in: ['APPROVED', 'ACTIVE'] },
       },
       include: {
         director: { select: { id: true, fullName: true } },
-        professorAssignments: true,
+        professorAssignments: {
+          select: {
+            id: true,
+            calculatedJourneyTime: true,
+          },
+        },
       },
     });
 

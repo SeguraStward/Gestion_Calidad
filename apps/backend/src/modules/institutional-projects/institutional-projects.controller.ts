@@ -14,8 +14,17 @@ export class InstitutionalProjectsController {
 
   @Post()
   @ApiOperation({ summary: 'Create institutional project' })
-  create(@Body() dto: CreateInstitutionalProjectDto) {
-    return this.service.create(dto);
+  async create(@Body() dto: CreateInstitutionalProjectDto) {
+    try {
+      this.logger.debug('📥 Received DTO:', JSON.stringify(dto, null, 2));
+      const result = await this.service.create(dto);
+      this.logger.debug('✅ Created successfully:', Array.isArray(result) ? 'bulk' : (result as any)?.id);
+      return result;
+    } catch (error: any) {
+      this.logger.error('❌ Error creating institutional project:', error?.message || error);
+      this.logger.error('Stack:', error?.stack);
+      throw error;
+    }
   }
 
   @Get()
@@ -24,22 +33,11 @@ export class InstitutionalProjectsController {
     return this.service.findAll();
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get institutional project by ID' })
-  findById(@Param('id') id: string) {
-    return this.service.findById(id);
-  }
-
-  @Put(':id')
-  @ApiOperation({ summary: 'Update institutional project' })
-  update(@Param('id') id: string, @Body() dto: UpdateInstitutionalProjectDto) {
-    return this.service.update(id, dto);
-  }
-
-  @Delete(':id')
-  @ApiOperation({ summary: 'Delete institutional project' })
-  delete(@Param('id') id: string) {
-    return this.service.delete(id);
+  @Get('with-available-time')
+  @ApiOperation({ summary: 'Get projects with available time for assignment' })
+  @ApiResponse({ status: 200, description: 'Projects with available time retrieved successfully' })
+  async findWithAvailableTime() {
+    return this.service.findWithAvailableTime();
   }
 
   @Get('by-campus-allocation/:campusAllocationId')
@@ -66,10 +64,9 @@ export class InstitutionalProjectsController {
     return this.service.calculateTotalAssignedTime(campusAllocationId);
   }
 
-  @Get('with-available-time')
-  @ApiOperation({ summary: 'Get projects with available time for assignment' })
-  @ApiResponse({ status: 200, description: 'Projects with available time retrieved successfully' })
-  async findWithAvailableTime() {
-    return this.service.findWithAvailableTime();
+  @Get(':id')
+  @ApiOperation({ summary: 'Get institutional project by ID' })
+  findById(@Param('id') id: string) {
+    return this.service.findById(id);
   }
 }

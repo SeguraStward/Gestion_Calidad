@@ -156,7 +156,7 @@ export default function JourneyCalculator({ config }: JourneyCalculatorProps) {
       {/* Help Text */}
       {config && !result && !error && (
         <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
-          <p className="font-medium mb-2">💡 Rangos configurados:</p>
+          <p className="font-medium mb-2"> Rangos configurados:</p>
           <ul className="space-y-1 ml-4">
             <li>
               • ¼ Tiempo: {config.quarterTimeMinHours} - {config.quarterTimeMaxHours} horas

@@ -61,7 +61,21 @@ export default function ExternalProviderForm({
 
   const handleSubmit = async (data: CreateExternalProviderDto) => {
     try {
-      await onSubmit(data)
+      console.log('📋 Form - Raw data from form:', data)
+      console.log('📋 Form - providedJourneyTime:', data.providedJourneyTime, typeof data.providedJourneyTime)
+
+      // Asegurar que providedJourneyTime sea un número
+      const sanitizedData = {
+        ...data,
+        providedJourneyTime:
+          typeof data.providedJourneyTime === 'number'
+            ? data.providedJourneyTime
+            : parseFloat(String(data.providedJourneyTime || 0))
+      }
+
+      console.log('📋 Form - Sanitized data:', sanitizedData)
+
+      await onSubmit(sanitizedData)
       if (!provider) {
         form.reset()
       }

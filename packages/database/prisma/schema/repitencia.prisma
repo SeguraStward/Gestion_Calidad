@@ -1,0 +1,54 @@
+// ============================================================
+//  📚 Repitencias (Cursos con repitencia)
+//  Modelo para registrar cursos que requieren tiempo adicional
+// ============================================================
+
+model Repitencia {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  // Relaciones
+  campusId           String @db.ObjectId
+  curricularMeshId   String @db.ObjectId
+  courseId           String @db.ObjectId
+  academicCycleId    String @db.ObjectId
+  campusAllocationId String @db.ObjectId
+
+  campus           Campus                      @relation("CampusRepitencias", fields: [campusId], references: [id])
+  curricularMesh   CurricularMesh              @relation("MeshRepitencias", fields: [curricularMeshId], references: [id])
+  course           Course                      @relation("CourseRepitencias", fields: [courseId], references: [id])
+  academicCycle    AcademicCycle               @relation("CycleRepitencias", fields: [academicCycleId], references: [id])
+  campusAllocation CampusJourneyTimeAllocation @relation("AllocationRepitencias", fields: [campusAllocationId], references: [id])
+
+  // Información del curso
+  courseName        String
+  courseCode        String
+  careerName        String
+  additionalHours   Float // Horas adicionales requeridas por repitencia
+  studentsCount     Int?  // Cantidad de estudiantes repitiendo
+  reason            String? // Razón de la repitencia
+  semester          String? // Semestre en que se dicta la repitencia
+
+  // Estado
+  status RepitenciaStatus @default(PENDING)
+
+  // Campos de auditoría
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@index([campusId])
+  @@index([courseId])
+  @@index([academicCycleId])
+  @@index([campusAllocationId])
+  @@map("repitencias")
+}
+
+enum RepitenciaStatus {
+  PENDING   // Pendiente de asignación
+  APPROVED  // Aprobada para tiempo adicional
+  ASSIGNED  // Tiempo asignado
+  COMPLETED // Completada
+  CANCELLED // Cancelada
+}

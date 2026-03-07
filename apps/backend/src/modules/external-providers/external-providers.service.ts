@@ -8,7 +8,38 @@ export class ExternalProvidersService {
   constructor(private readonly repo: ExternalProvidersRepository) {}
 
   async create(dto: CreateExternalProviderDto) {
-    return this.repo.save(dto as any);
+    // 🔄 Transformar el DTO para Prisma con la estructura de conexión correcta
+    const { annualAllocationId, startDate, endDate, ...rest } = dto;
+
+    console.log('🔍 Service - Original DTO:', JSON.stringify(dto, null, 2));
+    console.log('🔍 Service - annualAllocationId:', annualAllocationId);
+
+    // 📅 Transformar fechas string a DateTime ISO-8601
+    const prismaData: any = {
+      ...rest,
+      annualAllocation: {
+        connect: { id: annualAllocationId },
+      },
+    };
+
+    // Solo agregar fechas si existen, convirtiéndolas a ISO-8601
+    if (startDate) {
+      prismaData.startDate = new Date(startDate).toISOString();
+    }
+    if (endDate) {
+      prismaData.endDate = new Date(endDate).toISOString();
+    }
+
+    console.log('🔍 Service - Transformed Prisma Data:', JSON.stringify(prismaData, null, 2));
+
+    try {
+      const result = await this.repo.save(prismaData as any);
+      console.log('✅ Service - Saved successfully:', Array.isArray(result) ? 'bulk' : (result as any)?.id);
+      return result;
+    } catch (error: any) {
+      console.error('❌ Service - Error saving:', error?.message || error);
+      throw error;
+    }
   }
 
   async findAll(page?: number, limit?: number) {

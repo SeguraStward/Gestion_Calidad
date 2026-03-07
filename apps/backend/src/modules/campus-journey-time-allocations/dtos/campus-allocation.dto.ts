@@ -6,13 +6,13 @@ import { AllocationStatus } from '@una-gc/database/prisma/generated/client';
 export class CampusAllocationDto {
   @ApiPropertyOptional() @IsOptional() @IsString() id?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() annualAllocationId?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() cycleId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() academicCycleId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() campusId?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() meshId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() curricularMeshId?: string;
 
   @ApiPropertyOptional() @IsOptional() @IsNumber() allocatedJourneyTime?: number;
   @ApiPropertyOptional() @IsOptional() @IsNumber() baseJourneyTimeConsumed?: number;
-  @ApiPropertyOptional() @IsOptional() @IsNumber() additionalTime?: number;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() additionalJourneyTime?: number;
   @ApiPropertyOptional() @IsOptional() @IsNumber() availableJourneyTime?: number;
 
   @ApiPropertyOptional() @IsOptional() @IsEnum(AllocationStatus) status?: AllocationStatus;
