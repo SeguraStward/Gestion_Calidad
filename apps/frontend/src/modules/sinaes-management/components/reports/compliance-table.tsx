@@ -98,7 +98,7 @@ export function ComplianceTable({ dimensions }: ComplianceTableProps) {
             </TableHeader>
             <TableBody>
               {dimensions.map((dimension) => (
-                <React.Fragment key={dimension.dimensionId}>
+                <React.Fragment key={dimension.id}>
                   {/* Fila de Dimensión */}
                   <TableRow className="bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/40 border-b-2 border-blue-300 dark:border-blue-700">
                     <TableCell className="py-2">
@@ -106,9 +106,9 @@ export function ComplianceTable({ dimensions }: ComplianceTableProps) {
                         variant="ghost"
                         size="sm"
                         className="h-7 p-1 hover:bg-blue-200/50 dark:hover:bg-blue-800/50"
-                        onClick={() => toggleDimension(dimension.dimensionId)}
+                        onClick={() => toggleDimension(dimension.id)}
                       >
-                        {expandedDimensions.has(dimension.dimensionId) ? (
+                        {expandedDimensions.has(dimension.id) ? (
                           <ChevronDown className="mr-1 h-3.5 w-3.5" />
                         ) : (
                           <ChevronRight className="mr-1 h-3.5 w-3.5" />
@@ -121,9 +121,9 @@ export function ComplianceTable({ dimensions }: ComplianceTableProps) {
                       {dimension.evidencesWithDocuments}
                     </TableCell>
                     <TableCell
-                      className={`text-center py-2 text-sm font-medium ${dimension.evidencesMissing > 0 ? 'text-red-700 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`}
+                      className={`text-center py-2 text-sm font-medium ${(dimension.totalEvidences - dimension.evidencesWithDocuments) > 0 ? 'text-red-700 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`}
                     >
-                      {dimension.evidencesMissing}
+                      {dimension.totalEvidences - dimension.evidencesWithDocuments}
                     </TableCell>
                     <TableCell className="text-center py-2 text-sm">{dimension.totalDocuments}</TableCell>
                     <TableCell className={`text-center py-2 text-sm font-bold ${getComplianceColor(dimension.compliancePercentage)}`}>
@@ -137,18 +137,18 @@ export function ComplianceTable({ dimensions }: ComplianceTableProps) {
                   </TableRow>
 
                   {/* Filas de Componentes */}
-                  {expandedDimensions.has(dimension.dimensionId) &&
+                  {expandedDimensions.has(dimension.id) &&
                     dimension.components.map((component) => (
-                      <React.Fragment key={component.componentId}>
+                      <React.Fragment key={component.id}>
                         <TableRow className="bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-800/30 border-b border-purple-200 dark:border-purple-700">
                           <TableCell className="pl-8 py-2">
                             <Button
                               variant="ghost"
                               size="sm"
                               className="h-6 p-1 hover:bg-purple-100/70 dark:hover:bg-purple-800/50"
-                              onClick={() => toggleComponent(component.componentId)}
+                              onClick={() => toggleComponent(component.id)}
                             >
-                              {expandedComponents.has(component.componentId) ? (
+                              {expandedComponents.has(component.id) ? (
                                 <ChevronDown className="mr-1 h-3 w-3" />
                               ) : (
                                 <ChevronRight className="mr-1 h-3 w-3" />
@@ -161,34 +161,34 @@ export function ComplianceTable({ dimensions }: ComplianceTableProps) {
                             {component.evidencesWithDocuments}
                           </TableCell>
                           <TableCell
-                            className={`text-center py-2 text-sm font-medium ${component.evidencesMissing > 0 ? 'text-red-700 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`}
+                            className={`text-center py-2 text-sm font-medium ${(component.totalEvidences - component.evidencesWithDocuments) > 0 ? 'text-red-700 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`}
                           >
-                            {component.evidencesMissing}
+                            {component.totalEvidences - component.evidencesWithDocuments}
                           </TableCell>
                           <TableCell className="text-center py-2 text-sm">{component.totalDocuments}</TableCell>
                           <TableCell className={`text-center py-2 text-sm font-bold ${getComplianceColor(component.compliancePercentage)}`}>
                             {component.compliancePercentage.toFixed(1)}%
                           </TableCell>
                           <TableCell className="text-center py-2">
-                            <Badge variant="outline" className={`text-xs ${getCriterionStatusClass(component.complianceStatus === 'EXCELLENT' || component.complianceStatus === 'GOOD' ? 'COMPLETE' : component.complianceStatus === 'FAIR' ? 'PARTIAL' : 'MISSING')}`}>
-                              {component.compliancePercentage >= 90 ? 'Excelente' : component.compliancePercentage >= 70 ? 'Bueno' : component.compliancePercentage >= 50 ? 'Regular' : 'Deficiente'}
+                            <Badge variant="outline" className={`text-xs ${getCriterionStatusClass(component.complianceStatus)}`}>
+                              {getCriterionStatusLabel(component.complianceStatus)}
                             </Badge>
                           </TableCell>
                         </TableRow>
 
                         {/* Filas de Criterios */}
-                        {expandedComponents.has(component.componentId) &&
+                        {expandedComponents.has(component.id) &&
                           component.criteria.map((criterion) => (
-                            <React.Fragment key={criterion.criterionId}>
+                            <React.Fragment key={criterion.id}>
                               <TableRow className="bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                                 <TableCell className="pl-16 py-1.5">
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     className="h-5 p-1 hover:bg-gray-100/70 dark:hover:bg-gray-700/50"
-                                    onClick={() => toggleCriterion(criterion.criterionId)}
+                                    onClick={() => toggleCriterion(criterion.id)}
                                   >
-                                    {expandedCriteria.has(criterion.criterionId) ? (
+                                    {expandedCriteria.has(criterion.id) ? (
                                       <ChevronDown className="mr-1 h-2.5 w-2.5" />
                                     ) : (
                                       <ChevronRight className="mr-1 h-2.5 w-2.5" />
@@ -210,16 +210,16 @@ export function ComplianceTable({ dimensions }: ComplianceTableProps) {
                                   {criterion.compliancePercentage.toFixed(1)}%
                                 </TableCell>
                                 <TableCell className="text-center py-1.5">
-                                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${getCriterionStatusClass(criterion.status)}`}>
-                                    {getCriterionStatusLabel(criterion.status)}
+                                  <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${getCriterionStatusClass(criterion.complianceStatus)}`}>
+                                    {getCriterionStatusLabel(criterion.complianceStatus)}
                                   </Badge>
                                 </TableCell>
                               </TableRow>
 
                               {/* Filas de Evidencias */}
-                              {expandedCriteria.has(criterion.criterionId) &&
+                              {expandedCriteria.has(criterion.id) &&
                                 criterion.evidences.map((evidence) => (
-                                  <TableRow key={evidence.evidenceId} className="bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-800/30">
+                                  <TableRow key={evidence.id} className="bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-800/30">
                                     <TableCell className="pl-24 py-1.5 text-muted-foreground">
                                       <span className="text-xs">📄 {evidence.name}</span>
                                     </TableCell>

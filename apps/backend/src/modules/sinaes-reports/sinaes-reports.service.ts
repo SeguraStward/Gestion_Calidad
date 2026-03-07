@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@src/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import {
   ComplianceReportDto,
   DimensionComplianceDto,
@@ -9,6 +10,51 @@ import {
   ComplianceStatisticsDto,
 } from './dtos/compliance-report.dto';
 import { GenerateReportFiltersDto } from './dtos/generate-report-filters.dto';
+
+/** Evidence with its proof documents from the Prisma query */
+interface EvidenceWithDocs {
+  id: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  proofDocuments: { code: string }[];
+}
+
+/** Standard with nested evidences */
+interface StandardWithEvidences {
+  id: string;
+  name: string;
+  evidences: EvidenceWithDocs[];
+}
+
+/** Criterion with direct evidences and standards */
+interface CriterionWithHierarchy {
+  id: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  hasDirectEvidences: boolean;
+  evidences: EvidenceWithDocs[];
+  standards: StandardWithEvidences[];
+}
+
+/** Component with criteria */
+interface ComponentWithCriteria {
+  id: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  criteria: CriterionWithHierarchy[];
+}
+
+/** Dimension with full component hierarchy */
+interface DimensionWithHierarchy {
+  id: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  components: ComponentWithCriteria[];
+}
 
 @Injectable()
 export class SinaesReportsService {
@@ -27,7 +73,7 @@ export class SinaesReportsService {
     this.logger.log('🔍 Generating compliance report with filters:', filters);
 
     // 1. Build where clause for filtering dimensions/components/criteria
-    const whereClause: any = {};
+    const whereClause: Prisma.DimensionWhereInput = {};
 
     if (filters.dimensionId) {
       whereClause.id = filters.dimensionId;
@@ -190,7 +236,7 @@ export class SinaesReportsService {
   /**
    * Process a dimension and calculate compliance for all its components
    */
-  private async processDimension(dimension: any): Promise<DimensionComplianceDto> {
+  private async processDimension(dimension: DimensionWithHierarchy): Promise<DimensionComplianceDto> {
     const components: ComponentComplianceDto[] = [];
 
     for (const component of dimension.components) {
@@ -226,7 +272,7 @@ export class SinaesReportsService {
   /**
    * Process a component and calculate compliance for all its criteria
    */
-  private async processComponent(component: any): Promise<ComponentComplianceDto> {
+  private async processComponent(component: ComponentWithCriteria): Promise<ComponentComplianceDto> {
     const criteria: CriterionComplianceDto[] = [];
 
     for (const criterion of component.criteria) {
@@ -258,25 +304,36 @@ export class SinaesReportsService {
   }
 
   /**
-   * Process a criterion and calculate compliance for all its evidences
+   * Process a criterion and calculate compliance for all its evidences.
+   * Collects evidences from both direct criterion evidences AND standards,
+   * using a Map to avoid counting the same evidence twice.
    */
-  private async processCriterion(criterion: any): Promise<CriterionComplianceDto> {
-    const evidences: EvidenceComplianceDto[] = [];
+  private async processCriterion(criterion: CriterionWithHierarchy): Promise<CriterionComplianceDto> {
+    const evidenceMap = new Map<string, EvidenceComplianceDto>();
 
-    // Handle direct evidences OR evidences through standards
-    if (criterion.hasDirectEvidences) {
-      // Process direct evidences
+    // Process direct evidences (criterion → evidence)
+    if (criterion.evidences?.length) {
       for (const evidence of criterion.evidences) {
-        evidences.push(this.processEvidence(evidence));
-      }
-    } else {
-      // Process evidences through standards
-      for (const standard of criterion.standards) {
-        for (const evidence of standard.evidences) {
-          evidences.push(this.processEvidence(evidence));
+        if (!evidenceMap.has(evidence.id)) {
+          evidenceMap.set(evidence.id, this.processEvidence(evidence));
         }
       }
     }
+
+    // Process evidences through standards (criterion → standard → evidence)
+    if (criterion.standards?.length) {
+      for (const standard of criterion.standards) {
+        if (standard.evidences?.length) {
+          for (const evidence of standard.evidences) {
+            if (!evidenceMap.has(evidence.id)) {
+              evidenceMap.set(evidence.id, this.processEvidence(evidence));
+            }
+          }
+        }
+      }
+    }
+
+    const evidences = Array.from(evidenceMap.values());
 
     // Calculate criterion totals
     const totalEvidences = evidences.length;
@@ -303,10 +360,10 @@ export class SinaesReportsService {
   /**
    * Process an evidence and count its documents
    */
-  private processEvidence(evidence: any): EvidenceComplianceDto {
+  private processEvidence(evidence: EvidenceWithDocs): EvidenceComplianceDto {
     const documentCount = evidence.proofDocuments?.length || 0;
     const hasDocuments = documentCount > 0;
-    const documentCodes = evidence.proofDocuments?.map((doc: any) => doc.code) || [];
+    const documentCodes = evidence.proofDocuments?.map((doc) => doc.code) || [];
 
     return {
       id: evidence.id,
@@ -389,7 +446,7 @@ export class SinaesReportsService {
         careerId: report.filters.careerId,
         dateFrom: report.filters.dateFrom,
         dateTo: report.filters.dateTo,
-        reportData: report as any, // Store full report as JSON
+        reportData: report as unknown as Prisma.JsonValue,
         totalEvidences: report.statistics.totalEvidences,
         evidencesWithDocuments: report.statistics.evidencesWithDocuments,
         totalDocuments: report.statistics.totalDocuments,
@@ -414,7 +471,7 @@ export class SinaesReportsService {
       throw new NotFoundException(`Report with ID ${id} not found`);
     }
 
-    return report.reportData as any;
+    return report.reportData as unknown as ComplianceReportDto;
   }
 
   /**

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
-import { ComplianceReportDto } from './dtos/compliance-report.dto';
+import { ComplianceReportDto, DimensionComplianceDto, ComponentComplianceDto, CriterionComplianceDto } from './dtos/compliance-report.dto';
 
 @Injectable()
 export class PdfGeneratorService {
@@ -173,7 +173,7 @@ export class PdfGeneratorService {
   /**
    * Genera HTML para filtros aplicados
    */
-  private generateFiltersHtml(filters: any): string {
+  private generateFiltersHtml(filters: ComplianceReportDto['filters']): string {
     const appliedFilters: string[] = [];
 
     if (filters.dimension) {
@@ -229,7 +229,7 @@ export class PdfGeneratorService {
   /**
    * Genera HTML para una dimensión
    */
-  private generateDimensionHtml(dimension: any): string {
+  private generateDimensionHtml(dimension: DimensionComplianceDto): string {
     return `
       <div class="dimension-block">
         <div class="dimension-header">
@@ -255,7 +255,7 @@ export class PdfGeneratorService {
   /**
    * Genera HTML para un componente
    */
-  private generateComponentHtml(component: any): string {
+  private generateComponentHtml(component: ComponentComplianceDto): string {
     return `
       <div class="component-block">
         <div class="component-header">
@@ -288,7 +288,7 @@ export class PdfGeneratorService {
   /**
    * Genera fila de tabla para un criterio
    */
-  private generateCriterionRow(criterion: any): string {
+  private generateCriterionRow(criterion: CriterionComplianceDto): string {
     return `
       <tr>
         <td>${criterion.name}</td>

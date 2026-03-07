@@ -23,6 +23,34 @@ import type { GenerateReportFilters } from '../../types/sinaes-reports.types';
 import { useDimensionsWithFullHierarchy } from '../../services/dimensions.service';
 import { useListCareersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useCareer';
 
+/** Local types for the SINAES hierarchy used in filters */
+interface FilterCriterion {
+  id: string;
+  code?: string;
+  name: string;
+}
+
+interface FilterComponent {
+  id: string;
+  code?: string;
+  name: string;
+  criteria?: FilterCriterion[];
+}
+
+interface FilterDimension {
+  id: string;
+  code?: string;
+  name: string;
+  components?: FilterComponent[];
+}
+
+interface FilterCareer {
+  id: string;
+  code?: string;
+  name: string;
+  status?: string;
+}
+
 interface ComplianceFiltersProps {
   onGenerateReport: (filters: GenerateReportFilters) => void;
   isGenerating?: boolean;
@@ -42,88 +70,29 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
   const { data: dimensionsData, isLoading: isLoadingDimensions } = useDimensionsWithFullHierarchy();
   const { data: careersData, isLoading: isLoadingCareers } = useListCareersFlat();
 
-  // Debug logs
-  console.log('📊 Dimensions Data:', dimensionsData);
-  console.log('📊 Is Loading Dimensions:', isLoadingDimensions);
-
-  // Log para ver la estructura completa
-  if (dimensionsData && Array.isArray(dimensionsData) && dimensionsData.length > 0) {
-    const firstDim = dimensionsData[0];
-    const firstComp = firstDim.components?.[0];
-    const firstCrit = firstComp?.criteria?.[0];
-    const firstStd = firstCrit?.standards?.[0];
-    const firstEvd = firstCrit?.evidences?.[0];
-
-    console.log('📊 First Dimension Structure:', {
-      id: firstDim.id,
-      name: firstDim.name,
-      hasComponents: !!firstDim.components,
-      componentCount: firstDim.components?.length || 0,
-      firstComponent: firstComp ? {
-        id: firstComp.id,
-        name: firstComp.name,
-        hasCriteria: !!firstComp.criteria,
-        criteriaCount: firstComp.criteria?.length || 0,
-        firstCriterion: firstCrit ? {
-          id: firstCrit.id,
-          name: firstCrit.name,
-          hasStandards: !!firstCrit.standards,
-          standardsCount: firstCrit.standards?.length || 0,
-          hasEvidences: !!firstCrit.evidences,
-          evidencesCount: firstCrit.evidences?.length || 0,
-          // 🔍 NUEVO: Ver contenido de standards y evidences
-          firstStandard: firstStd ? {
-            id: firstStd.id,
-            name: firstStd.name,
-            hasEvidences: !!firstStd.evidences,
-            evidencesCount: firstStd.evidences?.length || 0
-          } : null,
-          firstEvidence: firstEvd ? {
-            id: firstEvd.id,
-            name: firstEvd.name
-          } : null
-        } : null
-      } : null
-    });
-
-    // Log adicional para ver el RAW data del primer criterio
-    console.log('🔍 RAW First Criterion:', firstCrit);
-
-    // Log específico para standards
-    if (firstCrit?.standards && firstCrit.standards.length > 0) {
-      console.log('🔍 First Standard:', firstCrit.standards[0]);
-      console.log('🔍 First Standard has evidences?', !!firstCrit.standards[0].evidences);
-      console.log('🔍 First Standard evidences:', firstCrit.standards[0].evidences);
-    } else {
-      console.log('⚠️ No standards found in first criterion');
-    }
-  }  // Extraer arrays de datos
+  // Extraer arrays de datos
   const dimensions = useMemo(() => {
     if (!dimensionsData) return [];
-    const result = Array.isArray(dimensionsData) ? dimensionsData : (dimensionsData as any).data || [];
-    console.log('✅ Processed dimensions:', result);
-    return result;
+    return Array.isArray(dimensionsData) ? dimensionsData : (dimensionsData as { data: FilterDimension[] }).data || [];
   }, [dimensionsData]);
 
   const careers = useMemo(() => {
     if (!careersData) return [];
     // Filtrar solo carreras activas
     const careersList = Array.isArray(careersData) ? careersData : [];
-    return careersList.filter((c: any) => c.status === 'ACTIVE');
+    return careersList.filter((c: FilterCareer) => c.status === 'ACTIVE');
   }, [careersData]);
 
   // Filtrar componentes y criterios según selección
   const components = useMemo(() => {
     if (!dimensionId || dimensionId === 'all') return [];
-    const selectedDimension = dimensions.find((d: any) => d.id === dimensionId);
+    const selectedDimension = dimensions.find((d: FilterDimension) => d.id === dimensionId);
     return selectedDimension?.components || [];
   }, [dimensionId, dimensions]);
 
   const criteria = useMemo(() => {
     if (!componentId || componentId === 'all') return [];
-    const selectedComponent = components.find((c: any) => c.id === componentId);
-    console.log('🔍 Selected Component:', selectedComponent);
-    console.log('🔍 Component Criteria:', selectedComponent?.criteria);
+    const selectedComponent = components.find((c: FilterComponent) => c.id === componentId);
     return selectedComponent?.criteria || [];
   }, [componentId, components]);
 
@@ -139,7 +108,6 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
       dateTo: dateTo ? dateTo.toISOString() : undefined,
     };
 
-    console.log('🔍 Generating report with filters:', filters);
     onGenerateReport(filters);
   };
 
@@ -203,7 +171,7 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas las dimensiones</SelectItem>
-                  {dimensions.map((dim: any) => (
+                  {dimensions.map((dim: FilterDimension) => (
                     <SelectItem key={dim.id} value={dim.id}>
                       {dim.code ? `${dim.code} - ${dim.name}` : dim.name}
                     </SelectItem>
@@ -224,7 +192,7 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los componentes</SelectItem>
-                  {components.map((comp: any) => (
+                  {components.map((comp: FilterComponent) => (
                     <SelectItem key={comp.id} value={comp.id}>
                       {comp.code ? `${comp.code} - ${comp.name}` : comp.name}
                     </SelectItem>
@@ -245,7 +213,7 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los criterios</SelectItem>
-                  {criteria.map((crit: any) => (
+                  {criteria.map((crit: FilterCriterion) => (
                     <SelectItem key={crit.id} value={crit.id}>
                       {crit.code ? `${crit.code} - ${crit.name}` : crit.name}
                     </SelectItem>
@@ -262,7 +230,7 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas las carreras</SelectItem>
-                  {careers.map((career: any) => (
+                  {careers.map((career: FilterCareer) => (
                     <SelectItem key={career.id} value={career.id}>
                       {career.code ? `${career.code} - ${career.name}` : career.name}
                     </SelectItem>

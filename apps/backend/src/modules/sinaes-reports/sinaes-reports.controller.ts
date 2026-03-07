@@ -13,18 +13,22 @@ import {
   ParseIntPipe,
   HttpException,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, Request as ExpressRequest } from 'express';
 import type { Response as ResponseType } from 'express';
-import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SinaesReportsService } from './sinaes-reports.service';
 import { PdfGeneratorService } from './pdf-generator.service';
 import { GenerateReportFiltersDto } from './dtos/generate-report-filters.dto';
 import { ComplianceReportDto } from './dtos/compliance-report.dto';
 import { ResourceName } from '../auth/decorators/resource-name.decorator';
+import { JwtAuthGuard } from '@src/modules/auth/guards';
 
 @ApiTags('SINAES Reports')
+@ApiBearerAuth()
 @ResourceName('SINAES_REPORT')
+@UseGuards(JwtAuthGuard)
 @Controller('sinaes-reports')
 export class SinaesReportsController {
   private readonly logger = new Logger(SinaesReportsController.name);
@@ -50,11 +54,11 @@ export class SinaesReportsController {
   @ApiResponse({ status: 200, description: 'Report generated successfully', type: ComplianceReportDto })
   async generateComplianceReport(
     @Query() filters: GenerateReportFiltersDto,
-    @Req() request: Request,
+    @Req() request: ExpressRequest & { user?: { sub?: string; id?: string } },
   ): Promise<ComplianceReportDto> {
     this.logger.log('📊 Generating compliance report');
 
-    const user = (request as any).user;
+    const user = request.user;
     const userId = user?.sub || user?.id;
 
     return this.sinaesReportsService.generateComplianceReport(filters, userId);

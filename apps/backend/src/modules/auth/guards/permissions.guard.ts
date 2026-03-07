@@ -40,7 +40,8 @@ export class PermissionsGuard implements CanActivate {
       'PROOF_DOCUMENT',
       'PROOF_DOCUMENT_TYPE',
       'STANDARD_EVIDENCE',
-      'CAREER_PROOF_DOCUMENT'
+      'CAREER_PROOF_DOCUMENT',
+      'SINAES_REPORT',
     ];
 
     // Verificar si el recurso es SINAES

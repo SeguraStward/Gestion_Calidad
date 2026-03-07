@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-
 import { Button } from '@una-gc/ui/components/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@una-gc/ui/components/tabs';
 import { Alert, AlertDescription } from '@una-gc/ui/components/alert';
-import { Download, FileBarChart, History, Loader2 } from 'lucide-react';
+import { Download, FileBarChart, History, Loader2, ShieldAlert, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ComplianceFilters } from '@/modules/sinaes-management/components/reports/compliance-filters';
 import { ComplianceSummary } from '@/modules/sinaes-management/components/reports/compliance-summary';
 import { ComplianceTable } from '@/modules/sinaes-management/components/reports/compliance-table';
@@ -15,60 +15,76 @@ import {
   useExportTempReportPdf,
   useReportsList,
 } from '@/modules/sinaes-management/services/sinaes-reports.service';
+import { useAuth } from '@/modules/auth/hooks';
+import { toast } from 'sonner';
 import type {
   GenerateReportFilters,
   ComplianceReport,
+  SavedComplianceReport,
 } from '@/modules/sinaes-management/types/sinaes-reports.types';
 
 export default function SinaesReportsPage() {
+  const { role, isAuthenticated } = useAuth();
+  const isAdmin = role?.name === 'ADMINISTRADOR';
+
   const [activeTab, setActiveTab] = useState('generate');
   const [currentReport, setCurrentReport] = useState<ComplianceReport | null>(null);
+  const [historyPage, setHistoryPage] = useState(1);
+  const historyLimit = 10;
 
   // Hooks
   const generateReportMutation = useGenerateReport();
   const exportPdfMutation = useExportPdf();
   const exportTempReportPdfMutation = useExportTempReportPdf();
-  const { data: savedReports, isLoading: isLoadingReports } = useReportsList(1, 10);
+  const { data: savedReports, isLoading: isLoadingReports } = useReportsList(historyPage, historyLimit);
+
+  // Protección de ruta: solo administradores
+  if (!isAuthenticated || !isAdmin) {
+    return (
+      <div className="container mx-auto flex flex-col items-center justify-center gap-4 py-20">
+        <ShieldAlert className="h-16 w-16 text-muted-foreground" />
+        <h1 className="text-2xl font-bold">Acceso Restringido</h1>
+        <p className="text-muted-foreground text-center max-w-md">
+          No tiene permisos para acceder a los reportes de cumplimiento SINAES.
+          Contacte al administrador si necesita acceso.
+        </p>
+      </div>
+    );
+  }
 
   const handleGenerateReport = async (filters: GenerateReportFilters) => {
     try {
-      const response = await generateReportMutation.mutateAsync(filters);
-      console.log('📊 Report received from backend:', response);
-
-      // El backend devuelve { data: { ... } }, necesitamos extraer el data
-      const report = (response as any).data || response;
-
-      console.log('📊 Extracted report:', report);
-      console.log('📊 Report dimensions:', report.dimensions);
-      console.log('📊 Report statistics:', report.statistics);
-
+      const report = await generateReportMutation.mutateAsync(filters);
       setCurrentReport(report);
       setActiveTab('results');
+      toast.success('Reporte generado exitosamente');
     } catch (error) {
       console.error('Error generando reporte:', error);
+      toast.error('Error al generar el reporte. Por favor intente nuevamente.');
     }
   };
 
   const handleExportPdf = async () => {
     if (!currentReport) {
-      alert('No hay reporte para exportar');
+      toast.warning('No hay reporte para exportar');
       return;
     }
 
     try {
       // Si el reporte tiene ID (está guardado), usar el endpoint con ID
-      if ('reportId' in currentReport && currentReport.reportId) {
+      if (currentReport.id) {
         await exportPdfMutation.mutateAsync({
-          id: currentReport.reportId,
+          id: currentReport.id,
           reportName: currentReport.reportName,
         });
       } else {
         // Si es un reporte temporal (recién generado), usar el nuevo endpoint
         await exportTempReportPdfMutation.mutateAsync(currentReport);
       }
+      toast.success('PDF exportado exitosamente');
     } catch (error) {
       console.error('Error exportando PDF:', error);
-      alert('Error al exportar el PDF. Por favor intente nuevamente.');
+      toast.error('Error al exportar el PDF. Por favor intente nuevamente.');
     }
   };
 
@@ -224,11 +240,11 @@ export default function SinaesReportsPage() {
                 <div className="flex h-32 items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
-              ) : savedReports && savedReports.reports && savedReports.reports.length > 0 ? (
+              ) : savedReports && savedReports.data && savedReports.data.length > 0 ? (
                 <div className="space-y-4">
-                  {savedReports.reports.map((report: any) => (
+                  {savedReports.data.map((report: SavedComplianceReport) => (
                     <div
-                      key={report.reportId}
+                      key={report.id}
                       className="flex items-center justify-between rounded-lg border p-4"
                     >
                       <div>
@@ -253,7 +269,7 @@ export default function SinaesReportsPage() {
                           size="sm"
                           onClick={() =>
                             exportPdfMutation.mutate({
-                              id: report.reportId,
+                              id: report.id,
                               reportName: report.reportName,
                             })
                           }
@@ -263,6 +279,35 @@ export default function SinaesReportsPage() {
                       </div>
                     </div>
                   ))}
+                  {/* Pagination controls */}
+                  {savedReports.meta && savedReports.meta.totalPages > 1 && (
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <p className="text-sm text-muted-foreground">
+                        Página {savedReports.meta.page} de {savedReports.meta.totalPages}
+                        {' '}({savedReports.meta.total} reportes)
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={historyPage <= 1}
+                          onClick={() => setHistoryPage((p) => Math.max(1, p - 1))}
+                        >
+                          <ChevronLeft className="h-4 w-4 mr-1" />
+                          Anterior
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={historyPage >= savedReports.meta.totalPages}
+                          onClick={() => setHistoryPage((p) => p + 1)}
+                        >
+                          Siguiente
+                          <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center text-muted-foreground">

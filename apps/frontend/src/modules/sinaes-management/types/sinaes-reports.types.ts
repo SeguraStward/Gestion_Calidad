@@ -31,54 +31,64 @@ export interface GenerateReportFilters {
  * Evidencia con estado de cumplimiento
  */
 export interface EvidenceCompliance {
-  evidenceId: string;
+  id: string;
+  code: string;
   name: string;
+  description?: string;
   documentCount: number;
   hasDocuments: boolean;
   documentCodes: string[];
-  status: 'COMPLETE' | 'MISSING';
+  complianceStatus: 'COMPLETE' | 'MISSING';
 }
 
 /**
  * Criterio con estado de cumplimiento
  */
 export interface CriterionCompliance {
-  criterionId: string;
+  id: string;
+  code: string;
   name: string;
+  description?: string;
+  hasDirectEvidences: boolean;
   evidences: EvidenceCompliance[];
   totalEvidences: number;
   evidencesWithDocuments: number;
   evidencesMissing: number;
   totalDocuments: number;
   compliancePercentage: number;
-  status: CriterionStatus;
+  complianceStatus: CriterionStatus;
 }
 
 /**
  * Componente con estado de cumplimiento
  */
 export interface ComponentCompliance {
-  componentId: string;
+  id: string;
+  code: string;
   name: string;
+  description?: string;
   criteria: CriterionCompliance[];
+  totalCriteria: number;
   totalEvidences: number;
   evidencesWithDocuments: number;
-  evidencesMissing: number;
   totalDocuments: number;
   compliancePercentage: number;
-  complianceStatus: ComplianceStatus;
+  complianceStatus: 'COMPLETE' | 'PARTIAL' | 'MISSING';
 }
 
 /**
  * Dimensión con estado de cumplimiento
  */
 export interface DimensionCompliance {
-  dimensionId: string;
+  id: string;
+  code: string;
   name: string;
+  description?: string;
   components: ComponentCompliance[];
+  totalComponents: number;
+  totalCriteria: number;
   totalEvidences: number;
   evidencesWithDocuments: number;
-  evidencesMissing: number;
   totalDocuments: number;
   compliancePercentage: number;
   complianceStatus: ComplianceStatus;
@@ -115,7 +125,7 @@ export interface AppliedFilters {
  * Reporte completo de cumplimiento
  */
 export interface ComplianceReport {
-  reportId?: string;
+  id?: string;
   reportName: string;
   description?: string;
   generatedAt: string;
@@ -123,27 +133,34 @@ export interface ComplianceReport {
   filters: AppliedFilters;
   statistics?: ComplianceStatistics;
   dimensions?: DimensionCompliance[];
+  career?: {
+    id: string;
+    name: string;
+    code: string;
+  };
 }
 
 /**
  * Reporte guardado (con metadata adicional)
  */
 export interface SavedComplianceReport extends ComplianceReport {
-  reportId: string;
+  id: string;
   status: 'ACTIVE' | 'INACTIVE';
   createdAt: string;
   updatedAt: string;
 }
 
 /**
- * Respuesta paginada de reportes
+ * Respuesta paginada de reportes (coincide con backend)
  */
 export interface ReportsListResponse {
-  reports: SavedComplianceReport[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  data: SavedComplianceReport[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
 /**
