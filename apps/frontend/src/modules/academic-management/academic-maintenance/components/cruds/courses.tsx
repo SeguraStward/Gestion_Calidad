@@ -357,6 +357,19 @@ export default function CourseCrud() {
       entityNamePlural: 'Cursos',
       searchPlaceholder: 'Buscar por código, nombre o carrera...',
       usePaginatedQuery: useListCoursesPaginated,
+      filterConfig: [
+        {
+          key: 'status',
+          label: 'Estado',
+          type: 'select' as const,
+          placeholder: 'Todos',
+          options: [
+            { value: 'ALL', label: 'Todos' },
+            { value: 'ACTIVE', label: 'Activo' },
+            { value: 'INACTIVE', label: 'Inactivo' }
+          ]
+        }
+      ],
       useCreateMutation: useCreateCourse,
       useUpdateMutation: useUpdateCourse,
       useDeleteMutation: useRemoveCourse,
