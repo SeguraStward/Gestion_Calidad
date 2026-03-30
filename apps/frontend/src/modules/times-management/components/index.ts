@@ -10,6 +10,6 @@ export { StatsCard } from './StatsCard'
 
 // Export types
 export type { JourneyConfig } from './JourneyConfigDisplay'
-export type { ProfessorAssignment } from './ProfessorAssignments'
-export type { RepitenciaRecord } from './RepitenciasManager'
+export type { ProfessorAssignmentRow } from './ProfessorAssignments'
+export type { Repitencia as RepitenciaRecord } from '../services/repitencias.service'
 export type { CampusAllocation } from './CampusAllocationsTable'

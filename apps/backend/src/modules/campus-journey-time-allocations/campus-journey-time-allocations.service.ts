@@ -57,8 +57,9 @@ export class CampusJourneyTimeAllocationsService extends GenericService<
       campusId: allocation.campusId,
       cycleName: allocation.academicCycle?.name || 'Sin ciclo',
       academicCycleId: allocation.academicCycleId,
-      careerName: allocation.curricularMesh?.career?.name || 'Sin carrera',
+      careerName: allocation.curricularMesh?.career?.name,
       careerId: allocation.curricularMesh?.career?.id,
+      description: allocation.description,
       totalAllocatedTime: allocation.allocatedJourneyTime,
       additionalTime: allocation.additionalJourneyTime || 0,
       availableTime: allocation.availableJourneyTime || 0,
@@ -76,27 +77,52 @@ export class CampusJourneyTimeAllocationsService extends GenericService<
   }
 
   // Recalcula availableJourneyTime = allocatedJourneyTime + additionalTime - baseJourneyTimeConsumed
-  private computeAvailable(payload: Partial<CreateCampusAllocationDto | UpdateCampusAllocationDto>) {
-    const allocated = Number(payload.allocatedJourneyTime ?? 0);
-    const additional = Number(payload.additionalTime ?? 0);
-    const consumed = Number(payload.baseJourneyTimeConsumed ?? 0);
+  private computeAvailable(input: {
+    allocatedJourneyTime?: number;
+    additionalTime?: number;
+    baseJourneyTimeConsumed?: number;
+  }) {
+    const allocated = Number(input.allocatedJourneyTime ?? 0);
+    const additional = Number(input.additionalTime ?? 0);
+    const consumed = Number(input.baseJourneyTimeConsumed ?? 0);
     const available = allocated + additional - consumed;
     return available < 0 ? 0 : available;
   }
 
   async save(payload: CreateCampusAllocationDto) {
     const withDerived: any = {
-      ...payload,
+      annualAllocationId: payload.annualAllocationId,
+      campusId: payload.campusId,
+      academicCycleId: payload.cycleId,
+      ...(payload.meshId ? { curricularMeshId: payload.meshId } : {}),
+      allocatedJourneyTime: payload.allocatedJourneyTime,
+      baseJourneyTimeConsumed: payload.baseJourneyTimeConsumed ?? 0,
+      additionalJourneyTime: payload.additionalTime ?? 0,
+      status: payload.status,
+      description: payload.description,
       availableJourneyTime: this.computeAvailable(payload),
-      annualAllocation: { connect: { id: payload.annualAllocationId } },
     };
     return super.save(withDerived);
   }
 
   async update(id: string, payload: UpdateCampusAllocationDto) {
-    const withDerived = {
-      ...payload,
-      availableJourneyTime: this.computeAvailable(payload),
+    const current: any = await this.repo.findById(id);
+
+    const withDerived: any = {
+      ...(payload.annualAllocationId ? { annualAllocationId: payload.annualAllocationId } : {}),
+      ...(payload.campusId ? { campusId: payload.campusId } : {}),
+      ...(payload.cycleId ? { academicCycleId: payload.cycleId } : {}),
+      ...(payload.meshId !== undefined ? { curricularMeshId: payload.meshId || null } : {}),
+      ...(payload.allocatedJourneyTime !== undefined ? { allocatedJourneyTime: payload.allocatedJourneyTime } : {}),
+      ...(payload.baseJourneyTimeConsumed !== undefined ? { baseJourneyTimeConsumed: payload.baseJourneyTimeConsumed } : {}),
+      ...(payload.additionalTime !== undefined ? { additionalJourneyTime: payload.additionalTime } : {}),
+      ...(payload.status ? { status: payload.status } : {}),
+      ...(payload.description !== undefined ? { description: payload.description } : {}),
+      availableJourneyTime: this.computeAvailable({
+        allocatedJourneyTime: payload.allocatedJourneyTime ?? current.allocatedJourneyTime,
+        additionalTime: payload.additionalTime ?? current.additionalJourneyTime,
+        baseJourneyTimeConsumed: payload.baseJourneyTimeConsumed ?? current.baseJourneyTimeConsumed,
+      }),
     };
     return super.update(id, withDerived as any);
   }

@@ -1,12 +1,12 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
-import { BookOpen, Plus, AlertCircle } from 'lucide-react'
-import { Button } from '@una-gc/ui/components/button'
-import { Input } from '@una-gc/ui/components/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card'
+import React, { useCallback, useEffect, useState } from 'react'
+import { AlertCircle, BookOpen, Plus } from 'lucide-react'
 import { Alert, AlertDescription } from '@una-gc/ui/components/alert'
+import { Button } from '@una-gc/ui/components/button'
+import { Card, CardContent } from '@una-gc/ui/components/card'
+import { toast } from 'sonner'
+
 import { EmptyState } from './EmptyState'
 import { RepitenciasForm } from './RepitenciasForm'
 import { useRepitenciasStore } from '../store/useRepitenciasStore'
@@ -19,64 +19,32 @@ interface RepitenciasManagerProps {
   campusAllocationId?: string
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
+
 export default function RepitenciasManager({ campusAllocationId }: RepitenciasManagerProps) {
   const { repitencias, loading, error, fetchAll, fetchByCampusAllocation, create, clearError } = useRepitenciasStore()
 
-  // Cargar datos de selectores
   const { data: cycles = [], isLoading: loadingCycles } = useAcademicCycle()
   const { data: campuses = [], isLoading: loadingCampuses } = useCampus()
   const { data: courses = [], isLoading: loadingCourses } = useCourses()
 
   const [showForm, setShowForm] = useState(false)
-  const [formData, setFormData] = useState({ curricularMeshId: '' })
-
-  const handleFormSubmit = async (data: any) => {
-    const hours = Number(data.additionalHours)
-    const students = Number(data.studentsCount)
-
-    try {
-      const dto: CreateRepitenciaDto = {
-        campusId: data.campusId,
-        curricularMeshId: formData.curricularMeshId || data.campusId, // Fallback temporal
-        courseId: data.courseId,
-        academicCycleId: data.academicCycleId,
-        campusAllocationId: campusAllocationId || '',
-        courseName: data.courseName,
-        courseCode: data.courseCode,
-        careerName: data.careerName,
-        additionalHours: hours,
-        studentsCount: students,
-        reason: data.reason,
-        status: 'PENDING'
-      }
-
-      await create(dto)
-      setShowForm(false)
-      alert('✅ Repitencia creada exitosamente')
-    } catch (err) {
-      console.error('Error al crear repitencia:', err)
-      alert('❌ Error al crear repitencia. Verifica los datos e intenta nuevamente.')
-    }
-  }
+  const [curricularMeshId, setCurricularMeshId] = useState('')
 
   const loadCampusAllocationData = useCallback(async (allocationId: string) => {
     try {
-      const url = `http://localhost:3000/api/v1/campus-journey-time-allocations/raw/${allocationId}`
-      const res = await fetch(url)
+      const res = await fetch(`${API_URL}/campus-journey-time-allocations/raw/${allocationId}`, { cache: 'no-store' })
 
-      if (res.ok) {
-        const json = await res.json()
-        const data = json.data || json
-
-        setFormData((prev) => ({
-          ...prev,
-          campusId: data.campusId || '',
-          curricularMeshId: data.curricularMeshId || '',
-          academicCycleId: data.academicCycleId || ''
-        }))
+      if (!res.ok) {
+        return
       }
+
+      const json = await res.json()
+      const data = json?.data || json
+      setCurricularMeshId(data?.curricularMeshId || '')
     } catch (err) {
-      console.error('❌ Error al cargar campus allocation:', err)
+      console.error('Error loading campus allocation:', err)
+      setCurricularMeshId('')
     }
   }, [])
 
@@ -84,12 +52,53 @@ export default function RepitenciasManager({ campusAllocationId }: RepitenciasMa
     if (campusAllocationId) {
       fetchByCampusAllocation(campusAllocationId)
       loadCampusAllocationData(campusAllocationId)
-    } else {
-      fetchAll()
+      return
     }
+
+    fetchAll()
+    setCurricularMeshId('')
   }, [campusAllocationId, fetchAll, fetchByCampusAllocation, loadCampusAllocationData])
 
-  const totalHoras = repitencias.reduce((sum, r) => sum + r.additionalHours, 0)
+  const handleFormSubmit = async (data: any) => {
+    if (!campusAllocationId) {
+      toast.error('Selecciona una asignacion de campus antes de registrar repitencias.')
+      return
+    }
+
+    const additionalHours = Number(data.additionalHours)
+    const studentsCount = Number(data.studentsCount)
+
+    if (!Number.isFinite(additionalHours) || additionalHours <= 0) {
+      toast.error('Las horas adicionales deben ser mayores a 0.')
+      return
+    }
+
+    const dto: CreateRepitenciaDto = {
+      campusId: data.campusId,
+      ...(curricularMeshId ? { curricularMeshId } : {}),
+      courseId: data.courseId,
+      academicCycleId: data.academicCycleId,
+      campusAllocationId,
+      courseName: data.courseName,
+      courseCode: data.courseCode,
+      careerName: data.careerName,
+      additionalHours,
+      studentsCount: Number.isFinite(studentsCount) && studentsCount > 0 ? studentsCount : undefined,
+      reason: data.reason,
+      status: 'PENDING'
+    }
+
+    try {
+      await create(dto)
+      setShowForm(false)
+      toast.success('Repitencia registrada correctamente')
+    } catch (err) {
+      console.error('Error creating repitencia:', err)
+      toast.error('Error al crear repitencia. Verifica los datos e intenta nuevamente.')
+    }
+  }
+
+  const totalHoras = repitencias.reduce((sum, item) => sum + item.additionalHours, 0)
 
   if (loading && repitencias.length === 0) {
     return (
@@ -102,7 +111,6 @@ export default function RepitenciasManager({ campusAllocationId }: RepitenciasMa
 
   return (
     <div className="space-y-6">
-      {/* Error Message */}
       {error && (
         <div className="p-3 bg-red-100 text-red-800 rounded flex justify-between items-center">
           <span>{error}</span>
@@ -112,36 +120,42 @@ export default function RepitenciasManager({ campusAllocationId }: RepitenciasMa
         </div>
       )}
 
-      {/* Summary Card */}
+      {!campusAllocationId && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Para registrar repitencias debes contar con una asignacion de campus activa en este periodo.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {repitencias.length > 0 && (
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <BookOpen className="h-8 w-8 text-orange-600" />
+                <BookOpen className="h-8 w-8 text-primary" />
                 <div>
-                  <p className="text-sm text-orange-700 font-medium">Total de Registros</p>
-                  <p className="text-2xl font-bold text-orange-900">{repitencias.length}</p>
+                  <p className="text-sm text-muted-foreground">Total de Registros</p>
+                  <p className="text-2xl font-bold">{repitencias.length}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-orange-700 font-medium">Horas Adicionales</p>
-                <p className="text-2xl font-bold text-orange-900">{totalHoras.toFixed(1)}</p>
+                <p className="text-sm text-muted-foreground">Horas Adicionales</p>
+                <p className="text-2xl font-bold">{totalHoras.toFixed(1)}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Add Button */}
       <div className="flex justify-end">
-        <Button onClick={() => setShowForm(!showForm)} disabled={loading}>
+        <Button onClick={() => setShowForm(!showForm)} disabled={loading || !campusAllocationId}>
           <Plus className="h-4 w-4 mr-2" />
           {showForm ? 'Cancelar' : 'Agregar Repitencia'}
         </Button>
       </div>
 
-      {/* Form */}
       {showForm && (
         <RepitenciasForm
           cycles={cycles}
@@ -156,7 +170,6 @@ export default function RepitenciasManager({ campusAllocationId }: RepitenciasMa
         />
       )}
 
-      {/* Records Table */}
       {repitencias.length === 0 ? (
         <EmptyState
           icon={<BookOpen className="h-12 w-12" />}
@@ -170,7 +183,7 @@ export default function RepitenciasManager({ campusAllocationId }: RepitenciasMa
               <thead className="bg-muted">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Código
+                    Codigo
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Curso

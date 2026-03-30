@@ -1,0 +1,43 @@
+model CohortCourseProjection {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  cohortId        String @db.ObjectId
+  courseId        String @db.ObjectId
+  academicCycleId String @db.ObjectId
+  campusId        String @db.ObjectId
+
+  projectedStudents Int
+  repeatingStudents Int @default(0)
+  approvedStudents  Int @default(0)
+
+  sourceType CohortProjectionSourceType @default(AUTO)
+  notes      String?
+
+  status CohortCourseProjectionStatus @default(ACTIVE)
+
+  cohort Cohort @relation("CohortCourseProjections", fields: [cohortId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([cohortId, courseId, academicCycleId, campusId], name: "unique_cohort_course_projection")
+  @@index([cohortId])
+  @@index([courseId])
+  @@index([academicCycleId])
+  @@index([campusId])
+  @@index([status])
+  @@map("cohort_course_projections")
+}
+
+enum CohortProjectionSourceType {
+  AUTO
+  MANUAL
+}
+
+enum CohortCourseProjectionStatus {
+  ACTIVE
+  INACTIVE
+}

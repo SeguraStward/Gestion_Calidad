@@ -1,5 +1,5 @@
 // ============================================================
-//  📦 RepitenciasService
+//   RepitenciasService
 //  Servicio para gestión de repitencias (cursos con repitencia)
 // ============================================================
 
@@ -26,7 +26,7 @@ export interface Repitencia {
 
 export interface CreateRepitenciaDto {
   campusId: string
-  curricularMeshId: string
+  curricularMeshId?: string
   courseId: string
   academicCycleId: string
   campusAllocationId: string
@@ -52,16 +52,17 @@ export interface RepitenciaStatistics {
 
 export const RepitenciasService = {
   /**
-   * 🔹 Obtiene todas las repitencias
+   *  Obtiene todas las repitencias
    */
   async getAll(): Promise<Repitencia[]> {
     try {
       const res = await fetch(`${API_URL}/repitencias`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener repitencias:', res.status)
+        console.error(' Error al obtener repitencias:', res.status)
         throw new Error(`Error al obtener repitencias: ${res.status}`)
       }
 
@@ -69,44 +70,46 @@ export const RepitenciasService = {
       const data = Array.isArray(json) ? json : json.data || []
       return data
     } catch (err) {
-      console.error('⚠️ Error en getAll:', err)
+      console.error(' Error en getAll:', err)
       return []
     }
   },
 
   /**
-   * 🔹 Obtiene una repitencia por ID
+   *  Obtiene una repitencia por ID
    */
   async getById(id: string): Promise<Repitencia | null> {
     try {
       const res = await fetch(`${API_URL}/repitencias/${id}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener repitencia:', res.status)
+        console.error(' Error al obtener repitencia:', res.status)
         return null
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en getById:', err)
+      console.error(' Error en getById:', err)
       return null
     }
   },
 
   /**
-   * 🔹 Obtiene repitencias por campus
+   *  Obtiene repitencias por campus
    */
   async getByCampus(campusId: string): Promise<Repitencia[]> {
     try {
       const res = await fetch(`${API_URL}/repitencias/by-campus/${campusId}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener repitencias por campus:', res.status)
+        console.error(' Error al obtener repitencias por campus:', res.status)
         return []
       }
 
@@ -114,22 +117,23 @@ export const RepitenciasService = {
       const data = Array.isArray(json) ? json : json.data || []
       return data
     } catch (err) {
-      console.error('⚠️ Error en getByCampus:', err)
+      console.error(' Error en getByCampus:', err)
       return []
     }
   },
 
   /**
-   * 🔹 Obtiene repitencias por curso
+   *  Obtiene repitencias por curso
    */
   async getByCourse(courseId: string): Promise<Repitencia[]> {
     try {
       const res = await fetch(`${API_URL}/repitencias/by-course/${courseId}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener repitencias por curso:', res.status)
+        console.error(' Error al obtener repitencias por curso:', res.status)
         return []
       }
 
@@ -137,22 +141,23 @@ export const RepitenciasService = {
       const data = Array.isArray(json) ? json : json.data || []
       return data
     } catch (err) {
-      console.error('⚠️ Error en getByCourse:', err)
+      console.error(' Error en getByCourse:', err)
       return []
     }
   },
 
   /**
-   * 🔹 Obtiene repitencias por ciclo académico
+   *  Obtiene repitencias por ciclo académico
    */
   async getByAcademicCycle(academicCycleId: string): Promise<Repitencia[]> {
     try {
       const res = await fetch(`${API_URL}/repitencias/by-academic-cycle/${academicCycleId}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener repitencias por ciclo:', res.status)
+        console.error(' Error al obtener repitencias por ciclo:', res.status)
         return []
       }
 
@@ -160,22 +165,23 @@ export const RepitenciasService = {
       const data = Array.isArray(json) ? json : json.data || []
       return data
     } catch (err) {
-      console.error('⚠️ Error en getByAcademicCycle:', err)
+      console.error(' Error en getByAcademicCycle:', err)
       return []
     }
   },
 
   /**
-   * 🔹 Obtiene repitencias por asignación de campus
+   *  Obtiene repitencias por asignación de campus
    */
   async getByCampusAllocation(campusAllocationId: string): Promise<Repitencia[]> {
     try {
       const res = await fetch(`${API_URL}/repitencias/by-campus-allocation/${campusAllocationId}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener repitencias por asignación:', res.status)
+        console.error(' Error al obtener repitencias por asignación:', res.status)
         return []
       }
 
@@ -183,123 +189,129 @@ export const RepitenciasService = {
       const data = Array.isArray(json) ? json : json.data || []
       return data
     } catch (err) {
-      console.error('⚠️ Error en getByCampusAllocation:', err)
+      console.error(' Error en getByCampusAllocation:', err)
       return []
     }
   },
 
   /**
-   * 🔹 Calcula el total de horas adicionales por asignación de campus
+   *  Calcula el total de horas adicionales por asignación de campus
    */
   async getTotalAdditionalHours(campusAllocationId: string): Promise<number> {
     try {
       const res = await fetch(`${API_URL}/repitencias/total-additional-hours/${campusAllocationId}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al calcular horas adicionales:', res.status)
+        console.error(' Error al calcular horas adicionales:', res.status)
         return 0
       }
 
       const json = await res.json()
       return json?.total || 0
     } catch (err) {
-      console.error('⚠️ Error en getTotalAdditionalHours:', err)
+      console.error(' Error en getTotalAdditionalHours:', err)
       return 0
     }
   },
 
   /**
-   * 🔹 Obtiene estadísticas de repitencias
+   *  Obtiene estadísticas de repitencias
    */
   async getStatistics(): Promise<RepitenciaStatistics | null> {
     try {
       const res = await fetch(`${API_URL}/repitencias/statistics`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener estadísticas:', res.status)
+        console.error(' Error al obtener estadísticas:', res.status)
         return null
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en getStatistics:', err)
+      console.error(' Error en getStatistics:', err)
       return null
     }
   },
 
   /**
-   * 🔹 Crea una nueva repitencia
+   *  Crea una nueva repitencia
    */
   async create(data: CreateRepitenciaDto): Promise<Repitencia | null> {
     try {
       const res = await fetch(`${API_URL}/repitencias`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
-        console.error('❌ Error al crear repitencia:', res.status, errorData)
+        console.error(' Error al crear repitencia:', res.status, errorData)
         throw new Error(errorData.message || `Error al crear repitencia: ${res.status}`)
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en create:', err)
+      console.error(' Error en create:', err)
       throw err
     }
   },
 
   /**
-   * 🔹 Actualiza una repitencia existente
+   *  Actualiza una repitencia existente
    */
   async update(id: string, data: UpdateRepitenciaDto): Promise<Repitencia | null> {
     try {
       const res = await fetch(`${API_URL}/repitencias/${id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
-        console.error('❌ Error al actualizar repitencia:', res.status, errorData)
+        console.error(' Error al actualizar repitencia:', res.status, errorData)
         throw new Error(errorData.message || `Error al actualizar repitencia: ${res.status}`)
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en update:', err)
+      console.error(' Error en update:', err)
       throw err
     }
   },
 
   /**
-   * 🔹 Elimina una repitencia
+   *  Elimina una repitencia
    */
   async delete(id: string): Promise<boolean> {
     try {
       const res = await fetch(`${API_URL}/repitencias/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al eliminar repitencia:', res.status)
+        console.error(' Error al eliminar repitencia:', res.status)
         return false
       }
 
       return true
     } catch (err) {
-      console.error('⚠️ Error en delete:', err)
+      console.error(' Error en delete:', err)
       return false
     }
   }
 }
+

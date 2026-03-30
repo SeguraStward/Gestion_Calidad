@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
-import { ComplianceReportDto, DimensionComplianceDto, ComponentComplianceDto, CriterionComplianceDto } from './dtos/compliance-report.dto';
+import {
+  ComplianceReportDto,
+  DimensionComplianceDto,
+  ComponentComplianceDto,
+  CriterionComplianceDto,
+} from './dtos/compliance-report.dto';
 
 @Injectable()
 export class PdfGeneratorService {
@@ -9,9 +14,7 @@ export class PdfGeneratorService {
   /**
    * Genera un PDF a partir de un reporte de cumplimiento
    */
-  async generateCompliancePdf(
-    report: ComplianceReportDto,
-  ): Promise<Buffer> {
+  async generateCompliancePdf(report: ComplianceReportDto): Promise<Buffer> {
     this.logger.log(`Generando PDF para reporte: ${report.reportName}`);
 
     const browser = await puppeteer.launch({
@@ -120,7 +123,9 @@ export class PdfGeneratorService {
   </div>
 
   <!-- Resumen de estadísticas -->
-  ${statistics ? `
+  ${
+    statistics
+      ? `
   <div class="statistics-section">
     <h4>Resumen General</h4>
     <div class="stats-grid">
@@ -131,7 +136,9 @@ export class PdfGeneratorService {
       <div class="stat-card">
         <div class="stat-label">Total Componentes</div>
         <div class="stat-value">${statistics.totalComponents}</div>
-      </div>` : ''}
+      </div>`
+      : ''
+  }
       <div class="stat-card">
         <div class="stat-label">Total Criterios</div>
         <div class="stat-value">${statistics.totalCriteria}</div>
@@ -163,7 +170,7 @@ export class PdfGeneratorService {
   <!-- Detalles por dimensión -->
   <div class="dimensions-section">
     <h4>Detalle por Dimensión</h4>
-    ${dimensions.map(dim => this.generateDimensionHtml(dim)).join('')}
+    ${dimensions.map((dim) => this.generateDimensionHtml(dim)).join('')}
   </div>
 </body>
 </html>
@@ -176,31 +183,31 @@ export class PdfGeneratorService {
   private generateFiltersHtml(filters: ComplianceReportDto['filters']): string {
     const appliedFilters: string[] = [];
 
-    if (filters.dimension) {
+    if (filters.dimensionId) {
       appliedFilters.push(`<div class="info-row">
         <span class="label">Dimensión:</span>
-        <span class="value">${filters.dimension}</span>
+        <span class="value">${filters.dimensionId}</span>
       </div>`);
     }
 
-    if (filters.component) {
+    if (filters.componentId) {
       appliedFilters.push(`<div class="info-row">
         <span class="label">Componente:</span>
-        <span class="value">${filters.component}</span>
+        <span class="value">${filters.componentId}</span>
       </div>`);
     }
 
-    if (filters.criterion) {
+    if (filters.criterionId) {
       appliedFilters.push(`<div class="info-row">
         <span class="label">Criterio:</span>
-        <span class="value">${filters.criterion}</span>
+        <span class="value">${filters.criterionId}</span>
       </div>`);
     }
 
-    if (filters.career) {
+    if (filters.careerId) {
       appliedFilters.push(`<div class="info-row">
         <span class="label">Carrera:</span>
-        <span class="value">${filters.career}</span>
+        <span class="value">${filters.careerId}</span>
       </div>`);
     }
 
@@ -243,11 +250,11 @@ export class PdfGeneratorService {
         <div class="dimension-summary">
           <span>Total Evidencias: <strong>${dimension.totalEvidences}</strong></span>
           <span>Con Documentos: <strong class="success">${dimension.evidencesWithDocuments}</strong></span>
-          <span>Sin Documentos: <strong class="${dimension.evidencesMissing > 0 ? 'danger' : 'success'}">${dimension.evidencesMissing}</strong></span>
+          <span>Sin Documentos: <strong class="${dimension.totalEvidences - dimension.evidencesWithDocuments > 0 ? 'danger' : 'success'}">${dimension.totalEvidences - dimension.evidencesWithDocuments}</strong></span>
           <span>Total Documentos: <strong>${dimension.totalDocuments}</strong></span>
         </div>
         
-        ${dimension.components.map(comp => this.generateComponentHtml(comp)).join('')}
+        ${dimension.components.map((comp) => this.generateComponentHtml(comp)).join('')}
       </div>
     `;
   }
@@ -278,7 +285,7 @@ export class PdfGeneratorService {
             </tr>
           </thead>
           <tbody>
-            ${component.criteria.map(crit => this.generateCriterionRow(crit)).join('')}
+            ${component.criteria.map((crit) => this.generateCriterionRow(crit)).join('')}
           </tbody>
         </table>
       </div>
@@ -293,13 +300,13 @@ export class PdfGeneratorService {
       <tr>
         <td>${criterion.name}</td>
         <td>
-          <span class="status-badge ${this.getCriterionStatusClass(criterion.status)}">
-            ${this.getCriterionStatusLabel(criterion.status)}
+          <span class="status-badge ${this.getCriterionStatusClass(criterion.complianceStatus)}">
+            ${this.getCriterionStatusLabel(criterion.complianceStatus)}
           </span>
         </td>
         <td class="text-center">${criterion.totalEvidences}</td>
         <td class="text-center success">${criterion.evidencesWithDocuments}</td>
-        <td class="text-center ${criterion.evidencesMissing > 0 ? 'danger' : 'success'}">${criterion.evidencesMissing}</td>
+        <td class="text-center ${criterion.totalEvidences - criterion.evidencesWithDocuments > 0 ? 'danger' : 'success'}">${criterion.totalEvidences - criterion.evidencesWithDocuments}</td>
         <td class="text-center">${criterion.totalDocuments}</td>
         <td class="text-center">
           <strong class="${this.getPercentageClass(criterion.compliancePercentage)}">

@@ -1,10 +1,11 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Calculator, AlertCircle, CheckCircle } from 'lucide-react'
+import { AlertCircle, Calculator, CheckCircle } from 'lucide-react'
 import { Button } from '@una-gc/ui/components/button'
-import { Input } from '@una-gc/ui/components/input'
 import { Card, CardContent } from '@una-gc/ui/components/card'
+import { Input } from '@una-gc/ui/components/input'
+
 import type { JourneyConfig } from './JourneyConfigDisplay'
 
 interface JourneyCalculatorProps {
@@ -15,11 +16,11 @@ function calculateJourneyType(hours: number, cfg: JourneyConfig | null) {
   if (!cfg) return null
 
   if (hours >= cfg.quarterTimeMinHours && hours <= cfg.quarterTimeMaxHours) {
-    return { type: '¼ Tiempo', value: cfg.quarterTimeValue, color: 'blue' }
+    return { type: 'Cuarto de tiempo', value: cfg.quarterTimeValue, color: 'blue' }
   }
 
   if (hours >= cfg.halfTimeMinHours && hours <= cfg.halfTimeMaxHours) {
-    return { type: '½ Tiempo', value: cfg.halfTimeValue, color: 'green' }
+    return { type: 'Medio tiempo', value: cfg.halfTimeValue, color: 'green' }
   }
 
   if (
@@ -29,19 +30,19 @@ function calculateJourneyType(hours: number, cfg: JourneyConfig | null) {
     hours >= cfg.threeQuarterMinHours &&
     hours <= cfg.threeQuarterMaxHours
   ) {
-    return { type: '¾ Tiempo', value: cfg.threeQuarterTimeValue, color: 'yellow' }
+    return { type: 'Tres cuartos de tiempo', value: cfg.threeQuarterTimeValue, color: 'yellow' }
   }
 
   if (hours >= cfg.fullTimeMinHours) {
-    return { type: 'Tiempo Completo', value: cfg.fullTimeValue, color: 'purple' }
+    return { type: 'Tiempo completo', value: cfg.fullTimeValue, color: 'purple' }
   }
 
-  return { type: 'No definido', value: 0, color: 'gray' }
+  return { type: 'Fuera de rango', value: 0, color: 'gray' }
 }
 
 export default function JourneyCalculator({ config }: JourneyCalculatorProps) {
   const [hours, setHours] = useState('')
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<{ type: string; value: number; color: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleCalculate = () => {
@@ -49,14 +50,14 @@ export default function JourneyCalculator({ config }: JourneyCalculatorProps) {
     setResult(null)
 
     if (!config) {
-      setError('No hay configuración de jornada cargada.')
+      setError('No hay una configuracion de jornada activa.')
       return
     }
 
     const h = Number(hours)
 
-    if (!hours || isNaN(h)) {
-      setError('Por favor ingresa un número válido de horas.')
+    if (!hours || Number.isNaN(h)) {
+      setError('Ingresa una cantidad valida de horas.')
       return
     }
 
@@ -67,16 +68,15 @@ export default function JourneyCalculator({ config }: JourneyCalculatorProps) {
 
     const maxHours = config.maxDailyHours || 12
     if (h > maxHours) {
-      setError(`El valor excede el máximo de ${maxHours} horas permitidas.`)
+      setError(`El valor excede el maximo permitido de ${maxHours} horas.`)
       return
     }
 
-    const calculation = calculateJourneyType(h, config)
-    setResult(calculation)
+    setResult(calculateJourneyType(h, config))
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+  const handleKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
       handleCalculate()
     }
   }
@@ -85,66 +85,65 @@ export default function JourneyCalculator({ config }: JourneyCalculatorProps) {
     blue: 'bg-blue-50 border-blue-200 text-blue-900',
     green: 'bg-green-50 border-green-200 text-green-900',
     yellow: 'bg-yellow-50 border-yellow-200 text-yellow-900',
-    purple: 'bg-purple-50 border-purple-200 text-purple-900',
+    purple: 'bg-violet-50 border-violet-200 text-violet-900',
     gray: 'bg-gray-50 border-gray-200 text-gray-900'
   }
 
   return (
     <div className="space-y-6">
-      {/* Calculator Input */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <div className="flex-1">
           <Input
             type="number"
             value={hours}
-            onChange={(e) => setHours(e.target.value)}
+            onChange={(event) => setHours(event.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Número de horas..."
+            placeholder="Cantidad de horas"
             min="0"
             step="0.5"
             className="text-lg"
           />
         </div>
         <Button onClick={handleCalculate} size="lg" className="sm:w-auto">
-          <Calculator className="h-4 w-4 mr-2" />
-          Calcular
+          <Calculator className="mr-2 h-4 w-4" />
+          Convertir
         </Button>
       </div>
 
-      {/* Error Message */}
       {error && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="flex items-start gap-3 p-4">
-            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
             <div>
-              <p className="font-medium text-red-900">Error en el cálculo</p>
-              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <p className="font-medium text-red-900">No se pudo realizar la conversion</p>
+              <p className="mt-1 text-sm text-red-700">{error}</p>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Result Card */}
       {result && (
         <Card className={`border-2 ${colorClasses[result.color as keyof typeof colorClasses]}`}>
           <CardContent className="p-6">
             <div className="flex items-start gap-4">
-              <CheckCircle className="h-8 w-8 text-green-600 flex-shrink-0" />
+              <CheckCircle className="h-8 w-8 flex-shrink-0 text-green-600" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-700 mb-2">
+                <p className="mb-2 text-sm font-medium text-gray-700">
                   {hours} hora{Number(hours) !== 1 ? 's' : ''} corresponde a:
                 </p>
-                <p className="text-3xl font-bold mb-2">{result.type}</p>
+                <p className="mb-2 text-3xl font-bold">{result.type}</p>
                 <div className="flex items-center gap-4 text-sm">
                   <span className="font-medium">
-                    Valor equivalente: <span className="text-lg font-bold">{result.value}</span>
+                    Fraccion equivalente: <span className="text-lg font-bold">{result.value}</span>
                   </span>
                   {result.value === 1 ? (
-                    <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                    <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
                       Tiempo completo
                     </span>
                   ) : (
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">Tiempo parcial</span>
+                    <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
+                      Tiempo parcial
+                    </span>
                   )}
                 </div>
               </div>
@@ -153,24 +152,19 @@ export default function JourneyCalculator({ config }: JourneyCalculatorProps) {
         </Card>
       )}
 
-      {/* Help Text */}
       {config && !result && !error && (
-        <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
-          <p className="font-medium mb-2"> Rangos configurados:</p>
-          <ul className="space-y-1 ml-4">
-            <li>
-              • ¼ Tiempo: {config.quarterTimeMinHours} - {config.quarterTimeMaxHours} horas
-            </li>
-            <li>
-              • ½ Tiempo: {config.halfTimeMinHours} - {config.halfTimeMaxHours} horas
-            </li>
-            {config.threeQuarterMinHours && (
+        <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
+          <p className="mb-2 font-medium">Rangos activos</p>
+          <ul className="ml-4 space-y-1">
+            <li>Cuarto de tiempo: {config.quarterTimeMinHours} - {config.quarterTimeMaxHours} horas</li>
+            <li>Medio tiempo: {config.halfTimeMinHours} - {config.halfTimeMaxHours} horas</li>
+            {config.threeQuarterMinHours && config.threeQuarterMaxHours ? (
               <li>
-                • ¾ Tiempo: {config.threeQuarterMinHours} - {config.threeQuarterMaxHours} horas
+                Tres cuartos de tiempo: {config.threeQuarterMinHours} - {config.threeQuarterMaxHours} horas
               </li>
-            )}
-            <li>• Tiempo Completo: Desde {config.fullTimeMinHours} horas</li>
-            <li className="text-gray-500 mt-2">Máximo permitido: {config.maxDailyHours || 12} horas</li>
+            ) : null}
+            <li>Tiempo completo: desde {config.fullTimeMinHours} horas</li>
+            <li className="mt-2 text-gray-500">Maximo permitido: {config.maxDailyHours || 12} horas</li>
           </ul>
         </div>
       )}

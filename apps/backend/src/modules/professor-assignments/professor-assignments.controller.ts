@@ -30,9 +30,9 @@ export class ProfessorAssignmentsController extends GenericController<
     @Query('orderBy') orderBy?: string,
     @Query('include') includeQueryParam?: string,
   ) {
-    this.logger.debug('🎯 Custom findAll() called in controller');
+    this.logger.debug('Custom findAll() called in controller');
     const result = await this.serviceImpl.findAll(page, limit, where, orderBy, includeQueryParam);
-    this.logger.debug(`🎯 Got ${result.data.length} assignments from service`);
+    this.logger.debug(`Got ${result.data.length} assignments from service`);
     return result;
   }
 }

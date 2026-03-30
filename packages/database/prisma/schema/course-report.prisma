@@ -1,0 +1,37 @@
+model CourseReport {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  courseId        String @db.ObjectId
+  academicCycleId String @db.ObjectId
+  campusId        String @db.ObjectId
+  professorId     String @db.ObjectId
+
+  matriculados Int
+  aprobados    Int
+  reprobados   Int
+
+  isFinal Boolean @default(false)
+
+  status CourseReportStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([courseId, academicCycleId, campusId, professorId, isFinal], name: "unique_course_report_per_submission_type")
+  @@index([courseId])
+  @@index([academicCycleId])
+  @@index([campusId])
+  @@index([professorId])
+  @@index([status])
+  @@index([isFinal])
+  @@map("course_reports")
+}
+
+enum CourseReportStatus {
+  PENDING
+  SUBMITTED
+  APPROVED
+}

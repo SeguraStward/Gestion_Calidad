@@ -9,13 +9,13 @@ model Repitencia {
 
   // Relaciones
   campusId           String @db.ObjectId
-  curricularMeshId   String @db.ObjectId
+  curricularMeshId   String? @db.ObjectId
   courseId           String @db.ObjectId
   academicCycleId    String @db.ObjectId
   campusAllocationId String @db.ObjectId
 
   campus           Campus                      @relation("CampusRepitencias", fields: [campusId], references: [id])
-  curricularMesh   CurricularMesh              @relation("MeshRepitencias", fields: [curricularMeshId], references: [id])
+  curricularMesh   CurricularMesh?             @relation("MeshRepitencias", fields: [curricularMeshId], references: [id])
   course           Course                      @relation("CourseRepitencias", fields: [courseId], references: [id])
   academicCycle    AcademicCycle               @relation("CycleRepitencias", fields: [academicCycleId], references: [id])
   campusAllocation CampusJourneyTimeAllocation @relation("AllocationRepitencias", fields: [campusAllocationId], references: [id])

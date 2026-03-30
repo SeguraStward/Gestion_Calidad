@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { Building2, Edit, Eye, MoreHorizontal, Trash2 } from 'lucide-react'
 import { Button } from '@una-gc/ui/components/button'
 import {
   DropdownMenu,
@@ -10,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@una-gc/ui/components/dropdown-menu'
-import { MoreHorizontal, Edit, Trash2, Eye, Building2 } from 'lucide-react'
+
 import type { ExternalProvider } from '../services/external-providers.service'
 import { EmptyState } from './EmptyState'
 
@@ -58,7 +59,7 @@ export default function ExternalProvidersTable({ providers, onEdit, onDelete, on
       <EmptyState
         icon={<Building2 className="h-16 w-16" />}
         title="No hay proveedores externos registrados"
-        description="Los proveedores externos son universidades, convenios o acuerdos que proveen horas de jornada adicionales. Crea el primer proveedor para comenzar."
+        description="Los proveedores externos aportan tiempo de jornada adicional. Crea el primer proveedor para comenzar."
       />
     )
   }
@@ -86,7 +87,7 @@ export default function ExternalProvidersTable({ providers, onEdit, onDelete, on
                 </div>
               </td>
               <td className="border border-gray-300 px-4 py-2">
-                <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">
+                <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-muted text-foreground">
                   {PROVIDER_TYPE_LABELS[provider.providerType] || provider.providerType}
                 </span>
               </td>
@@ -103,9 +104,7 @@ export default function ExternalProvidersTable({ providers, onEdit, onDelete, on
                 )}
               </td>
               <td className="border border-gray-300 px-4 py-2">
-                <span
-                  className={`inline-block px-2 py-1 text-xs font-medium rounded ${STATUS_COLORS[provider.status || 'ACTIVE']}`}
-                >
+                <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${STATUS_COLORS[provider.status || 'ACTIVE']}`}>
                   {STATUS_LABELS[provider.status || 'ACTIVE']}
                 </span>
               </td>
@@ -113,7 +112,7 @@ export default function ExternalProvidersTable({ providers, onEdit, onDelete, on
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="h-8 w-8 p-0">
-                      <span className="sr-only">Abrir menú</span>
+                      <span className="sr-only">Abrir menu</span>
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -135,7 +134,7 @@ export default function ExternalProvidersTable({ providers, onEdit, onDelete, on
                     {onDelete && (
                       <DropdownMenuItem
                         onClick={() => {
-                          if (confirm(`¿Estás seguro de eliminar el proveedor "${provider.name}"?`)) {
+                          if (confirm(`Estas seguro de eliminar el proveedor "${provider.name}"?`)) {
                             onDelete(provider.id!)
                           }
                         }}

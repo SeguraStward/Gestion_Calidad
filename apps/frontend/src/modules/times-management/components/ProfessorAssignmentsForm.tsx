@@ -1,12 +1,12 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
+import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Alert, AlertDescription } from '@una-gc/ui/components/alert'
 import { Button } from '@una-gc/ui/components/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card'
 import { Input } from '@una-gc/ui/components/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card'
-import { Alert, AlertDescription } from '@una-gc/ui/components/alert'
-import { AlertCircle, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react'
 
 interface ProfessorAssignmentsFormProps {
   cycles: any[]
@@ -54,31 +54,34 @@ export function ProfessorAssignmentsForm({
   const [courseSearch, setCourseSearch] = useState('')
   const [filteredCourses, setFilteredCourses] = useState<any[]>([])
 
-  // Filtrar profesores según búsqueda
   useEffect(() => {
-    if (professorSearch.trim()) {
-      const filtered = professors.filter(
-        (p: any) =>
-          p.fullName?.toLowerCase().includes(professorSearch.toLowerCase()) ||
-          p.cedula?.toLowerCase().includes(professorSearch.toLowerCase())
-      )
-      setFilteredProfessors(filtered.slice(0, 10))
-    } else {
+    if (!professorSearch.trim()) {
       setFilteredProfessors([])
+      return
     }
+
+    const filtered = professors.filter(
+      (professor: any) =>
+        professor.fullName?.toLowerCase().includes(professorSearch.toLowerCase()) ||
+        professor.cedula?.toLowerCase().includes(professorSearch.toLowerCase())
+    )
+
+    setFilteredProfessors(filtered.slice(0, 10))
   }, [professorSearch, professors])
 
-  // Filtrar cursos según búsqueda
   useEffect(() => {
-    if (courseSearch.trim()) {
-      const filtered = courses.filter(
-        (c: any) =>
-          c.code?.toLowerCase().includes(courseSearch.toLowerCase()) || c.name?.toLowerCase().includes(courseSearch.toLowerCase())
-      )
-      setFilteredCourses(filtered.slice(0, 10))
-    } else {
+    if (!courseSearch.trim()) {
       setFilteredCourses([])
+      return
     }
+
+    const filtered = courses.filter(
+      (course: any) =>
+        course.code?.toLowerCase().includes(courseSearch.toLowerCase()) ||
+        course.name?.toLowerCase().includes(courseSearch.toLowerCase())
+    )
+
+    setFilteredCourses(filtered.slice(0, 10))
   }, [courseSearch, courses])
 
   const handleProfessorSelect = (professor: any) => {
@@ -98,88 +101,83 @@ export function ProfessorAssignmentsForm({
       courseId: course.id,
       courseCode: course.code,
       courseName: course.name,
-      careerName: course.career?.name || '' // ✅ Auto-llenar carrera
+      careerName: course.career?.name || ''
     }))
     setCourseSearch(`${course.code} - ${course.name}`)
     setFilteredCourses([])
   }
 
-  const canProceed = (): boolean => {
+  const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return !!formData.academicCycleId
+        return Boolean(formData.academicCycleId)
       case 2:
-        return !!formData.campusId
+        return Boolean(formData.campusId)
       case 3:
-        return !!(formData.professorId && formData.professorName && formData.professorCedula)
+        return Boolean(formData.professorId)
       case 4:
-        return true // ✅ Curso es opcional, siempre puede avanzar
+        return true
       case 5:
-        return !!formData.journeyType
+        return Boolean(formData.journeyType)
       default:
         return false
     }
   }
 
-  const handleNext = () => {
-    if (canProceed()) {
-      setCurrentStep((prev) => Math.min(5, prev + 1))
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+
+    if (!canProceed()) {
+      return
     }
-  }
 
-  const handleBack = () => {
-    setCurrentStep((prev) => Math.max(1, prev - 1))
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (canProceed()) {
-      // Mapear journeyType al enum del backend
-      const assignmentTypeMap: { [key: string]: string } = {
-        '1/4': 'QUARTER',
-        '1/2': 'HALF',
-        '3/4': 'THREE_QUARTER',
-        Full: 'FULL'
-      }
-
-      onSubmit({
-        professorId: formData.professorId,
-        academicCycleId: formData.academicCycleId,
-        campusId: formData.campusId,
-        curricularMeshCourseId: formData.courseId || undefined, // ✅ Opcional - solo se envía si existe
-        assignmentType: assignmentTypeMap[formData.journeyType] || 'FULL',
-        notes: `Asignación para ${formData.professorName} - ${formData.courseName}`
-      })
+    const assignmentTypeMap: Record<string, string> = {
+      '1/4': 'QUARTER',
+      '1/2': 'HALF',
+      '3/4': 'THREE_QUARTER',
+      Full: 'FULL'
     }
+
+    onSubmit({
+      professorId: formData.professorId,
+      academicCycleId: formData.academicCycleId,
+      campusId: formData.campusId,
+      curricularMeshCourseId: formData.courseId || undefined,
+      assignmentType: assignmentTypeMap[formData.journeyType] || 'FULL',
+      notes: formData.courseName
+        ? `Asignacion para ${formData.professorName} - ${formData.courseName}`
+        : `Asignacion para ${formData.professorName}`
+    })
   }
 
   const steps = [
-    { number: 1, title: 'Ciclo Académico', completed: !!formData.academicCycleId },
-    { number: 2, title: 'Sede', completed: !!formData.campusId },
-    { number: 3, title: 'Profesor', completed: !!formData.professorId },
-    { number: 4, title: 'Curso', completed: !!formData.courseId },
-    { number: 5, title: 'Tipo de Jornada', completed: !!formData.journeyType }
+    { number: 1, title: 'Ciclo Academico', completed: Boolean(formData.academicCycleId) },
+    { number: 2, title: 'Sede', completed: Boolean(formData.campusId) },
+    { number: 3, title: 'Profesor', completed: Boolean(formData.professorId) },
+    { number: 4, title: 'Curso', completed: Boolean(formData.courseId) },
+    { number: 5, title: 'Tipo de Jornada', completed: Boolean(formData.journeyType) }
   ]
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle>Nueva Asignación de Profesor</CardTitle>
-        <CardDescription>Complete el formulario paso a paso</CardDescription>
+        <CardTitle>Nueva Asignacion de Profesor</CardTitle>
+        <CardDescription>Completa el formulario paso a paso</CardDescription>
       </CardHeader>
+
       <CardContent>
-        {/* Stepper visual */}
         <div className="mb-8 flex items-center justify-between">
           {steps.map((step, index) => (
             <React.Fragment key={step.number}>
               <div className="flex flex-col items-center">
                 <div
-                  className={`
-                    w-10 h-10 rounded-full flex items-center justify-center font-semibold
-                    ${currentStep === step.number ? 'bg-primary text-primary-foreground' : ''}
-                    ${currentStep > step.number ? 'bg-green-500 text-white' : ''}
-                    ${currentStep < step.number ? 'bg-muted text-muted-foreground' : ''}
-                  `}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+                    currentStep === step.number
+                      ? 'bg-primary text-primary-foreground'
+                      : currentStep > step.number
+                        ? 'bg-green-500 text-white'
+                        : 'bg-muted text-muted-foreground'
+                  }`}
                 >
                   {step.completed && currentStep > step.number ? <CheckCircle2 className="w-5 h-5" /> : step.number}
                 </div>
@@ -193,23 +191,22 @@ export function ProfessorAssignmentsForm({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Paso 1: Ciclo Académico */}
           {currentStep === 1 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Paso 1: Seleccione el Ciclo Académico</h3>
+              <h3 className="text-lg font-semibold">Paso 1: Selecciona el Ciclo Academico</h3>
               {loadingCycles ? (
                 <Alert>
-                  <AlertDescription>Cargando ciclos académicos...</AlertDescription>
+                  <AlertDescription>Cargando ciclos academicos...</AlertDescription>
                 </Alert>
               ) : (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Ciclo Académico *</label>
+                  <label className="text-sm font-medium">Ciclo Academico *</label>
                   <Select
                     value={formData.academicCycleId}
                     onValueChange={(value) => setFormData((prev) => ({ ...prev, academicCycleId: value }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccione un ciclo" />
+                      <SelectValue placeholder="Selecciona un ciclo" />
                     </SelectTrigger>
                     <SelectContent>
                       {cycles.map((cycle) => (
@@ -221,19 +218,12 @@ export function ProfessorAssignmentsForm({
                   </Select>
                 </div>
               )}
-              {!formData.academicCycleId && (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>Debe seleccionar un ciclo académico antes de continuar</AlertDescription>
-                </Alert>
-              )}
             </div>
           )}
 
-          {/* Paso 2: Sede */}
           {currentStep === 2 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Paso 2: Seleccione la Sede</h3>
+              <h3 className="text-lg font-semibold">Paso 2: Selecciona la Sede</h3>
               {loadingCampuses ? (
                 <Alert>
                   <AlertDescription>Cargando sedes...</AlertDescription>
@@ -241,12 +231,9 @@ export function ProfessorAssignmentsForm({
               ) : (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Sede *</label>
-                  <Select
-                    value={formData.campusId}
-                    onValueChange={(value) => setFormData((prev) => ({ ...prev, campusId: value }))}
-                  >
+                  <Select value={formData.campusId} onValueChange={(value) => setFormData((prev) => ({ ...prev, campusId: value }))}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccione una sede" />
+                      <SelectValue placeholder="Selecciona una sede" />
                     </SelectTrigger>
                     <SelectContent>
                       {campuses.map((campus) => (
@@ -258,63 +245,31 @@ export function ProfessorAssignmentsForm({
                   </Select>
                 </div>
               )}
-              {!formData.campusId && (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>Debe seleccionar una sede antes de continuar</AlertDescription>
-                </Alert>
-              )}
             </div>
           )}
 
-          {/* Paso 3: Profesor */}
           {currentStep === 3 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Paso 3: Seleccione el Profesor</h3>
+              <h3 className="text-lg font-semibold">Paso 3: Selecciona el Profesor</h3>
+
               {loadingProfessors ? (
                 <Alert>
                   <AlertDescription>Cargando profesores...</AlertDescription>
                 </Alert>
               ) : professors.length === 0 ? (
-                <div className="space-y-4">
-                  <Alert className="bg-yellow-50 border-yellow-200">
-                    <AlertCircle className="h-4 w-4 text-yellow-600" />
-                    <AlertDescription className="text-yellow-800">
-                      No hay profesores registrados en el sistema. Por favor ingrese los datos manualmente.
-                    </AlertDescription>
-                  </Alert>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Nombre del Profesor *</label>
-                    <Input
-                      placeholder="Nombre completo del profesor"
-                      value={formData.professorName}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          professorName: e.target.value,
-                          professorId: 'manual-' + e.target.value.replace(/\s+/g, '-').toLowerCase()
-                        }))
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Cédula *</label>
-                    <Input
-                      placeholder="Número de cédula"
-                      value={formData.professorCedula}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, professorCedula: e.target.value }))}
-                    />
-                  </div>
-                </div>
+                <Alert className="bg-yellow-50 border-yellow-200">
+                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-yellow-800">
+                    No hay profesores disponibles. Primero registra profesores activos para poder crear asignaciones.
+                  </AlertDescription>
+                </Alert>
               ) : (
                 <div className="space-y-2 relative">
                   <label className="text-sm font-medium">Profesor *</label>
                   <Input
-                    placeholder="Buscar por nombre o cédula..."
+                    placeholder="Buscar por nombre o cedula..."
                     value={professorSearch}
-                    onChange={(e) => setProfessorSearch(e.target.value)}
+                    onChange={(event) => setProfessorSearch(event.target.value)}
                   />
                   {filteredProfessors.length > 0 && (
                     <div className="absolute z-10 w-full bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto mt-1">
@@ -326,7 +281,7 @@ export function ProfessorAssignmentsForm({
                           className="w-full text-left px-4 py-2 hover:bg-muted transition-colors border-b last:border-b-0"
                         >
                           <div className="font-medium">{professor.fullName}</div>
-                          <div className="text-sm text-muted-foreground">Cédula: {professor.cedula}</div>
+                          <div className="text-sm text-muted-foreground">Cedula: {professor.cedula}</div>
                         </button>
                       ))}
                     </div>
@@ -341,30 +296,23 @@ export function ProfessorAssignmentsForm({
                   )}
                 </div>
               )}
-              {!formData.professorId && (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>Debe ingresar los datos del profesor antes de continuar</AlertDescription>
-                </Alert>
-              )}
             </div>
           )}
 
-          {/* Paso 4: Curso */}
           {currentStep === 4 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Paso 4: Seleccione el Curso</h3>
+              <h3 className="text-lg font-semibold">Paso 4: Curso (Opcional)</h3>
               {loadingCourses ? (
                 <Alert>
                   <AlertDescription>Cargando cursos...</AlertDescription>
                 </Alert>
               ) : (
                 <div className="space-y-2 relative">
-                  <label className="text-sm font-medium">Curso *</label>
+                  <label className="text-sm font-medium">Curso</label>
                   <Input
-                    placeholder="Buscar por código o nombre..."
+                    placeholder="Buscar por codigo o nombre..."
                     value={courseSearch}
-                    onChange={(e) => setCourseSearch(e.target.value)}
+                    onChange={(event) => setCourseSearch(event.target.value)}
                   />
                   {filteredCourses.length > 0 && (
                     <div className="absolute z-10 w-full bg-background border border-border rounded-md shadow-lg max-h-60 overflow-y-auto mt-1">
@@ -379,7 +327,7 @@ export function ProfessorAssignmentsForm({
                             {course.code} - {course.name}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            Créditos: {course.credits} • Carrera: {course.career?.name || 'N/A'}
+                            Creditos: {course.credits} - Carrera: {course.career?.name || 'N/A'}
                           </div>
                         </button>
                       ))}
@@ -395,38 +343,28 @@ export function ProfessorAssignmentsForm({
                   )}
                 </div>
               )}
-              {!formData.courseId && (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>Debe seleccionar un curso antes de continuar</AlertDescription>
-                </Alert>
-              )}
             </div>
           )}
 
-          {/* Paso 5: Tipo de Jornada */}
           {currentStep === 5 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Paso 5: Seleccione el Tipo de Jornada</h3>
+              <h3 className="text-lg font-semibold">Paso 5: Tipo de Jornada</h3>
 
               <Alert className="bg-blue-50 border-blue-200">
                 <AlertDescription className="text-blue-800">
-                  📊 <strong>Resumen de la asignación:</strong>
-                  <br />• Profesor: {formData.professorName} ({formData.professorCedula})<br />• Curso: {formData.courseCode} -{' '}
-                  {formData.courseName}
-                  <br />• Carrera: {formData.careerName}
-                  <br />• Campus: {campuses.find((c) => c.id === formData.campusId)?.name || 'N/A'}
+                  <strong>Resumen de la asignacion:</strong>
+                  <br />Profesor: {formData.professorName} ({formData.professorCedula})
+                  <br />Curso: {formData.courseCode ? `${formData.courseCode} - ${formData.courseName}` : 'Sin curso asociado'}
+                  <br />Carrera: {formData.careerName || 'N/A'}
+                  <br />Campus: {campuses.find((campus) => campus.id === formData.campusId)?.name || 'N/A'}
                 </AlertDescription>
               </Alert>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Tipo de Jornada *</label>
-                <Select
-                  value={formData.journeyType}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, journeyType: value }))}
-                >
+                <Select value={formData.journeyType} onValueChange={(value) => setFormData((prev) => ({ ...prev, journeyType: value }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccione tipo de jornada" />
+                    <SelectValue placeholder="Selecciona tipo de jornada" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1/4">1/4 Tiempo (0.25)</SelectItem>
@@ -435,25 +373,15 @@ export function ProfessorAssignmentsForm({
                     <SelectItem value="Full">Tiempo Completo (1.00)</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  El tiempo de jornada se calculará automáticamente según el tipo seleccionado
-                </p>
+                <p className="text-xs text-muted-foreground">El tiempo de jornada se calculara segun el tipo seleccionado.</p>
               </div>
-
-              {!formData.journeyType && (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>Debe seleccionar un tipo de jornada antes de continuar</AlertDescription>
-                </Alert>
-              )}
             </div>
           )}
 
-          {/* Botones de navegación */}
           <div className="flex justify-between pt-6 border-t">
             <div>
               {currentStep > 1 && (
-                <Button type="button" variant="outline" onClick={handleBack}>
+                <Button type="button" variant="outline" onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}>
                   <ChevronLeft className="w-4 h-4 mr-2" />
                   Anterior
                 </Button>
@@ -465,13 +393,17 @@ export function ProfessorAssignmentsForm({
                 Cancelar
               </Button>
               {currentStep < 5 ? (
-                <Button type="button" onClick={handleNext} disabled={!canProceed()}>
+                <Button
+                  type="button"
+                  onClick={() => setCurrentStep((prev) => Math.min(5, prev + 1))}
+                  disabled={!canProceed() || (currentStep === 3 && professors.length === 0)}
+                >
                   Siguiente
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               ) : (
                 <Button type="submit" disabled={loading || !canProceed()}>
-                  {loading ? 'Guardando...' : 'Crear Asignación'}
+                  {loading ? 'Guardando...' : 'Crear Asignacion'}
                 </Button>
               )}
             </div>

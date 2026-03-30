@@ -1,0 +1,646 @@
+VideoErick
+Transcrito por TurboScribe. Actualizar a Ilimitado para eliminar este mensaje.
+
+[Orador 1]
+
+Un curso de 1 a 5 horas. Si es medio tiempo, o 20 horas, tiene que ser de 6 a 8 horas contacto.
+Si son 3 cuartos, son de 9 a 11 horas contacto.
+
+¿Qué quiere decir esto? Que tenemos un curso, 2 cursos. Tenemos 2 cursos de 4 horas que
+suman 8 y uno de 3.
+
+8, 9, 10, 11, entonces son 3 cuartos de tiempo. Yo tenga 3 cursos, no significa que es tiempo
+completo, ni significa que es 3 cuartos de tiempo, porque puedo tener 3 cursos de 4 horas, 2
+cursos de 4 y uno de 3, y son igual, 3 cursos, pero uno es tiempo completo y el otro representa
+los cuartos de tiempo. Y el tiempo completo es después de 12 horas contacto.
+
+Entonces, ahí lo que el sistema necesita jalar es que si yo le digo que Douglas Ramírez va a dar
+el curso tal y el otro curso tal, que el sistema sepa que ese curso, uno es de 4 horas y el otro es
+de 3, y que suman 7, y que si 7 está entre 6 y 8, y si está entre 6 y 8, ¿cuánto tiempo es? Que se
+le va a consultar.
+
+[Orador 2]
+
+Medio tiempo.
+
+[Orador 1]
+
+Eso es lo que preocupa que el sistema jale, entonces cuando es medio tiempo, entonces él sabe
+que hay medio tiempo en ese curso y lo resta el total de horas que vamos teniendo. Y entonces
+me va a decir, bueno, al final de la sumatoria de la resta, me dice, usted consumió este ciclo
+tantos tiempos, 2.15, 15.25 y lo que sea. Es correcto, nosotros al principio de año siempre nos
+pasan digamos 80 tiempos, ¿no?
+
+O 70 tiempos, entonces nosotros lo metemos, esto es lo que hay disponible para este año. Y
+entonces ahí va rebajando. Entonces que haya algún cuadrito donde diga saldo de tiempos en
+lo que lo está delante.
+
+Entonces que yo le pegue un informe y le diga, díganme cuántos tiempos, con los primer ciclo,
+cuántos tiempos me quedan disponibles. Bueno, le quedan 2 tiempos, o le hacen falta. Eso que
+me permite a mí, que yo por ahí de abril, ya yo tengo todo lo del primer ciclo colocado.
+
+Por ahí de abril yo le meto todo lo del segundo ciclo más o menos, se lo voy metiendo. Le meto,
+le meto, le meto la información y me diga, a usted con toda esta programación que tiene
+presupuestada, proyectada, le van a hacer falta 4.5 tiempos. Entonces eso es lo que nosotros
+tenemos que ir a pedir.
+
+[Orador 2]
+
+A mí no me queda muy claro, por ejemplo, para el primer ciclo, o sea para el primer semestre,
+digamos. En ciclo vendría siendo un semestre, ¿verdad? Para el primer semestre, antes de que
+empiece, se tiene que hacer todo este cálculo.
+
+[Orador 1]
+
+Sí, nosotros lo hacemos el año antes, digamos. Es decir, para el año que viene, ya como en
+octubre nosotros estamos viendo todo esto.
+
+[Orador 2]
+
+Para el primer ciclo.
+
+[Orador 1]
+
+Y ahorita en abril nosotros lo vemos para el segundo ciclo, y en octubre para el primer ciclo, y
+ahí va. Pero siempre donde hay más conflictos es en el segundo ciclo. ¿Por qué?
+
+Porque en el segundo ciclo es cuando ya empezamos, vamos con el mismo presupuesto. Pero
+lo que más necesitamos saber es en este ciclo, cómo estamos para el segundo ciclo, para ver si
+hay que pedir, si ya nos va a solucionar, si hay que hacer alguna apuesta, qué sé yo.
+
+[Orador 2]
+
+Sí, claro. En cuanto, usted nos había explicado que había otra parte, que era la de visualizar los
+estudiantes en qué ciclo iban según el cohorte.
+
+[Orador 1]
+
+Sí, pero eso todavía no lee demos mucha mente. Me interesa más esto de los ciclos. Ahí es que yo
+veo muy complejo esa otra parte, porque habría que registrarlo por cédula, y asociarlo con la
+matrícula.
+
+Está bien complejo.
+
+[Orador 2]
+
+Sí, bueno, no sé si esos datos ya los trabajarán.
+
+[Orador 1]
+
+Y yo creo que eso de los cortes y eso, ya lo podemos sacar con un informe a través del banner.
+O sea, ya existe una forma de sacarlo.
+[Orador 2]
+
+Ah, ok, ok.
+
+[Orador 1]
+
+O sea, se convierte en una duplicación.
+
+[Orador 2]
+
+Sí. Ok. Con esto del tiempo de jornada, además de los cursos, había otra parte que también
+consumía tiempo de jornada, que eran como los proyectos.
+
+[Orador 1]
+
+Sí, proyectos. Esos se cargan de manera manual. Ustedes me tienen que dejar a mí hacer un
+proyecto nuevo, le pongo una vigencia, de tal de 1 de enero del 2025 al 31 de diciembre del
+2027, y que el sistema entienda que por ese tiempo ese proyecto va a estar vigente, y que
+consume un cuarto de tiempo todos los ciclos, o medio tiempo.
+
+Y eso yo lo puedo llevar a mano.
+
+[Orador 2]
+
+Sí, eso usted lo define. Sí.
+
+[Orador 1]
+
+Se llama así, proyectos y actividades académicas. Sí.
+
+[Orador 2]
+
+Ok. Yo recuerdo que también había otra parte que usted nos había mencionado, que tal vez la
+podíamos dejar para después, pero como estamos definiendo ese proyecto, tal vez
+necesitamos también, por lo menos, constatar que hay otra parte ahí. Usted hablaba de utilizar
+fórmulas, no sé si era para hacer un cálculo, estimaciones, algo así.
+
+[Orador 4]
+
+No me acuerdo.
+
+[Orador 2]
+
+Sí. Usted me ha dicho que eso tal vez lo dejamos más adelante.
+
+[Orador 1]
+
+Para hacer estimaciones. No lo recuerdo. Tendríamos que ya cuando veamos lo que tienen y ya
+mirar qué sigue, porque no me acuerdo.
+
+[Orador 2]
+
+Ok. Sí, está bien. Ángel, usted, ¿no tiene preguntas?
+
+[Orador 3]
+
+Ahorita sí.
+
+[Orador 1]
+
+Creo que las repitencias se manejan aparte, ¿verdad? Tienen la misma lógica, pero aparte.
+
+[Orador 2]
+
+Ah, cierto, las repitencias.
+
+[Orador 1]
+
+Tienen la misma lógica de los tiempos, no cambia nada, nada más que no suman dentro de lo
+que va aparte. Porque no son constantes, son variables. Ahí lo que se sabe es que cuando uno
+mete la información por carrera, uno sabe que esa carrera por año consume tanta cantidad de
+tiempo.
+
+Y las repitencias son lo que hace que se cambie.
+
+[Orador 2]
+
+Ajá, lo que hace que varíe.
+
+[Orador 3]
+
+Amigo, si pudiera hacer como un resumen así muy breve de todo lo que es. Es que yo no estuve
+en la primera vez que hablaron, entonces para poder sentir un poco mejor todo.
+
+[Orador 1]
+
+Sí, bueno, dame un segundo para abrir entonces el Excel para explicarlo más.
+
+[Orador 4]
+
+Nosotros en la universidad utilizamos. Por acá, por carrera. Si ves, vamos viendo carrera por
+carrera.
+
+[Orador 1]
+
+Digamos que hablemos de gestión empresarial de turismo sostenible. Gestión empresarial de
+turismo sostenible tiene en la malla curricular, ¿verdad? Tiene en el primer ciclo esto que está
+por acá.
+
+Estos cuatro, estos cinco cursos. Dos generales, un curso llamado Taller de Sistema Turístico,
+Geografía e Inglés. Sistema generales, las zonas contacto, las zonas visitantes son 3 y 3.
+
+Y 5 Geografía, 5 Taller de Sistema Turístico y 10 horas contacto de Inglés para Turismo. ¿Esto
+qué significa? Que este curso de Inglés para Turismo es de tres cuartos de tiempo, de acuerdo
+a lo que hablamos, ¿verdad?
+
+Recuerda que de 9 a 11 son tres cuartos. Este de 5, recuerda que de 1 a 5 horas de horas
+contacto, horas docentes, son un cuarto de tiempo. Igual este, igual este, igual este.
+
+Por sí, este ciclo consume 1.75 tiempo. ¿Verdad? Entonces, esto me lo jala esto que está por
+acá.
+
+Si nosotros nos vamos a... Vamos a ver, Agencia Empresarial del Turismo Sostenible. Me doy
+cuenta que el cohorte número 1 del 2025 que viene entrando se va a consumir esto por acá.
+
+El cohorte 2024, o sea, el del año pasado, que va en el tercer ciclo, o en el segundo año, tercer
+ciclo, 1.75 y 2, 1.75. Y dice que hay 0.25 repetencia. Entonces, esto puede deberse a algún
+cursito ahí de contabilidad o de algo así. Este tiempo que queda aquí, este tiempo completo,
+pues se puede deber a dos cursos o a un curso de inglés integrado, alguna cuestión que hay
+quedados, entonces se abre el curso ese.
+
+Esto se suma y da que por año se consumen, ¿verdad? 6.125 tiempos por año. Bueno, ese es el
+cálculo que hace eso por allí.
+
+Y después esto me lo pasa a este apartado. Lo que me está diciendo es que la gestión
+empresarial del turismo sostenible consume 6.125 tiempos en todo el año. Inglés también.
+
+Inglés también. Ingeniería de calidad consume esto. Ingeniería de sistemas consume 8.25. Y así
+sucesivamente. Entonces me dice que al año, con todas las carreras, la universidad consume
+45.13 tiempos. Pérez Celedón y Campus Coto combinado. Necesita 72.25 tiempos para poder
+operar en docencia, nada más. Y ya después le metemos todo el tema de los proyectos y
+demás. Y me dice aquí, ¿se acuerdan? Esta Excel que tenemos acá que me están haciendo falta
+12.72 tiempos. ¿Por qué? Yo estoy necesitando 72 tiempos, ¿verdad? Tengo 83 disponibles.
+
+Y le quito lo de los proyectos que salen de ese mismo presupuesto y me hacen falta 12 tiempos.
+Entonces, en términos general, lo que nosotros necesitamos es un sistema donde nosotros
+podamos ponerle cuáles son los cursos que se activan por ciclo o por año. Que entienda que
+este curso jala 7.75, este 0.25, este también, este también, este también. Este otro jala un
+tiempo, por aquí tiene que haber uno que jale un tiempo. Vamos a ver cuál. Bueno, aquí no
+aparece, pero creo que inglés por ahí.
+
+Y que me los sume por carreras acá, por corte, ¿verdad? Y que después de estos tiempos que se
+van jalando acá con repitencia, me los sume en un solo conglomerado. Que sume además de la
+docencia por carrera, que sume también los proyectos que tenemos o actividades académicas.
+
+Y cada uno de las responsabilidades que tiene. ¿Ya? ¿Más o menos?
+
+[Orador 3]
+
+Bueno. Este sí, digamos, entonces cada ciclo se tiene que hacer eso. ¿Y cómo se va a tomar eso
+de repitencia?
+
+¿Cómo se calcula?
+
+[Orador 1]
+
+Vamos a ver. Por eso les digo, tiene que haber un cuadrito ahí en el sistema donde yo me deje
+meter a mis cursos por repitencia. Porque eso no se sabe, no se sabe si ya se va a abrir o no.
+
+Entonces no puede haber un rubro ahí que sea repitencia. Entonces, yo puedo llenar por
+código de curso. ¿Verdad?
+
+Vamos a ver. Este código de curso, ustedes pueden habilitar una hojita. Vamos a ver.
+
+Ustedes pueden habilitar una hojita ahí dentro del, ¿cómo se llama? Donde yo pueda decir,
+bueno, voy a seleccionar, gestión empresarial de triunfo sostenible. Y selecciono uno de estos
+códigos de acá.
+
+¿Ya? Selecciono el SCC 414, que es el curso de gestión de triunfo alternativo. Y le digo que este
+curso voy a abrirlo por repitencia.
+
+Es decir, además del ordinario, lo voy a abrir por repitencia. ¿Qué significa eso? Que me va a
+generar medio tiempo.
+
+Un 0.25 por ordinario, que se va a abrir normal. En el quinto ciclo, ¿verdad? Y otro cuarto de
+tiempo que se va a abrir de manera, por repitencia.
+
+Entonces me lo suma diferente. No sé si me voy a entender ahora.
+
+[Orador 2]
+
+Ajá, sí. O sea, eso sería, se le suma a parte del curso normal, ¿qué sería? Repitencia, eso es
+como un añadido.
+
+Como un apartado de repitencia.
+
+[Orador 1]
+
+¿A qué se suma? Aquí. ¿Ves?
+Yo lo pongo acá. ¿Por qué? Porque se sale de lo ordinario.
+
+Esto casi nunca va a cambiar. Esto que estoy mostrando. ¿Cambia cuándo?
+
+Aquí. Porque es extraordinario. ¿Verdad?
+
+Puede ser que este año haya muchos quedados en fundamentos. ¿Verdad? En funda.
+
+Y el otro año no, no hay ninguno. Entonces no hay necesidad de abrir un curso. Vea por
+ejemplo aquí en sistemas.
+
+Vea la cantidad de tiempos en el segundo ciclo. Esto es probablemente porque se abre varios
+cursos de funda. Progrado 1, Progrado 2, qué sé yo.
+
+Sí. Entonces, aquí me lo pone aparte. Entonces yo le puedo decir al sistema, dígame cuántos
+cursos o cuántos tiempos por repitencia en cualquier carrera o ni esta carrera.
+
+Se van a abrir, se abrieron o se van a abrir en el segundo ciclo. En el segundo ciclo en el 25 o se
+abrieron en el 2023. Tanto.
+
+Entonces ya yo tengo una estadística. Pero ya pues eso me lo jala uno solo. Aquí no discrimina
+repitencia ni nada.
+
+Sino que aquí ya lo suma todo. Entonces me está diciendo que voy a necesitar 6.125. Y así
+sucesivamente. Ya voy.
+
+6.75, 8.25, 7.13, etcétera. Y me lo suma todo porque ya al final cuenta.
+
+[Orador 3]
+
+¿Y después se resta el total del año o del ciclo? ¿Cómo era eso?
+
+[Orador 1]
+
+Entonces eso se trabaja, vamos a ver, se trabaja por año.
+
+[Orador 3]
+
+Por año.
+
+[Orador 1]
+
+Por año, sí. Pero los datos los lleno por ciclo. Ya.
+
+Esto yo lo hice para este ciclo. Entonces esto es lo que yo muevo más que todo, esto que está
+aquí. Entonces esto yo lo llene por ciclo, por año.
+
+Pero al final se llena por cada uno de los ciclos. La sumatoria de los dos ciclos dan esto. Y
+después empiezo a restarle.
+
+Aquí le estoy sumando. Que en el observatorio me pasan un tiempo de heredia. En Provenzo
+Capital me pasan esta cantidad de tiempos.
+
+En este otro me pasan tiempos. Me pasaron algunos tiempos y esto me suma. Entonces me dio
+83.41. Eso es lo que me dio. Y después les rebajo lo que yo nombro. Que no me dan tiempos y
+que yo asumo como organización. Y empiezo a restar y a restar diferentes RIGS.
+
+Y me dice que me quedan 12 tiempos pendientes por conseguir. Entonces tenemos los cursos
+de cada una de estas carreras. Que se tienen que dar sí o sí.
+
+Más las repitencias. Luego tengo unidades académicas de la universidad que me pasan
+tiempos. Que me pasan plata, por decirlo de alguna manera.
+
+Para que me entiendan mejor. Me pasan dinero para que yo pueda transferir mejor en
+proyectos. Entonces yo lo sumo aquí.
+
+Me pasan medios tiempos en observatorio. 1.16 en Promoviendo. 1.16 en Carrera de Sistema. 1
+en Bienes de Coto. Nombramientos analizados 2. Y así sucesivamente y lo sumo.
+
+Ustedes pueden ponerme a mí. Hay un rubro donde yo puedo ir llenando de manera manual.
+Eso se llena manual.
+
+Porque esto es incierto también. Esto es a veces sí, a veces no. Y después tengo que descargar.
+
+Las actividades académicas que se van a abrir. Y que me consumen algún tiempo. Esta, por
+ejemplo, que estoy señalando acá.
+
+Se llama accesibilidad turística. Este año me consume 0.25. Pero este año cierra. Entonces el
+otro año me consume nada.
+
+El 2.27 se quita. Pero se puede abrir una, dos o tres más aquí. Entonces consumen cierta
+cantidad de tiempo.
+
+Que me suman aquí, me quitan. Me quitan disponible. Eso es lo que yo necesito saber es.
+
+Para yo después ir y decir. Bueno, me hacen falta tantos tiempos. Eso es como que a ustedes yo
+les doy galletas.
+
+Les doy galletas. Y esas galletas ustedes las tienen que repartir entre un montón de gente. Pero
+este año.
+
+Este primer ciclo les llega a una cantidad de gente. Y el otro ciclo les va a llegar a otra cantidad
+de gente. Entonces usted lo que necesita saber es.
+
+Cuánta gente les va a llegar el otro ciclo. Para saber si con las galletas que le quedaron. Ya.
+Sí. Más o menos eso es.
+
+[Orador 2]
+
+Como en ese ejemplo de accesibilidad turística. Que se tiene un 0.25. Eso es entre los dos ciclos.
+
+[Orador 1]
+
+Sí. Estos son anuales también. Estos son anuales.
+
+Ajá, ok. Estos son 0.25 todo el año.
+
+[Orador 2]
+
+Ajá, ya, ya, ya, ok.
+
+[Orador 1]
+
+Los cursos no pueden ser anuales porque se dan en dos ciclos.
+
+[Orador 2]
+
+Sí. No hay forma de. Lo que nos enseñó antes.
+
+Que usted sumaba varios. Eh. Varios valores.
+
+Más abajo. Ahí o en donde. Que eran.
+
+Se dijo que eran tiempos de jornada que le daban. Que eran inciertos.
+
+[Orador 4]
+
+Ah, ya, aquí.
+
+[Orador 2]
+
+Ajá, eso. Yo vi que dice algunos que es plazo fijo. Vacantes, fructales.
+
+Esos también son inciertos o esos sí son.
+
+[Orador 1]
+
+No, esos son fijos.
+
+[Orador 2]
+
+Sí.
+
+[Orador 1]
+Ah, ok. Pero esto propietario, esto no cambia. Plazo fijo esto sí cambia.
+
+Ustedes pueden poner. Los pueden poner abiertos. Y yo lo lleno manualmente todos los años.
+
+[Orador 2]
+
+Ajá.
+
+[Orador 1]
+
+Porque puede ser que un propietario se pensione. Puede ser que un propietario se sumó.
+Entonces hay uno más.
+
+Etcétera. Plazo fijo puede ser que se bajó. Igual es incierto.
+
+[Orador 2]
+
+Sí, ok, ok. O ese total que aparece ahí. Disponible para docencia.
+
+Ese ya sería el total que se tiene. Ya para trabajar con proyectos. Con docencia.
+
+Es esto de aquí.
+
+[Orador 1]
+
+Más esto que nos pasa.
+
+[Orador 2]
+
+Ah, ok, ok. Ya, ya, ya. Sí.
+
+[Orador 3]
+
+Eso de distribución de jornadas. Baje un toquecito ahí. Para ver.
+
+Ese menos 0.22. Digamos, ¿por qué? ¿Por qué pasa?
+
+[Orador 1]
+
+Ve aquí la fórmula. Está diciendo que está restando este menos este menos este. ¿Verdad?
+
+Son tiempos que se crean ahí. ¿Verdad? Y lo que me dice es que este menos este menos este
+me da menos 0.22. Pero, digamos, este. Lo que quiere decir esto es que a partir de aquí ya
+vamos mal. O sea, no me está alcanzando el tiempo. Puede ser que aquí de positivo.
+
+Puede ser que esta estrategia de permanencia estudiantil, que se llama repitencia. ¿Verdad? No
+sea menos, sea 8.
+
+Entonces ya hay menos. Vamos a darle 8, así como les decía. Recordemos que es 11.8. 11.8. Lo
+que yo le doy aquí, 8. Ya me da. Ajá.
+
+[Orador 4]
+
+Aquí es 11.78. Ya me queda mal.
+
+[Orador 3]
+
+¿Y esos rubros? Son fijos, digamos, siempre. Estos.
+
+[Orador 1]
+
+Este sí, este también. Y aquí para adelante no. Esto va a depender de la cantidad de proyectos
+que se abran por año.
+
+Por eso esto tiene que quedar abierto. Que yo lo pueda manejar, quitar y borrar. Porque este
+diseño de acá, este por ejemplo, esta extensión forestal.
+
+¿Ves que dice aquí 0.12? Eso es porque este proyecto termina el 30 de junio y ya no más.
+Entonces él no consume todo el año, sino la mitad.
+
+¿Entendés?
+
+[Orador 3]
+
+O sea, sería como un registro de rubros.
+
+[Orador 1]
+
+Aquí lo que tiene que preocuparse es que me abran a mí la posibilidad de yo poder crear
+proyectos. Y darles un peso de 0.25 a 1. Y ya.
+
+Una vez que yo lo asigne, le pongo un periodo. Este proyecto de accesibilidad está del 1 de
+enero del 2025 al 31 de diciembre del 2026. Entonces en ese tiempo, siempre, siempre me va a
+jalar este 0.25 por año. ¿Lo vas a entender?
+
+[Orador 3]
+
+Sí.
+
+[Orador 1]
+
+Y como aquí yo le pongo extensión forestal. Es del 1 de enero del 2024 al 30 de junio del 2025.
+Entonces él, porque entiende que yo le pongo 0.25 por año. Me va a entender que como
+trabaja medio año, entonces me va a dar 0.12. Entonces no vean estos números. Estos números
+no los vean. No tienen por qué mirarlos.
+
+Vean es la posibilidad de que me puedan abrir un espacio para yo poder llenar. Esto ustedes
+pueden ponerle aquí proyectos. Entonces se llaman proyectos de actividades.
+
+En el proyecto de actividades yo puedo abrir 1, 2, 3, etc. N cantidad de proyectos. Y yo le hago
+la carga.
+
+Esta escuela sinfónica tiene tres cuartos. Este tiene medio tiempo. Este tiene menos de un
+cuarto, de la mitad de un cuarto de tiempo.
+
+Un octavo. Este tiene un cuarto de tiempo. Este un octavo de tiempo.
+
+Un medio tiempo. Me explico. Yo le puedo meter la información.
+
+Y ya queda fija por el periodo de tiempo que yo determine.
+
+[Orador 2]
+
+Usted definiría el periodo de tiempo y la cantidad de tiempo de jornada que va a... Exacto. Y el
+nombre del proyecto.
+
+[Orador 4]
+
+Yo hago un nuevo.
+
+[Orador 1]
+
+Entonces ustedes no se preocupen por los números. Lo que necesitamos es que me sumen y
+me resten los condensados. ¿Qué ocupo que me sume?
+
+Los tiempos de todas las carreras. Que me sumen la repitencia. Que me dejen a mí abrir...
+
+Me dejen a mí abrir proyectos o unidades que me pasan tiempo. Entonces yo sumo tiempos. Y
+después que me dejen a mí abrir proyectos que me quitan tiempo.
+
+¿Me va a entender? Sí. Entonces, aquí hay tres números.
+
+Tiempos para docencia, que es lo que necesito. Tiempos que me trasladan. Tiempos que me
+trasladan, que vienen de otros lados y me los dan.
+
+Que se sumen, digamos. Y tiempos que se consumen de proyectos. Tiempo de docencia.
+
+Tiempos de docencia. Tiempos que me trasladan. Y tiempos que se consumen que no son
+docencia, son proyectos.
+
+O gestión. Aquí viene gestión.
+
+[Orador 3]
+
+Sí. Los primeros tiempos que se calculan para las carreras, digamos, repitencia y todo eso. Eso
+se resta al total.
+
+Después, lo que le dan a usted se suma al total. Y después se vuelve a restar. Lo de rubros.
+
+[Orador 1]
+
+No, no, no. Los tiempos de docencia se suman todos. Es lo que yo necesito para operar.
+
+Aquí él sumó. Suma todos estos rubros y los suma aquí. ¿Ya?
+
+Y suma Pérez y suma Cotto. Yo necesito 25.3 y Cotto necesita 27.3. Ya tenemos que
+necesitamos la sumatoria de todos los tiempos para dar todos los cursos del año. Se necesitan
+72.25 con repitencia y con todo. Ah, ok. Listo. Después tenemos los tiempos que me pasan.
+
+Que son estos de aquí. Están en color. Esto es importante que lo pongan, pero esto ni quita ni
+resta.
+
+Lo explico. Esto suma, digamos, pero estas tres cosas que están aquí. Los vietares, los vivos y
+los vacantes, es esto mismo de aquí arriba.
+
+Ajá. Ya. Esta es la forma en que yo...
+
+Esto es lo que tengo disponible para trabajar con mano de obra. Digamos, no le den mucha
+mente a eso. Igual abrame en una casilla que se llame propietarios, otra plazos vivos y otra
+vacantes y yo lo lleno manualmente.
+
+[Orador 2]
+
+Ok.
+
+[Orador 1]
+
+Y sumar a las jornadas existentes. Aquí está muy claro. Estas son jornadas de docencia.
+
+Ya. Estas son jornadas existentes. ¿Verdad?
+
+Y estas son jornadas que me consumen. Diferente a la docencia. Entonces, yo lo que hago es
+que...
+
+Lo que estoy haciendo aquí. Ojo. En este de aquí para adelante.
+
+Lo que estoy haciendo es sumar. Lo que necesito que sea 72.25 más lo que me están pasando.
+Ya.
+
+Y me da 83.41. Y después del resto... Lo que me consume que no sea docencia. Que son gestión
+y proyectos.
+
+Así de sencillo. Es una suma.
+[Orador 3]
+
+Sí, entre 72 y más 83. Da un resultado ahí. No, no, no.
+
+[Orador 1]
+
+72 es lo que yo necesito solamente para docencia. Insisto. Este cuadrito de acá solamente es
+docencia.
+
+Cursos. Cursos. Por carrera.
+
+Esto que tengo acá son platas que me pasan. Me lo pasaron. ¿De acuerdo?
+
+Entonces yo lo sumo a lo que necesito para docencia y me da 83.41. A ese 83.41 le resto esto
+que está aquí que es la gestión y los proyectos. Y me da esto. Ahora sí.
+
+Lo que necesito para docencia lo sumo a lo que me pasa. Lo que está disponible. Y después del
+resto lo que me consume que no tengo...
+
+O sea, que está ahí, que me lo va a consumir, que me lo va a bajar. Y es esto. Pueden ser más o
+pueden ser menos.
+
+Pueden valer más o pueden valer menos.
+
+Este archivo dura más de 30 minutos.
+
+Actualizar a Ilimitado en https://turboscribe.ai/es/ para transcribir archivos de hasta 10
+horas.
+

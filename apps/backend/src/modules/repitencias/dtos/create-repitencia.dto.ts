@@ -7,9 +7,10 @@ export class CreateRepitenciaDto {
   @IsString()
   campusId!: string;
 
-  @ApiProperty({ description: 'ID de la malla curricular', example: '507f1f77bcf86cd799439011' })
+  @ApiProperty({ description: 'ID de la malla curricular', example: '507f1f77bcf86cd799439011', required: false })
+  @IsOptional()
   @IsString()
-  curricularMeshId!: string;
+  curricularMeshId?: string;
 
   @ApiProperty({ description: 'ID del curso', example: '507f1f77bcf86cd799439011' })
   @IsString()

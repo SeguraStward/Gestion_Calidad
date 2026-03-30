@@ -33,7 +33,7 @@ export class AuditFields {
   updatedAt?: Date;
 
   @ApiPropertyOptional({
-    description: 'Created by user ID',
+    description: 'Created by user ID', 
     readOnly: true,
     example: 'user-uuid-here',
   })

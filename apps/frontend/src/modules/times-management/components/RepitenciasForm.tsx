@@ -259,7 +259,7 @@ export function RepitenciasForm({
                       <div className="flex-1">
                         <div className="font-medium text-green-900">{formData.courseCode}</div>
                         <div className="text-sm text-green-700">{formData.courseName}</div>
-                        {formData.careerName && <div className="text-xs text-green-600 mt-1">📚 {formData.careerName}</div>}
+                        {formData.careerName && <div className="text-xs text-green-600 mt-1">{formData.careerName}</div>}
                       </div>
                     </div>
                   </div>

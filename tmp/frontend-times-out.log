@@ -1,0 +1,15 @@
+
+> @una-gc/frontend@0.0.1 dev C:\Users\rocic\OneDrive\Documentos\Ingeniería\VI_Semestre\Ing_II\Gestion_Calidad\apps\frontend
+> next dev -p 3001
+
+   ▲ Next.js 15.3.4
+   - Local:        http://localhost:3001
+   - Network:      http://169.254.113.78:3001
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 5.8s
+ ✓ Compiled /middleware in 410ms (113 modules)
+ ○ Compiling /auth/login ...
+ ✓ Compiled /auth/login in 18.4s (5148 modules)
+ ✓ Compiled in 3.3s (2536 modules)

@@ -15,9 +15,10 @@ export class CreateCampusAllocationDto {
   @IsString()
   campusId!: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
-  meshId!: string;
+  meshId?: string;
 
   @ApiProperty({ example: 200 })
   @IsNumber()

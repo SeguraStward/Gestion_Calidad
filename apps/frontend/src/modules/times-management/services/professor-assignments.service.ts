@@ -1,5 +1,5 @@
 // ============================================================
-//  📦 ProfessorAssignmentsService
+//   ProfessorAssignmentsService
 //  Servicio para gestión de asignaciones de profesores
 // ============================================================
 
@@ -25,7 +25,7 @@ export interface CreateProfessorAssignmentDto {
   professorId: string
   academicCycleId: string
   campusId: string
-  curricularMeshCourseId?: string // ✅ OPCIONAL (no siempre hay curso asignado)
+  curricularMeshCourseId?: string //  OPCIONAL (no siempre hay curso asignado)
   assignmentType: 'FULL' | 'THREE_QUARTER' | 'HALF' | 'QUARTER'
   campusAllocationId?: string
   institutionalProjectId?: string
@@ -36,16 +36,17 @@ export interface UpdateProfessorAssignmentDto extends Partial<CreateProfessorAss
 
 export const ProfessorAssignmentsService = {
   /**
-   * 🔹 Obtiene todas las asignaciones de profesores
+   *  Obtiene todas las asignaciones de profesores
    */
   async getAll(): Promise<ProfessorAssignment[]> {
     try {
       const res = await fetch(`${API_URL}/professor-assignments`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener asignaciones de profesores:', res.status)
+        console.error(' Error al obtener asignaciones de profesores:', res.status)
         throw new Error(`Error al obtener asignaciones: ${res.status}`)
       }
 
@@ -53,44 +54,46 @@ export const ProfessorAssignmentsService = {
       const data = Array.isArray(json) ? json : json.data || []
       return data
     } catch (err) {
-      console.error('⚠️ Error en getAll:', err)
+      console.error(' Error en getAll:', err)
       return []
     }
   },
 
   /**
-   * 🔹 Obtiene una asignación por ID
+   *  Obtiene una asignación por ID
    */
   async getById(id: string): Promise<ProfessorAssignment | null> {
     try {
       const res = await fetch(`${API_URL}/professor-assignments/${id}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener asignación:', res.status)
+        console.error(' Error al obtener asignación:', res.status)
         return null
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en getById:', err)
+      console.error(' Error en getById:', err)
       return null
     }
   },
 
   /**
-   * 🔹 Obtiene asignaciones por profesor
+   *  Obtiene asignaciones por profesor
    */
   async getByProfessor(professorId: string): Promise<ProfessorAssignment[]> {
     try {
       const res = await fetch(`${API_URL}/professor-assignments?professorId=${professorId}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener asignaciones del profesor:', res.status)
+        console.error(' Error al obtener asignaciones del profesor:', res.status)
         return []
       }
 
@@ -98,22 +101,23 @@ export const ProfessorAssignmentsService = {
       const data = Array.isArray(json) ? json : json.data || []
       return data
     } catch (err) {
-      console.error('⚠️ Error en getByProfessor:', err)
+      console.error(' Error en getByProfessor:', err)
       return []
     }
   },
 
   /**
-   * 🔹 Obtiene asignaciones por campus
+   *  Obtiene asignaciones por campus
    */
   async getByCampusAllocation(campusAllocationId: string): Promise<ProfessorAssignment[]> {
     try {
       const res = await fetch(`${API_URL}/professor-assignments?campusAllocationId=${campusAllocationId}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener asignaciones por campus:', res.status)
+        console.error(' Error al obtener asignaciones por campus:', res.status)
         return []
       }
 
@@ -121,79 +125,83 @@ export const ProfessorAssignmentsService = {
       const data = Array.isArray(json) ? json : json.data || []
       return data
     } catch (err) {
-      console.error('⚠️ Error en getByCampusAllocation:', err)
+      console.error(' Error en getByCampusAllocation:', err)
       return []
     }
   },
 
   /**
-   * 🔹 Crea una nueva asignación de profesor
+   *  Crea una nueva asignación de profesor
    */
   async create(data: CreateProfessorAssignmentDto): Promise<ProfessorAssignment | null> {
     try {
       const res = await fetch(`${API_URL}/professor-assignments`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
-        console.error('❌ Error al crear asignación:', res.status, errorData)
+        console.error(' Error al crear asignación:', res.status, errorData)
         throw new Error(errorData.message || `Error al crear asignación: ${res.status}`)
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en create:', err)
+      console.error(' Error en create:', err)
       throw err
     }
   },
 
   /**
-   * 🔹 Actualiza una asignación existente
+   *  Actualiza una asignación existente
    */
   async update(id: string, data: UpdateProfessorAssignmentDto): Promise<ProfessorAssignment | null> {
     try {
       const res = await fetch(`${API_URL}/professor-assignments/${id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
-        console.error('❌ Error al actualizar asignación:', res.status, errorData)
+        console.error(' Error al actualizar asignación:', res.status, errorData)
         throw new Error(errorData.message || `Error al actualizar asignación: ${res.status}`)
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en update:', err)
+      console.error(' Error en update:', err)
       throw err
     }
   },
 
   /**
-   * 🔹 Elimina una asignación
+   *  Elimina una asignación
    */
   async delete(id: string): Promise<boolean> {
     try {
       const res = await fetch(`${API_URL}/professor-assignments/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al eliminar asignación:', res.status)
+        console.error(' Error al eliminar asignación:', res.status)
         return false
       }
 
       return true
     } catch (err) {
-      console.error('⚠️ Error en delete:', err)
+      console.error(' Error en delete:', err)
       return false
     }
   }
 }
+

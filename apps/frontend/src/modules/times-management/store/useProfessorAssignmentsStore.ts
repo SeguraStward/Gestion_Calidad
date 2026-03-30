@@ -89,7 +89,7 @@ export const useProfessorAssignmentsStore = create<ProfessorAssignmentsState>((s
     try {
       const newAssignment = await ProfessorAssignmentsService.create(data)
       if (newAssignment) {
-        // 🔄 Refrescar todos los datos desde el backend para obtener relaciones pobladas
+        //  Refrescar todos los datos desde el backend para obtener relaciones pobladas
         const assignments = await ProfessorAssignmentsService.getAll()
         set({ assignments, loading: false })
       }

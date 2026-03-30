@@ -16,12 +16,10 @@ export class InstitutionalProjectsController {
   @ApiOperation({ summary: 'Create institutional project' })
   async create(@Body() dto: CreateInstitutionalProjectDto) {
     try {
-      this.logger.debug('📥 Received DTO:', JSON.stringify(dto, null, 2));
-      const result = await this.service.create(dto);
-      this.logger.debug('✅ Created successfully:', Array.isArray(result) ? 'bulk' : (result as any)?.id);
-      return result;
+      this.logger.debug('Received institutional project payload');
+      return await this.service.create(dto);
     } catch (error: any) {
-      this.logger.error('❌ Error creating institutional project:', error?.message || error);
+      this.logger.error('Error creating institutional project:', error?.message || error);
       this.logger.error('Stack:', error?.stack);
       throw error;
     }
@@ -68,5 +66,19 @@ export class InstitutionalProjectsController {
   @ApiOperation({ summary: 'Get institutional project by ID' })
   findById(@Param('id') id: string) {
     return this.service.findById(id);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update institutional project' })
+  @ApiParam({ name: 'id', type: String })
+  update(@Param('id') id: string, @Body() dto: UpdateInstitutionalProjectDto) {
+    return this.service.update(id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete institutional project' })
+  @ApiParam({ name: 'id', type: String })
+  delete(@Param('id') id: string) {
+    return this.service.delete(id);
   }
 }

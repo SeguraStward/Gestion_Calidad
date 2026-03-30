@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@src/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@una-gc/database/prisma/generated/client';
 import {
   ComplianceReportDto,
   DimensionComplianceDto,
@@ -60,7 +60,7 @@ interface DimensionWithHierarchy {
 export class SinaesReportsService {
   private readonly logger = new Logger(SinaesReportsService.name);
 
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Generate a compliance report based on filters
@@ -169,10 +169,14 @@ export class SinaesReportsService {
           this.logger.debug(`     * Direct Evidences: ${firstCrit.evidences.length}`);
           if (firstCrit.standards.length > 0) {
             const firstStd = firstCrit.standards[0];
-            this.logger.debug(`     * First Standard: ${firstStd.name} (${firstStd.evidences.length} evidences)`);
+            this.logger.debug(
+              `     * First Standard: ${firstStd.name} (${firstStd.evidences.length} evidences)`,
+            );
             if (firstStd.evidences.length > 0) {
               const firstEvd = firstStd.evidences[0];
-              this.logger.debug(`       - First Evidence: ${firstEvd.name} (${firstEvd.proofDocuments.length} docs)`);
+              this.logger.debug(
+                `       - First Evidence: ${firstEvd.name} (${firstEvd.proofDocuments.length} docs)`,
+              );
             }
           }
         }
@@ -411,9 +415,7 @@ export class SinaesReportsService {
    * FAIR: >= 50%
    * POOR: < 50%
    */
-  private getComplianceStatus(
-    percentage: number,
-  ): 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR' {
+  private getComplianceStatus(percentage: number): 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR' {
     if (percentage >= 90) return 'EXCELLENT';
     if (percentage >= 70) return 'GOOD';
     if (percentage >= 50) return 'FAIR';

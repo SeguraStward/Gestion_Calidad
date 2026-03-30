@@ -1,5 +1,5 @@
 // ============================================================
-//  🗄️ useInstitutionalProjectsStore
+//   useInstitutionalProjectsStore
 //  Store Zustand para gestión de proyectos institucionales
 // ============================================================
 
@@ -13,17 +13,17 @@ import {
 } from '../services/institutional-projects.service'
 
 interface InstitutionalProjectsStore {
-  // 📊 Estado
+  //  Estado
   projects: InstitutionalProject[]
   projectsWithAvailableTime: ProjectWithAvailableTime[]
   selectedProject: InstitutionalProject | null
   loading: boolean
   error: string | null
 
-  // 📈 Estadísticas
+  //  Estadísticas
   totalAssignedTime: number
 
-  // 🔹 Acciones - Lectura
+  //  Acciones - Lectura
   fetchProjects: () => Promise<void>
   fetchProjectById: (id: string) => Promise<void>
   fetchProjectsByCampusAllocation: (campusAllocationId: string) => Promise<void>
@@ -31,12 +31,12 @@ interface InstitutionalProjectsStore {
   fetchProjectsWithAvailableTime: () => Promise<void>
   fetchTotalAssignedTime: (campusAllocationId: string) => Promise<void>
 
-  // 🔹 Acciones - Escritura
+  //  Acciones - Escritura
   createProject: (data: CreateInstitutionalProjectDto) => Promise<InstitutionalProject | null>
   updateProject: (id: string, data: UpdateInstitutionalProjectDto) => Promise<boolean>
   deleteProject: (id: string) => Promise<boolean>
 
-  // 🔹 Acciones - UI
+  //  Acciones - UI
   selectProject: (project: InstitutionalProject | null) => void
   clearError: () => void
   reset: () => void
@@ -55,7 +55,7 @@ export const useInstitutionalProjectsStore = create<InstitutionalProjectsStore>(
   ...initialState,
 
   // ============================================================
-  //  📖 Lectura de Datos
+  //   Lectura de Datos
   // ============================================================
 
   fetchProjects: async () => {
@@ -66,7 +66,7 @@ export const useInstitutionalProjectsStore = create<InstitutionalProjectsStore>(
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar proyectos'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchProjects:', err)
+      console.error(' Error en fetchProjects:', err)
     }
   },
 
@@ -82,7 +82,7 @@ export const useInstitutionalProjectsStore = create<InstitutionalProjectsStore>(
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar proyecto'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchProjectById:', err)
+      console.error(' Error en fetchProjectById:', err)
     }
   },
 
@@ -94,7 +94,7 @@ export const useInstitutionalProjectsStore = create<InstitutionalProjectsStore>(
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar proyectos por campus'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchProjectsByCampusAllocation:', err)
+      console.error(' Error en fetchProjectsByCampusAllocation:', err)
     }
   },
 
@@ -106,7 +106,7 @@ export const useInstitutionalProjectsStore = create<InstitutionalProjectsStore>(
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar proyectos por director'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchProjectsByDirector:', err)
+      console.error(' Error en fetchProjectsByDirector:', err)
     }
   },
 
@@ -118,7 +118,7 @@ export const useInstitutionalProjectsStore = create<InstitutionalProjectsStore>(
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar proyectos con tiempo disponible'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchProjectsWithAvailableTime:', err)
+      console.error(' Error en fetchProjectsWithAvailableTime:', err)
     }
   },
 
@@ -127,12 +127,12 @@ export const useInstitutionalProjectsStore = create<InstitutionalProjectsStore>(
       const total = await InstitutionalProjectsService.getTotalAssignedTime(campusAllocationId)
       set({ totalAssignedTime: total })
     } catch (err) {
-      console.error('❌ Error en fetchTotalAssignedTime:', err)
+      console.error(' Error en fetchTotalAssignedTime:', err)
     }
   },
 
   // ============================================================
-  //  ✏️ Escritura de Datos
+  //   Escritura de Datos
   // ============================================================
 
   createProject: async (data: CreateInstitutionalProjectDto) => {
@@ -153,7 +153,7 @@ export const useInstitutionalProjectsStore = create<InstitutionalProjectsStore>(
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al crear proyecto'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en createProject:', err)
+      console.error(' Error en createProject:', err)
       throw err
     }
   },
@@ -176,7 +176,7 @@ export const useInstitutionalProjectsStore = create<InstitutionalProjectsStore>(
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al actualizar proyecto'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en updateProject:', err)
+      console.error(' Error en updateProject:', err)
       throw err
     }
   },
@@ -199,13 +199,13 @@ export const useInstitutionalProjectsStore = create<InstitutionalProjectsStore>(
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al eliminar proyecto'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en deleteProject:', err)
+      console.error(' Error en deleteProject:', err)
       return false
     }
   },
 
   // ============================================================
-  //  🎛️ Control de UI
+  //   Control de UI
   // ============================================================
 
   selectProject: (project: InstitutionalProject | null) => {
@@ -220,3 +220,4 @@ export const useInstitutionalProjectsStore = create<InstitutionalProjectsStore>(
     set(initialState)
   }
 }))
+

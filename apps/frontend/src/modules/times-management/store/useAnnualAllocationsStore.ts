@@ -1,5 +1,5 @@
 // ============================================================
-//  🗄️ useAnnualAllocationsStore
+//   useAnnualAllocationsStore
 //  Store Zustand para gestión de asignaciones anuales
 // ============================================================
 
@@ -13,7 +13,7 @@ import {
 } from '../services/annual-allocations.service'
 
 interface AnnualAllocationsStore {
-  // 📊 Estado
+  //  Estado
   allocations: AnnualJourneyTimeAllocation[]
   activeAllocation: AnnualJourneyTimeAllocation | null
   selectedAllocation: AnnualJourneyTimeAllocation | null
@@ -21,19 +21,19 @@ interface AnnualAllocationsStore {
   loading: boolean
   error: string | null
 
-  // 🔹 Acciones - Lectura
+  //  Acciones - Lectura
   fetchAll: () => Promise<void>
   fetchById: (id: string) => Promise<void>
   fetchByYear: (year: number) => Promise<void>
   fetchActive: () => Promise<void>
   fetchYearSummary: (year: number) => Promise<void>
 
-  // 🔹 Acciones - Escritura
+  //  Acciones - Escritura
   create: (data: CreateAnnualAllocationDto) => Promise<AnnualJourneyTimeAllocation | null>
   update: (id: string, data: UpdateAnnualAllocationDto) => Promise<boolean>
   delete: (id: string) => Promise<boolean>
 
-  // 🔹 Acciones - UI
+  //  Acciones - UI
   selectAllocation: (allocation: AnnualJourneyTimeAllocation | null) => void
   clearError: () => void
   reset: () => void
@@ -52,7 +52,7 @@ export const useAnnualAllocationsStore = create<AnnualAllocationsStore>((set, ge
   ...initialState,
 
   // ============================================================
-  //  📖 Lectura de Datos
+  //   Lectura de Datos
   // ============================================================
 
   fetchAll: async () => {
@@ -63,7 +63,7 @@ export const useAnnualAllocationsStore = create<AnnualAllocationsStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar asignaciones anuales'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchAll:', err)
+      console.error(' Error en fetchAll:', err)
     }
   },
 
@@ -79,7 +79,7 @@ export const useAnnualAllocationsStore = create<AnnualAllocationsStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar asignación anual'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchById:', err)
+      console.error(' Error en fetchById:', err)
     }
   },
 
@@ -95,7 +95,7 @@ export const useAnnualAllocationsStore = create<AnnualAllocationsStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar asignación por año'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchByYear:', err)
+      console.error(' Error en fetchByYear:', err)
     }
   },
 
@@ -107,7 +107,7 @@ export const useAnnualAllocationsStore = create<AnnualAllocationsStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar asignación activa'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchActive:', err)
+      console.error(' Error en fetchActive:', err)
     }
   },
 
@@ -119,12 +119,12 @@ export const useAnnualAllocationsStore = create<AnnualAllocationsStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar resumen del año'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchYearSummary:', err)
+      console.error(' Error en fetchYearSummary:', err)
     }
   },
 
   // ============================================================
-  //  ✏️ Escritura de Datos
+  //   Escritura de Datos
   // ============================================================
 
   create: async (data: CreateAnnualAllocationDto) => {
@@ -145,7 +145,7 @@ export const useAnnualAllocationsStore = create<AnnualAllocationsStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al crear asignación anual'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en create:', err)
+      console.error(' Error en create:', err)
       throw err
     }
   },
@@ -169,7 +169,7 @@ export const useAnnualAllocationsStore = create<AnnualAllocationsStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al actualizar asignación anual'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en update:', err)
+      console.error(' Error en update:', err)
       throw err
     }
   },
@@ -193,13 +193,13 @@ export const useAnnualAllocationsStore = create<AnnualAllocationsStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al eliminar asignación anual'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en delete:', err)
+      console.error(' Error en delete:', err)
       return false
     }
   },
 
   // ============================================================
-  //  🎛️ Control de UI
+  //   Control de UI
   // ============================================================
 
   selectAllocation: (allocation: AnnualJourneyTimeAllocation | null) => {
@@ -214,3 +214,4 @@ export const useAnnualAllocationsStore = create<AnnualAllocationsStore>((set, ge
     set(initialState)
   }
 }))
+

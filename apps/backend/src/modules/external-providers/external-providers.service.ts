@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+
 import { ExternalProvidersRepository } from './external-providers.repository';
 import { CreateExternalProviderDto } from './dtos/create-external-provider.dto';
 import { UpdateExternalProviderDto } from './dtos/update-external-provider.dto';
@@ -8,13 +9,8 @@ export class ExternalProvidersService {
   constructor(private readonly repo: ExternalProvidersRepository) {}
 
   async create(dto: CreateExternalProviderDto) {
-    // 🔄 Transformar el DTO para Prisma con la estructura de conexión correcta
     const { annualAllocationId, startDate, endDate, ...rest } = dto;
 
-    console.log('🔍 Service - Original DTO:', JSON.stringify(dto, null, 2));
-    console.log('🔍 Service - annualAllocationId:', annualAllocationId);
-
-    // 📅 Transformar fechas string a DateTime ISO-8601
     const prismaData: any = {
       ...rest,
       annualAllocation: {
@@ -22,24 +18,15 @@ export class ExternalProvidersService {
       },
     };
 
-    // Solo agregar fechas si existen, convirtiéndolas a ISO-8601
     if (startDate) {
       prismaData.startDate = new Date(startDate).toISOString();
     }
+
     if (endDate) {
       prismaData.endDate = new Date(endDate).toISOString();
     }
 
-    console.log('🔍 Service - Transformed Prisma Data:', JSON.stringify(prismaData, null, 2));
-
-    try {
-      const result = await this.repo.save(prismaData as any);
-      console.log('✅ Service - Saved successfully:', Array.isArray(result) ? 'bulk' : (result as any)?.id);
-      return result;
-    } catch (error: any) {
-      console.error('❌ Service - Error saving:', error?.message || error);
-      throw error;
-    }
+    return this.repo.save(prismaData as any);
   }
 
   async findAll(page?: number, limit?: number) {
@@ -51,7 +38,27 @@ export class ExternalProvidersService {
   }
 
   async update(id: string, dto: UpdateExternalProviderDto) {
-    return this.repo.update(id, dto as any);
+    const { annualAllocationId, startDate, endDate, ...rest } = dto;
+
+    const prismaData: any = {
+      ...rest,
+    };
+
+    if (annualAllocationId) {
+      prismaData.annualAllocation = {
+        connect: { id: annualAllocationId },
+      };
+    }
+
+    if (startDate) {
+      prismaData.startDate = new Date(startDate).toISOString();
+    }
+
+    if (endDate) {
+      prismaData.endDate = new Date(endDate).toISOString();
+    }
+
+    return this.repo.update(id, prismaData as any);
   }
 
   async delete(id: string) {

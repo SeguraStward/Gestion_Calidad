@@ -1,16 +1,18 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
-import { UserPlus, Search, Users, Clock, AlertCircle } from 'lucide-react'
+import React, { useMemo, useState } from 'react'
+import { AlertCircle, Clock, Search, UserPlus, Users } from 'lucide-react'
 import { Button } from '@una-gc/ui/components/button'
-import { Input } from '@una-gc/ui/components/input'
 import { Card, CardContent } from '@una-gc/ui/components/card'
-import { EmptyState } from './EmptyState'
-import { ProfessorAssignmentsForm } from './ProfessorAssignmentsForm'
+import { Input } from '@una-gc/ui/components/input'
+
 import { useAcademicCycle } from '@/shared/hooks/useAcademicCycle'
 import { useCampus } from '@/shared/hooks/useCampus'
-import { useProfessors } from '@/shared/hooks/useProfessors'
 import { useCourses } from '@/shared/hooks/useCourses'
+import { useProfessors } from '@/shared/hooks/useProfessors'
+
+import { EmptyState } from './EmptyState'
+import { ProfessorAssignmentsForm } from './ProfessorAssignmentsForm'
 
 export interface ProfessorAssignmentRow {
   id: string
@@ -33,7 +35,6 @@ export default function ProfessorAssignments({ assignments, loading, onAssign }:
   const [searchTerm, setSearchTerm] = useState('')
   const [showForm, setShowForm] = useState(false)
 
-  // Data hooks
   const { data: cycles = [], isLoading: loadingCycles } = useAcademicCycle()
   const { data: campuses = [], isLoading: loadingCampuses } = useCampus()
   const { data: professors = [], isLoading: loadingProfessors } = useProfessors()
@@ -44,29 +45,24 @@ export default function ProfessorAssignments({ assignments, loading, onAssign }:
 
     const term = searchTerm.toLowerCase()
     return assignments.filter(
-      (a) =>
-        a.professorName.toLowerCase().includes(term) ||
-        a.professorId.toLowerCase().includes(term) ||
-        a.campus.toLowerCase().includes(term)
+      (assignment) =>
+        assignment.professorName.toLowerCase().includes(term) ||
+        assignment.professorId.toLowerCase().includes(term) ||
+        assignment.campus.toLowerCase().includes(term)
     )
   }, [assignments, searchTerm])
 
   const summary = useMemo(() => {
-    const totalTimes = assignments.reduce((sum, a) => sum + a.assignedHours, 0)
-    const totalProfessors = new Set(assignments.map((a) => a.professorId)).size
-    const avgTimes = totalProfessors > 0 ? (totalTimes / totalProfessors).toFixed(2) : '0'
-
-    // Convertir tiempos a horas reales según las fórmulas:
-    // FULL = 1 tiempo = 12h, HALF = 0.5 tiempos = 6h, QUARTER = 0.25 tiempos = 3h
-    const totalHours = assignments.reduce((sum, a) => {
-      return sum + a.assignedHours * 12 // 1 tiempo = 12 horas
-    }, 0)
+    const totalTimes = assignments.reduce((sum, assignment) => sum + assignment.assignedHours, 0)
+    const totalProfessors = new Set(assignments.map((assignment) => assignment.professorId)).size
+    const averageTimes = totalProfessors > 0 ? (totalTimes / totalProfessors).toFixed(2) : '0'
+    const totalHours = assignments.reduce((sum, assignment) => sum + assignment.assignedHours * 12, 0)
 
     return {
       totalTimes: totalTimes.toFixed(2),
       totalHours: totalHours.toFixed(0),
       totalProfessors,
-      avgTimes
+      averageTimes
     }
   }, [assignments])
 
@@ -87,6 +83,13 @@ export default function ProfessorAssignments({ assignments, loading, onAssign }:
     pending: 'Pendiente'
   }
 
+  const assignmentTypeLabels: Record<string, string> = {
+    FULL: 'Tiempo completo',
+    HALF: 'Medio tiempo',
+    QUARTER: 'Cuarto de tiempo',
+    THREE_QUARTER: 'Tres cuartos de tiempo'
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -98,78 +101,75 @@ export default function ProfessorAssignments({ assignments, loading, onAssign }:
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Users className="h-8 w-8 text-blue-600" />
+              <Users className="h-8 w-8 text-primary" />
               <div>
-                <p className="text-sm text-blue-700 font-medium">Profesores</p>
-                <p className="text-2xl font-bold text-blue-900">{summary.totalProfessors}</p>
+                <p className="text-sm text-muted-foreground">Profesores</p>
+                <p className="text-2xl font-bold">{summary.totalProfessors}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Clock className="h-8 w-8 text-purple-600" />
+              <Clock className="h-8 w-8 text-primary" />
               <div>
-                <p className="text-sm text-purple-700 font-medium">Tiempos Totales</p>
-                <p className="text-2xl font-bold text-purple-900">{summary.totalTimes}</p>
+                <p className="text-sm text-muted-foreground">Tiempos Totales</p>
+                <p className="text-2xl font-bold">{summary.totalTimes}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Clock className="h-8 w-8 text-orange-600" />
+              <Clock className="h-8 w-8 text-primary" />
               <div>
-                <p className="text-sm text-orange-700 font-medium">Horas Totales</p>
-                <p className="text-2xl font-bold text-orange-900">{summary.totalHours}h</p>
-                <p className="text-xs text-orange-600">1 tiempo = 12h</p>
+                <p className="text-sm text-muted-foreground">Horas Totales</p>
+                <p className="text-2xl font-bold">{summary.totalHours}h</p>
+                <p className="text-xs text-muted-foreground">1 tiempo = 12h</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+        <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <AlertCircle className="h-8 w-8 text-green-600" />
+              <AlertCircle className="h-8 w-8 text-primary" />
               <div>
-                <p className="text-sm text-green-700 font-medium">Promedio</p>
-                <p className="text-2xl font-bold text-green-900">{summary.avgTimes}</p>
-                <p className="text-xs text-green-600">tiempos/profesor</p>
+                <p className="text-sm text-muted-foreground">Promedio</p>
+                <p className="text-2xl font-bold">{summary.averageTimes}</p>
+                <p className="text-xs text-muted-foreground">tiempos/profesor</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search and Actions */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             type="text"
-            placeholder="Buscar por profesor, cédula o sede..."
+            placeholder="Buscar por profesor, cedula o sede..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(event) => setSearchTerm(event.target.value)}
             className="pl-10"
           />
         </div>
         <Button onClick={() => setShowForm(!showForm)} className="sm:w-auto">
           <UserPlus className="h-4 w-4 mr-2" />
-          {showForm ? 'Cancelar' : 'Nueva Asignación'}
+          {showForm ? 'Cancelar' : 'Nueva Asignacion'}
         </Button>
       </div>
 
-      {/* Assignment Form */}
       {showForm && (
         <ProfessorAssignmentsForm
           cycles={cycles}
@@ -186,15 +186,14 @@ export default function ProfessorAssignments({ assignments, loading, onAssign }:
         />
       )}
 
-      {/* Assignments Table */}
       {filteredAssignments.length === 0 ? (
         <EmptyState
           icon={<Users className="h-12 w-12" />}
           title="No hay asignaciones"
           description={
             searchTerm
-              ? 'No se encontraron asignaciones que coincidan con tu búsqueda.'
-              : 'Comienza asignando horas de jornada a los profesores.'
+              ? 'No se encontraron asignaciones que coincidan con la busqueda.'
+              : 'Comienza asignando tiempos de jornada a los profesores.'
           }
         />
       ) : (
@@ -207,11 +206,11 @@ export default function ProfessorAssignments({ assignments, loading, onAssign }:
                     Profesor
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Cédula
+                    Cedula
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Sede</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Horas
+                    Tiempos
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Tipo</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -226,12 +225,12 @@ export default function ProfessorAssignments({ assignments, loading, onAssign }:
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground">{assignment.professorId}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm">{assignment.campus}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold">{assignment.assignedHours}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm">{assignment.assignmentType || 'N/A'}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
+                      {assignmentTypeLabels[assignment.assignmentType] || assignment.assignmentType || 'No definido'}
+                    </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          statusColors[assignment.status]
-                        }`}
+                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[assignment.status]}`}
                       >
                         {statusLabels[assignment.status]}
                       </span>

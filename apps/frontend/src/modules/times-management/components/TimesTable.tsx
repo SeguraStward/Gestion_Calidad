@@ -8,7 +8,7 @@ export default function TimesTable({ data }: { data: any }) {
     return <p className="text-gray-500">No hay asignaciones registradas.</p>
   }
 
-  // 🧩 Detectar dinámicamente si los campos son anidados o simples
+  //  Detectar dinámicamente si los campos son anidados o simples
   return (
     <table className="table-auto border-collapse border border-gray-400 w-full">
       <thead>

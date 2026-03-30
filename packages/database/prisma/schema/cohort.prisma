@@ -1,0 +1,30 @@
+model Cohort {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  careerId String @db.ObjectId
+  year     Int
+  group    String
+
+  initialStudents Int
+
+  status CohortStatus @default(ACTIVE)
+
+  projections CohortCourseProjection[] @relation("CohortCourseProjections")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([careerId, year, group], name: "unique_cohort_per_career_year_group")
+  @@index([careerId])
+  @@index([year])
+  @@index([status])
+  @@map("cohorts")
+}
+
+enum CohortStatus {
+  ACTIVE
+  INACTIVE
+}

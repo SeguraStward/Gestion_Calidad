@@ -64,7 +64,7 @@ export const useCampusAllocationsStore = create<CampusAllocationsState>((set) =>
     try {
       const newAllocation = await CampusJourneyTimeAllocationsService.create(data)
       if (newAllocation) {
-        // 🔄 Refrescar todos los datos desde el backend para obtener relaciones pobladas
+        //  Refrescar todos los datos desde el backend para obtener relaciones pobladas
         const allocations = await CampusJourneyTimeAllocationsService.getAll()
         set({ allocations, loading: false })
       }

@@ -1,5 +1,5 @@
 // ============================================================
-//  🗄️ useRepitenciasStore
+//   useRepitenciasStore
 //  Store Zustand para gestión de repitencias
 // ============================================================
 
@@ -13,14 +13,14 @@ import {
 } from '../services/repitencias.service'
 
 interface RepitenciasStore {
-  // 📊 Estado
+  //  Estado
   repitencias: Repitencia[]
   selectedRepitencia: Repitencia | null
   statistics: RepitenciaStatistics | null
   loading: boolean
   error: string | null
 
-  // 🔹 Acciones - Lectura
+  //  Acciones - Lectura
   fetchAll: () => Promise<void>
   fetchById: (id: string) => Promise<void>
   fetchByCampus: (campusId: string) => Promise<void>
@@ -29,12 +29,12 @@ interface RepitenciasStore {
   fetchByCampusAllocation: (campusAllocationId: string) => Promise<void>
   fetchStatistics: () => Promise<void>
 
-  // 🔹 Acciones - Escritura
+  //  Acciones - Escritura
   create: (data: CreateRepitenciaDto) => Promise<Repitencia | null>
   update: (id: string, data: UpdateRepitenciaDto) => Promise<boolean>
   delete: (id: string) => Promise<boolean>
 
-  // 🔹 Acciones - UI
+  //  Acciones - UI
   selectRepitencia: (repitencia: Repitencia | null) => void
   clearError: () => void
   reset: () => void
@@ -52,7 +52,7 @@ export const useRepitenciasStore = create<RepitenciasStore>((set, get) => ({
   ...initialState,
 
   // ============================================================
-  //  📖 Lectura de Datos
+  //   Lectura de Datos
   // ============================================================
 
   fetchAll: async () => {
@@ -63,7 +63,7 @@ export const useRepitenciasStore = create<RepitenciasStore>((set, get) => ({
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar repitencias'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchAll:', err)
+      console.error(' Error en fetchAll:', err)
     }
   },
 
@@ -79,7 +79,7 @@ export const useRepitenciasStore = create<RepitenciasStore>((set, get) => ({
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar repitencia'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchById:', err)
+      console.error(' Error en fetchById:', err)
     }
   },
 
@@ -91,7 +91,7 @@ export const useRepitenciasStore = create<RepitenciasStore>((set, get) => ({
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar repitencias por campus'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchByCampus:', err)
+      console.error(' Error en fetchByCampus:', err)
     }
   },
 
@@ -103,7 +103,7 @@ export const useRepitenciasStore = create<RepitenciasStore>((set, get) => ({
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar repitencias por curso'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchByCourse:', err)
+      console.error(' Error en fetchByCourse:', err)
     }
   },
 
@@ -115,7 +115,7 @@ export const useRepitenciasStore = create<RepitenciasStore>((set, get) => ({
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar repitencias por ciclo'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchByAcademicCycle:', err)
+      console.error(' Error en fetchByAcademicCycle:', err)
     }
   },
 
@@ -127,7 +127,7 @@ export const useRepitenciasStore = create<RepitenciasStore>((set, get) => ({
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar repitencias por asignación'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchByCampusAllocation:', err)
+      console.error(' Error en fetchByCampusAllocation:', err)
     }
   },
 
@@ -139,12 +139,12 @@ export const useRepitenciasStore = create<RepitenciasStore>((set, get) => ({
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar estadísticas'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchStatistics:', err)
+      console.error(' Error en fetchStatistics:', err)
     }
   },
 
   // ============================================================
-  //  ✏️ Escritura de Datos
+  //   Escritura de Datos
   // ============================================================
 
   create: async (data: CreateRepitenciaDto) => {
@@ -165,7 +165,7 @@ export const useRepitenciasStore = create<RepitenciasStore>((set, get) => ({
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al crear repitencia'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en create:', err)
+      console.error(' Error en create:', err)
       throw err
     }
   },
@@ -188,7 +188,7 @@ export const useRepitenciasStore = create<RepitenciasStore>((set, get) => ({
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al actualizar repitencia'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en update:', err)
+      console.error(' Error en update:', err)
       throw err
     }
   },
@@ -211,13 +211,13 @@ export const useRepitenciasStore = create<RepitenciasStore>((set, get) => ({
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al eliminar repitencia'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en delete:', err)
+      console.error(' Error en delete:', err)
       return false
     }
   },
 
   // ============================================================
-  //  🎛️ Control de UI
+  //   Control de UI
   // ============================================================
 
   selectRepitencia: (repitencia: Repitencia | null) => {
@@ -232,3 +232,4 @@ export const useRepitenciasStore = create<RepitenciasStore>((set, get) => ({
     set(initialState)
   }
 }))
+

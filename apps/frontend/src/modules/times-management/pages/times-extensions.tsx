@@ -1,47 +1,46 @@
 'use client'
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@una-gc/ui/components'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components'
+import { useEffect, useMemo, useState } from 'react'
+import { AlertTriangle, Plus, RefreshCw } from 'lucide-react'
 import { Button } from '@una-gc/ui/components/button'
-import { Plus, RefreshCw, AlertTriangle } from 'lucide-react'
-import { useEffect, useState, useMemo } from 'react'
-import { useUserService } from '@/lib/api/modules/user/hooks/use-user-service'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
+import { Input } from '@una-gc/ui/components/input'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@una-gc/ui/components'
 
-// Components
-import ExternalProvidersTable from '../components/ExternalProvidersTable'
-import ExternalProviderForm from '../components/ExternalProviderForm'
-import InstitutionalProjectsTable from '../components/InstitutionalProjectsTable'
-import InstitutionalProjectForm from '../components/InstitutionalProjectForm'
-import AnnualAllocationQuickCreate from '../components/AnnualAllocationQuickCreate'
-import { StatsGrid } from '../components/StatsCard'
+import { userApiService } from '@/lib/api/modules/user/user-api.service'
+
 import { Breadcrumbs } from '../components/Breadcrumbs'
+import ExternalProviderForm from '../components/ExternalProviderForm'
+import ExternalProvidersTable from '../components/ExternalProvidersTable'
+import InstitutionalProjectForm from '../components/InstitutionalProjectForm'
+import InstitutionalProjectsTable from '../components/InstitutionalProjectsTable'
+import { StatsGrid } from '../components/StatsCard'
 
-// Stores
-import { useExternalProvidersStore } from '../store/useExternalProvidersStore'
-import { useInstitutionalProjectsStore } from '../store/useInstitutionalProjectsStore'
 import { useAnnualAllocationsStore } from '../store/useAnnualAllocationsStore'
 import { useCampusAllocationsStore } from '../store/useCampusAllocationsStore'
+import { useExternalProvidersStore } from '../store/useExternalProvidersStore'
+import { useInstitutionalProjectsStore } from '../store/useInstitutionalProjectsStore'
 
-// Types
-import type { ExternalProvider, CreateExternalProviderDto } from '../services/external-providers.service'
-import type { InstitutionalProject, CreateInstitutionalProjectDto } from '../services/institutional-projects.service'
+import type { CreateExternalProviderDto, ExternalProvider } from '../services/external-providers.service'
+import type { CreateInstitutionalProjectDto, InstitutionalProject } from '../services/institutional-projects.service'
 
 export default function TimesExtensionsPage() {
-  // ============================================================
-  //  🗄️ Store State - Annual Allocation
-  // ============================================================
-  const { activeAllocation, loading: allocationLoading, fetchActive: fetchActiveAllocation } = useAnnualAllocationsStore()
+  const {
+    activeAllocation,
+    loading: allocationLoading,
+    error: allocationError,
+    fetchActive: fetchActiveAllocation,
+    create: createAnnualAllocation,
+    update: updateAnnualAllocation,
+    clearError: clearAllocationError
+  } = useAnnualAllocationsStore()
 
-  // ============================================================
-  //  🗄️ Store State - External Providers
-  // ============================================================
   const {
     providers,
     selectedProvider,
     loading: providersLoading,
     error: providersError,
-    totalProvidedTime,
     fetchProviders,
     createProvider,
     updateProvider,
@@ -50,16 +49,11 @@ export default function TimesExtensionsPage() {
     clearError: clearProviderError
   } = useExternalProvidersStore()
 
-  // ============================================================
-  //  🗄️ Store State - Institutional Projects
-  // ============================================================
   const {
     projects,
-    projectsWithAvailableTime,
     selectedProject,
     loading: projectsLoading,
     error: projectsError,
-    totalAssignedTime,
     fetchProjects,
     fetchProjectsWithAvailableTime,
     createProject,
@@ -69,44 +63,45 @@ export default function TimesExtensionsPage() {
     clearError: clearProjectError
   } = useInstitutionalProjectsStore()
 
-  // ============================================================
-  //  🗄️ Store State - Campus Allocations
-  // ============================================================
   const { allocations: campusAllocations, fetchAll: fetchCampusAllocations } = useCampusAllocationsStore()
 
-  // ============================================================
-  //  🧑‍💼 Directors list (from users service)
-  // ============================================================
-  const { getUsers } = useUserService()
   const [directors, setDirectors] = useState<Array<{ id: string; name?: string; email?: string }>>([])
-
-  // ============================================================
-  //  📋 Local UI State
-  // ============================================================
   const [activeTab, setActiveTab] = useState('providers')
+  const [annualDialogOpen, setAnnualDialogOpen] = useState(false)
   const [providerDialogOpen, setProviderDialogOpen] = useState(false)
   const [projectDialogOpen, setProjectDialogOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [annualYear, setAnnualYear] = useState(new Date().getFullYear())
+  const [annualTotalTime, setAnnualTotalTime] = useState('')
 
-  // ============================================================
-  //  📊 Calculated Stats
-  // ============================================================
+  const calculatedTotalProvidedTime = useMemo(
+    () => providers.reduce((sum, provider) => sum + (provider.providedJourneyTime || 0), 0),
+    [providers]
+  )
 
-  const calculatedTotalProvidedTime = useMemo(() => {
-    return providers.reduce((sum, p) => sum + (p.providedJourneyTime || 0), 0)
-  }, [providers])
+  const calculatedTotalRequiredTime = useMemo(
+    () => projects.reduce((sum, project) => sum + (project.requiredJourneyTime || 0), 0),
+    [projects]
+  )
 
-  const calculatedTotalRequiredTime = useMemo(() => {
-    return projects.reduce((sum, p) => sum + (p.requiredJourneyTime || 0), 0)
-  }, [projects])
+  const calculatedTotalAssignedTime = useMemo(
+    () => projects.reduce((sum, project) => sum + (project.assignedJourneyTime || 0), 0),
+    [projects]
+  )
 
-  const calculatedTotalAssignedTime = useMemo(() => {
-    return projects.reduce((sum, p) => sum + (p.assignedJourneyTime || 0), 0)
-  }, [projects])
+  const projectCampusAllocations = useMemo(
+    () =>
+      campusAllocations
+        .filter((allocation): allocation is typeof allocation & { id: string } => Boolean(allocation.id))
+        .map((allocation) => ({
+          id: allocation.id,
+          campusName: allocation.campusName || allocation.campusId,
+          cycleName: allocation.cycleName || allocation.academicCycleId,
+          careerName: allocation.careerName
+        })),
+    [campusAllocations]
+  )
 
-  // ============================================================
-  //  🚀 Initial Data Load
-  // ============================================================
   useEffect(() => {
     fetchActiveAllocation()
     fetchProviders()
@@ -114,22 +109,64 @@ export default function TimesExtensionsPage() {
     fetchProjectsWithAvailableTime()
     fetchCampusAllocations()
 
-    // Fetch directors (users with role DIRECTOR). If role name differs adjust accordingly.
     ;(async () => {
       try {
-        const res = await getUsers({ roleName: 'DIRECTOR', status: 'ACTIVE', page: 1, limit: 100 })
+        const res = await userApiService.getUsersByRoleNameAndStatus('DIRECTOR', 'ACTIVE', 1, 100)
         const items = res?.data || []
-        setDirectors(items.map((u: any) => ({ id: u.id, name: u.name, email: u.email })))
+        setDirectors(
+          items.map((user) => ({
+            id: user.id,
+            name: user.fullName,
+            email: user.email
+          }))
+        )
       } catch (err) {
         console.error('Error fetching directors:', err)
         setDirectors([])
       }
     })()
-  }, [fetchActiveAllocation, fetchProviders, fetchProjects, fetchProjectsWithAvailableTime])
+  }, [fetchActiveAllocation, fetchProviders, fetchProjects, fetchProjectsWithAvailableTime, fetchCampusAllocations])
 
-  // ============================================================
-  //  🔹 External Providers Handlers
-  // ============================================================
+  const openAnnualDialog = () => {
+    setAnnualYear(activeAllocation?.year ?? new Date().getFullYear())
+    setAnnualTotalTime(activeAllocation ? String(activeAllocation.totalJourneyTime) : '')
+    clearAllocationError()
+    setAnnualDialogOpen(true)
+  }
+
+  const handleSubmitAnnualAllocation = async () => {
+    if (!annualYear || !annualTotalTime) {
+      alert('Completa el ano y el total de jornadas.')
+      return
+    }
+
+    const totalJourneyTime = Number(annualTotalTime)
+    if (!Number.isFinite(totalJourneyTime) || totalJourneyTime <= 0) {
+      alert('El total de jornadas debe ser un numero valido mayor a 0.')
+      return
+    }
+
+    try {
+      if (activeAllocation?.id) {
+        await updateAnnualAllocation(activeAllocation.id, {
+          year: annualYear,
+          totalJourneyTime
+        })
+      } else {
+        await createAnnualAllocation({
+          year: annualYear,
+          totalJourneyTime,
+          status: 'ACTIVE'
+        })
+      }
+
+      await fetchActiveAllocation()
+      setAnnualDialogOpen(false)
+    } catch (error) {
+      console.error('Error saving annual allocation:', error)
+    }
+  }
+
   const handleCreateProvider = () => {
     selectProvider(null)
     setIsEditing(false)
@@ -144,34 +181,28 @@ export default function TimesExtensionsPage() {
 
   const handleSubmitProvider = async (data: CreateExternalProviderDto) => {
     if (!activeAllocation?.id) {
-      alert('No hay una asignación anual activa. Por favor crea una primero.')
+      alert('No hay una asignacion anual activa. Crea una primero.')
       return
     }
 
     try {
-      console.log('🟦 Frontend - Active Allocation:', activeAllocation)
-      console.log('🟦 Frontend - Form Data:', data)
-
-      // Use real annualAllocationId from active allocation
       const payload = {
         ...data,
         annualAllocationId: data.annualAllocationId || activeAllocation.id
       }
 
-      console.log('🟦 Frontend - Final Payload:', payload)
-
       if (isEditing && selectedProvider?.id) {
         await updateProvider(selectedProvider.id, payload)
       } else {
-        console.log('🟦 Frontend - Calling createProvider...')
-        const result = await createProvider(payload)
-        console.log('✅ Frontend - Created successfully:', result)
+        await createProvider(payload)
       }
+
+      await fetchProviders()
       setProviderDialogOpen(false)
       selectProvider(null)
     } catch (error: any) {
-      console.error('❌ Frontend - Error submitting provider:', error)
-      alert('Error al crear el proveedor: ' + (error?.message || 'Error desconocido'))
+      console.error('Error submitting provider:', error)
+      alert(`Error al guardar el proveedor: ${error?.message || 'Error desconocido'}`)
     }
   }
 
@@ -179,9 +210,6 @@ export default function TimesExtensionsPage() {
     await deleteProvider(id)
   }
 
-  // ============================================================
-  //  🔹 Institutional Projects Handlers
-  // ============================================================
   const handleCreateProject = () => {
     selectProject(null)
     setIsEditing(false)
@@ -195,22 +223,18 @@ export default function TimesExtensionsPage() {
   }
 
   const handleSubmitProject = async (data: CreateInstitutionalProjectDto) => {
-    console.log('🟦 Frontend - Submitting project...', data)
-
     if (!activeAllocation?.id) {
-      alert('No hay una asignación anual activa. Por favor crea una primero.')
+      alert('No hay una asignacion anual activa. Crea una primero.')
       return
     }
 
-    // ⚠️ TODO: Agregar selectores reales para campus y director en el formulario
-    // Por ahora, pedimos al usuario que proporcione IDs válidos
-    if (!data.campusAllocationId || data.campusAllocationId === 'temp-campus-allocation-id') {
-      alert('⚠️ Falta campusAllocationId válido. Por favor selecciona una asignación de campus.')
+    if (!data.campusAllocationId) {
+      alert('Debes seleccionar una asignacion de campus.')
       return
     }
 
-    if (!data.directorId || data.directorId === 'temp-director-id') {
-      alert('⚠️ Falta directorId válido. Por favor selecciona un director.')
+    if (!data.directorId) {
+      alert('Debes seleccionar un director.')
       return
     }
 
@@ -220,18 +244,19 @@ export default function TimesExtensionsPage() {
         assignedJourneyTime: data.assignedJourneyTime || 0
       }
 
-      console.log('🟦 Frontend - Final payload:', payload)
-
       if (isEditing && selectedProject?.id) {
         await updateProject(selectedProject.id, payload)
       } else {
         await createProject(payload)
       }
+
+      await fetchProjects()
+      await fetchProjectsWithAvailableTime()
       setProjectDialogOpen(false)
       selectProject(null)
     } catch (error) {
-      console.error('❌ Frontend - Error submitting project:', error)
-      alert('Error al crear el proyecto. Revisa que los IDs sean válidos.')
+      console.error('Error submitting project:', error)
+      alert('Error al guardar el proyecto. Revisa los datos e intenta nuevamente.')
     }
   }
 
@@ -239,81 +264,103 @@ export default function TimesExtensionsPage() {
     await deleteProject(id)
   }
 
-  // ============================================================
-  //  🎨 Render
-  // ============================================================
   return (
-    <div className="container mx-auto p-6 space-y-6 min-h-full">
-      {/* Breadcrumbs */}
-      <Breadcrumbs items={[{ label: 'Gestión de Tiempos', href: '/times-management' }, { label: 'Proveedores y Proyectos' }]} />
+    <div className="container mx-auto min-h-full space-y-6 p-6">
+      <Breadcrumbs
+        items={[
+          { label: 'Gestion de Tiempos', href: '/times-management' },
+          { label: 'Capacidad Externa y Proyectos' }
+        ]}
+      />
 
-      {/* Page Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Gestión de Tiempo de Jornada</h1>
-          <p className="text-gray-600 mt-2">Administración de proveedores externos y proyectos institucionales</p>
+          <h1 className="text-3xl font-bold">Capacidad Externa y Proyectos</h1>
+          <p className="mt-2 text-muted-foreground">
+            Administra la asignacion anual, los apoyos externos y los proyectos institucionales.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {activeAllocation ? (
+            <>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Asignacion anual activa</p>
+                <p className="text-lg font-semibold">
+                  Ano {activeAllocation.year} - {activeAllocation.totalJourneyTime} jornadas
+                </p>
+              </div>
+              <Button variant="outline" onClick={openAnnualDialog} disabled={allocationLoading}>
+                Editar
+              </Button>
+            </>
+          ) : (
+            <Button size="lg" onClick={openAnnualDialog} disabled={allocationLoading}>
+              <Plus className="mr-2 h-4 w-4" />
+              Crear asignacion anual
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Annual Allocation Quick Create - Show if no active allocation */}
+      {allocationError && (
+        <div className="flex items-center justify-between rounded bg-red-100 p-3 text-red-800">
+          <span>{allocationError}</span>
+          <Button variant="ghost" size="sm" onClick={clearAllocationError}>
+            Cerrar
+          </Button>
+        </div>
+      )}
+
       {!activeAllocation && !allocationLoading && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+        <div className="rounded border-l-4 border-yellow-400 bg-yellow-50 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
-              <AlertTriangle className="h-5 w-5 text-yellow-400" />
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
             </div>
             <div className="ml-3 flex-1">
-              <h3 className="text-sm font-medium text-yellow-800">No hay asignación anual activa</h3>
+              <h3 className="text-sm font-medium text-yellow-800">No hay una asignacion anual activa</h3>
               <p className="mt-2 text-sm text-yellow-700">
-                Para crear proveedores externos y proyectos institucionales, primero necesitas una asignación anual activa.
+                Para registrar proveedores externos y proyectos institucionales, primero debes crear una asignacion
+                anual activa.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      <AnnualAllocationQuickCreate
-        onSuccess={(allocationId) => {
-          console.log('✅ Asignación anual creada con ID:', allocationId)
-          fetchActiveAllocation()
-        }}
-      />
-
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="providers">Proveedores Externos</TabsTrigger>
-          <TabsTrigger value="projects">Proyectos Institucionales</TabsTrigger>
+          <TabsTrigger value="providers">Proveedores externos</TabsTrigger>
+          <TabsTrigger value="projects">Proyectos institucionales</TabsTrigger>
         </TabsList>
 
-        {/* ============================================================ */}
-        {/*  TAB 1: PROVEEDORES EXTERNOS */}
-        {/* ============================================================ */}
-        <TabsContent value="providers" className="space-y-4 mt-4">
+        <TabsContent value="providers" className="mt-4 space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Proveedores Externos</CardTitle>
-                  <CardDescription>Universidades, convenios y acuerdos que proveen horas de jornada adicionales</CardDescription>
+                  <CardTitle>Proveedores externos</CardTitle>
+                  <CardDescription>
+                    Convenios, universidades y apoyos externos que aportan jornadas adicionales.
+                  </CardDescription>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => fetchProviders()} disabled={providersLoading}>
-                    <RefreshCw className="h-4 w-4 mr-2" />
+                    <RefreshCw className="mr-2 h-4 w-4" />
                     Actualizar
                   </Button>
                   <Button size="sm" onClick={handleCreateProvider}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nuevo Proveedor
+                    <Plus className="mr-2 h-4 w-4" />
+                    Nuevo proveedor
                   </Button>
                 </div>
               </div>
             </CardHeader>
 
             <CardContent>
-              {/* Error Message */}
               {providersError && (
-                <div className="mb-4 p-3 bg-red-100 text-red-800 rounded flex justify-between items-center">
+                <div className="mb-4 flex items-center justify-between rounded bg-red-100 p-3 text-red-800">
                   <span>{providersError}</span>
                   <Button variant="ghost" size="sm" onClick={clearProviderError}>
                     Cerrar
@@ -321,43 +368,41 @@ export default function TimesExtensionsPage() {
                 </div>
               )}
 
-              {/* Stats */}
               <div className="mb-6">
                 <StatsGrid
                   stats={[
                     {
-                      title: 'Total Proveedores',
+                      title: 'Proveedores registrados',
                       value: providers.length,
-                      description: 'Proveedores registrados',
+                      description: 'Total del periodo',
                       icon: <Plus className="h-4 w-4" />,
                       trend: 'neutral'
                     },
                     {
-                      title: 'Horas Totales Provistas',
-                      value: `${calculatedTotalProvidedTime}h`,
-                      description: 'Tiempo de jornada disponible',
+                      title: 'Jornadas externas',
+                      value: `${calculatedTotalProvidedTime}j`,
+                      description: 'Capacidad disponible',
                       icon: <RefreshCw className="h-4 w-4" />,
                       trend: calculatedTotalProvidedTime > 0 ? 'up' : 'neutral',
-                      trendValue: calculatedTotalProvidedTime > 0 ? 'Disponible para asignación' : 'Sin horas provistas'
+                      trendValue: calculatedTotalProvidedTime > 0 ? 'Con aporte disponible' : 'Sin aporte registrado'
                     },
                     {
-                      title: 'Proveedores Activos',
-                      value: providers.filter((p) => p.status === 'ACTIVE').length,
-                      description: 'Convenios en vigor',
+                      title: 'Convenios activos',
+                      value: providers.filter((provider) => provider.status === 'ACTIVE').length,
+                      description: 'Vigentes',
                       icon: <Plus className="h-4 w-4" />,
                       trend: 'up'
                     },
                     {
-                      title: 'Promedio por Proveedor',
-                      value: providers.length > 0 ? `${Math.round(calculatedTotalProvidedTime / providers.length)}h` : '0h',
-                      description: 'Horas promedio',
+                      title: 'Promedio por proveedor',
+                      value: providers.length > 0 ? `${Math.round(calculatedTotalProvidedTime / providers.length)}j` : '0j',
+                      description: 'Capacidad media',
                       icon: <RefreshCw className="h-4 w-4" />
                     }
                   ]}
                 />
               </div>
 
-              {/* Table */}
               <ExternalProvidersTable
                 providers={providers}
                 loading={providersLoading}
@@ -368,16 +413,15 @@ export default function TimesExtensionsPage() {
           </Card>
         </TabsContent>
 
-        {/* ============================================================ */}
-        {/*  TAB 2: PROYECTOS INSTITUCIONALES */}
-        {/* ============================================================ */}
-        <TabsContent value="projects" className="space-y-4 mt-4">
+        <TabsContent value="projects" className="mt-4 space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Proyectos Institucionales</CardTitle>
-                  <CardDescription>Proyectos que requieren asignación de tiempo de jornada de profesores</CardDescription>
+                  <CardTitle>Proyectos institucionales</CardTitle>
+                  <CardDescription>
+                    Iniciativas que consumen jornadas dentro de la capacidad disponible del periodo.
+                  </CardDescription>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -389,21 +433,20 @@ export default function TimesExtensionsPage() {
                     }}
                     disabled={projectsLoading}
                   >
-                    <RefreshCw className="h-4 w-4 mr-2" />
+                    <RefreshCw className="mr-2 h-4 w-4" />
                     Actualizar
                   </Button>
                   <Button size="sm" onClick={handleCreateProject}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nuevo Proyecto
+                    <Plus className="mr-2 h-4 w-4" />
+                    Nuevo proyecto
                   </Button>
                 </div>
               </div>
             </CardHeader>
 
             <CardContent>
-              {/* Error Message */}
               {projectsError && (
-                <div className="mb-4 p-3 bg-red-100 text-red-800 rounded flex justify-between items-center">
+                <div className="mb-4 flex items-center justify-between rounded bg-red-100 p-3 text-red-800">
                   <span>{projectsError}</span>
                   <Button variant="ghost" size="sm" onClick={clearProjectError}>
                     Cerrar
@@ -411,35 +454,34 @@ export default function TimesExtensionsPage() {
                 </div>
               )}
 
-              {/* Stats */}
               <div className="mb-6">
                 <StatsGrid
                   stats={[
                     {
-                      title: 'Total Proyectos',
+                      title: 'Proyectos registrados',
                       value: projects.length,
-                      description: 'Proyectos registrados',
+                      description: 'Total del periodo',
                       icon: <Plus className="h-4 w-4" />,
                       trend: 'neutral'
                     },
                     {
-                      title: 'Proyectos Activos',
-                      value: projects.filter((p) => p.projectStatus === 'ACTIVE').length,
-                      description: 'En ejecución',
+                      title: 'Proyectos activos',
+                      value: projects.filter((project) => project.projectStatus === 'ACTIVE').length,
+                      description: 'En ejecucion',
                       icon: <RefreshCw className="h-4 w-4" />,
                       trend: 'up'
                     },
                     {
-                      title: 'Horas Requeridas',
-                      value: `${calculatedTotalRequiredTime}h`,
-                      description: 'Tiempo total necesario',
+                      title: 'Jornadas requeridas',
+                      value: `${calculatedTotalRequiredTime}j`,
+                      description: 'Necesidad total',
                       icon: <Plus className="h-4 w-4" />,
                       trend: 'neutral'
                     },
                     {
-                      title: 'Horas Asignadas',
-                      value: `${calculatedTotalAssignedTime}h`,
-                      description: `Capacidad: ${calculatedTotalRequiredTime > 0 ? Math.round((calculatedTotalAssignedTime / calculatedTotalRequiredTime) * 100) : 0}%`,
+                      title: 'Jornadas asignadas',
+                      value: `${calculatedTotalAssignedTime}j`,
+                      description: `Cobertura: ${calculatedTotalRequiredTime > 0 ? Math.round((calculatedTotalAssignedTime / calculatedTotalRequiredTime) * 100) : 0}%`,
                       icon: <RefreshCw className="h-4 w-4" />,
                       trend:
                         calculatedTotalAssignedTime >= calculatedTotalRequiredTime
@@ -449,16 +491,15 @@ export default function TimesExtensionsPage() {
                             : 'down',
                       trendValue:
                         calculatedTotalAssignedTime >= calculatedTotalRequiredTime
-                          ? 'Completo'
+                          ? 'Cobertura completa'
                           : calculatedTotalAssignedTime > 0
-                            ? `Falta ${calculatedTotalRequiredTime - calculatedTotalAssignedTime}h`
-                            : 'Sin asignaciones'
+                            ? `Pendiente ${calculatedTotalRequiredTime - calculatedTotalAssignedTime}j`
+                            : 'Sin asignacion'
                     }
                   ]}
                 />
               </div>
 
-              {/* Table */}
               <InstitutionalProjectsTable
                 projects={projects}
                 loading={projectsLoading}
@@ -470,19 +511,60 @@ export default function TimesExtensionsPage() {
         </TabsContent>
       </Tabs>
 
-      {/* ============================================================ */}
-      {/*  DIALOGS */}
-      {/* ============================================================ */}
-
-      {/* External Provider Dialog */}
-      <Dialog open={providerDialogOpen} onOpenChange={setProviderDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={annualDialogOpen} onOpenChange={setAnnualDialogOpen}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{isEditing ? 'Editar Proveedor Externo' : 'Nuevo Proveedor Externo'}</DialogTitle>
+            <DialogTitle>{activeAllocation ? 'Editar asignacion anual' : 'Crear asignacion anual'}</DialogTitle>
+            <DialogDescription>
+              {activeAllocation
+                ? 'Actualiza el ano y el total de jornadas de la asignacion activa.'
+                : 'Define el ano y el total de jornadas para crear una nueva asignacion anual.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium">Ano</label>
+              <Input
+                type="number"
+                value={annualYear}
+                onChange={(event) => setAnnualYear(Number(event.target.value))}
+                min="2020"
+                max="2100"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium">Total de jornadas</label>
+              <Input
+                type="number"
+                value={annualTotalTime}
+                onChange={(event) => setAnnualTotalTime(event.target.value)}
+                min="1"
+                step="0.5"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setAnnualDialogOpen(false)} disabled={allocationLoading}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSubmitAnnualAllocation} disabled={allocationLoading}>
+                {allocationLoading ? 'Guardando...' : 'Guardar'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={providerDialogOpen} onOpenChange={setProviderDialogOpen}>
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? 'Editar proveedor externo' : 'Nuevo proveedor externo'}</DialogTitle>
             <DialogDescription>
               {isEditing
-                ? 'Modifica la información del proveedor externo'
-                : 'Crea un nuevo proveedor externo de horas de jornada'}
+                ? 'Actualiza la informacion del proveedor externo.'
+                : 'Registra un nuevo proveedor externo de jornadas.'}
             </DialogDescription>
           </DialogHeader>
           <ExternalProviderForm
@@ -498,20 +580,19 @@ export default function TimesExtensionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Institutional Project Dialog */}
       <Dialog open={projectDialogOpen} onOpenChange={setProjectDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{isEditing ? 'Editar Proyecto Institucional' : 'Nuevo Proyecto Institucional'}</DialogTitle>
+            <DialogTitle>{isEditing ? 'Editar proyecto institucional' : 'Nuevo proyecto institucional'}</DialogTitle>
             <DialogDescription>
               {isEditing
-                ? 'Modifica la información del proyecto institucional'
-                : 'Crea un nuevo proyecto institucional que requiere tiempo de jornada'}
+                ? 'Actualiza la informacion del proyecto institucional.'
+                : 'Registra un nuevo proyecto que requiere jornadas de trabajo.'}
             </DialogDescription>
           </DialogHeader>
           <InstitutionalProjectForm
             project={selectedProject}
-            campusAllocations={campusAllocations}
+            campusAllocations={projectCampusAllocations}
             directors={directors}
             onSubmit={handleSubmitProject}
             onCancel={() => {

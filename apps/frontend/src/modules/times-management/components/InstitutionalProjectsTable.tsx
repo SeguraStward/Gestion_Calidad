@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { Briefcase, Edit, Eye, MoreHorizontal, Trash2, Users } from 'lucide-react'
 import { Button } from '@una-gc/ui/components/button'
 import {
   DropdownMenu,
@@ -10,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@una-gc/ui/components/dropdown-menu'
-import { MoreHorizontal, Edit, Trash2, Eye, Users, Briefcase } from 'lucide-react'
+
 import type { InstitutionalProject } from '../services/institutional-projects.service'
 import { EmptyState } from './EmptyState'
 
@@ -25,8 +26,8 @@ interface InstitutionalProjectsTableProps {
 
 const PROJECT_TYPE_LABELS: Record<string, string> = {
   INSTITUTIONAL: 'Institucional',
-  RESEARCH: 'Investigación',
-  EXTENSION: 'Extensión',
+  RESEARCH: 'Investigacion',
+  EXTENSION: 'Extension',
   OTHER: 'Otro'
 }
 
@@ -44,6 +45,16 @@ const STATUS_COLORS: Record<string, string> = {
   PAUSED: 'bg-yellow-100 text-yellow-800',
   COMPLETED: 'bg-blue-100 text-blue-800',
   CANCELLED: 'bg-red-100 text-red-800'
+}
+
+const resolveDirectorName = (project: InstitutionalProject) => {
+  if (!project.director) return null
+  const anyDirector = project.director as any
+  if (anyDirector.fullName) return anyDirector.fullName
+  const firstName = anyDirector.firstName || ''
+  const lastName = anyDirector.lastName || ''
+  const fullName = `${firstName} ${lastName}`.trim()
+  return fullName || anyDirector.email || null
 }
 
 export default function InstitutionalProjectsTable({
@@ -68,7 +79,7 @@ export default function InstitutionalProjectsTable({
       <EmptyState
         icon={<Briefcase className="h-16 w-16" />}
         title="No hay proyectos institucionales registrados"
-        description="Los proyectos institucionales requieren asignación de tiempo de jornada de profesores. Crea el primer proyecto para gestionar las horas."
+        description="Crea el primer proyecto para gestionar las horas de jornada y su capacidad."
       />
     )
   }
@@ -89,8 +100,8 @@ export default function InstitutionalProjectsTable({
       <table className="w-full border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-100">
-            <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Código</th>
-            <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Título / Director</th>
+            <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Codigo</th>
+            <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Titulo / Director</th>
             <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Tipo</th>
             <th className="border border-gray-300 px-4 py-2 text-center font-semibold">Horas Requeridas</th>
             <th className="border border-gray-300 px-4 py-2 text-center font-semibold">Horas Asignadas</th>
@@ -102,6 +113,8 @@ export default function InstitutionalProjectsTable({
         <tbody>
           {projects.map((project) => {
             const capacity = calculateCapacity(project)
+            const directorName = resolveDirectorName(project)
+
             return (
               <tr key={project.id} className="hover:bg-gray-50">
                 <td className="border border-gray-300 px-4 py-2">
@@ -110,16 +123,12 @@ export default function InstitutionalProjectsTable({
                 <td className="border border-gray-300 px-4 py-2">
                   <div>
                     <p className="font-medium">{project.title}</p>
-                    {project.director && (
-                      <p className="text-sm text-gray-500 mt-1">
-                        Director: {project.director.firstName} {project.director.lastName}
-                      </p>
-                    )}
+                    {directorName && <p className="text-sm text-gray-500 mt-1">Director: {directorName}</p>}
                     {project.description && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{project.description}</p>}
                   </div>
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
-                  <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800">
+                  <span className="inline-block px-2 py-1 text-xs font-medium rounded bg-muted text-foreground">
                     {PROJECT_TYPE_LABELS[project.projectType] || project.projectType}
                   </span>
                 </td>
@@ -134,20 +143,14 @@ export default function InstitutionalProjectsTable({
                     <span className={`font-bold text-xl ${getCapacityColor(capacity)}`}>{capacity}%</span>
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
                       <div
-                        className={`h-2 rounded-full ${
-                          capacity >= 100 ? 'bg-green-500' : capacity >= 75 ? 'bg-yellow-500' : 'bg-red-500'
-                        }`}
+                        className={`h-2 rounded-full ${capacity >= 100 ? 'bg-green-500' : capacity >= 75 ? 'bg-yellow-500' : 'bg-red-500'}`}
                         style={{ width: `${Math.min(capacity, 100)}%` }}
                       ></div>
                     </div>
                   </div>
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
-                  <span
-                    className={`inline-block px-2 py-1 text-xs font-medium rounded ${
-                      STATUS_COLORS[project.projectStatus || 'DRAFT']
-                    }`}
-                  >
+                  <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${STATUS_COLORS[project.projectStatus || 'DRAFT']}`}>
                     {STATUS_LABELS[project.projectStatus || 'DRAFT']}
                   </span>
                 </td>
@@ -155,7 +158,7 @@ export default function InstitutionalProjectsTable({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menú</span>
+                        <span className="sr-only">Abrir menu</span>
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -183,7 +186,7 @@ export default function InstitutionalProjectsTable({
                       {onDelete && (
                         <DropdownMenuItem
                           onClick={() => {
-                            if (confirm(`¿Estás seguro de eliminar el proyecto "${project.code}"?`)) {
+                            if (confirm(`Estas seguro de eliminar el proyecto "${project.code}"?`)) {
                               onDelete(project.id!)
                             }
                           }}

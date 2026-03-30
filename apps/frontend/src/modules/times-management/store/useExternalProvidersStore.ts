@@ -1,5 +1,5 @@
 // ============================================================
-//  🗄️ useExternalProvidersStore
+//   useExternalProvidersStore
 //  Store Zustand para gestión de proveedores externos
 // ============================================================
 
@@ -12,27 +12,27 @@ import {
 } from '../services/external-providers.service'
 
 interface ExternalProvidersStore {
-  // 📊 Estado
+  //  Estado
   providers: ExternalProvider[]
   selectedProvider: ExternalProvider | null
   loading: boolean
   error: string | null
 
-  // 📈 Estadísticas
+  //  Estadísticas
   totalProvidedTime: number
 
-  // 🔹 Acciones - Lectura
+  //  Acciones - Lectura
   fetchProviders: () => Promise<void>
   fetchProviderById: (id: string) => Promise<void>
   fetchProvidersByAnnualAllocation: (annualAllocationId: string) => Promise<void>
   fetchTotalProvidedTime: (annualAllocationId: string) => Promise<void>
 
-  // 🔹 Acciones - Escritura
+  //  Acciones - Escritura
   createProvider: (data: CreateExternalProviderDto) => Promise<ExternalProvider | null>
   updateProvider: (id: string, data: UpdateExternalProviderDto) => Promise<boolean>
   deleteProvider: (id: string) => Promise<boolean>
 
-  // 🔹 Acciones - UI
+  //  Acciones - UI
   selectProvider: (provider: ExternalProvider | null) => void
   clearError: () => void
   reset: () => void
@@ -50,7 +50,7 @@ export const useExternalProvidersStore = create<ExternalProvidersStore>((set, ge
   ...initialState,
 
   // ============================================================
-  //  📖 Lectura de Datos
+  //   Lectura de Datos
   // ============================================================
 
   fetchProviders: async () => {
@@ -61,7 +61,7 @@ export const useExternalProvidersStore = create<ExternalProvidersStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar proveedores'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchProviders:', err)
+      console.error(' Error en fetchProviders:', err)
     }
   },
 
@@ -77,7 +77,7 @@ export const useExternalProvidersStore = create<ExternalProvidersStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar proveedor'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchProviderById:', err)
+      console.error(' Error en fetchProviderById:', err)
     }
   },
 
@@ -89,7 +89,7 @@ export const useExternalProvidersStore = create<ExternalProvidersStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al cargar proveedores por año'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en fetchProvidersByAnnualAllocation:', err)
+      console.error(' Error en fetchProvidersByAnnualAllocation:', err)
     }
   },
 
@@ -98,12 +98,12 @@ export const useExternalProvidersStore = create<ExternalProvidersStore>((set, ge
       const total = await ExternalProvidersService.getTotalProvidedTime(annualAllocationId)
       set({ totalProvidedTime: total })
     } catch (err) {
-      console.error('❌ Error en fetchTotalProvidedTime:', err)
+      console.error(' Error en fetchTotalProvidedTime:', err)
     }
   },
 
   // ============================================================
-  //  ✏️ Escritura de Datos
+  //   Escritura de Datos
   // ============================================================
 
   createProvider: async (data: CreateExternalProviderDto) => {
@@ -124,7 +124,7 @@ export const useExternalProvidersStore = create<ExternalProvidersStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al crear proveedor'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en createProvider:', err)
+      console.error(' Error en createProvider:', err)
       throw err
     }
   },
@@ -147,7 +147,7 @@ export const useExternalProvidersStore = create<ExternalProvidersStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al actualizar proveedor'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en updateProvider:', err)
+      console.error(' Error en updateProvider:', err)
       throw err
     }
   },
@@ -170,13 +170,13 @@ export const useExternalProvidersStore = create<ExternalProvidersStore>((set, ge
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error al eliminar proveedor'
       set({ error: errorMsg, loading: false })
-      console.error('❌ Error en deleteProvider:', err)
+      console.error(' Error en deleteProvider:', err)
       return false
     }
   },
 
   // ============================================================
-  //  🎛️ Control de UI
+  //   Control de UI
   // ============================================================
 
   selectProvider: (provider: ExternalProvider | null) => {
@@ -191,3 +191,4 @@ export const useExternalProvidersStore = create<ExternalProvidersStore>((set, ge
     set(initialState)
   }
 }))
+

@@ -1,5 +1,5 @@
 // ============================================================
-//  📦 JourneyTimeConfigService
+//   JourneyTimeConfigService
 //  Servicio para gestión de configuraciones de tiempo de jornada
 // ============================================================
 
@@ -53,16 +53,17 @@ export interface JourneyTimeCalculation {
 
 export const JourneyTimeConfigService = {
   /**
-   * 🔹 Obtiene todas las configuraciones de tiempo de jornada
+   *  Obtiene todas las configuraciones de tiempo de jornada
    */
   async getAll(): Promise<JourneyTimeConfig[]> {
     try {
       const res = await fetch(`${API_URL}/journey-time-configs`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener configuraciones:', res.status)
+        console.error(' Error al obtener configuraciones:', res.status)
         throw new Error(`Error al obtener configuraciones: ${res.status}`)
       }
 
@@ -70,123 +71,129 @@ export const JourneyTimeConfigService = {
       const data = Array.isArray(json) ? json : json.data || []
       return data
     } catch (err) {
-      console.error('⚠️ Error en getAll:', err)
+      console.error(' Error en getAll:', err)
       return []
     }
   },
 
   /**
-   * 🔹 Obtiene la configuración activa
+   *  Obtiene la configuración activa
    */
   async getActive(): Promise<JourneyTimeConfig | null> {
     try {
       const res = await fetch(`${API_URL}/journey-time-configs/active`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener configuración activa:', res.status)
+        console.error(' Error al obtener configuración activa:', res.status)
         return null
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en getActive:', err)
+      console.error(' Error en getActive:', err)
       return null
     }
   },
 
   /**
-   * 🔹 Crea una nueva configuración
+   *  Crea una nueva configuración
    */
   async create(data: CreateJourneyTimeConfigDto): Promise<JourneyTimeConfig | null> {
     try {
       const res = await fetch(`${API_URL}/journey-time-configs`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
-        console.error('❌ Error al crear configuración:', res.status, errorData)
+        console.error(' Error al crear configuración:', res.status, errorData)
         throw new Error(errorData.message || `Error al crear configuración: ${res.status}`)
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en create:', err)
+      console.error(' Error en create:', err)
       throw err
     }
   },
 
   /**
-   * 🔹 Actualiza una configuración existente
+   *  Actualiza una configuración existente
    */
   async update(id: string, data: UpdateJourneyTimeConfigDto): Promise<JourneyTimeConfig | null> {
     try {
       const res = await fetch(`${API_URL}/journey-time-configs/${id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
-        console.error('❌ Error al actualizar configuración:', res.status, errorData)
+        console.error(' Error al actualizar configuración:', res.status, errorData)
         throw new Error(errorData.message || `Error al actualizar configuración: ${res.status}`)
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en update:', err)
+      console.error(' Error en update:', err)
       throw err
     }
   },
 
   /**
-   * 🔹 Elimina una configuración
+   *  Elimina una configuración
    */
   async delete(id: string): Promise<boolean> {
     try {
       const res = await fetch(`${API_URL}/journey-time-configs/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al eliminar configuración:', res.status)
+        console.error(' Error al eliminar configuración:', res.status)
         return false
       }
 
       return true
     } catch (err) {
-      console.error('⚠️ Error en delete:', err)
+      console.error(' Error en delete:', err)
       return false
     }
   },
 
   /**
-   * 🔹 Calcula el tipo de jornada según las horas
+   *  Calcula el tipo de jornada según las horas
    */
   async calculateJourneyTime(hours: number): Promise<JourneyTimeCalculation | null> {
     try {
       const res = await fetch(`${API_URL}/journey-time-configs/calc?hours=${hours}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al calcular jornada:', res.status)
+        console.error(' Error al calcular jornada:', res.status)
         return null
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en calculateJourneyTime:', err)
+      console.error(' Error en calculateJourneyTime:', err)
       return null
     }
   }
 }
+

@@ -16,12 +16,10 @@ export class ExternalProvidersController {
   @ApiOperation({ summary: 'Create external provider' })
   async create(@Body() dto: CreateExternalProviderDto) {
     try {
-      this.logger.debug('📥 Received DTO:', JSON.stringify(dto, null, 2));
-      const result = await this.service.create(dto);
-      this.logger.debug('✅ Created successfully:', Array.isArray(result) ? 'bulk' : (result as any)?.id);
-      return result;
+      this.logger.debug('Received external provider payload');
+      return await this.service.create(dto);
     } catch (error: any) {
-      this.logger.error('❌ Error creating external provider:', error?.message || error);
+      this.logger.error('Error creating external provider:', error?.message || error);
       this.logger.error('Stack:', error?.stack);
       throw error;
     }

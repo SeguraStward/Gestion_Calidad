@@ -3,11 +3,12 @@
 import React, { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { Button } from '@una-gc/ui/components/button'
-import { Input } from '@una-gc/ui/components/input'
-import { Textarea } from '@una-gc/ui/components/textarea'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
+import { Input } from '@una-gc/ui/components/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
-import type { InstitutionalProject, CreateInstitutionalProjectDto } from '../services/institutional-projects.service'
+import { Textarea } from '@una-gc/ui/components/textarea'
+
+import type { CreateInstitutionalProjectDto, InstitutionalProject } from '../services/institutional-projects.service'
 
 interface CampusAllocation {
   id: string
@@ -18,8 +19,8 @@ interface CampusAllocation {
 
 interface Director {
   id: string
-  name: string
-  email: string
+  name?: string
+  email?: string
 }
 
 interface InstitutionalProjectFormProps {
@@ -60,96 +61,97 @@ export default function InstitutionalProjectForm({
   })
 
   useEffect(() => {
-    if (project) {
-      form.reset({
-        code: project.code,
-        title: project.title,
-        description: project.description || '',
-        objectives: project.objectives || '',
-        projectType: project.projectType,
-        requiredJourneyTime: project.requiredJourneyTime,
-        assignedJourneyTime: project.assignedJourneyTime,
-        startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
-        endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
-        campusAllocationId: project.campusAllocationId,
-        directorId: project.directorId
-      })
-    }
-  }, [project, form])
+    form.reset({
+      code: project?.code || '',
+      title: project?.title || '',
+      description: project?.description || '',
+      objectives: project?.objectives || '',
+      projectType: project?.projectType || 'INSTITUTIONAL',
+      requiredJourneyTime: project?.requiredJourneyTime || 0,
+      assignedJourneyTime: project?.assignedJourneyTime || 0,
+      startDate: project?.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
+      endDate: project?.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
+      campusAllocationId: project?.campusAllocationId || campusAllocationId || campusAllocations[0]?.id || '',
+      directorId: project?.directorId || directorId || directors[0]?.id || ''
+    })
+  }, [project, campusAllocationId, directorId, campusAllocations, directors, form])
 
   const handleSubmit = async (data: CreateInstitutionalProjectDto) => {
+    const sanitizedData: CreateInstitutionalProjectDto = {
+      ...data,
+      requiredJourneyTime: Number(data.requiredJourneyTime),
+      assignedJourneyTime: Number(data.assignedJourneyTime || 0)
+    }
+
     try {
-      await onSubmit(data)
+      await onSubmit(sanitizedData)
       if (!project) {
         form.reset()
       }
     } catch (error) {
-      console.error('Error submitting form:', error)
+      console.error('Error submitting project form:', error)
     }
   }
+
+  const hasCampusAllocations = campusAllocations.length > 0
+  const hasDirectors = directors.length > 0
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {/* Código */}
         <FormField
           control={form.control}
           name="code"
           rules={{
-            required: 'El código es obligatorio',
+            required: 'El codigo es obligatorio',
             pattern: {
               value: /^[A-Z0-9-]+$/,
-              message: 'El código debe contener solo letras mayúsculas, números y guiones'
+              message: 'El codigo debe contener solo letras mayusculas, numeros y guiones'
             }
           }}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Código del Proyecto *</FormLabel>
+              <FormLabel>Codigo del Proyecto *</FormLabel>
               <FormControl>
-                <Input placeholder="PROJ-2025-001" {...field} className="font-mono" disabled={!!project} />
+                <Input placeholder="PROJ-2026-001" {...field} className="font-mono" disabled={Boolean(project)} />
               </FormControl>
               <FormDescription>
-                {project
-                  ? 'El código no puede modificarse después de crear el proyecto'
-                  : 'Código único del proyecto (ej: PROJ-2025-001)'}
+                {project ? 'El codigo no puede modificarse despues de crear el proyecto' : 'Codigo unico del proyecto'}
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Título */}
         <FormField
           control={form.control}
           name="title"
-          rules={{ required: 'El título es obligatorio' }}
+          rules={{ required: 'El titulo es obligatorio' }}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Título del Proyecto *</FormLabel>
+              <FormLabel>Titulo del Proyecto *</FormLabel>
               <FormControl>
-                <Input placeholder="Ej: Mejora de Infraestructura Tecnológica" {...field} />
+                <Input placeholder="Ej: Mejora de Infraestructura Tecnologica" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Descripción */}
         <FormField
           control={form.control}
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Descripción</FormLabel>
+              <FormLabel>Descripcion</FormLabel>
               <FormControl>
-                <Textarea placeholder="Descripción general del proyecto..." rows={3} {...field} />
+                <Textarea placeholder="Descripcion general del proyecto..." rows={3} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Objetivos */}
         <FormField
           control={form.control}
           name="objectives"
@@ -164,42 +166,34 @@ export default function InstitutionalProjectForm({
           )}
         />
 
-        {/* Asignación de Campus */}
         <FormField
           control={form.control}
           name="campusAllocationId"
-          rules={{ required: 'La asignación de campus es obligatoria' }}
+          rules={{ required: 'La asignacion de campus es obligatoria' }}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Asignación de Campus *</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <FormLabel>Asignacion de Campus *</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value} disabled={!hasCampusAllocations}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona la asignación de campus" />
+                    <SelectValue placeholder={hasCampusAllocations ? 'Selecciona la asignacion de campus' : 'No hay asignaciones disponibles'} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {campusAllocations.length > 0 ? (
-                    campusAllocations.map((allocation) => (
-                      <SelectItem key={allocation.id} value={allocation.id}>
-                        {allocation.campusName} - {allocation.cycleName}
-                        {allocation.careerName && ` - ${allocation.careerName}`}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="" disabled>
-                      No hay asignaciones disponibles
+                  {campusAllocations.map((allocation) => (
+                    <SelectItem key={allocation.id} value={allocation.id}>
+                      {allocation.campusName} - {allocation.cycleName}
+                      {allocation.careerName ? ` - ${allocation.careerName}` : ''}
                     </SelectItem>
-                  )}
+                  ))}
                 </SelectContent>
               </Select>
-              <FormDescription>Campus y ciclo donde se ejecutará el proyecto</FormDescription>
+              <FormDescription>Campus y ciclo donde se ejecutara el proyecto</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Director */}
         <FormField
           control={form.control}
           name="directorId"
@@ -207,24 +201,19 @@ export default function InstitutionalProjectForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Director del Proyecto *</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={field.onChange} value={field.value} disabled={!hasDirectors}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona el director" />
+                    <SelectValue placeholder={hasDirectors ? 'Selecciona el director' : 'No hay directores disponibles'} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {directors.length > 0 ? (
-                    directors.map((director) => (
-                      <SelectItem key={director.id} value={director.id}>
-                        {director.name || director.email} {director.name && `(${director.email})`}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="" disabled>
-                      No hay directores disponibles
+                  {directors.map((director) => (
+                    <SelectItem key={director.id} value={director.id}>
+                      {director.name || director.email || director.id}
+                      {director.name && director.email ? ` (${director.email})` : ''}
                     </SelectItem>
-                  )}
+                  ))}
                 </SelectContent>
               </Select>
               <FormDescription>Coordinador o responsable del proyecto</FormDescription>
@@ -233,7 +222,6 @@ export default function InstitutionalProjectForm({
           )}
         />
 
-        {/* Tipo de Proyecto */}
         <FormField
           control={form.control}
           name="projectType"
@@ -241,7 +229,7 @@ export default function InstitutionalProjectForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tipo de Proyecto *</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona el tipo" />
@@ -249,8 +237,8 @@ export default function InstitutionalProjectForm({
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="INSTITUTIONAL">Institucional</SelectItem>
-                  <SelectItem value="RESEARCH">Investigación</SelectItem>
-                  <SelectItem value="EXTENSION">Extensión</SelectItem>
+                  <SelectItem value="RESEARCH">Investigacion</SelectItem>
+                  <SelectItem value="EXTENSION">Extension</SelectItem>
                   <SelectItem value="OTHER">Otro</SelectItem>
                 </SelectContent>
               </Select>
@@ -259,7 +247,6 @@ export default function InstitutionalProjectForm({
           )}
         />
 
-        {/* Horas Requeridas y Asignadas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -278,7 +265,7 @@ export default function InstitutionalProjectForm({
                     step="0.5"
                     placeholder="120"
                     {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                    onChange={(event) => field.onChange(Number(event.target.value))}
                   />
                 </FormControl>
                 <FormDescription>Horas totales necesarias para el proyecto</FormDescription>
@@ -290,9 +277,7 @@ export default function InstitutionalProjectForm({
           <FormField
             control={form.control}
             name="assignedJourneyTime"
-            rules={{
-              min: { value: 0, message: 'Debe ser mayor o igual a 0' }
-            }}
+            rules={{ min: { value: 0, message: 'Debe ser mayor o igual a 0' } }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Horas Asignadas</FormLabel>
@@ -303,7 +288,7 @@ export default function InstitutionalProjectForm({
                     step="0.5"
                     placeholder="0"
                     {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                    onChange={(event) => field.onChange(Number(event.target.value))}
                   />
                 </FormControl>
                 <FormDescription>Horas ya asignadas al proyecto</FormDescription>
@@ -313,7 +298,6 @@ export default function InstitutionalProjectForm({
           />
         </div>
 
-        {/* Fechas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -346,18 +330,16 @@ export default function InstitutionalProjectForm({
           />
         </div>
 
-        {/* Hidden IDs */}
         <input type="hidden" {...form.register('campusAllocationId')} />
         <input type="hidden" {...form.register('directorId')} />
 
-        {/* Botones */}
         <div className="flex justify-end gap-3 pt-4">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
               Cancelar
             </Button>
           )}
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading || !hasCampusAllocations || !hasDirectors}>
             {loading ? 'Guardando...' : project ? 'Actualizar' : 'Crear Proyecto'}
           </Button>
         </div>

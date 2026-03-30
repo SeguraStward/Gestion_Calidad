@@ -10,20 +10,40 @@ export class AnnualJourneyTimeAllocationsRepository extends GenericPrismaReposit
   Prisma.AnnualJourneyTimeAllocationUpdateInput,
   Prisma.AnnualJourneyTimeAllocationWhereUniqueInput
 > {
-  // ⬇️ define el nombre del delegate que usará el genérico
+  // define el nombre del delegate que usara el generico
   protected readonly modelName = 'annualJourneyTimeAllocation' as const;
 
   constructor(prisma: PrismaService) {
-    // ⬇️ tu GenericPrismaRepository SOLO recibe el prisma
+    // tu GenericPrismaRepository SOLO recibe el prisma
     super(prisma);
   }
 
   /**
-   * Buscar asignación anual por año
+   * Buscar asignacion anual por ano.
+   * Primero busca una asignacion ACTIVE; si no existe, toma la mas reciente del ano.
    */
   async findByYear(year: number) {
+    const active = await this.prismaService.annualJourneyTimeAllocation.findFirst({
+      where: { year, status: 'ACTIVE' },
+      include: {
+        campusAllocations: {
+          include: {
+            campus: { select: { id: true, name: true } },
+            curricularMesh: { select: { id: true, name: true } },
+            academicCycle: { select: { id: true, name: true } },
+            professorAssignments: true,
+            institutionalProjects: true,
+          },
+        },
+        externalProviders: true,
+      },
+    });
+
+    if (active) return active;
+
     return this.prismaService.annualJourneyTimeAllocation.findFirst({
       where: { year },
+      orderBy: { createdAt: 'desc' },
       include: {
         campusAllocations: {
           include: {

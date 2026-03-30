@@ -1,5 +1,5 @@
 // ============================================================
-//  📦 InstitutionalProjectsService
+//   InstitutionalProjectsService
 //  Servicio para gestión de proyectos institucionales
 // ============================================================
 
@@ -55,16 +55,17 @@ export interface ProjectWithAvailableTime extends InstitutionalProject {
 
 export const InstitutionalProjectsService = {
   /**
-   * 🔹 Obtiene todos los proyectos institucionales
+   *  Obtiene todos los proyectos institucionales
    */
   async getAll(): Promise<InstitutionalProject[]> {
     try {
       const res = await fetch(`${API_URL}/institutional-projects`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener proyectos:', res.status)
+        console.error(' Error al obtener proyectos:', res.status)
         throw new Error(`Error al obtener proyectos: ${res.status}`)
       }
 
@@ -72,44 +73,46 @@ export const InstitutionalProjectsService = {
       const data = Array.isArray(json) ? json : json.data || []
       return data
     } catch (err) {
-      console.error('⚠️ Error en getAll:', err)
+      console.error(' Error en getAll:', err)
       return []
     }
   },
 
   /**
-   * 🔹 Obtiene un proyecto por ID
+   *  Obtiene un proyecto por ID
    */
   async getById(id: string): Promise<InstitutionalProject | null> {
     try {
       const res = await fetch(`${API_URL}/institutional-projects/${id}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener proyecto:', res.status)
+        console.error(' Error al obtener proyecto:', res.status)
         return null
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en getById:', err)
+      console.error(' Error en getById:', err)
       return null
     }
   },
 
   /**
-   * 🔹 Obtiene proyectos por campus
+   *  Obtiene proyectos por campus
    */
   async getByCampusAllocation(campusAllocationId: string): Promise<InstitutionalProject[]> {
     try {
       const res = await fetch(`${API_URL}/institutional-projects/by-campus-allocation/${campusAllocationId}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener proyectos por campus:', res.status)
+        console.error(' Error al obtener proyectos por campus:', res.status)
         return []
       }
 
@@ -117,20 +120,21 @@ export const InstitutionalProjectsService = {
       const data = Array.isArray(json) ? json : json.data || []
       return data
     } catch (err) {
-      console.error('⚠️ Error en getByCampusAllocation:', err)
+      console.error(' Error en getByCampusAllocation:', err)
       return []
     }
   },
 
   /**
-   * 🔹 Obtiene proyectos por director
+   *  Obtiene proyectos por director
    */
   async getByDirector(directorId: string): Promise<InstitutionalProject[]> {
     try {
-      const res = await fetch(`${API_URL}/institutional-projects/by-director/${directorId}`, { cache: 'no-store' })
+      const res = await fetch(`${API_URL}/institutional-projects/by-director/${directorId}`, { cache: 'no-store',
+        credentials: 'include' })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener proyectos por director:', res.status)
+        console.error(' Error al obtener proyectos por director:', res.status)
         return []
       }
 
@@ -138,22 +142,23 @@ export const InstitutionalProjectsService = {
       const data = Array.isArray(json) ? json : json.data || []
       return data
     } catch (err) {
-      console.error('⚠️ Error en getByDirector:', err)
+      console.error(' Error en getByDirector:', err)
       return []
     }
   },
 
   /**
-   * 🔹 Obtiene proyectos con tiempo disponible
+   *  Obtiene proyectos con tiempo disponible
    */
   async getWithAvailableTime(): Promise<ProjectWithAvailableTime[]> {
     try {
       const res = await fetch(`${API_URL}/institutional-projects/with-available-time`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al obtener proyectos con tiempo disponible:', res.status)
+        console.error(' Error al obtener proyectos con tiempo disponible:', res.status)
         return []
       }
 
@@ -161,101 +166,106 @@ export const InstitutionalProjectsService = {
       const data = Array.isArray(json) ? json : json.data || []
       return data
     } catch (err) {
-      console.error('⚠️ Error en getWithAvailableTime:', err)
+      console.error(' Error en getWithAvailableTime:', err)
       return []
     }
   },
 
   /**
-   * 🔹 Calcula el total de tiempo asignado por campus
+   *  Calcula el total de tiempo asignado por campus
    */
   async getTotalAssignedTime(campusAllocationId: string): Promise<number> {
     try {
       const res = await fetch(`${API_URL}/institutional-projects/total-assigned-time/${campusAllocationId}`, {
-        cache: 'no-store'
+        cache: 'no-store',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al calcular total asignado:', res.status)
+        console.error(' Error al calcular total asignado:', res.status)
         return 0
       }
 
       const json = await res.json()
       return json?.total || 0
     } catch (err) {
-      console.error('⚠️ Error en getTotalAssignedTime:', err)
+      console.error(' Error en getTotalAssignedTime:', err)
       return 0
     }
   },
 
   /**
-   * 🔹 Crea un nuevo proyecto institucional
+   *  Crea un nuevo proyecto institucional
    */
   async create(data: CreateInstitutionalProjectDto): Promise<InstitutionalProject | null> {
     try {
       const res = await fetch(`${API_URL}/institutional-projects`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
-        console.error('❌ Error al crear proyecto:', res.status, errorData)
+        console.error(' Error al crear proyecto:', res.status, errorData)
         throw new Error(errorData.message || `Error al crear proyecto: ${res.status}`)
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en create:', err)
+      console.error(' Error en create:', err)
       throw err
     }
   },
 
   /**
-   * 🔹 Actualiza un proyecto institucional existente
+   *  Actualiza un proyecto institucional existente
    */
   async update(id: string, data: UpdateInstitutionalProjectDto): Promise<InstitutionalProject | null> {
     try {
       const res = await fetch(`${API_URL}/institutional-projects/${id}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
-        console.error('❌ Error al actualizar proyecto:', res.status, errorData)
+        console.error(' Error al actualizar proyecto:', res.status, errorData)
         throw new Error(errorData.message || `Error al actualizar proyecto: ${res.status}`)
       }
 
       const json = await res.json()
       return json?.data || json
     } catch (err) {
-      console.error('⚠️ Error en update:', err)
+      console.error(' Error en update:', err)
       throw err
     }
   },
 
   /**
-   * 🔹 Elimina un proyecto institucional
+   *  Elimina un proyecto institucional
    */
   async delete(id: string): Promise<boolean> {
     try {
       const res = await fetch(`${API_URL}/institutional-projects/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       })
 
       if (!res.ok) {
-        console.error('❌ Error al eliminar proyecto:', res.status)
+        console.error(' Error al eliminar proyecto:', res.status)
         return false
       }
 
       return true
     } catch (err) {
-      console.error('⚠️ Error en delete:', err)
+      console.error(' Error en delete:', err)
       return false
     }
   }
 }
+

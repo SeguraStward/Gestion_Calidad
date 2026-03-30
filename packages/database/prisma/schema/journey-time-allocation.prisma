@@ -42,12 +42,12 @@ model CampusJourneyTimeAllocation {
   // Relaciones con modelos existentes
   annualAllocationId String @db.ObjectId
   campusId           String @db.ObjectId
-  curricularMeshId   String @db.ObjectId
+  curricularMeshId   String? @db.ObjectId
   academicCycleId    String @db.ObjectId
 
   annualAllocation AnnualJourneyTimeAllocation @relation("AnnualCampusAllocations", fields: [annualAllocationId], references: [id])
   campus           Campus                      @relation("CampusJourneyAllocations", fields: [campusId], references: [id])
-  curricularMesh   CurricularMesh              @relation("MeshAllocations", fields: [curricularMeshId], references: [id])
+  curricularMesh   CurricularMesh?             @relation("MeshAllocations", fields: [curricularMeshId], references: [id])
   academicCycle    AcademicCycle               @relation("CycleJourneyAllocations", fields: [academicCycleId], references: [id])
 
   // Tiempo de jornada asignado y calculado
@@ -58,6 +58,9 @@ model CampusJourneyTimeAllocation {
 
   // Estado de la asignación
   status AllocationStatus @default(DRAFT)
+
+  // Referencia manual para la demo mientras no exista integración completa con mallas
+  description String?
 
   // Relaciones
   professorAssignments  ProfessorAssignment[]  @relation("AllocationAssignments")

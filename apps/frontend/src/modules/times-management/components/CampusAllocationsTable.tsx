@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Building2 } from 'lucide-react'
+import { Card, CardContent } from '@una-gc/ui/components/card'
 import { EmptyState } from './EmptyState'
 
 export interface CampusAllocation {
@@ -40,17 +41,12 @@ export default function CampusAllocationsTable({ allocations, loading }: CampusA
       <EmptyState
         icon={<Building2 className="h-16 w-16" />}
         title="No hay asignaciones de campus registradas"
-        description="Las asignaciones de campus distribuyen las horas de jornada por sede y ciclo académico. Configura la primera asignación para comenzar."
+        description="Las asignaciones de campus distribuyen las horas de jornada por sede y ciclo academico. Configura la primera asignacion para comenzar."
       />
     )
   }
 
-  // Calcular totales por campus
-  const totalBrunca = allocations.filter((a) => a.campus.includes('Brunca')).reduce((sum, a) => sum + a.totalHours, 0)
-
-  const totalCoto = allocations.filter((a) => a.campus.includes('Coto')).reduce((sum, a) => sum + a.totalHours, 0)
-
-  const totalGeneral = allocations.reduce((sum, a) => sum + a.totalHours, 0)
+  const totalGeneral = allocations.reduce((sum, allocation) => sum + allocation.totalHours, 0)
 
   return (
     <div className="space-y-4">
@@ -59,15 +55,17 @@ export default function CampusAllocationsTable({ allocations, loading }: CampusA
           <thead>
             <tr className="bg-gray-100">
               <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Campus</th>
+              <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Carrera / Referencia</th>
               <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Ciclo</th>
               <th className="border border-gray-300 px-4 py-2 text-center font-semibold">Horas Totales</th>
               <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Estado</th>
             </tr>
           </thead>
           <tbody>
-            {allocations.map((allocation, idx) => (
-              <tr key={idx} className="hover:bg-gray-50">
+            {allocations.map((allocation, index) => (
+              <tr key={allocation.id || index} className="hover:bg-gray-50">
                 <td className="border border-gray-300 px-4 py-2 font-medium">{allocation.campus}</td>
+                <td className="border border-gray-300 px-4 py-2">{allocation.career}</td>
                 <td className="border border-gray-300 px-4 py-2">{allocation.cycle}</td>
                 <td className="border border-gray-300 px-4 py-2 text-center">
                   <span className="font-semibold text-lg">{allocation.totalHours}h</span>
@@ -87,18 +85,17 @@ export default function CampusAllocationsTable({ allocations, loading }: CampusA
         </table>
       </div>
 
-      {/* Summary Card - Solo mostrar total general */}
-      <div className="pt-4 border-t">
-        <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
+      <Card>
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-green-700 font-medium">Total General Asignado</p>
-              <p className="text-xs text-green-600 mt-1">Suma de todas las asignaciones de campus</p>
+              <p className="text-sm text-muted-foreground">Total General Asignado</p>
+              <p className="text-xs text-muted-foreground mt-1">Suma de todas las asignaciones de campus</p>
             </div>
-            <p className="text-3xl font-bold text-green-800">{totalGeneral}h</p>
+            <p className="text-3xl font-bold">{totalGeneral}h</p>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
