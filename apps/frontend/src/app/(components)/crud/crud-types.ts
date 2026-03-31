@@ -2,6 +2,9 @@
 import { UseMutationResult, UseQueryResult } from '@tanstack/react-query'
 import { ColumnDef } from '@tanstack/react-table'
 import { Control, DefaultValues, FieldErrors, FieldValues } from 'react-hook-form'
+import type { FilterField } from '@/components/base/filters-panel'
+
+export type { FilterField }
 
 export type CrudPaginationMeta = {
   total: number
@@ -66,4 +69,6 @@ export type CrudConfig<
   processItemForEditing?: (item: TItem) => TUpdateInput
   processFormValues?: (values: TCreateInput | TUpdateInput) => TCreateInput | TUpdateInput
   preDeleteCheck?: (item: TItem) => string | null
+  // Filtros de dropdowns/selects que se envían al backend
+  filterConfig?: FilterField[]
 }

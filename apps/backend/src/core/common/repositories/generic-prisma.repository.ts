@@ -3,29 +3,37 @@ import { GenericRepository } from '../interfaces/generic-repository.interface';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { PaginatedResponse } from '@core/http/interfaces/paginated-response.interface';
 
+// Operadores lógicos de Prisma que deben pasar siempre, sin validación de campo
+const PRISMA_LOGICAL_OPERATORS = ['OR', 'AND', 'NOT'];
+
 function filterValidFields(where: any, validFields: string[]): any {
   if (!where) return undefined;
   const filtered: any = {};
+
   for (const key of Object.keys(where)) {
-    if (validFields.includes(key)) {
-      const value = where[key];
+    const value = where[key];
 
-      // Skip empty strings, null, and undefined to avoid Prisma ObjectID errors
-      if (value === '' || value === null || value === undefined) {
-        continue;
-      }
-
-      // Recursively clean nested objects
-      if (typeof value === 'object' && !Array.isArray(value)) {
-        const cleanedNested = filterValidFields(value, validFields);
-        if (cleanedNested && Object.keys(cleanedNested).length > 0) {
-          filtered[key] = cleanedNested;
-        }
-      } else {
+    // Siempre permitir operadores lógicos de Prisma (OR, AND, NOT)
+    // Estos no son campos del modelo pero son necesarios para búsquedas complejas
+    if (PRISMA_LOGICAL_OPERATORS.includes(key)) {
+      if (value !== null && value !== undefined) {
         filtered[key] = value;
       }
+      continue;
     }
+
+    // Solo permitir campos conocidos del modelo
+    if (!validFields.includes(key)) continue;
+
+    // Descartar strings vacíos, null y undefined para evitar errores de ObjectId en Prisma
+    if (value === '' || value === null || value === undefined) continue;
+
+    // Mantener el valor tal cual, incluidos objetos de filtro anidados como
+    // { contains: '...' }, { mode: 'insensitive' } o filtros de relación como
+    // { name: { contains: '...' } }. Prisma valida la estructura internamente.
+    filtered[key] = value;
   }
+
   return Object.keys(filtered).length > 0 ? filtered : undefined;
 }
 
