@@ -176,31 +176,31 @@ export class PdfGeneratorService {
   private generateFiltersHtml(filters: ComplianceReportDto['filters']): string {
     const appliedFilters: string[] = [];
 
-    if (filters.dimension) {
+    if (filters.dimensionId) {
       appliedFilters.push(`<div class="info-row">
         <span class="label">Dimensión:</span>
-        <span class="value">${filters.dimension}</span>
+        <span class="value">${filters.dimensionId}</span>
       </div>`);
     }
 
-    if (filters.component) {
+    if (filters.componentId) {
       appliedFilters.push(`<div class="info-row">
         <span class="label">Componente:</span>
-        <span class="value">${filters.component}</span>
+        <span class="value">${filters.componentId}</span>
       </div>`);
     }
 
-    if (filters.criterion) {
+    if (filters.criterionId) {
       appliedFilters.push(`<div class="info-row">
         <span class="label">Criterio:</span>
-        <span class="value">${filters.criterion}</span>
+        <span class="value">${filters.criterionId}</span>
       </div>`);
     }
 
-    if (filters.career) {
+    if (filters.careerId) {
       appliedFilters.push(`<div class="info-row">
         <span class="label">Carrera:</span>
-        <span class="value">${filters.career}</span>
+        <span class="value">${filters.careerId}</span>
       </div>`);
     }
 
@@ -243,7 +243,7 @@ export class PdfGeneratorService {
         <div class="dimension-summary">
           <span>Total Evidencias: <strong>${dimension.totalEvidences}</strong></span>
           <span>Con Documentos: <strong class="success">${dimension.evidencesWithDocuments}</strong></span>
-          <span>Sin Documentos: <strong class="${dimension.evidencesMissing > 0 ? 'danger' : 'success'}">${dimension.evidencesMissing}</strong></span>
+          <span>Sin Documentos: <strong class="${(dimension.totalEvidences - dimension.evidencesWithDocuments) > 0 ? 'danger' : 'success'}">${dimension.totalEvidences - dimension.evidencesWithDocuments}</strong></span>
           <span>Total Documentos: <strong>${dimension.totalDocuments}</strong></span>
         </div>
         
@@ -293,13 +293,13 @@ export class PdfGeneratorService {
       <tr>
         <td>${criterion.name}</td>
         <td>
-          <span class="status-badge ${this.getCriterionStatusClass(criterion.status)}">
-            ${this.getCriterionStatusLabel(criterion.status)}
+          <span class="status-badge ${this.getCriterionStatusClass(criterion.complianceStatus)}">
+            ${this.getCriterionStatusLabel(criterion.complianceStatus)}
           </span>
         </td>
         <td class="text-center">${criterion.totalEvidences}</td>
         <td class="text-center success">${criterion.evidencesWithDocuments}</td>
-        <td class="text-center ${criterion.evidencesMissing > 0 ? 'danger' : 'success'}">${criterion.evidencesMissing}</td>
+        <td class="text-center ${(criterion.totalEvidences - criterion.evidencesWithDocuments) > 0 ? 'danger' : 'success'}">${criterion.totalEvidences - criterion.evidencesWithDocuments}</td>
         <td class="text-center">${criterion.totalDocuments}</td>
         <td class="text-center">
           <strong class="${this.getPercentageClass(criterion.compliancePercentage)}">
