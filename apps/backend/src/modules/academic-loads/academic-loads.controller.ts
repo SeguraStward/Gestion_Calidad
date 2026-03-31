@@ -12,7 +12,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Status } from '@una-gc/database/prisma/generated/client';
+import { Prisma, Status } from '@una-gc/database/prisma/generated/client';
 
 import { AuthorizedEndpoint } from '@src/core/common/decorators/authorized-endpoint.decorator';
 import { ResourceName } from '@src/modules/auth/decorators/resource-name.decorator';
@@ -62,19 +62,19 @@ export class AcademicLoadsController extends GenericController<AcademicLoadDto, 
     } = where;
 
     // Búsqueda de texto libre
-    const searchConditions = search
+    const searchConditions: Prisma.AcademicLoadWhereInput | undefined = search
       ? {
           OR: [
-            { nrc: { contains: search, mode: 'insensitive' } },
-            { course: { name: { contains: search, mode: 'insensitive' } } },
-            { professor: { fullName: { contains: search, mode: 'insensitive' } } },
-            { professor: { fullLastName: { contains: search, mode: 'insensitive' } } },
+            { nrc: { contains: search, mode: Prisma.QueryMode.insensitive } },
+            { course: { name: { contains: search, mode: Prisma.QueryMode.insensitive } } },
+            { professor: { fullName: { contains: search, mode: Prisma.QueryMode.insensitive } } },
+            { professor: { fullLastName: { contains: search, mode: Prisma.QueryMode.insensitive } } },
           ],
         }
-      : {};
+      : undefined;
 
     // Filtros directos por ID y estado (solo se incluyen si tienen valor)
-    const directFilters = {
+    const directFilters: Prisma.AcademicLoadWhereInput = {
       ...(academicCycleId && { academicCycleId }),
       ...(courseId && { courseId }),
       ...(professorId && { professorId }),
@@ -82,7 +82,9 @@ export class AcademicLoadsController extends GenericController<AcademicLoadDto, 
     };
 
     const hasFilters = search || Object.keys(directFilters).length;
-    const finalWhere = hasFilters ? { ...searchConditions, ...directFilters } : undefined;
+    const finalWhere: Prisma.AcademicLoadWhereInput | undefined = hasFilters
+      ? { ...directFilters, ...(searchConditions ?? {}) }
+      : undefined;
 
     const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
 
