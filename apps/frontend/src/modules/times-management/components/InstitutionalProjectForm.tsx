@@ -79,6 +79,10 @@ export default function InstitutionalProjectForm({
   const handleSubmit = async (data: CreateInstitutionalProjectDto) => {
     const sanitizedData: CreateInstitutionalProjectDto = {
       ...data,
+      description: data.description?.trim() || undefined,
+      objectives: data.objectives?.trim() || undefined,
+      startDate: data.startDate || undefined,
+      endDate: data.endDate || undefined,
       requiredJourneyTime: Number(data.requiredJourneyTime),
       assignedJourneyTime: Number(data.assignedJourneyTime || 0)
     }
@@ -237,9 +241,9 @@ export default function InstitutionalProjectForm({
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="INSTITUTIONAL">Institucional</SelectItem>
+                  <SelectItem value="ACADEMIC">Academico</SelectItem>
                   <SelectItem value="RESEARCH">Investigacion</SelectItem>
                   <SelectItem value="EXTENSION">Extension</SelectItem>
-                  <SelectItem value="OTHER">Otro</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

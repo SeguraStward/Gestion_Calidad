@@ -9,7 +9,7 @@ export interface ExternalProvider {
   id?: string
   name: string
   description?: string
-  providerType: 'UNIVERSITY' | 'AGREEMENT' | 'EXCHANGE' | 'OTHER'
+  providerType: 'UNIVERSITY' | 'EXTERNAL' | 'AGREEMENT'
   contactEmail?: string
   contactPhone?: string
   contactPerson?: string
@@ -26,7 +26,7 @@ export interface ExternalProvider {
 export interface CreateExternalProviderDto {
   name: string
   description?: string
-  providerType: 'UNIVERSITY' | 'AGREEMENT' | 'EXCHANGE' | 'OTHER'
+  providerType: 'UNIVERSITY' | 'EXTERNAL' | 'AGREEMENT'
   contactEmail?: string
   contactPhone?: string
   contactPerson?: string

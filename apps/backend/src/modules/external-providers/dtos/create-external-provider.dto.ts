@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsPositive, IsString, Matches } from 'class-validator';
 import { ProviderType, Status } from '@una-gc/database/prisma/generated/client';
+
+const PHONE_REGEX = /^\+?[0-9\s\-()]{7,20}$/;
 
 export class CreateExternalProviderDto {
   @ApiProperty({ description: 'Nombre del proveedor/convenio', example: 'Universidad de Costa Rica' })
@@ -9,6 +12,7 @@ export class CreateExternalProviderDto {
 
   @ApiProperty({ description: 'Descripción del proveedor', required: false })
   @IsOptional()
+  @Transform(({ value }) => value?.trim() || undefined)
   @IsString()
   description?: string;
 
@@ -18,16 +22,22 @@ export class CreateExternalProviderDto {
 
   @ApiProperty({ description: 'Email de contacto', required: false })
   @IsOptional()
+  @Transform(({ value }) => value?.trim() || undefined)
   @IsString()
   contactEmail?: string;
 
   @ApiProperty({ description: 'Teléfono de contacto', required: false })
   @IsOptional()
+  @Transform(({ value }) => value?.trim().replace(/\s+/g, ' ') || undefined)
   @IsString()
+  @Matches(PHONE_REGEX, {
+    message: 'El telefono debe contener solo numeros, espacios, guiones, parentesis y puede iniciar con +',
+  })
   contactPhone?: string;
 
   @ApiProperty({ description: 'Persona de contacto', required: false })
   @IsOptional()
+  @Transform(({ value }) => value?.trim() || undefined)
   @IsString()
   contactPerson?: string;
 

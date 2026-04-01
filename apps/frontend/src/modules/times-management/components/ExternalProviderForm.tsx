@@ -61,6 +61,12 @@ export default function ExternalProviderForm({
     const providedJourneyTime = Number(data.providedJourneyTime)
     const sanitizedData: CreateExternalProviderDto = {
       ...data,
+      description: data.description?.trim() || undefined,
+      contactEmail: data.contactEmail?.trim() || undefined,
+      contactPhone: data.contactPhone?.trim() || undefined,
+      contactPerson: data.contactPerson?.trim() || undefined,
+      startDate: data.startDate || undefined,
+      endDate: data.endDate || undefined,
       providedJourneyTime: Number.isFinite(providedJourneyTime) ? providedJourneyTime : 0
     }
 
@@ -121,9 +127,8 @@ export default function ExternalProviderForm({
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="UNIVERSITY">Universidad</SelectItem>
+                  <SelectItem value="EXTERNAL">Proveedor externo</SelectItem>
                   <SelectItem value="AGREEMENT">Convenio</SelectItem>
-                  <SelectItem value="EXCHANGE">Intercambio</SelectItem>
-                  <SelectItem value="OTHER">Otro</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -194,8 +199,9 @@ export default function ExternalProviderForm({
             <FormItem>
               <FormLabel>Telefono de Contacto</FormLabel>
               <FormControl>
-                <Input placeholder="+506 8888-8888" {...field} />
+                <Input type="tel" placeholder="+506 8888-8888" {...field} />
               </FormControl>
+              <FormDescription>Formato valido: +506 8888-8888, 8888-8888 o (506) 8888-8888</FormDescription>
               <FormMessage />
             </FormItem>
           )}

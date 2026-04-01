@@ -11,7 +11,7 @@ export interface InstitutionalProject {
   title: string
   description?: string
   objectives?: string
-  projectType: 'INSTITUTIONAL' | 'RESEARCH' | 'EXTENSION' | 'OTHER'
+  projectType: 'INSTITUTIONAL' | 'ACADEMIC' | 'RESEARCH' | 'EXTENSION'
   requiredJourneyTime: number
   assignedJourneyTime: number
   startDate: string
@@ -37,7 +37,7 @@ export interface CreateInstitutionalProjectDto {
   title: string
   description?: string
   objectives?: string
-  projectType: 'INSTITUTIONAL' | 'RESEARCH' | 'EXTENSION' | 'OTHER'
+  projectType: 'INSTITUTIONAL' | 'ACADEMIC' | 'RESEARCH' | 'EXTENSION'
   requiredJourneyTime: number
   assignedJourneyTime?: number
   startDate: string
