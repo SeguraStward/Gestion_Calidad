@@ -78,7 +78,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             items: [
               { title: 'Panel de Tiempos', url: '/times-management' },
               { title: 'Resumen Anual', url: '/times-management/summary' },
-              { title: 'Proyectos y Proveedores', url: '/times-management/extensions' }
+              { title: 'Proyectos y Proveedores', url: '/times-management/extensions' },
+              { title: 'Configuracion de Jornada', url: '/times-management/configuracion' }
             ]
           }
         ]

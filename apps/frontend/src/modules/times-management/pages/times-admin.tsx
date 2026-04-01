@@ -12,7 +12,6 @@ import { toast } from 'sonner'
 
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import CampusAllocationForm from '../components/CampusAllocationForm'
-import JourneyConfigDisplay, { type JourneyConfig } from '../components/JourneyConfigDisplay'
 import ProfessorAssignments, { type ProfessorAssignmentRow } from '../components/ProfessorAssignments'
 import RepitenciasManager from '../components/RepitenciasManager'
 import { StatsGrid } from '../components/StatsCard'
@@ -20,8 +19,8 @@ import { StatsGrid } from '../components/StatsCard'
 import { useAnnualAllocationsStore } from '../store/useAnnualAllocationsStore'
 import { useCampusAllocationsStore } from '../store/useCampusAllocationsStore'
 import { useCohortsStore } from '../store/useCohortsStore'
-import { useJourneyTimeConfigStore } from '../store/useJourneyTimeConfigStore'
 import { useProfessorAssignmentsStore } from '../store/useProfessorAssignmentsStore'
+import { useListCareersFlat } from '../../academic-management/academic-maintenance/hooks/useCareer'
 
 export default function TimesAdminPage() {
   const assignmentTypeLabels: Record<string, string> = {
@@ -44,8 +43,8 @@ export default function TimesAdminPage() {
     fetchActive: fetchActiveAnnualAllocation,
     fetchYearSummary
   } = useAnnualAllocationsStore()
-  const { activeConfig, loading: loadingConfig, fetchActive, create: createConfig } = useJourneyTimeConfigStore()
-  const { cohorts, alerts, loading: loadingCohorts, loadingAlerts, fetchAll: fetchCohorts, fetchAlerts, create: createCohort } = useCohortsStore()
+  const { cohorts, alerts, loading: loadingCohorts, fetchAll: fetchCohorts, create: createCohort } = useCohortsStore()
+  const { data: careers = [] } = useListCareersFlat()
   const { allocations, loading: loadingAllocations, fetchAll: fetchAllocations } = useCampusAllocationsStore()
   const {
     assignments,
@@ -55,12 +54,11 @@ export default function TimesAdminPage() {
   } = useProfessorAssignmentsStore()
 
   useEffect(() => {
-    fetchActive()
     fetchAllocations()
     fetchAssignments()
     fetchActiveAnnualAllocation()
     fetchCohorts()
-  }, [fetchActive, fetchAllocations, fetchAssignments, fetchActiveAnnualAllocation, fetchCohorts])
+  }, [fetchAllocations, fetchAssignments, fetchActiveAnnualAllocation, fetchCohorts])
 
   useEffect(() => {
     if (activeAllocation?.year) {
@@ -241,41 +239,6 @@ export default function TimesAdminPage() {
   }))
 
 
-  const transformedConfig: JourneyConfig | null = activeConfig
-    ? {
-        ...activeConfig,
-        status: activeConfig.status as 'ACTIVE' | 'INACTIVE' | 'DRAFT' | undefined
-      }
-    : null
-
-  const handleUploadConfig = async (newConfig: JourneyConfig) => {
-    try {
-      const effectiveYear =
-        typeof newConfig.effectiveYear === 'string' ? parseInt(newConfig.effectiveYear, 10) : newConfig.effectiveYear
-
-      await createConfig({
-        quarterTimeMinHours: newConfig.quarterTimeMinHours,
-        quarterTimeMaxHours: newConfig.quarterTimeMaxHours,
-        quarterTimeValue: newConfig.quarterTimeValue,
-        halfTimeMinHours: newConfig.halfTimeMinHours,
-        halfTimeMaxHours: newConfig.halfTimeMaxHours,
-        halfTimeValue: newConfig.halfTimeValue,
-        threeQuarterMinHours: newConfig.threeQuarterMinHours,
-        threeQuarterMaxHours: newConfig.threeQuarterMaxHours,
-        threeQuarterTimeValue: newConfig.threeQuarterTimeValue,
-        fullTimeMinHours: newConfig.fullTimeMinHours,
-        fullTimeValue: newConfig.fullTimeValue,
-        maxDailyHours: newConfig.maxDailyHours,
-        effectiveYear,
-        status: 'ACTIVE'
-      })
-      toast.success('Configuracion cargada correctamente')
-    } catch (error) {
-      console.error('Error uploading config:', error)
-      toast.error('Error al cargar la configuracion')
-    }
-  }
-
   const handleAssignProfessor = async (assignment: Record<string, any>) => {
     try {
       if (!assignment.professorId || !assignment.academicCycleId || !assignment.campusId || !assignment.assignmentType) {
@@ -324,10 +287,9 @@ export default function TimesAdminPage() {
       </div>
 
       <Tabs defaultValue="allocations" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="allocations">Asignaciones</TabsTrigger>
           <TabsTrigger value="cohorts">Cohortes</TabsTrigger>
-          <TabsTrigger value="config">Configuracion</TabsTrigger>
           <TabsTrigger value="professor">Profesores</TabsTrigger>
           <TabsTrigger value="repitencias">Repitencias</TabsTrigger>
         </TabsList>
@@ -715,15 +677,6 @@ export default function TimesAdminPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="config" className="mt-6">
-          <JourneyConfigDisplay
-            config={transformedConfig}
-            loading={loadingConfig}
-            onUploadConfig={handleUploadConfig}
-            canEdit={true}
-          />
-        </TabsContent>
-
         <TabsContent value="professor" className="mt-6">
           <ProfessorAssignments
             assignments={transformedAssignments}
@@ -748,12 +701,22 @@ export default function TimesAdminPage() {
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div className="space-y-1">
-              <label className="text-sm font-medium">ID de carrera</label>
-              <Input
-                placeholder="ObjectId de la carrera"
+              <label className="text-sm font-medium">Carrera</label>
+              <Select
                 value={cohortForm.careerId}
-                onChange={(e) => setCohortForm((prev) => ({ ...prev, careerId: e.target.value }))}
-              />
+                onValueChange={(v) => setCohortForm((prev) => ({ ...prev, careerId: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona una carrera..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {careers.map((career) => (
+                    <SelectItem key={career.id} value={career.id}>
+                      {career.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
