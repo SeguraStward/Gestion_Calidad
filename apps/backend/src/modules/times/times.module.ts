@@ -11,7 +11,9 @@ import { JourneyTimeConfigsModule } from '../journey-time-configs/journey-time-c
 import { ExternalProvidersModule } from '../external-providers/external-providers.module';
 import { InstitutionalProjectsModule } from '../institutional-projects/institutional-projects.module';
 import { RepitenciasModule } from '../repitencias/repitencias.module';
-import { Prisma } from '@una-gc/database/prisma/generated/client';
+import { CohortsModule } from '../cohorts/cohorts.module';
+import { CourseReportsModule } from '../course-reports/course-reports.module';
+import { ProfessorPortalModule } from '../professor-portal/professor-portal.module';
 import { PrismaModule } from '@src/prisma/prisma.module';
 
 @Module({
@@ -23,6 +25,9 @@ import { PrismaModule } from '@src/prisma/prisma.module';
     ExternalProvidersModule,
     InstitutionalProjectsModule,
     RepitenciasModule,
+    CohortsModule,
+    CourseReportsModule,
+    ProfessorPortalModule,
     PrismaModule,
   ],
   controllers: [TimesController],
