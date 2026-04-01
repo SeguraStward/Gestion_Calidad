@@ -50,7 +50,7 @@ services:
       dockerfile: apps/frontend/Dockerfile
 
     env_file:
-      - ./apps/frontend/.env
+      - ./apps/frontend/.env.production
 
     depends_on:
       - proxy
@@ -63,7 +63,7 @@ services:
       # Core Traefik labels
       - "traefik.enable=true"
       - "traefik.docker.network=gcalidad-network"
-      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
 
       # HTTP to HTTPS redirect
       - "traefik.http.routers.frontend-http.rule=Host(`gestion-calidad.arayaroma.software`)"
@@ -86,7 +86,7 @@ services:
         DATABASE_URL: ${DATABASE_URL}
 
     env_file:
-      - ./apps/backend/.env
+      - ./apps/backend/.env.production
       - ./.env
 
     depends_on:

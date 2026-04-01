@@ -1,6 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@src/prisma/prisma.service';
-import { Prisma } from '@una-gc/database/prisma/generated/client';
 import {
   ComplianceReportDto,
   DimensionComplianceDto,
@@ -73,7 +72,7 @@ export class SinaesReportsService {
     this.logger.log('🔍 Generating compliance report with filters:', filters);
 
     // 1. Build where clause for filtering dimensions/components/criteria
-    const whereClause: Prisma.DimensionWhereInput = {};
+    const whereClause: any = {};
 
     if (filters.dimensionId) {
       whereClause.id = filters.dimensionId;
@@ -448,7 +447,7 @@ export class SinaesReportsService {
         careerId: report.filters.careerId,
         dateFrom: report.filters.dateFrom,
         dateTo: report.filters.dateTo,
-        reportData: report as unknown as Prisma.JsonValue,
+        reportData: report as any,
         totalEvidences: report.statistics.totalEvidences,
         evidencesWithDocuments: report.statistics.evidencesWithDocuments,
         totalDocuments: report.statistics.totalDocuments,

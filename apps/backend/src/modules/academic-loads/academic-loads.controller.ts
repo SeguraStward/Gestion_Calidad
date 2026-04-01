@@ -88,7 +88,7 @@ export class AcademicLoadsController extends GenericController<AcademicLoadDto, 
 
     const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
 
-    return this.academicLoadsService.findAll(Number(page), Number(limit), finalWhere, parsedOrderBy);
+    return this.academicLoadsService.findAll(Number(page), Number(limit), finalWhere as any, parsedOrderBy);
   }
 
   // Custom endpoint for finding academic loads by professor
