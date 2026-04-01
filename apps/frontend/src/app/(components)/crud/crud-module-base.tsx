@@ -1,5 +1,6 @@
 'use client'
 
+import { FiltersPanel } from '@/components/base/filters-panel'
 import { usePagination } from '@/shared/hooks/usePagination'
 import { ColumnDef } from '@tanstack/react-table'
 import { Button, Card, CardContent } from '@una-gc/ui/components'
@@ -37,12 +38,15 @@ export const CrudModuleBase = <
     processItemForEditing,
     processFormValues,
     preDeleteCheck,
-    searchPlaceholder = `Buscar ${entityNamePlural.toLowerCase()}...`
+    searchPlaceholder = `Buscar ${entityNamePlural.toLowerCase()}...`,
+    filterConfig
   } = props
   const [editingId, setEditingId] = useState<string | null>(null)
   const [idToDelete, setIdToDelete] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [previousTotalItems, setPreviousTotalItems] = useState<number | undefined>(undefined)
+  // Estado local de los dropdowns de filtro (se aplican al hacer clic en "Buscar")
+  const [pendingFilters, setPendingFilters] = useState<Record<string, any>>({})
   const useSafeOneQuery = useOneQuery ?? (() => ({ data: undefined, isLoading: false }))
   // Always call useOneQuery unconditionally to comply with React rules of hooks
   const { data: editingItemData, isLoading: isLoadingEditingItem } = useSafeOneQuery(
@@ -58,8 +62,14 @@ export const CrudModuleBase = <
   }, [editingId, editingItemData, processItemForEditing])
 
   // Paginación
-  const { currentPage, setCurrentPage, itemsPerPage, queryParams } = usePagination()
+  const { currentPage, setCurrentPage, itemsPerPage, queryParams, search, updateSearch, updateFilters } = usePagination()
   const { data: paginatedData, refetch, isLoading: isLoadingList } = usePaginatedQuery(queryParams)
+
+  const handleApplyFilters = () => updateFilters(pendingFilters)
+  const handleClearFilters = () => {
+    setPendingFilters({})
+    updateFilters({})
+  }
 
   // Sincronizar página con backend
   useEffect(() => {
@@ -259,6 +269,15 @@ export const CrudModuleBase = <
           </CardContent>
         </Card>
       )}
+      {filterConfig && filterConfig.length > 0 && (
+        <FiltersPanel
+          filters={pendingFilters}
+          fields={filterConfig}
+          onFiltersChange={setPendingFilters}
+          onSearch={handleApplyFilters}
+          onClear={handleClearFilters}
+        />
+      )}
       <DataTable
         columns={columns}
         data={processedItems}
@@ -267,11 +286,15 @@ export const CrudModuleBase = <
         isLoading={isLoadingList}
         currentPage={paginatedData?.meta?.page || 1}
         totalPages={paginatedData?.meta?.totalPages || 1}
+        totalItems={paginatedData?.meta?.total || 0}
         onPageChange={(page) => {
           if (page >= 1 && page <= (paginatedData?.meta?.totalPages || 1)) {
             setCurrentPage(page)
           }
         }}
+        serverSideFiltering={true}
+        searchQuery={search}
+        onSearchChange={updateSearch}
       />
       <AlertMessage
         open={!!idToDelete}

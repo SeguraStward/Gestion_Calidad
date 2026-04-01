@@ -374,6 +374,52 @@ const AcademicLoadPage = () => {
       useUpdateMutation: useUpdateAcademicLoad,
       useDeleteMutation: useRemoveAcademicLoad,
       useOneQuery: useAcademicLoadOne,
+      filterConfig: [
+        {
+          key: 'academicCycleId',
+          label: 'Ciclo Académico',
+          type: 'select' as const,
+          placeholder: 'Todos los ciclos',
+          options: [
+            { value: 'ALL', label: 'Todos' },
+            ...formDataProps.academicCycles.map((c: any) => ({ value: c.id, label: c.name }))
+          ]
+        },
+        {
+          key: 'courseId',
+          label: 'Curso',
+          type: 'select' as const,
+          placeholder: 'Todos los cursos',
+          options: [
+            { value: 'ALL', label: 'Todos' },
+            ...formDataProps.courses.map((c: any) => ({ value: c.id, label: `${c.code ?? ''} – ${c.name}` }))
+          ]
+        },
+        {
+          key: 'professorId',
+          label: 'Profesor',
+          type: 'select' as const,
+          placeholder: 'Todos los profesores',
+          options: [
+            { value: 'ALL', label: 'Todos' },
+            ...formDataProps.professors.map((p: any) => ({
+              value: p.id,
+              label: p.name ?? `${p.fullName ?? ''} ${p.fullLastName ?? ''}`.trim()
+            }))
+          ]
+        },
+        {
+          key: 'status',
+          label: 'Estado',
+          type: 'select' as const,
+          placeholder: 'Todos',
+          options: [
+            { value: 'ALL', label: 'Todos' },
+            { value: 'ACTIVE', label: 'Activo' },
+            { value: 'INACTIVE', label: 'Inactivo' }
+          ]
+        }
+      ],
       defaultFormValues: {
         nrc: '',
         maximumCapacity: 30,
@@ -441,7 +487,7 @@ const AcademicLoadPage = () => {
         return null // Permitir eliminación
       }
     }),
-    [renderForm, renderColumns]
+    [renderForm, renderColumns, formDataProps]
   )
 
   return (

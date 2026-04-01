@@ -220,11 +220,13 @@ export function useAuth(): UseAuthReturn {
           return false;
         }
 
-        // IMPORTANTE: En la base de datos, las acciones pueden estar en 'actions' o 'permissions'
-        // Verificar ambos campos para compatibilidad
+        // IMPORTANTE: En la base de datos, las acciones pueden estar en 'actions', 'type' o 'permissions'
+        // El backend mapea PermissionType[] como 'type', String[] custom como 'actions'
         const permissionActions = Array.isArray(permission.actions) && permission.actions.length > 0
           ? permission.actions
-          : (permission as any).permissions || [];
+          : Array.isArray((permission as any).type) && (permission as any).type.length > 0
+            ? (permission as any).type
+            : (permission as any).permissions || [];
 
         // Verificar si el action está en el array de actions del permiso
         const hasAction = Array.isArray(permissionActions) && permissionActions.includes(action);
@@ -255,7 +257,7 @@ export function useAuth(): UseAuthReturn {
     refreshAuth()
   }, [refreshAuth])
 
-  // Separate effect to fetch roles if user exists but has no role
+  // Separate effect to restore the active role if user exists but has no role in session
   useEffect(() => {
     const initializeRoles = async () => {
       // Solo intentar obtener roles si:
@@ -264,21 +266,33 @@ export function useAuth(): UseAuthReturn {
       // 3. No hay rol actual
       // 4. No hay error
       if (!isLoading && user && !role && !error) {
-        console.log('[useAuth] User exists but no role, attempting to fetch roles...')
+        // Re-check if role was hydrated from sessionStorage while we were waiting
+        const currentRole = useSessionStore.getState().role
+        if (currentRole) {
+          console.log('[useAuth] Role already set after hydration:', currentRole.name)
+          return
+        }
+
+        console.log('[useAuth] User exists but no role, restoring active role from backend...')
 
         try {
-          console.log('[useAuth] Fetching user roles...')
-          const userRoles = await AuthService.getUserRoles()
-          console.log('[useAuth] User roles received:', userRoles)
+          const [userRoles, activeRoleId] = await Promise.all([
+            AuthService.getUserRoles(),
+            AuthService.getActiveRole(),
+          ])
+          console.log('[useAuth] Roles received:', userRoles?.length, '| Active role ID:', activeRoleId)
 
           if (userRoles && userRoles.length > 0) {
             const { setRole } = useSessionStore.getState()
-            const firstRole = userRoles[0]
-            if (firstRole) {
-              console.log('[useAuth] Setting first role as active:', firstRole)
-              setRole(firstRole)
+            // Prefer the role that matches the active role cookie; fall back to first
+            const activeRole = activeRoleId
+              ? userRoles.find(r => r.id === activeRoleId) ?? userRoles[0]
+              : userRoles[0]
+
+            if (activeRole) {
+              console.log('[useAuth] Restoring role:', activeRole.name)
+              setRole(activeRole)
             } else {
-              console.warn('[useAuth] First role is undefined')
               setRole(null)
             }
           } else {
@@ -287,15 +301,15 @@ export function useAuth(): UseAuthReturn {
             setRole(null)
           }
         } catch (roleError) {
-          console.error('[useAuth] Error fetching user roles:', roleError)
+          console.error('[useAuth] Error restoring role:', roleError)
           const { setRole } = useSessionStore.getState()
           setRole(null)
         }
       }
     }
 
-    // Delay para evitar que se ejecute inmediatamente después del refreshAuth
-    const timeoutId = setTimeout(initializeRoles, 500)
+    // Delay to allow Zustand sessionStorage hydration to complete first
+    const timeoutId = setTimeout(initializeRoles, 800)
 
     return () => clearTimeout(timeoutId)
   }, [user, role, isLoading, error])

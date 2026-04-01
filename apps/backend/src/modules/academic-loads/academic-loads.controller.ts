@@ -34,15 +34,14 @@ export class AcademicLoadsController extends GenericController<AcademicLoadDto, 
 
   // Override findAll to support search functionality
   @Get()
-  @ApiOperation({ summary: 'Find all academic loads with search functionality' })
+  @ApiOperation({ summary: 'Find all academic loads with search and filter functionality' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({
-    name: 'search',
-    required: false,
-    type: String,
-    description: 'Search by NRC, course name, or professor name',
-  })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by NRC, course name, or professor name' })
+  @ApiQuery({ name: 'academicCycleId', required: false, type: String, description: 'Filter by academic cycle ID' })
+  @ApiQuery({ name: 'courseId', required: false, type: String, description: 'Filter by course ID' })
+  @ApiQuery({ name: 'professorId', required: false, type: String, description: 'Filter by professor ID' })
+  @ApiQuery({ name: 'status', required: false, enum: ['ACTIVE', 'INACTIVE'], description: 'Filter by status' })
   @ApiQuery({ name: 'orderBy', required: false, type: String })
   @ApiQuery({ name: 'include', required: false, type: String })
   @AuthorizedEndpoint(PermissionType.READ)
@@ -53,28 +52,41 @@ export class AcademicLoadsController extends GenericController<AcademicLoadDto, 
     @Query('orderBy') orderBy?: string,
     @Query('include') includeQueryParam?: string,
   ) {
-    const { page: _p, limit: _l, orderBy: _o, include: _i, search, ...filters } = where;
+    const {
+      page: _p, limit: _l, orderBy: _o, include: _i,
+      search,
+      academicCycleId,
+      courseId,
+      professorId,
+      status,
+    } = where;
 
-    // Build search conditions if search parameter is provided
-    let searchConditions = {};
-    if (search) {
-      searchConditions = {
-        OR: [
-          { nrc: { contains: search, mode: 'insensitive' } },
-          { course: { name: { contains: search, mode: 'insensitive' } } },
-          { professor: { fullName: { contains: search, mode: 'insensitive' } } },
-          { professor: { fullLastName: { contains: search, mode: 'insensitive' } } },
-        ],
-      };
-    }
+    // Búsqueda de texto libre
+    const searchConditions = search
+      ? {
+          OR: [
+            { nrc: { contains: search, mode: 'insensitive' } },
+            { course: { name: { contains: search, mode: 'insensitive' } } },
+            { professor: { fullName: { contains: search, mode: 'insensitive' } } },
+            { professor: { fullLastName: { contains: search, mode: 'insensitive' } } },
+          ],
+        }
+      : {};
 
-    // Combine search conditions with other filters
-    const finalWhere =
-      Object.keys(filters).length || search ? { ...searchConditions, ...filters } : undefined;
+    // Filtros directos por ID y estado (solo se incluyen si tienen valor)
+    const directFilters = {
+      ...(academicCycleId && { academicCycleId }),
+      ...(courseId && { courseId }),
+      ...(professorId && { professorId }),
+      ...(status && { status }),
+    };
+
+    const hasFilters = search || Object.keys(directFilters).length;
+    const finalWhere = hasFilters ? { ...searchConditions, ...directFilters } : undefined;
 
     const parsedOrderBy = orderBy ? JSON.parse(orderBy) : undefined;
 
-    return this.academicLoadsService.findAll(Number(page), Number(limit), finalWhere, parsedOrderBy);
+    return this.academicLoadsService.findAll(Number(page), Number(limit), finalWhere as any, parsedOrderBy);
   }
 
   // Custom endpoint for finding academic loads by professor
