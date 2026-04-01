@@ -5,8 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@una-gc/ui/components'
 import { Button } from '@una-gc/ui/components/button'
 import { Card, CardContent } from '@una-gc/ui/components/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@una-gc/ui/components/dialog'
+import { Input } from '@una-gc/ui/components/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
-import { ArrowLeft, ArrowRight, Banknote, Building2, Clock, Plus, Scale } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, Banknote, BookOpen, Building2, Clock, Plus, Scale, Users } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Breadcrumbs } from '../components/Breadcrumbs'
@@ -18,6 +19,7 @@ import { StatsGrid } from '../components/StatsCard'
 
 import { useAnnualAllocationsStore } from '../store/useAnnualAllocationsStore'
 import { useCampusAllocationsStore } from '../store/useCampusAllocationsStore'
+import { useCohortsStore } from '../store/useCohortsStore'
 import { useJourneyTimeConfigStore } from '../store/useJourneyTimeConfigStore'
 import { useProfessorAssignmentsStore } from '../store/useProfessorAssignmentsStore'
 
@@ -33,6 +35,9 @@ export default function TimesAdminPage() {
   const [selectedCampus, setSelectedCampus] = useState<string | null>(null)
   const [selectedCareer, setSelectedCareer] = useState<{ campus: string; career: string } | null>(null)
 
+  const [cohortDialogOpen, setCohortDialogOpen] = useState(false)
+  const [cohortForm, setCohortForm] = useState({ careerId: '', year: String(new Date().getFullYear()), group: 'A', initialStudents: '' })
+
   const {
     activeAllocation,
     yearSummary,
@@ -40,6 +45,7 @@ export default function TimesAdminPage() {
     fetchYearSummary
   } = useAnnualAllocationsStore()
   const { activeConfig, loading: loadingConfig, fetchActive, create: createConfig } = useJourneyTimeConfigStore()
+  const { cohorts, alerts, loading: loadingCohorts, loadingAlerts, fetchAll: fetchCohorts, fetchAlerts, create: createCohort } = useCohortsStore()
   const { allocations, loading: loadingAllocations, fetchAll: fetchAllocations } = useCampusAllocationsStore()
   const {
     assignments,
@@ -53,7 +59,8 @@ export default function TimesAdminPage() {
     fetchAllocations()
     fetchAssignments()
     fetchActiveAnnualAllocation()
-  }, [fetchActive, fetchAllocations, fetchAssignments, fetchActiveAnnualAllocation])
+    fetchCohorts()
+  }, [fetchActive, fetchAllocations, fetchAssignments, fetchActiveAnnualAllocation, fetchCohorts])
 
   useEffect(() => {
     if (activeAllocation?.year) {
@@ -317,8 +324,9 @@ export default function TimesAdminPage() {
       </div>
 
       <Tabs defaultValue="allocations" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="allocations">Asignaciones</TabsTrigger>
+          <TabsTrigger value="cohorts">Cohortes</TabsTrigger>
           <TabsTrigger value="config">Configuracion</TabsTrigger>
           <TabsTrigger value="professor">Profesores</TabsTrigger>
           <TabsTrigger value="repitencias">Repitencias</TabsTrigger>
@@ -585,6 +593,128 @@ export default function TimesAdminPage() {
           </div>
         </TabsContent>
 
+        <TabsContent value="cohorts" className="mt-6">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">Cohortes</h2>
+                <p className="text-sm text-muted-foreground">
+                  Generaciones de estudiantes por carrera y año. Permite proyectar rezagados y alertas de apertura.
+                </p>
+              </div>
+              <Button onClick={() => setCohortDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Nuevo cohorte
+              </Button>
+            </div>
+
+            {/* Alertas: cursos con 20+ rezagados */}
+            {alerts.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-amber-700">
+                  <AlertTriangle className="h-4 w-4" />
+                  Cursos con 20 o más rezagados proyectados
+                </h3>
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {alerts.map((alert) => (
+                    <Card key={alert.courseId} className="border-amber-200 bg-amber-50/60">
+                      <CardContent className="p-4">
+                        <p className="text-xs font-mono text-muted-foreground">{alert.courseCode}</p>
+                        <p className="mt-1 font-semibold">{alert.courseName || alert.courseId}</p>
+                        <p className="mt-1 text-sm text-amber-800">
+                          {alert.rezagadosProyectados} rezagados proyectados
+                        </p>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Considere abrir un grupo de repitencia
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Lista de cohortes */}
+            {loadingCohorts ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+                <span className="ml-3 text-sm text-muted-foreground">Cargando cohortes...</span>
+              </div>
+            ) : cohorts.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Users className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
+                  <p className="text-muted-foreground">No hay cohortes registrados.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Crea el primero con el botón "Nuevo cohorte".
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              (() => {
+                // Agrupar por careerId + año
+                const grouped = new Map<string, typeof cohorts>()
+                cohorts.forEach((c) => {
+                  const key = `${c.careerId}-${c.year}`
+                  const existing = grouped.get(key) || []
+                  existing.push(c)
+                  grouped.set(key, existing)
+                })
+
+                return (
+                  <div className="space-y-4">
+                    {Array.from(grouped.entries()).map(([key, rows]) => {
+                      if (!rows[0]) return null
+                      const first = rows[0]
+                      return (
+                        <Card key={key}>
+                          <CardContent className="p-4">
+                            <div className="mb-3 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <BookOpen className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm font-semibold text-muted-foreground">
+                                  Carrera ID: {first.careerId}
+                                </span>
+                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                  {first.year}
+                                </span>
+                              </div>
+                              <span className="text-xs text-muted-foreground">{rows.length} grupo(s)</span>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                              {rows.map((cohort) => (
+                                <div
+                                  key={cohort.id}
+                                  className="rounded-lg border bg-muted/30 p-3"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium">Grupo {cohort.group}</span>
+                                    <span
+                                      className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${
+                                        cohort.status === 'ACTIVE'
+                                          ? 'bg-green-100 text-green-700'
+                                          : 'bg-muted text-muted-foreground'
+                                      }`}
+                                    >
+                                      {cohort.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
+                                    </span>
+                                  </div>
+                                  <p className="mt-1 text-2xl font-bold">{cohort.initialStudents}</p>
+                                  <p className="text-xs text-muted-foreground">estudiantes iniciales</p>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                )
+              })()
+            )}
+          </div>
+        </TabsContent>
+
         <TabsContent value="config" className="mt-6">
           <JourneyConfigDisplay
             config={transformedConfig}
@@ -606,6 +736,92 @@ export default function TimesAdminPage() {
           <RepitenciasManager campusAllocationId={allocations[0]?.id} />
         </TabsContent>
       </Tabs>
+
+      {/* Dialog nuevo cohorte */}
+      <Dialog open={cohortDialogOpen} onOpenChange={setCohortDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nuevo cohorte</DialogTitle>
+            <DialogDescription>
+              Registra una generación de estudiantes por carrera, año y grupo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">ID de carrera</label>
+              <Input
+                placeholder="ObjectId de la carrera"
+                value={cohortForm.careerId}
+                onChange={(e) => setCohortForm((prev) => ({ ...prev, careerId: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Año</label>
+                <Input
+                  type="number"
+                  placeholder="2024"
+                  value={cohortForm.year}
+                  onChange={(e) => setCohortForm((prev) => ({ ...prev, year: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Grupo</label>
+                <Select
+                  value={cohortForm.group}
+                  onValueChange={(v) => setCohortForm((prev) => ({ ...prev, group: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">A</SelectItem>
+                    <SelectItem value="B">B</SelectItem>
+                    <SelectItem value="C">C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Estudiantes iniciales</label>
+              <Input
+                type="number"
+                placeholder="40"
+                value={cohortForm.initialStudents}
+                onChange={(e) => setCohortForm((prev) => ({ ...prev, initialStudents: e.target.value }))}
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setCohortDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!cohortForm.careerId || !cohortForm.year || !cohortForm.initialStudents) {
+                    toast.error('Completa todos los campos requeridos')
+                    return
+                  }
+                  try {
+                    await createCohort({
+                      careerId: cohortForm.careerId,
+                      year: Number(cohortForm.year),
+                      group: cohortForm.group,
+                      initialStudents: Number(cohortForm.initialStudents)
+                    })
+                    toast.success('Cohorte creado correctamente')
+                    setCohortDialogOpen(false)
+                    setCohortForm({ careerId: '', year: String(new Date().getFullYear()), group: 'A', initialStudents: '' })
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : 'Error al crear cohorte')
+                  }
+                }}
+              >
+                Crear cohorte
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={allocationDialogOpen} onOpenChange={setAllocationDialogOpen}>
         <DialogContent className="max-w-2xl">
