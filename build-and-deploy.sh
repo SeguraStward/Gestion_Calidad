@@ -67,13 +67,13 @@ export_images() {
     # Exportar frontend
     if [ "$1" == "frontend" ] || [ "$1" == "all" ]; then
         log_info "Exportando frontend..."
-        sudo docker save gestion-calidad-frontend:latest | gzip > /tmp/gc-images/frontend.tar.gz
+        sudo docker save gestion-calidad_frontend:latest | gzip > /tmp/gc-images/frontend.tar.gz
     fi
     
     # Exportar backend
     if [ "$1" == "backend" ] || [ "$1" == "all" ]; then
         log_info "Exportando backend..."
-        sudo docker save gestion-calidad-backend:latest | gzip > /tmp/gc-images/backend.tar.gz
+        sudo docker save gestion-calidad_backend:latest | gzip > /tmp/gc-images/backend.tar.gz
     fi
     
     log_info "Imágenes exportadas ✓"
