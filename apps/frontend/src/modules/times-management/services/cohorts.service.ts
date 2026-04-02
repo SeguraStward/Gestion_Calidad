@@ -17,7 +17,7 @@ export interface CreateCohortDto {
   group: string
   initialStudents: number
   status?: 'ACTIVE' | 'INACTIVE'
-}babel
+}
 
 export interface UpdateCohortDto extends Partial<CreateCohortDto> {}
 

@@ -35,7 +35,7 @@ export default function TimesAdminPage() {
   const [selectedCareer, setSelectedCareer] = useState<{ campus: string; career: string } | null>(null)
 
   const [cohortDialogOpen, setCohortDialogOpen] = useState(false)
-  const [cohortForm, setCohortForm] = useState({ careerId: '', year: String(new Date().getFullYear()), group: 'A', initialStudents: '' })
+  const [cohortForm, setCohortForm] = useState({ careerId: '', year: '2026', group: 'A', initialStudents: '' })
 
   const {
     activeAllocation,
@@ -177,7 +177,7 @@ export default function TimesAdminPage() {
     const baseDistribution = [0.35, 0.3, 0.2, 0.15]
     const raw = baseDistribution.map((ratio) => Number((total * ratio).toFixed(2)))
     const diff = Number((total - raw.reduce((sum, value) => sum + value, 0)).toFixed(2))
-    raw[0] = Number((raw[0] + diff).toFixed(2))
+    raw[0] = Number(((raw[0] ?? 0) + diff).toFixed(2))
 
     return [
       { cohort: 'Generacion 2022', cycle: cycleLabels[0] || 'Ciclo I', journey: raw[0] },
@@ -223,7 +223,7 @@ export default function TimesAdminPage() {
     [displayCampusCareers.rows]
   )
   const selectedCareerTotal = useMemo(
-    () => displayCareerCohorts.reduce((sum, row) => sum + row.journey, 0),
+    () => displayCareerCohorts.reduce((sum, row) => sum + (row.journey ?? 0), 0),
     [displayCareerCohorts]
   )
 
@@ -399,7 +399,7 @@ export default function TimesAdminPage() {
                           <td className="px-4 py-4 text-sm font-medium">
                             <div className="flex items-center gap-2">
                               <span>{row.cohort}</span>
-                              {row.isMock ? (
+                              {(row as any).isMock ? (
                                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
                                   Demo
                                 </span>
@@ -408,7 +408,7 @@ export default function TimesAdminPage() {
                           </td>
                           <td className="px-4 py-4 text-sm">{row.cycle}</td>
                           <td className="px-4 py-4 text-right text-sm font-semibold tabular-nums">
-                            {row.journey.toFixed(2)}j
+                            {(row.journey ?? 0).toFixed(2)}j
                           </td>
                         </tr>
                       ))}
@@ -476,7 +476,7 @@ export default function TimesAdminPage() {
                           <td className="px-4 py-4 text-sm font-medium">
                             <div className="flex items-center gap-2">
                               <span>{row.career}</span>
-                              {row.isMock ? (
+                              {(row as any).isMock ? (
                                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
                                   Demo
                                 </span>
