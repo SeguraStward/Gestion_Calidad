@@ -63,7 +63,7 @@ services:
       # Core Traefik labels
       - "traefik.enable=true"
       - "traefik.docker.network=gcalidad-network"
-      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
 
       # HTTP to HTTPS redirect
       - "traefik.http.routers.frontend-http.rule=Host(`gestion-calidad.arayaroma.software`)"
