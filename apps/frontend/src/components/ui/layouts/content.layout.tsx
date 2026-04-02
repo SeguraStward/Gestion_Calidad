@@ -11,6 +11,7 @@ export function ContentLayout({ children }: { children: ReactNode }) {
   // Pages without sidebar
   const isAuthPage = pathname.startsWith('/auth')
   const isCallbackPage = pathname === '/auth/callback'
+  const isPortalPage = pathname.startsWith('/portal-profesor')
 
   // Pages that need scroll
   const needsScroll = [
@@ -28,7 +29,7 @@ export function ContentLayout({ children }: { children: ReactNode }) {
   // HomePage doesn't need sidebar scroll
   const isHomePage = pathname === '/'
 
-  if (isAuthPage || isCallbackPage) {
+  if (isAuthPage || isCallbackPage || isPortalPage) {
     return <div className="h-screen overflow-auto">{children}</div>
   }
 
