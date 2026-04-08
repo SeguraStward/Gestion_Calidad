@@ -105,10 +105,10 @@ describe('GoogleDriveService', () => {
       foldersService as unknown as GoogleDriveFoldersService,
     );
 
-    jest.spyOn(service['logger'] as Logger, 'log').mockImplementation(() => {});
-    jest.spyOn(service['logger'] as Logger, 'error').mockImplementation(() => {});
-    jest.spyOn(service['logger'] as Logger, 'warn').mockImplementation(() => {});
-    jest.spyOn(service['logger'] as Logger, 'debug').mockImplementation(() => {});
+    jest.spyOn(service['logger'] as Logger, 'log').mockImplementation(() => { });
+    jest.spyOn(service['logger'] as Logger, 'error').mockImplementation(() => { });
+    jest.spyOn(service['logger'] as Logger, 'warn').mockImplementation(() => { });
+    jest.spyOn(service['logger'] as Logger, 'debug').mockImplementation(() => { });
   });
 
   // ── createFolderStructure ─────────────────────────────────────────────────
