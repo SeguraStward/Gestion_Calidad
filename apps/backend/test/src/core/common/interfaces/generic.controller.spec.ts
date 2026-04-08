@@ -2,112 +2,201 @@ import { NotFoundException } from '@nestjs/common';
 import { GenericController } from '@core/common/interfaces/generic.controller';
 import { IGenericService } from '@core/common/interfaces/generic-service.interface';
 
+// ─── Mock del servicio genérico ─────────────────────────────────────────────
+const crearMockServicio = (): jest.Mocked<IGenericService<any, any, any>> => ({
+  findAll: jest.fn(),
+  findById: jest.fn(),
+  findOne: jest.fn(),
+  count: jest.fn(),
+  save: jest.fn(),
+  update: jest.fn(),
+  deleteById: jest.fn(),
+  softDeleteById: jest.fn(),
+});
+
+// ─── Subclase concreta para poder instanciar la clase abstracta ──────────────
+const crearControlador = (servicio: jest.Mocked<IGenericService<any, any, any>>) =>
+  new (class extends GenericController<any, any> {
+    protected readonly logger = {
+      log: console.log,
+      error: console.error,
+      warn: console.warn,
+      debug: console.debug,
+      verbose: console.info,
+      fatal: console.error,
+      registerLocalInstanceRef: () => {},
+    } as any;
+    protected readonly resourceName = 'TestResource';
+    constructor() {
+      super(servicio);
+    }
+  })();
+
+// ─── Suite principal ─────────────────────────────────────────────────────────
 describe('GenericController', () => {
   let controller: GenericController<any, any>;
-  let mockService: jest.Mocked<IGenericService<any, any, any>>;
+  let mockServicio: jest.Mocked<IGenericService<any, any, any>>;
 
   beforeEach(() => {
-    mockService = {
-      findAll: jest.fn(),
-      count: jest.fn(),
-      findById: jest.fn(),
-      save: jest.fn(),
-      update: jest.fn(),
-      deleteById: jest.fn(),
-      findOne: jest.fn(),
-    };
-
-    controller = new (class extends GenericController<any, any> {
-      protected readonly logger = {
-        log: console.log,
-        error: console.error,
-        warn: console.warn,
-        debug: console.debug,
-        verbose: console.info,
-        fatal: console.error,
-        registerLocalInstanceRef: () => {},
-      } as any; // Use 'as any' to bypass type mismatch for testing purposes
-      constructor() {
-        super(mockService);
-      }
-    })();
+    mockServicio = crearMockServicio();
+    controller = crearControlador(mockServicio);
   });
 
+  // ── findAll ────────────────────────────────────────────────────────────────
   describe('findAll', () => {
-    it('should return paginated records', async () => {
-      const mockResult = { data: [{ id: 1 }], meta: { page: 1, limit: 10, total: 1 } };
-      mockService.findAll.mockResolvedValue(mockResult);
+    it('debe retornar registros paginados sin filtros', async () => {
+      const resultado = { data: [{ id: '1' }], meta: { page: 1, limit: 10, total: 1 } };
+      mockServicio.findAll.mockResolvedValue(resultado);
 
-      const result = await controller.findAll(1, 10, {}, '{"id":"asc"}');
+      const respuesta = await controller.findAll(1, 10, {}, undefined, undefined);
 
-      expect(result).toEqual(mockResult);
-      expect(mockService.findAll).toHaveBeenCalledWith(1, 10, {}, { id: 'asc' });
+      expect(respuesta).toEqual(resultado);
+      // Sin filtros activos se pasa undefined al servicio
+      expect(mockServicio.findAll).toHaveBeenCalledWith(1, 10, undefined, undefined, undefined);
+    });
+
+    it('debe parsear orderBy desde JSON y pasar filtros transformados', async () => {
+      const resultado = { data: [], meta: { page: 2, limit: 5, total: 0 } };
+      mockServicio.findAll.mockResolvedValue(resultado);
+
+      // where contiene page/limit/orderBy que deben descartarse y filtros extra
+      const where = { page: '2', limit: '5', orderBy: '{"name":"asc"}', activo: 'true', numero: '42' };
+      const respuesta = await controller.findAll(2, 5, where, '{"name":"asc"}', undefined);
+
+      expect(respuesta).toEqual(resultado);
+      // "numero" es numérico → debe convertirse; "activo" no lo es → queda como string
+      expect(mockServicio.findAll).toHaveBeenCalledWith(
+        2,
+        5,
+        { activo: 'true', numero: 42 },
+        { name: 'asc' },
+        undefined,
+      );
+    });
+
+    it('debe pasar page y limit como números aunque vengan como string', async () => {
+      const resultado = { data: [], meta: { page: 1, limit: 20, total: 0 } };
+      mockServicio.findAll.mockResolvedValue(resultado);
+
+      await controller.findAll('1' as any, '20' as any, {}, undefined, undefined);
+
+      expect(mockServicio.findAll).toHaveBeenCalledWith(1, 20, undefined, undefined, undefined);
     });
   });
 
+  // ── count ──────────────────────────────────────────────────────────────────
   describe('count', () => {
-    it('should return the count of records', async () => {
-      mockService.count.mockResolvedValue(5);
+    it('debe retornar el total de registros como objeto { count }', async () => {
+      mockServicio.count.mockResolvedValue(7);
 
-      const result = await controller.count({});
+      const resultado = await controller.count({});
 
-      expect(result).toEqual({ count: 5 });
-      expect(mockService.count).toHaveBeenCalledWith({});
+      expect(resultado).toEqual({ count: 7 });
+      expect(mockServicio.count).toHaveBeenCalledWith({});
+    });
+
+    it('debe funcionar sin filtros (where undefined)', async () => {
+      mockServicio.count.mockResolvedValue(0);
+
+      const resultado = await controller.count(undefined);
+
+      expect(resultado).toEqual({ count: 0 });
+      expect(mockServicio.count).toHaveBeenCalledWith(undefined);
     });
   });
 
+  // ── findById ───────────────────────────────────────────────────────────────
   describe('findById', () => {
-    it('should return a record by id', async () => {
-      const mockEntity = { id: 1 };
-      mockService.findById.mockResolvedValue(mockEntity);
+    it('debe retornar la entidad cuando existe', async () => {
+      const entidad = { id: 'abc123', nombre: 'Test' };
+      mockServicio.findById.mockResolvedValue(entidad);
 
-      const result = await controller.findById('1');
+      const resultado = await controller.findById('abc123');
 
-      expect(result).toEqual(mockEntity);
-      expect(mockService.findById).toHaveBeenCalledWith('1');
+      expect(resultado).toEqual(entidad);
+      expect(mockServicio.findById).toHaveBeenCalledWith('abc123', undefined);
     });
 
-    it('should throw NotFoundException if record not found', async () => {
-      mockService.findById.mockResolvedValue(null);
+    it('debe lanzar NotFoundException cuando el registro no existe', async () => {
+      mockServicio.findById.mockResolvedValue(null);
 
-      await expect(controller.findById('1')).rejects.toThrow(NotFoundException);
+      await expect(controller.findById('no-existe')).rejects.toThrow(NotFoundException);
     });
   });
 
+  // ── create ─────────────────────────────────────────────────────────────────
   describe('create', () => {
-    it('should create a new record', async () => {
-      const mockDto = { name: 'Test' };
-      const mockEntity = { id: 1, ...mockDto };
-      mockService.save.mockResolvedValue(mockEntity);
+    it('debe crear y retornar la nueva entidad', async () => {
+      const dto = { nombre: 'Nuevo' };
+      const entidad = { id: 'xyz', ...dto };
+      mockServicio.save.mockResolvedValue(entidad);
 
-      const result = await controller.create(mockDto);
+      const resultado = await controller.create(dto);
 
-      expect(result).toEqual(mockEntity);
-      expect(mockService.save).toHaveBeenCalledWith(mockDto);
+      expect(resultado).toEqual(entidad);
+      expect(mockServicio.save).toHaveBeenCalledWith(dto);
     });
   });
 
+  // ── update ─────────────────────────────────────────────────────────────────
   describe('update', () => {
-    it('should update a record by id', async () => {
-      const mockDto = { name: 'Updated' };
-      const mockEntity = { id: 1, ...mockDto };
-      mockService.update.mockResolvedValue(mockEntity);
+    it('debe actualizar y retornar la entidad modificada', async () => {
+      const dto = { nombre: 'Actualizado' };
+      const entidad = { id: '1', ...dto };
+      mockServicio.update.mockResolvedValue(entidad);
 
-      const result = await controller.update('1', mockDto);
+      const resultado = await controller.update('1', dto);
 
-      expect(result).toEqual(mockEntity);
-      expect(mockService.update).toHaveBeenCalledWith('1', mockDto);
+      expect(resultado).toEqual(entidad);
+      expect(mockServicio.update).toHaveBeenCalledWith('1', dto);
     });
   });
 
+  // ── delete ─────────────────────────────────────────────────────────────────
   describe('delete', () => {
-    it('should delete a record by id', async () => {
-      mockService.deleteById.mockResolvedValue(undefined);
+    it('debe eliminar el registro y retornar undefined (204 No Content)', async () => {
+      mockServicio.deleteById.mockResolvedValue(true);
 
-      const result = await controller.delete('1');
+      const resultado = await controller.delete('1');
 
-      expect(result).toBeUndefined();
-      expect(mockService.deleteById).toHaveBeenCalledWith('1');
+      expect(resultado).toBeUndefined();
+      expect(mockServicio.deleteById).toHaveBeenCalledWith('1');
+    });
+  });
+
+  // ── softDelete ─────────────────────────────────────────────────────────────
+  describe('softDelete', () => {
+    it('debe marcar el registro como inactivo y retornarlo', async () => {
+      const entidad = { id: '1', activo: false };
+      mockServicio.softDeleteById.mockResolvedValue(entidad);
+
+      const resultado = await controller.softDelete('1');
+
+      expect(resultado).toEqual(entidad);
+      expect(mockServicio.softDeleteById).toHaveBeenCalledWith('1');
+    });
+  });
+
+  // ── transformNumericFilters ────────────────────────────────────────────────
+  describe('transformNumericFilters (método protegido)', () => {
+    // Accedemos al método protegido vía cast a any para prueba unitaria directa
+    it('debe convertir strings numéricos a números', () => {
+      const filtros = { edad: '25', nombre: 'Juan', id: '0' };
+      const resultado = (controller as any).transformNumericFilters(filtros);
+
+      expect(resultado).toEqual({ edad: 25, nombre: 'Juan', id: 0 });
+    });
+
+    it('debe ignorar strings vacíos y no numéricos', () => {
+      const filtros = { valor: '', texto: 'abc', num: '3.14' };
+      const resultado = (controller as any).transformNumericFilters(filtros);
+
+      expect(resultado).toEqual({ valor: '', texto: 'abc', num: 3.14 });
+    });
+
+    it('debe retornar objeto vacío si no hay filtros', () => {
+      const resultado = (controller as any).transformNumericFilters({});
+      expect(resultado).toEqual({});
     });
   });
 });

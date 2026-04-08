@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CohortsRepository } from './cohorts.repository';
 import { CreateCohortDto } from './dtos/create-cohort.dto';
 import { UpdateCohortDto } from './dtos/update-cohort.dto';
@@ -29,7 +29,9 @@ export class CohortsService {
   }
 
   async findById(id: string) {
-    return this.repo.findById(id);
+    const entity = await this.repo.findById(id);
+    if (!entity) throw new NotFoundException(`Cohort ${id} not found`);
+    return entity;
   }
 
   async update(id: string, dto: UpdateCohortDto) {

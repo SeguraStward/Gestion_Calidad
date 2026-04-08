@@ -3,6 +3,7 @@ import { Expose, Transform, Type } from 'class-transformer';
 import { IsDate, IsInt, IsOptional, IsString } from 'class-validator';
 
 export class AuditFields {
+  @Expose()
   @ApiPropertyOptional({ description: 'Version', readOnly: true })
   @IsInt()
   @IsOptional()

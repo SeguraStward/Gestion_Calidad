@@ -1,3 +1,4 @@
+
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AuditFields } from '@src/dtos/audit-fields.dto';
 import { Status } from '@una-gc/database/prisma/generated/client'; // Assuming Status is correctly generated
@@ -12,68 +13,103 @@ import { UserDto } from '@src/modules/users/dtos/user.dto';
 import { AcademicLoadGroupDto } from '@src/modules/academic-load-groups/dtos/academic-load-group.dto'; // Adjust path if necessary
 
 export class AcademicLoadDto extends AuditFields {
+  
   @ApiPropertyOptional({ description: 'AcademicLoad ID' })
   @Expose()
+  
   @IsString()
+  
   @IsOptional()
   id?: string;
 
+  
   @ApiProperty({ description: 'NRC code' })
   @Expose()
+  
   @IsString()
+  
   nrc: string;
 
+  
   @ApiProperty({ description: 'Academic Cycle ID' })
+  @Expose()
   @IsString()
+  
   academicCycleId: string;
 
+  
   @ApiProperty({ description: 'Campus ID' })
+  @Expose()
   @IsString()
+  
   campusId: string;
 
+  
   @ApiProperty({ description: 'Course ID' })
+  @Expose()
   @IsString()
+  
   courseId: string;
 
+  
   @ApiPropertyOptional({ description: 'Classroom ID' }) // Made optional as per Prisma schema
+  @Expose()
   @IsString()
+  
   @IsOptional()
   classroomId?: string;
 
+  
   @ApiProperty({ description: 'Maximum capacity' })
   @Expose()
+  
   @IsInt()
   @Type(() => Number)
   maximumCapacity: number;
 
+  
   @ApiProperty({ description: 'Enrolled capacity' })
   @Expose()
+  
   @IsInt()
   @Type(() => Number)
   enrolledCapacity: number;
 
+  
   @ApiProperty({ description: 'Available seats' })
   @Expose()
+  
   @IsInt()
   @Type(() => Number)
   availableSeats: number;
 
+  
   @ApiProperty({ description: 'Group ID' })
-  @Expose() // Keep Expose if you want to send groupId even if group object is not included
+  @Expose()
+   // Keep Expose if you want to send groupId even if group object is not included
   @IsString()
+  
   groupId: string;
 
+  
   @ApiPropertyOptional({ description: 'Schedule ID' }) // Made optional as per Prisma schema
+  @Expose()
   @IsString()
+  
   @IsOptional()
   scheduleId?: string;
 
+  
   @ApiProperty({ description: 'Professor ID' })
+  @Expose()
   @IsString()
+  
   professorId: string;
 
+  
   @ApiPropertyOptional({ description: 'Date' })
   @Expose()
+  
   @IsDate()
   @IsOptional()
   @Type(() => Date)
@@ -114,42 +150,54 @@ export class AcademicLoadDto extends AuditFields {
   )
   date?: Date;
 
+  
   @ApiProperty({ description: 'Status of the academic load', enum: Status })
   @Expose()
+  
   @IsEnum(Status)
   status: Status;
 
+  
   @ApiPropertyOptional({ type: () => CourseDto })
   @Expose()
+  
   @Type(() => CourseDto)
   @ValidateNested()
   @IsOptional()
   course?: CourseDto;
 
+  
   @ApiPropertyOptional({ type: () => AcademicCycleDto })
   @Expose()
+  
   @Type(() => AcademicCycleDto)
   @ValidateNested()
   @IsOptional()
   academicCycle?: AcademicCycleDto;
 
+  
   @ApiPropertyOptional({ type: () => UserDto })
   @Expose()
+  
   @Type(() => UserDto)
   @ValidateNested()
   @IsOptional()
   professor?: UserDto;
 
+  
   @ApiPropertyOptional({ type: () => CampusDto })
   @Expose()
+  
   @Type(() => CampusDto)
   @ValidateNested()
   @IsOptional()
   campus?: CampusDto;
 
   // Add the group property
+  
   @ApiPropertyOptional({ type: () => AcademicLoadGroupDto })
   @Expose()
+  
   @Type(() => AcademicLoadGroupDto)
   @ValidateNested()
   @IsOptional()

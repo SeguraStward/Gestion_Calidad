@@ -1,18 +1,24 @@
 {
   "moduleFileExtensions": ["js", "json", "ts"],
-  "rootDir": ".",
-  "testRegex": ".*\\.spec\\.ts$",
+  "rootDir": "..",
+  "testRegex": "test/.*\\.spec\\.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
-  "collectCoverageFrom": ["**/*.(t|j)s"],
+  "collectCoverageFrom": [
+    "src/modules/**/*.service.ts",
+    "src/core/common/interfaces/generic.controller.ts",
+    "!src/**/*.module.ts",
+    "!src/**/*.dto.ts",
+    "!src/**/index.ts"
+  ],
   "coverageDirectory": "./coverage",
   "testEnvironment": "node",
   "moduleNameMapper": {
-    "^@src/(.*)$": "<rootDir>/../src/$1",
-    "^@modules/(.*)$": "<rootDir>/../src/modules/$1",
-    "^@core/(.*)$": "<rootDir>/../src/core/$1",
-    "^@shared/(.*)$": "<rootDir>/../src/shared/$1",
-    "^@common/(.*)$": "<rootDir>/../src/core/common/$1"
+    "^@src/(.*)$": "<rootDir>/src/$1",
+    "^@modules/(.*)$": "<rootDir>/src/modules/$1",
+    "^@core/(.*)$": "<rootDir>/src/core/$1",
+    "^@shared/(.*)$": "<rootDir>/src/shared/$1",
+    "^@common/(.*)$": "<rootDir>/src/core/common/$1"
   }
 }

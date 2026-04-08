@@ -196,7 +196,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'User logged out successfully' })
   @Get('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const refreshTokenFromCookie = req.cookies.refresh_token;
+    const refreshTokenFromCookie = req?.cookies?.refresh_token;
     if (refreshTokenFromCookie) {
       try {
         await this.authService.revokeRefreshToken(refreshTokenFromCookie);
@@ -207,7 +207,7 @@ export class AuthController {
       }
     }
 
-    // Clear all authentication cookies
+     // Clear all authentication cookies
     this.clearAuthCookies(res);
     return { message: 'Logged out successfully' };
   }
