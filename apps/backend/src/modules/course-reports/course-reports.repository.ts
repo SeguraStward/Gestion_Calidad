@@ -45,6 +45,10 @@ export class CourseReportsRepository extends GenericPrismaRepository<
         isFinal: true,
         status: 'SUBMITTED',
       },
+      include: {
+        course: { select: { id: true, name: true, code: true } },
+        academicCycle: { select: { id: true, name: true, year: true } },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }

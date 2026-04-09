@@ -20,7 +20,8 @@ model Campus {
   // Relations with Journey Time Management - Optimized
   journeyTimeAllocations CampusJourneyTimeAllocation[] @relation("CampusJourneyAllocations")
   professorAssignments   ProfessorAssignment[]         @relation("CampusAssignments")
-  repitencias            Repitencia[]                  @relation("CampusRepitencias")
+  repitencias   Repitencia[]   @relation("CampusRepitencias")
+  courseReports CourseReport[] @relation("CampusReports")
 
   // Audit fields
   createdAt DateTime @default(now())

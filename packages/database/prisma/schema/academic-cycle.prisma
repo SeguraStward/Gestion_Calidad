@@ -25,6 +25,7 @@ model AcademicCycle {
   journeyTimeAllocations CampusJourneyTimeAllocation[] @relation("CycleJourneyAllocations")
   professorAssignments   ProfessorAssignment[]         @relation("CycleAssignments")
   repitencias            Repitencia[]                  @relation("CycleRepitencias")
+  courseReports          CourseReport[]                @relation("CycleReports")
 
   // Audit fields
   createdAt DateTime @default(now())

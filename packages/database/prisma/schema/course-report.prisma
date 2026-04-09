@@ -7,6 +7,11 @@ model CourseReport {
   campusId        String @db.ObjectId
   professorId     String @db.ObjectId
 
+  course        Course        @relation("CourseReports", fields: [courseId], references: [id])
+  academicCycle AcademicCycle @relation("CycleReports", fields: [academicCycleId], references: [id])
+  campus        Campus        @relation("CampusReports", fields: [campusId], references: [id])
+  professor     User          @relation("ProfessorReports", fields: [professorId], references: [id])
+
   matriculados Int
   aprobados    Int
   reprobados   Int

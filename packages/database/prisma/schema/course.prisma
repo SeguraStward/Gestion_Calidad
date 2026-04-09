@@ -24,8 +24,9 @@ model Course {
   academicLoads AcademicLoad[]
 
   // Relations with Journey Time Management - Optimized
-  meshCourses CurricularMeshCourse[] @relation("CourseMeshes")
-  repitencias Repitencia[]           @relation("CourseRepitencias")
+  meshCourses   CurricularMeshCourse[] @relation("CourseMeshes")
+  repitencias   Repitencia[]           @relation("CourseRepitencias")
+  courseReports CourseReport[]         @relation("CourseReports")
 
   // Audit fields
   createdAt DateTime @default(now())

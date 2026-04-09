@@ -53,69 +53,83 @@ export class CourseReportsService {
   }
 
   /**
-   * Proyección de rezagados por curso para un campus y ciclo dado.
-   * Solo considera reportes finales de los últimos 2 años.
-   * Si un curso tiene 20+ rezagados proyectados → recomendaAbrirGrupo = true
+   * Acumula reprobados por curso para un campus en los últimos 2 años,
+   * enriqueciendo con el nombre y código real del curso.
+   * Retorna un Map de courseId → { courseId, courseName, courseCode, rezagados }
    */
-  async getProjections(campusId: string, cycleId: string) {
-    const cycle = await this.prisma.academicCycle.findUnique({ where: { id: cycleId } });
-    if (!cycle) throw new NotFoundException(`Ciclo ${cycleId} no encontrado`);
+  private async buildRezagadosMap(
+    campusId: string,
+    referenceYear: number,
+  ): Promise<Map<string, { courseId: string; courseName: string; courseCode: string; rezagados: number }>> {
+    const reports = await this.repo.findForProjection(campusId, referenceYear);
 
-    const reports = await this.repo.findForProjection(campusId, cycle.year);
+    // Recopilar IDs únicos de cursos
+    const courseIds = [...new Set(reports.map((r) => r.courseId))];
+
+    // Obtener nombres reales de los cursos en una sola query
+    const courses = await this.prisma.course.findMany({
+      where: { id: { in: courseIds } },
+      select: { id: true, name: true, code: true },
+    });
+    const courseMap = new Map(courses.map((c) => [c.id, c]));
 
     // Agrupar reprobados por curso
     const byCourseid = new Map<string, { courseId: string; courseName: string; courseCode: string; rezagados: number }>();
 
     for (const report of reports) {
-      const key = report.courseId;
-      const existing = byCourseid.get(key) ?? {
+      const course = courseMap.get(report.courseId);
+      const existing = byCourseid.get(report.courseId) ?? {
         courseId: report.courseId,
-        courseName: report.courseId,
-        courseCode: '',
+        courseName: course?.name ?? 'Curso desconocido',
+        courseCode: course?.code ?? '',
         rezagados: 0,
       };
       existing.rezagados += report.reprobados;
-      byCourseid.set(key, existing);
+      byCourseid.set(report.courseId, existing);
     }
 
+    return byCourseid;
+  }
+
+  /**
+   * Proyección de rezagados por curso para un campus y ciclo de referencia.
+   * Solo considera reportes finales de los últimos 2 años.
+   * recomendaAbrirGrupo = true cuando rezagados >= 20.
+   */
+  async getProjections(campusId: string, cycleId: string) {
+    const cycle = await this.prisma.academicCycle.findUnique({ where: { id: cycleId } });
+    if (!cycle) throw new NotFoundException(`Ciclo ${cycleId} no encontrado`);
+
+    const byCourseid = await this.buildRezagadosMap(campusId, cycle.year);
+
     return Array.from(byCourseid.values()).map((item) => ({
-      ...item,
+      courseId: item.courseId,
+      courseName: item.courseName,
+      courseCode: item.courseCode,
       rezagadosProyectados: item.rezagados,
       recomendaAbrirGrupo: item.rezagados >= REZAGADOS_ALERT_THRESHOLD,
     }));
   }
 
   /**
-   * Solo cursos con 20+ rezagados proyectados (alertas para Erick).
+   * Cursos con 20+ rezagados proyectados — alertas para Erick.
+   * Usa el año del ciclo activo como referencia.
    */
   async getAlerts(campusId: string) {
-    // Usar el ciclo activo del campus para obtener el año de referencia
     const activeCycle = await this.prisma.academicCycle.findFirst({
       where: { status: 'ACTIVE' },
       orderBy: { year: 'desc' },
     });
-
     const referenceYear = activeCycle?.year ?? new Date().getFullYear();
-    const reports = await this.repo.findForProjection(campusId, referenceYear);
 
-    const byCourseid = new Map<string, { courseId: string; courseName: string; courseCode: string; rezagados: number }>();
-
-    for (const report of reports) {
-      const key = report.courseId;
-      const existing = byCourseid.get(key) ?? {
-        courseId: report.courseId,
-        courseName: report.courseId,
-        courseCode: '',
-        rezagados: 0,
-      };
-      existing.rezagados += report.reprobados;
-      byCourseid.set(key, existing);
-    }
+    const byCourseid = await this.buildRezagadosMap(campusId, referenceYear);
 
     return Array.from(byCourseid.values())
       .filter((item) => item.rezagados >= REZAGADOS_ALERT_THRESHOLD)
       .map((item) => ({
-        ...item,
+        courseId: item.courseId,
+        courseName: item.courseName,
+        courseCode: item.courseCode,
         rezagadosProyectados: item.rezagados,
         recomendaAbrirGrupo: true,
       }));

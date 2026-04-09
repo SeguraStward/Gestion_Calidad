@@ -15,7 +15,6 @@
     "prisma:migrate": "pnpm --filter @una-gc/database db:migrate",
     "prisma:pull": "pnpm --filter @una-gc/database db:pull",
     "prepare": "husky",
-    "docs": "pnpm --filter @una-gc/docs start",
     "spell": "cspell --config cspell.config.yaml \"**/*\"",
     "lint-staged": "lint-staged"
   },

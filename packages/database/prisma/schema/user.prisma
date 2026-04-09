@@ -66,6 +66,7 @@ model User {
 
   // Relations with Journey Time Management
   professorAssignments ProfessorAssignment[]    @relation("ProfessorJourneyAssignments")
+  courseReports        CourseReport[]           @relation("ProfessorReports")
   directedProjects     InstitutionalProject[]   @relation("ProjectDirector")
   generatedReports     SinaesComplianceReport[]
   documentChanges      SinaesDocumentHistory[] // Historial de cambios en documentos

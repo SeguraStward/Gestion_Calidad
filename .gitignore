@@ -30,6 +30,11 @@ build
 dist
 
 
+# Generated / local output
+tmp/
+output/
+archive/
+
 # Debug
 npm-debug.log*
 
