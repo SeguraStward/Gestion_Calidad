@@ -262,7 +262,11 @@ export default function TimesAdminPage() {
         notes: assignment.notes
       })
 
-      await fetchAssignments()
+      await Promise.all([
+        fetchAssignments(),
+        fetchAllocations(),
+        activeAllocation?.year ? fetchYearSummary(activeAllocation.year) : Promise.resolve()
+      ])
       toast.success('Asignacion registrada correctamente')
     } catch (error) {
       console.error('Error assigning professor:', error)

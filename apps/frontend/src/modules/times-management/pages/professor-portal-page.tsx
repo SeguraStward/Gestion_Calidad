@@ -25,7 +25,9 @@ interface AssignedCourse {
   assignmentType: string
 }
 
-type Step = 'login' | 'courses' | 'report' | 'done'
+type Step = 'login' | 'courses' | 'report' | 'session-closed'
+
+const EMPTY_REPORT = { matriculados: '', aprobados: '', reprobados: '', isFinal: false }
 
 export default function ProfessorPortalPage() {
   const [step, setStep] = useState<Step>('login')
@@ -34,7 +36,9 @@ export default function ProfessorPortalPage() {
   const [session, setSession] = useState<SessionInfo | null>(null)
   const [courses, setCourses] = useState<AssignedCourse[]>([])
   const [selectedCourse, setSelectedCourse] = useState<AssignedCourse | null>(null)
-  const [reportForm, setReportForm] = useState({ matriculados: '', aprobados: '', reprobados: '', isFinal: false })
+  const [reportForm, setReportForm] = useState(EMPTY_REPORT)
+  // IDs de cursos ya reportados en esta sesión (para mostrar checkmark)
+  const [reportedCourseIds, setReportedCourseIds] = useState<Set<string>>(new Set())
 
   const handleLogin = async () => {
     if (!loginForm.cedula.trim() || !loginForm.token.trim()) {
@@ -46,7 +50,7 @@ export default function ProfessorPortalPage() {
       const res = await fetch(`${API_URL}/professor-portal/access`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cedula: loginForm.cedula.trim(), token: loginForm.token.trim() })
+        body: JSON.stringify({ cedula: loginForm.cedula.trim(), token: loginForm.token.trim() }),
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -58,8 +62,8 @@ export default function ProfessorPortalPage() {
       const coursesRes = await fetch(`${API_URL}/professor-portal/my-courses`, {
         headers: {
           'x-professor-token': loginForm.token.trim(),
-          'x-professor-cedula': loginForm.cedula.trim()
-        }
+          'x-professor-cedula': loginForm.cedula.trim(),
+        },
       })
       const coursesData = coursesRes.ok ? await coursesRes.json() : []
       setCourses(Array.isArray(coursesData) ? coursesData : [])
@@ -84,8 +88,18 @@ export default function ProfessorPortalPage() {
     const apr = Number(reportForm.aprobados)
     const rep = Number(reportForm.reprobados)
 
-    if (!mat || mat <= 0) { toast.error('Ingresa el número de matriculados'); return }
-    if (apr + rep > mat) { toast.error('Aprobados + reprobados no puede superar matriculados'); return }
+    if (!mat || mat < 1) {
+      toast.error('Ingresa el número de matriculados (mínimo 1)')
+      return
+    }
+    if (apr < 0 || rep < 0) {
+      toast.error('Los valores no pueden ser negativos')
+      return
+    }
+    if (apr + rep > mat) {
+      toast.error('Aprobados + reprobados no puede superar los matriculados')
+      return
+    }
 
     setLoading(true)
     try {
@@ -94,16 +108,28 @@ export default function ProfessorPortalPage() {
         headers: {
           'Content-Type': 'application/json',
           'x-professor-token': session.token,
-          'x-professor-cedula': session.cedula
+          'x-professor-cedula': session.cedula,
         },
-        body: JSON.stringify({ courseId, matriculados: mat, aprobados: apr, reprobados: rep, isFinal: reportForm.isFinal })
+        body: JSON.stringify({ courseId, matriculados: mat, aprobados: apr, reprobados: rep, isFinal: reportForm.isFinal }),
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.message || 'Error al enviar el informe')
       }
+
+      // Marcar curso como reportado en esta sesión
+      setReportedCourseIds((prev) => new Set(prev).add(selectedCourse.id))
       toast.success(reportForm.isFinal ? 'Informe final enviado' : 'Pre-informe guardado')
-      setStep('done')
+
+      if (reportForm.isFinal) {
+        // Token invalidado — cerrar sesión
+        setStep('session-closed')
+      } else {
+        // Volver a la lista de cursos para continuar con otros
+        setSelectedCourse(null)
+        setReportForm(EMPTY_REPORT)
+        setStep('courses')
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Error al enviar')
     } finally {
@@ -113,6 +139,7 @@ export default function ProfessorPortalPage() {
 
   const courseName = (c: AssignedCourse) => c.curricularMeshCourse?.course?.name ?? 'Curso sin nombre'
   const courseCode = (c: AssignedCourse) => c.curricularMeshCourse?.course?.code ?? ''
+  const allReported = courses.length > 0 && courses.every((c) => reportedCourseIds.has(c.id))
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-muted/30 flex items-center justify-center p-4">
@@ -126,6 +153,7 @@ export default function ProfessorPortalPage() {
           <p className="text-sm text-muted-foreground">Universidad Nacional — Sede Regional Brunca</p>
         </div>
 
+        {/* PASO 1 — Login */}
         {step === 'login' && (
           <Card>
             <CardHeader>
@@ -162,6 +190,7 @@ export default function ProfessorPortalPage() {
           </Card>
         )}
 
+        {/* PASO 2 — Lista de cursos */}
         {step === 'courses' && session && (
           <Card>
             <CardHeader>
@@ -170,7 +199,11 @@ export default function ProfessorPortalPage() {
               </CardTitle>
               <CardDescription>
                 Bienvenido, <span className="font-medium">{session.professor.fullName}</span>.
-                Selecciona el curso para el que deseas enviar tu informe.
+                {reportedCourseIds.size > 0 && (
+                  <span className="ml-1 text-green-700">
+                    ({reportedCourseIds.size} de {courses.length} reportados)
+                  </span>
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -182,29 +215,50 @@ export default function ProfessorPortalPage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {courses.map((course) => (
-                    <button
-                      key={course.id}
-                      onClick={() => { setSelectedCourse(course); setStep('report') }}
-                      className="w-full flex items-center justify-between rounded-lg border bg-background p-4 text-left transition-colors hover:bg-muted/50"
-                    >
-                      <div>
-                        <p className="font-medium">{courseName(course)}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {courseCode(course)}
-                          {course.campus?.name ? ` · ${course.campus.name}` : ''}
-                          {course.academicCycle?.name ? ` · ${course.academicCycle.name}` : ''}
-                        </p>
-                      </div>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    </button>
-                  ))}
+                  {courses.map((course) => {
+                    const reported = reportedCourseIds.has(course.id)
+                    return (
+                      <button
+                        key={course.id}
+                        onClick={() => {
+                          setSelectedCourse(course)
+                          setReportForm(EMPTY_REPORT)
+                          setStep('report')
+                        }}
+                        className={`w-full flex items-center justify-between rounded-lg border p-4 text-left transition-colors ${
+                          reported
+                            ? 'border-green-200 bg-green-50 hover:bg-green-100'
+                            : 'bg-background hover:bg-muted/50'
+                        }`}
+                      >
+                        <div>
+                          <p className="font-medium flex items-center gap-2">
+                            {courseName(course)}
+                            {reported && <CheckCircle className="h-4 w-4 text-green-600" />}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {courseCode(course)}
+                            {course.campus?.name ? ` · ${course.campus.name}` : ''}
+                            {course.academicCycle?.name ? ` · ${course.academicCycle.name}` : ''}
+                            {reported && <span className="ml-1 text-green-600">· Reportado</span>}
+                          </p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      </button>
+                    )
+                  })}
+                  {allReported && (
+                    <p className="text-center text-sm text-green-700 pt-2">
+                      Todos los cursos han sido reportados. Gracias.
+                    </p>
+                  )}
                 </div>
               )}
             </CardContent>
           </Card>
         )}
 
+        {/* PASO 3 — Formulario de informe */}
         {step === 'report' && selectedCourse && (
           <Card>
             <CardHeader>
@@ -214,6 +268,9 @@ export default function ProfessorPortalPage() {
               <CardDescription>
                 <span className="font-medium">{courseName(selectedCourse)}</span>
                 {courseCode(selectedCourse) ? ` (${courseCode(selectedCourse)})` : ''}
+                {reportedCourseIds.has(selectedCourse.id) && (
+                  <span className="ml-2 text-amber-600 text-xs">· Ya enviado (puedes actualizar)</span>
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -222,7 +279,7 @@ export default function ProfessorPortalPage() {
                   <label className="text-sm font-medium">Matriculados</label>
                   <Input
                     type="number"
-                    min={0}
+                    min={1}
                     placeholder="0"
                     value={reportForm.matriculados}
                     onChange={(e) => setReportForm((p) => ({ ...p, matriculados: e.target.value }))}
@@ -250,6 +307,23 @@ export default function ProfessorPortalPage() {
                 </div>
               </div>
 
+              {/* Validación en tiempo real */}
+              {reportForm.matriculados && reportForm.aprobados && reportForm.reprobados && (
+                (() => {
+                  const mat = Number(reportForm.matriculados)
+                  const apr = Number(reportForm.aprobados)
+                  const rep = Number(reportForm.reprobados)
+                  if (apr + rep > mat) {
+                    return (
+                      <p className="text-xs text-red-600 bg-red-50 rounded p-2">
+                        Aprobados ({apr}) + Reprobados ({rep}) = {apr + rep}, supera los matriculados ({mat}).
+                      </p>
+                    )
+                  }
+                  return null
+                })()
+              )}
+
               <div className="rounded-lg border p-3 space-y-2">
                 <p className="text-sm font-medium">Tipo de informe</p>
                 <div className="flex gap-6">
@@ -264,13 +338,26 @@ export default function ProfessorPortalPage() {
                 </div>
                 {reportForm.isFinal && (
                   <p className="text-xs text-amber-700 bg-amber-50 rounded p-2">
-                    Al enviar el informe final tu token de acceso quedará invalidado.
+                    Al enviar el informe final tu sesión se cerrará y no podrás reportar más cursos con este token.
+                  </p>
+                )}
+                {!reportForm.isFinal && (
+                  <p className="text-xs text-muted-foreground">
+                    El pre-informe es provisional. Podrás volver a reportar este curso cuando tengas los datos finales.
                   </p>
                 )}
               </div>
 
               <div className="flex gap-2 pt-1">
-                <Button variant="outline" className="flex-1" onClick={() => setStep('courses')}>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setSelectedCourse(null)
+                    setReportForm(EMPTY_REPORT)
+                    setStep('courses')
+                  }}
+                >
                   Volver
                 </Button>
                 <Button className="flex-1" onClick={handleSubmitReport} disabled={loading}>
@@ -281,30 +368,19 @@ export default function ProfessorPortalPage() {
           </Card>
         )}
 
-        {step === 'done' && (
+        {/* PASO 4 — Sesión cerrada (informe final enviado) */}
+        {step === 'session-closed' && (
           <Card>
             <CardContent className="py-10 text-center space-y-3">
               <CheckCircle className="mx-auto h-14 w-14 text-green-500" />
-              <h2 className="text-xl font-semibold">
-                {reportForm.isFinal ? 'Informe final enviado' : 'Pre-informe guardado'}
-              </h2>
+              <h2 className="text-xl font-semibold">Sesión completada</h2>
               <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                {reportForm.isFinal
-                  ? 'Tu informe quedó registrado y tu acceso al portal fue cerrado. Muchas gracias.'
-                  : 'Tu pre-informe fue guardado. Puedes ingresar de nuevo con tu token para enviar el informe final cuando corresponda.'}
+                Tu informe final fue registrado y tu acceso al portal fue cerrado. Muchas gracias.
               </p>
-              {!reportForm.isFinal && (
-                <Button
-                  variant="outline"
-                  className="mt-2"
-                  onClick={() => {
-                    setStep('courses')
-                    setSelectedCourse(null)
-                    setReportForm({ matriculados: '', aprobados: '', reprobados: '', isFinal: false })
-                  }}
-                >
-                  Enviar otro informe
-                </Button>
+              {reportedCourseIds.size > 1 && (
+                <p className="text-xs text-muted-foreground">
+                  Reportaste {reportedCourseIds.size} cursos en esta sesión.
+                </p>
               )}
             </CardContent>
           </Card>

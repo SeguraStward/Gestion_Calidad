@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 import { useAcademicCycle } from '@/shared/hooks/useAcademicCycle'
 import { useCampus } from '@/shared/hooks/useCampus'
+import { useListCareersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useCareer'
 
 import { useAnnualAllocationsStore } from '../store/useAnnualAllocationsStore'
 import { useCampusAllocationsStore } from '../store/useCampusAllocationsStore'
@@ -22,6 +23,7 @@ interface CampusAllocationFormProps {
 export default function CampusAllocationForm({ onSuccess, onCancel }: CampusAllocationFormProps) {
   const { data: campuses = [], isLoading: loadingCampuses } = useCampus()
   const { data: cycles = [], isLoading: loadingCycles } = useAcademicCycle()
+  const { data: careers = [], isLoading: loadingCareers } = useListCareersFlat()
 
   const {
     activeAllocation,
@@ -32,6 +34,7 @@ export default function CampusAllocationForm({ onSuccess, onCancel }: CampusAllo
 
   const [campusId, setCampusId] = useState('')
   const [cycleId, setCycleId] = useState('')
+  const [careerId, setCareerId] = useState('')
   const [cohortYear, setCohortYear] = useState('')
   const [allocatedJourneyTime, setAllocatedJourneyTime] = useState('')
   const [additionalTime, setAdditionalTime] = useState('0')
@@ -71,10 +74,12 @@ export default function CampusAllocationForm({ onSuccess, onCancel }: CampusAllo
       return
     }
 
-    if (!campusId || !cycleId || !allocatedJourneyTime) {
+    if (!campusId || !cycleId || !careerId || !allocatedJourneyTime) {
       alert('Completa todos los campos requeridos.')
       return
     }
+
+    const selectedCareer = careers.find((career) => career.id === careerId)
 
     const allocated = Number(allocatedJourneyTime)
     const additional = Number(additionalTime || '0')
@@ -96,7 +101,8 @@ export default function CampusAllocationForm({ onSuccess, onCancel }: CampusAllo
         campusId,
         allocatedJourneyTime: allocated,
         additionalTime: additional,
-        status: 'DRAFT'
+        status: 'DRAFT',
+        description: selectedCareer ? `${selectedCareer.code ?? ''} - ${selectedCareer.name ?? ''}`.trim() : undefined
       })
 
       await onSuccess()
@@ -140,6 +146,24 @@ export default function CampusAllocationForm({ onSuccess, onCancel }: CampusAllo
                 {campuses.map((campus) => (
                   <SelectItem key={campus.id} value={campus.id}>
                     {campus.code} - {campus.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Carrera <span className="text-red-500">*</span>
+            </label>
+            <Select value={careerId} onValueChange={setCareerId} disabled={loadingCareers || loading}>
+              <SelectTrigger>
+                <SelectValue placeholder={loadingCareers ? 'Cargando carreras...' : 'Selecciona una carrera'} />
+              </SelectTrigger>
+              <SelectContent>
+                {careers.map((career) => (
+                  <SelectItem key={career.id} value={career.id}>
+                    {career.code ? `${career.code} - ` : ''}{career.name}
                   </SelectItem>
                 ))}
               </SelectContent>

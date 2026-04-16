@@ -17,6 +17,36 @@ export class InstitutionalProjectsRepository extends GenericPrismaRepository<
   }
 
   /**
+   * Retorna un proyecto con sus relaciones (director y campus), útil al crear/actualizar
+   * para que el frontend reciba toda la información sin hacer un refetch extra.
+   */
+  async findByIdWithDirector(id: string) {
+    return this.prismaService.institutionalProject.findUnique({
+      where: { id },
+      include: {
+        director: { select: { id: true, fullName: true, email: true } },
+        campusAllocation: true,
+      },
+    });
+  }
+
+  /**
+   * Lista todos los proyectos activos sin paginar, incluyendo director y campus.
+   * Reemplaza al findAll genérico (que pagina a 10 y no incluye relaciones),
+   * para que la UI liste siempre el proyecto recién creado.
+   */
+  async findAllActive() {
+    return this.prismaService.institutionalProject.findMany({
+      where: { status: 'ACTIVE' },
+      include: {
+        director: { select: { id: true, fullName: true, email: true } },
+        campusAllocation: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
    * Buscar proyectos por asignación de campus
    */
   async findByCampusAllocation(campusAllocationId: string) {

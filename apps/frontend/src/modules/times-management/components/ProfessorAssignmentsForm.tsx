@@ -327,7 +327,7 @@ export function ProfessorAssignmentsForm({
                             {course.code} - {course.name}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            Creditos: {course.credits} - Carrera: {course.career?.name || 'N/A'}
+                            Horas contacto: {course.contactHours ?? 0} - Carrera: {course.career?.name || 'N/A'}
                           </div>
                         </button>
                       ))}

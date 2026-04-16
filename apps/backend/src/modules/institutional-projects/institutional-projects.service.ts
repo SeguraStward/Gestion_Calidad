@@ -29,11 +29,12 @@ export class InstitutionalProjectsService {
       prismaData.endDate = new Date(endDate).toISOString();
     }
 
-    return this.repo.save(prismaData as any);
+    const created: any = await this.repo.save(prismaData as any);
+    return this.repo.findByIdWithDirector(created.id);
   }
 
-  async findAll(page?: number, limit?: number) {
-    return this.repo.findAll(page, limit);
+  async findAll() {
+    return this.repo.findAllActive();
   }
 
   async findById(id: string) {
@@ -67,7 +68,8 @@ export class InstitutionalProjectsService {
       prismaData.endDate = new Date(endDate).toISOString();
     }
 
-    return this.repo.update(id, prismaData as any);
+    await this.repo.update(id, prismaData as any);
+    return this.repo.findByIdWithDirector(id);
   }
 
   async delete(id: string) {

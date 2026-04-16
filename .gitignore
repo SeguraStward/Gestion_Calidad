@@ -30,6 +30,11 @@ build
 dist
 
 
+# Generated / local output
+tmp/
+output/
+archive/
+
 # Debug
 npm-debug.log*
 
@@ -94,3 +99,9 @@ packages/database/prisma/seed-times-module.ts
 pnpm-lock.yaml
 test-assignment.ps1
 test-endpoints.ps1
+WhatsApp Image 2026-04-08 at 10.22.13 PM.jpeg
+Seguimiento-Parte-II.pdf
+Pruebas a Proyecto Asignado - Bradley Segura - Brayan Carmona.pdf
+Seguimiento-Parte-II.md
+apps/frontend/env.production
+apps/backend/env.production
