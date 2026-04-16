@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import {
   Activity,
   BarChart3,
@@ -76,6 +76,7 @@ export default function TimesSummaryPage() {
   const [selectedYear, setSelectedYear] = useState(currentYear)
   const [requestError, setRequestError] = useState<string | null>(null)
   const [reloadVersion, setReloadVersion] = useState(0)
+  const [expandedCampusId, setExpandedCampusId] = useState<string | null>(null)
 
   const summary = yearSummary as AnnualSummaryData | null
 
@@ -101,6 +102,7 @@ export default function TimesSummaryPage() {
     }
 
     loadSummary()
+    setExpandedCampusId(null)
 
     return () => {
       isMounted = false
@@ -108,6 +110,50 @@ export default function TimesSummaryPage() {
   }, [selectedYear, reloadVersion, fetchYearSummary, clearError])
 
   const campusRows = summary?.campusSummary || []
+
+  const campusGroups = useMemo(() => {
+    const map = new Map<string, {
+      campusId: string
+      campusName: string
+      allocated: number
+      additional: number
+      professorConsumed: number
+      projectsConsumed: number
+      totalConsumed: number
+      available: number
+      status: string
+      rows: CampusSummaryRow[]
+    }>()
+
+    campusRows.forEach((row) => {
+      const key = row.campusId || row.campusName
+      const existing = map.get(key)
+      if (existing) {
+        existing.allocated += row.allocated || 0
+        existing.additional += row.additional || 0
+        existing.professorConsumed += row.professorConsumed || 0
+        existing.projectsConsumed += row.projectsConsumed || 0
+        existing.totalConsumed += row.totalConsumed || 0
+        existing.available += row.available || 0
+        existing.rows.push(row)
+      } else {
+        map.set(key, {
+          campusId: key,
+          campusName: row.campusName,
+          allocated: row.allocated || 0,
+          additional: row.additional || 0,
+          professorConsumed: row.professorConsumed || 0,
+          projectsConsumed: row.projectsConsumed || 0,
+          totalConsumed: row.totalConsumed || 0,
+          available: row.available || 0,
+          status: row.status,
+          rows: [row]
+        })
+      }
+    })
+
+    return Array.from(map.values())
+  }, [campusRows])
 
   const docenciaRequerida = useMemo(
     () => campusRows.reduce((sum, campus) => sum + (campus.professorConsumed || 0), 0),
@@ -132,10 +178,10 @@ export default function TimesSummaryPage() {
   const saldoTrend = saldo > 0 ? 'up' : saldo < 0 ? 'down' : 'neutral'
   const saldoCardClass =
     saldo > 0
-      ? 'min-h-[160px] border-2 border-green-200 bg-green-50/80'
+      ? 'min-h-[160px] border-2 border-green-500 bg-green-100 text-green-950'
       : saldo < 0
-        ? 'min-h-[160px] border-2 border-red-200 bg-red-50/80'
-        : 'min-h-[160px] border-2 border-slate-200 bg-slate-50/80'
+        ? 'min-h-[160px] border-2 border-red-500 bg-red-100 text-red-950'
+        : 'min-h-[160px] border-2 border-slate-400 bg-slate-100 text-slate-900'
 
   return (
     <div className="container mx-auto py-8 space-y-8">
@@ -228,7 +274,7 @@ export default function TimesSummaryPage() {
               icon={<Wallet className="h-5 w-5" />}
               trend="neutral"
               trendValue={`${summary.summary?.totalCampus || campusRows.length} campus considerados`}
-              className="min-h-[160px] border-slate-200 bg-slate-50/70"
+              className="min-h-[160px] border-2 border-slate-400 bg-slate-100 text-slate-900"
             />
 
             <StatsCard
@@ -238,7 +284,7 @@ export default function TimesSummaryPage() {
               icon={<GraduationCap className="h-5 w-5" />}
               trend="neutral"
               trendValue={`${campusRows.length} filas en el desglose`}
-              className="min-h-[160px] border-blue-200 bg-blue-50/70"
+              className="min-h-[160px] border-2 border-blue-500 bg-blue-100 text-blue-950"
             />
 
             <StatsCard
@@ -248,7 +294,7 @@ export default function TimesSummaryPage() {
               icon={<BriefcaseBusiness className="h-5 w-5" />}
               trend="neutral"
               trendValue={`${summary.summary?.totalExternalProviders || 0} proveedores externos`}
-              className="min-h-[160px] border-amber-200 bg-amber-50/80"
+              className="min-h-[160px] border-2 border-amber-500 bg-amber-100 text-amber-950"
             />
 
             <StatsCard
@@ -270,7 +316,7 @@ export default function TimesSummaryPage() {
               <CardDescription>Distribucion anual de jornadas por sede, malla y ciclo academico.</CardDescription>
             </CardHeader>
             <CardContent>
-              {campusRows.length === 0 ? (
+              {campusGroups.length === 0 ? (
                 <EmptyState
                   icon={<Building2 className="h-12 w-12" />}
                   title="Sin detalle por campus"
@@ -278,12 +324,13 @@ export default function TimesSummaryPage() {
                 />
               ) : (
                 <div className="overflow-x-auto">
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Haz clic sobre un campus para ver el desglose por carrera y ciclo academico.
+                  </p>
                   <table className="w-full min-w-[980px] border-collapse">
                     <thead>
                       <tr className="border-b bg-muted/50 text-left">
                         <th className="px-3 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Campus</th>
-                        <th className="px-3 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Malla</th>
-                        <th className="px-3 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ciclo</th>
                         <th className="px-3 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Asignado</th>
                         <th className="px-3 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Adicional</th>
                         <th className="px-3 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Docencia</th>
@@ -294,24 +341,69 @@ export default function TimesSummaryPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {campusRows.map((campus) => (
-                        <tr key={`${campus.campusId}-${campus.academicCycle}-${campus.curricularMesh}`} className="border-b last:border-b-0">
-                          <td className="px-3 py-3 text-sm font-medium">{campus.campusName}</td>
-                          <td className="px-3 py-3 text-sm text-muted-foreground">{campus.curricularMesh}</td>
-                          <td className="px-3 py-3 text-sm text-muted-foreground">{campus.academicCycle}</td>
-                          <td className="px-3 py-3 text-sm">{formatHours(campus.allocated || 0)}</td>
-                          <td className="px-3 py-3 text-sm">{formatHours(campus.additional || 0)}</td>
-                          <td className="px-3 py-3 text-sm text-blue-700">{formatHours(campus.professorConsumed || 0)}</td>
-                          <td className="px-3 py-3 text-sm text-amber-700">{formatHours(campus.projectsConsumed || 0)}</td>
-                          <td className="px-3 py-3 text-sm font-medium">{formatHours(campus.totalConsumed || 0)}</td>
-                          <td className="px-3 py-3 text-sm font-semibold">{formatHours(campus.available || 0)}</td>
-                          <td className="px-3 py-3 text-sm">
-                            <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
-                              {campus.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      {campusGroups.map((group) => {
+                        const isExpanded = expandedCampusId === group.campusId
+                        return (
+                          <Fragment key={group.campusId}>
+                            <tr
+                              className={`cursor-pointer border-b transition-colors hover:bg-muted/40 ${isExpanded ? 'bg-muted/30' : ''}`}
+                              onClick={() => setExpandedCampusId(isExpanded ? null : group.campusId)}
+                            >
+                              <td className="px-3 py-3 text-sm font-medium">
+                                <span className="mr-2 inline-block w-3 text-muted-foreground">{isExpanded ? '▼' : '▶'}</span>
+                                {group.campusName}
+                              </td>
+                              <td className="px-3 py-3 text-sm">{formatHours(group.allocated)}</td>
+                              <td className="px-3 py-3 text-sm">{formatHours(group.additional)}</td>
+                              <td className="px-3 py-3 text-sm text-blue-700">{formatHours(group.professorConsumed)}</td>
+                              <td className="px-3 py-3 text-sm text-amber-700">{formatHours(group.projectsConsumed)}</td>
+                              <td className="px-3 py-3 text-sm font-medium">{formatHours(group.totalConsumed)}</td>
+                              <td className="px-3 py-3 text-sm font-semibold">{formatHours(group.available)}</td>
+                              <td className="px-3 py-3 text-sm">
+                                <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+                                  {group.status}
+                                </span>
+                              </td>
+                            </tr>
+                            {isExpanded && (
+                              <tr className="border-b bg-muted/10">
+                                <td colSpan={8} className="px-6 py-3">
+                                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Desglose por carrera / ciclo
+                                  </p>
+                                  <table className="w-full border-collapse">
+                                    <thead>
+                                      <tr className="border-b text-left text-xs text-muted-foreground">
+                                        <th className="px-2 py-2 font-semibold">Carrera / Malla</th>
+                                        <th className="px-2 py-2 font-semibold">Ciclo</th>
+                                        <th className="px-2 py-2 font-semibold">Asignado</th>
+                                        <th className="px-2 py-2 font-semibold">Docencia</th>
+                                        <th className="px-2 py-2 font-semibold">Proyectos</th>
+                                        <th className="px-2 py-2 font-semibold">Disponible</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {group.rows.map((row) => (
+                                        <tr
+                                          key={`${row.campusId}-${row.curricularMesh}-${row.academicCycle}`}
+                                          className="border-b last:border-b-0"
+                                        >
+                                          <td className="px-2 py-2 text-sm">{row.curricularMesh || 'Sin malla'}</td>
+                                          <td className="px-2 py-2 text-sm text-muted-foreground">{row.academicCycle}</td>
+                                          <td className="px-2 py-2 text-sm">{formatHours(row.allocated || 0)}</td>
+                                          <td className="px-2 py-2 text-sm text-blue-700">{formatHours(row.professorConsumed || 0)}</td>
+                                          <td className="px-2 py-2 text-sm text-amber-700">{formatHours(row.projectsConsumed || 0)}</td>
+                                          <td className="px-2 py-2 text-sm font-semibold">{formatHours(row.available || 0)}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            )}
+                          </Fragment>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
