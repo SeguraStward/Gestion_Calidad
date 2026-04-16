@@ -1,0 +1,253 @@
+\chapter{Desarrollo}
+
+\section{Introducción}
+Este capítulo describe el proceso de desarrollo del \textbf{Sistema de Gestión Integral Universitario}, el cual contempla dos módulos principales: Gestión de Evidencias SINAES y Gestión de Tiempos de Jornada. El desarrollo se realiza de forma iterativa siguiendo la metodología Scrum, con entregas incrementales en cada sprint.
+
+\section{Gestión de Reuniones y Documentación}
+
+\subsection{Formato de Minutas de Reunión}
+Durante el desarrollo del proyecto, se implementó un riguroso proceso de documentación de reuniones mediante minutas estructuradas, siguiendo el formato establecido en \hyperref[anexo:formato_minutas]{Anexo 6: Formato de minutas de reunión}. Estas minutas constituyeron una herramienta fundamental para:
+
+\begin{itemize}
+    \item Documentar decisiones técnicas y de negocio tomadas durante el desarrollo.
+    \item Registrar acuerdos con los diferentes actores del proyecto.
+    \item Establecer compromisos y fechas de entrega para cada sprint.
+    \item Identificar problemas potenciales de manera temprana.
+    \item Mantener la trazabilidad de los cambios solicitados.
+\end{itemize}
+
+Cada minuta siguió una estructura estandarizada que incluye:
+\begin{enumerate}
+    \item Información general (fecha, hora, lugar, participantes).
+    \item Agenda de la reunión.
+    \item Temas discutidos.
+    \item Acuerdos alcanzados.
+    \item Compromisos adquiridos.
+    \item Próximos pasos.
+    \item Firmas de los participantes.
+\end{enumerate}
+
+Este formato permitió mantener una comunicación efectiva entre el equipo de desarrollo y los usuarios finales del sistema (representantes de la UNA), asegurando que todas las partes interesadas estuvieran alineadas con los objetivos del proyecto.
+
+\subsection{Gestión de Cambios}
+Un aspecto crítico del desarrollo fue la implementación de un proceso formal de gestión de cambios, documentado a través de un formulario específico (ver \hyperref[anexo:formulario_gestion_de_cambios]{Anexo 12: Formulario gestión de cambios}). Este proceso permitió manejar de manera efectiva las modificaciones solicitadas durante el desarrollo, garantizando que:
+
+\begin{itemize}
+    \item Los cambios fueran evaluados en términos de impacto en alcance, tiempo y recursos.
+    \item Se mantuviera la integridad del sistema a lo largo del desarrollo.
+    \item Se priorizaran los cambios según su importancia y urgencia.
+    \item Se documentaran adecuadamente las modificaciones realizadas.
+    \item Se mantuviera la trazabilidad entre los requisitos originales y los cambios implementados.
+\end{itemize}
+
+\subsubsection{Actores Clave en la Gestión de Cambios}
+Para asegurar un proceso de gestión de cambios efectivo y alineado con los objetivos del proyecto, se identificaron los siguientes actores clave cuya participación fue fundamental:
+
+\begin{itemize}
+    \item \textbf{Estudiantes (Equipo de Desarrollo):}
+        \begin{itemize}
+            \item Francisco Mora Cabezas
+            \item Ángel Segura Méndez
+        \end{itemize}
+    \item \textbf{Profesor:} Saray Castro Mora
+    \item \textbf{Cliente (Dueño del Producto):} Josías Chávez Murillo
+\end{itemize}
+
+Un principio fundamental establecido fue que para la aprobación de cualquier cambio se requería, como mínimo, el consenso entre los estudiantes y el profesor. Este requisito garantizó que todos los cambios fueran debidamente evaluados desde perspectivas académicas y técnicas antes de su implementación.
+
+El proceso de gestión de cambios implementado constó de las siguientes etapas:
+
+\begin{enumerate}
+    \item \textbf{Solicitud de cambio:} Documentación formal de la modificación requerida, que podía ser iniciada por cualquiera de los actores clave.
+    \item \textbf{Análisis de impacto:} Evaluación técnica y de recursos necesarios, realizada por los estudiantes con supervisión del profesor.
+    \item \textbf{Aprobación:} Decisión basada en el análisis previo, requiriendo como mínimo el acuerdo entre estudiantes y profesor, e idealmente incluyendo al cliente.
+    \item \textbf{Implementación:} Desarrollo e integración del cambio por parte del equipo de estudiantes.
+    \item \textbf{Verificación:} Pruebas para asegurar que el cambio cumple los requisitos, con participación de todos los actores relevantes.
+    \item \textbf{Documentación:} Actualización de la documentación del sistema y registro formal del cambio implementado.
+\end{enumerate}
+
+Esta metodología de gestión de cambios fue particularmente valiosa considerando la naturaleza iterativa del desarrollo, permitiendo incorporar mejoras y ajustes sin comprometer la calidad del producto final ni los plazos establecidos en el cronograma.
+
+\section{Arquitectura Técnica}
+
+El sistema se está desarrollando siguiendo una arquitectura moderna de tres capas, aplicando las mejores prácticas de la industria del software.
+
+\subsection{Stack Tecnológico}
+
+La selección del stack tecnológico se realizó en base a criterios de escalabilidad, mantenibilidad, compatibilidad con tecnologías actuales y disponibilidad de documentación:
+
+\begin{itemize}
+    \item \textbf{Frontend:} Next.js 15.1.0 con React 19.0.0, utilizando el patrón App Router para enrutamiento del lado del servidor.
+    \item \textbf{Backend:} NestJS 10.4.19, framework de Node.js que implementa arquitectura hexagonal y principios SOLID.
+    \item \textbf{Base de Datos:} MongoDB con Prisma ORM 6.10.1, aprovechando la flexibilidad de bases de datos NoSQL para esquemas evolutivos.
+    \item \textbf{Autenticación:} JWT (JSON Web Tokens) con Passport.js, incluyendo integración con Google OAuth2.
+    \item \textbf{UI/UX:} shadcn/ui + Tailwind CSS 3.4.16 para interfaces responsivas y accesibles.
+    \item \textbf{Gestión de Estado:} Zustand 4.5.4 para state management del lado del cliente.
+    \item \textbf{Validación:} Zod 3.24.2 + class-validator para validación de datos tanto en frontend como backend.
+    \item \textbf{Documentación API:} Swagger/OpenAPI automático integrado en NestJS.
+\end{itemize}
+
+\subsection{Arquitectura Monorepo}
+
+El proyecto se organiza como un monorepo gestionado por pnpm workspaces y Turbo, lo que permite:
+
+\begin{itemize}
+    \item Compartir código común entre frontend y backend (tipos TypeScript, validaciones).
+    \item Gestionar dependencias de manera centralizada.
+    \item Ejecutar builds incrementales y paralelos.
+    \item Mantener consistencia en estándares de código mediante ESLint compartido.
+\end{itemize}
+
+\textbf{Estructura del monorepo:}
+
+\begin{quote}
+\texttt{Gestion\_Calidad/}\\
+\hspace*{1em}\texttt{apps/}\\
+\hspace*{2em}\texttt{backend/} \hspace{2em}\textit{\# API NestJS}\\
+\hspace*{2em}\texttt{frontend/} \hspace{1.5em}\textit{\# App Next.js}\\
+\hspace*{2em}\texttt{docs/} \hspace{2.8em}\textit{\# Documentación Docusaurus}\\
+\hspace*{1em}\texttt{packages/}\\
+\hspace*{2em}\texttt{database/} \hspace{1.5em}\textit{\# Prisma schemas compartidos}\\
+\hspace*{2em}\texttt{ui/} \hspace{3.3em}\textit{\# Componentes React reutilizables}\\
+\hspace*{2em}\texttt{eslint-config/} \hspace{0.3em}\textit{\# Configuraciones de linting}\\
+\hspace*{2em}\texttt{typescript-config/} \textit{\# tsconfig base}
+\end{quote}
+
+\section{Módulo de Evidencias SINAES}
+
+\subsection{Descripción y Cliente}
+
+El módulo de Gestión de Evidencias SINAES tiene como cliente principal al Lic. Josías Chávez Murillo. Este módulo busca centralizar y organizar toda la documentación probatoria requerida por el Sistema Nacional de Acreditación de la Educación Superior (SINAES).
+
+\subsection{Componentes Principales}
+
+El módulo contempla las siguientes entidades y funcionalidades:
+
+\begin{itemize}
+    \item \textbf{Gestión de Dimensiones SINAES:} Administración de las dimensiones y componentes definidos por SINAES.
+    \item \textbf{Tipos de Documentos:} Categorización de documentos según estándares institucionales.
+    \item \textbf{Carga de Evidencias:} Subida y almacenamiento de documentos probatorios en Google Drive.
+    \item \textbf{Consulta de Evidencias:} Búsqueda avanzada de documentos por dimensión, componente, criterio y año.
+    \item \textbf{Definición de Criterios:} Establecimiento de criterios de cumplimiento para cada componente SINAES.
+    \item \textbf{Auditoría:} Registro de cambios y modificaciones a documentos.
+\end{itemize}
+
+\subsection{Estructura de Backend}
+
+El backend del módulo SINAES incluye los siguientes módulos NestJS:
+
+\begin{itemize}
+    \item \texttt{DimensionsModule}: CRUD de dimensiones SINAES.
+    \item \texttt{ComponentsModule}: Gestión de componentes por dimensión.
+    \item \texttt{CriteriaModule}: Definición y administración de criterios de evaluación.
+    \item \texttt{EvidencesModule}: Carga, almacenamiento y consulta de evidencias documentales.
+    \item \texttt{DocumentTypesModule}: Categorización de tipos de documentos.
+    \item \texttt{GoogleDriveModule}: Integración con API de Google Drive para almacenamiento.
+\end{itemize}
+
+\subsection{Interfaz de Usuario}
+
+La interfaz del módulo SINAES proporciona vistas para:
+
+\begin{itemize}
+    \item Dashboard con resumen de evidencias por dimensión.
+    \item Formulario de carga de documentos con validación.
+    \item Buscador avanzado con filtros múltiples.
+    \item Vista de árbol jerárquico (Dimensión > Componente > Criterio > Evidencias).
+    \item Gestión de permisos por rol (administrador, coordinador, docente).
+\end{itemize}
+
+\section{Módulo de Tiempos de Jornada}
+
+\subsection{Descripción y Cliente}
+
+El módulo de Gestión de Tiempos de Jornada tiene como cliente principal al Lic. Erick Madrigal. Este módulo automatiza el cálculo y distribución de las cargas académicas docentes según los tiempos de jornada establecidos por la institución.
+
+\subsection{Componentes Principales}
+
+El módulo contempla las siguientes funcionalidades:
+
+\begin{itemize}
+    \item \textbf{Configuración de Rangos:} Definición de rangos de horas para cada tipo de jornada (1/4, 1/2, 3/4, tiempo completo).
+    \item \textbf{Presupuesto Anual:} Asignación del presupuesto total de tiempos de jornada por año académico.
+    \item \textbf{Distribución por Campus:} Asignación de tiempos de jornada a diferentes sedes universitarias.
+    \item \textbf{Asignaciones Docentes:} Registro de cargas académicas individuales (cursos, proyectos, tareas administrativas).
+    \item \textbf{Proyectos Institucionales:} Gestión de proyectos que requieren tiempo de jornada docente.
+    \item \textbf{Proveedores Externos:} Administración de convenios que aportan tiempos adicionales.
+\end{itemize}
+
+\subsection{Modelo de Datos}
+
+El modelo de datos incluye seis entidades principales en MongoDB:
+
+\begin{enumerate}
+    \item \textbf{JourneyTimeCalculationConfig:} Almacena los rangos de horas y valores para cada tipo de jornada (1/4, 1/2, 3/4, Tiempo Completo).
+    \item \textbf{AnnualJourneyTimeAllocation:} Gestiona el presupuesto anual de tiempos de jornada por sede.
+    \item \textbf{CampusJourneyTimeAllocation:} Distribuye los tiempos entre sedes específicas, calculando automáticamente tiempos disponibles.
+    \item \textbf{ProfessorAssignment:} Registra asignaciones individuales de profesores a cursos, proyectos o tareas administrativas.
+    \item \textbf{InstitutionalProject:} Modela proyectos institucionales que consumen tiempos de jornada.
+    \item \textbf{ExternalProvider:} Gestiona proveedores externos (convenios) que aportan tiempos adicionales.
+\end{enumerate}
+
+El modelo completo se encuentra documentado en el \hyperref[anexo:dicc_jornada]{Anexo 15: Diccionario de Datos --- Tiempos de Jornada} y \hyperref[anexo:modelo_no_relacional]{Anexo 9: Modelo No Relacional}.
+
+\subsection{Estructura de Backend}
+
+El backend del módulo de Tiempos de Jornada contempla los siguientes módulos NestJS:
+
+\begin{itemize}
+    \item \texttt{JourneyTimeConfigsModule}: Gestión de configuraciones de rangos de horas para cada tipo de jornada.
+    \item \texttt{AnnualJourneyTimeAllocationsModule}: Administración del presupuesto anual de tiempos de jornada.
+    \item \texttt{CampusJourneyTimeAllocationsModule}: Distribución de tiempos entre campus con cálculo automático de disponibilidad.
+    \item \texttt{ProfessorAssignmentsModule}: Registro de asignaciones docentes individuales.
+    \item \texttt{ExternalProvidersModule}: Gestión de proveedores externos y convenios.
+    \item \texttt{InstitutionalProjectsModule}: Administración de proyectos institucionales.
+\end{itemize}
+
+\subsubsection{Lógica de Cálculo}
+
+El sistema implementa cálculo automático de tiempos de jornada según las horas trabajadas. La disponibilidad de tiempos en cada campus se calcula mediante la fórmula:
+
+\begin{center}
+\texttt{disponible = asignado + adicional - consumido}
+\end{center}
+
+Esto permite mantener control automático de la disponibilidad de recursos en cada campus.
+
+\subsection{Interfaz de Usuario}
+
+La interfaz del módulo de Tiempos de Jornada incluye:
+
+\begin{itemize}
+    \item Dashboard con resumen de distribución de tiempos por campus.
+    \item Configuración de rangos de jornada (1/4, 1/2, 3/4, tiempo completo).
+    \item Calculadora interactiva de tipos de jornada según horas trabajadas.
+    \item Gestión de asignaciones docentes individuales.
+    \item Registro de proyectos institucionales y proveedores externos.
+    \item Reportes de consumo y disponibilidad por campus y ciclo académico.
+\end{itemize}
+
+\section{Integración entre Módulos}
+
+Ambos módulos comparten infraestructura común:
+
+\begin{itemize}
+    \item \textbf{Autenticación:} Sistema unificado con JWT y Google OAuth2.
+    \item \textbf{Base de Datos:} MongoDB compartida con esquemas separados por módulo.
+    \item \textbf{Gestión de Roles:} Permisos diferenciados (administrador, coordinador, docente).
+    \item \textbf{Auditoría:} Registro centralizado de cambios para ambos módulos.
+    \item \textbf{API Gateway:} Punto único de entrada para servicios backend.
+\end{itemize}
+
+\section{Estado Actual del Desarrollo}
+
+El desarrollo se encuentra en progreso continuo, con entregas incrementales en cada sprint. Las funcionalidades base de ambos módulos están implementadas, y se continúa trabajando en:
+
+\begin{itemize}
+    \item Validaciones avanzadas en formularios.
+    \item Mejoras en búsquedas y filtros.
+    \item Reportes de cumplimiento y auditoría.
+    \item Optimización de rendimiento.
+    \item Documentación técnica y de usuario.
+\end{itemize}
+

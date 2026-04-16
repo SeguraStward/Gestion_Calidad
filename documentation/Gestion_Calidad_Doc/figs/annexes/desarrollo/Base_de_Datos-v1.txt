@@ -1,0 +1,460 @@
+enum ProjectType {
+  RESEARCH      
+  EXTENSION     
+  INTEGRATED    
+  ADMINISTRATIVE
+  OTHER         
+}
+
+enum WorkloadCertainty {
+  FIXED     
+  UNCERTAIN 
+}
+
+// Modelos Base (asumiendo que ya existen en el proyecto "Gestión de Calidad" o son globales)
+enum Status {
+  ACTIVE
+  INACTIVE
+  PENDING
+  ARCHIVED
+}
+
+model User {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  // Campos de usuario (ej. nombre, correo, etc.)
+  email    String @unique
+  name     String
+  lastName String
+
+  // Relaciones con módulos
+  academicLoads      AcademicLoad[]
+  workloadTimes      WorkloadTime[]
+  repitencyCourses   RepitencyCourse[]
+  projectAssignments ProjectAssignment[]
+  externalWorkloads  ExternalWorkload[]
+  evidenceChangeHistory EvidenceChangeLog[]
+
+  // Roles (asumimos gestionados por el sistema de Gestión de Calidad, pero se puede añadir un campo de rol aquí si es necesario para granularidad local)
+  role     String // Ejemplo: "ADMIN", "PROFESSOR", "QUALITY_MANAGER"
+
+  status   Status   @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("users")
+}
+
+model Career {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  name        String
+  description String?
+  code        String @unique
+
+  curriculums      Curriculum[]
+  academicLoads    AcademicLoad[]
+  evidenceDocuments EvidenceDocument[] // Evidencias asociadas a carreras
+
+  status   Status   @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("careers")
+}
+
+model Course {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  code        String @unique
+  name        String
+  description String?
+
+  curriculumCourses CurriculumCourse[]
+
+  status   Status   @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@map("courses")
+}
+
+model AcademicCycle {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  version Int    @default(0) @map("__v")
+
+  year      Int
+  period    Int    // 1 for first semester, 2 for second, etc.
+  startDate DateTime
+  endDate   DateTime
+
+  academicLoads AcademicLoad[]
+  workloadTimes WorkloadTime[]
+  repitencyCourses RepitencyCourse[]
+  projectAssignments ProjectAssignment[]
+  externalWorkloads ExternalWorkload[]
+
+  status   Status   @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([year, period])
+  @@map("academic_cycles")
+}
+
+
+// ===== MODELOS PARA GESTIÓN DE TIEMPOS DE JORNADA =====
+
+model Curriculum {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  version   Int    @default(0) @map("__v")
+
+  name        String
+  description String?
+  year        Int    
+  isActive    Boolean @default(true)
+
+  careerId          String           @db.ObjectId
+  career            Career           @relation(fields: [careerId], references: [id])
+  curriculumCourses CurriculumCourse[] 
+
+  status    Status   @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  @db.ObjectId
+  updatedBy String?  @db.ObjectId
+
+  @@unique([careerId, year, name]) 
+  @@map("curriculums")
+}
+
+model CurriculumCourse {
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  version         Int    @default(0) @map("__v")
+
+  contactHours    Int    
+  level           Int    
+  semester        Int    
+  independentHours Int?   
+  credits         Int    
+
+  curriculumId    String @db.ObjectId
+  curriculum      Curriculum @relation(fields: [curriculumId], references: [id])
+  courseId        String @db.ObjectId
+  course          Course @relation(fields: [courseId], references: [id])
+  repitencyCourses RepitencyCourse[] 
+
+  status          Status   @default(ACTIVE)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?  @db.ObjectId
+  updatedBy       String?  @db.ObjectId
+
+  @@unique([curriculumId, courseId, level]) 
+  @@map("curriculum_courses")
+}
+
+model AcademicLoad {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  version     Int    @default(0) @map("__v")
+
+  professorId String @db.ObjectId
+  professor   User   @relation(fields: [professorId], references: [id])
+  careerId    String @db.ObjectId
+  career      Career @relation(fields: [careerId], references: [id])
+  academicCycleId String @db.ObjectId
+  academicCycle AcademicCycle @relation(fields: [academicCycleId], references: [id])
+
+  totalWorkload Float // Total de carga académica asignada a este profesor en esta carrera y ciclo
+
+  workloadTimes WorkloadTime[]
+
+  status      Status   @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?  @db.ObjectId
+  updatedBy   String?  @db.ObjectId
+
+  @@unique([professorId, careerId, academicCycleId])
+  @@map("academic_loads")
+}
+
+
+model WorkloadTime {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  version        Int    @default(0) @map("__v")
+
+  academicLoadId String       @db.ObjectId
+  academicLoad   AcademicLoad @relation(fields: [academicLoadId], references: [id])
+  professorId    String       @db.ObjectId
+  professor      User         @relation(fields: [professorId], references: [id])
+  academicCycleId String      @db.ObjectId
+  academicCycle  AcademicCycle @relation(fields: [academicCycleId], references: [id])
+
+  calculatedTime Float        
+  assignedTime   Float        
+  additionalTime Float        @default(0)
+  additionalReason String?    
+
+  status         Status   @default(ACTIVE)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  createdBy      String?  @db.ObjectId
+  updatedBy      String?  @db.ObjectId
+
+  @@unique([academicLoadId, professorId]) 
+  @@index([professorId, academicCycleId])
+  @@map("workload_times")
+}
+
+model RepitencyCourse {
+  id               String @id @default(auto()) @map("_id") @db.ObjectId
+  version          Int    @default(0) @map("__v")
+
+  enrolledStudents Int        
+  startDate        DateTime   
+  endDate          DateTime   
+  workloadTime     Float      
+  observations     String?    
+
+  academicCycleId  String        @db.ObjectId
+  academicCycle    AcademicCycle @relation(fields: [academicCycleId], references: [id])
+  curriculumCourseId String      @db.ObjectId
+  curriculumCourse CurriculumCourse @relation(fields: [curriculumCourseId], references: [id])
+  professorId      String        @db.ObjectId
+  professor        User          @relation(fields: [professorId], references: [id])
+
+  status           Status   @default(ACTIVE)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  createdBy        String?  @db.ObjectId
+  updatedBy        String?  @db.ObjectId
+
+  @@unique([academicCycleId, curriculumCourseId, professorId]) 
+  @@map("repitency_courses")
+}
+
+model InstitutionalProject {
+  id                 String @id @default(auto()) @map("_id") @db.ObjectId
+  version            Int    @default(0) @map("__v")
+
+  title              String
+  description        String
+  code               String @unique
+  projectType        ProjectType
+  startDate          DateTime
+  endDate            DateTime
+
+  projectAssignments ProjectAssignment[]
+
+  status             Status   @default(ACTIVE)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  createdBy          String?  @db.ObjectId
+  updatedBy          String?  @db.ObjectId
+
+  @@map("institutional_projects")
+}
+
+model ProjectAssignment {
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  version         Int    @default(0) @map("__v")
+
+  role            String   
+  workloadTime    Float    
+  startDate       DateTime 
+  endDate         DateTime? 
+
+  projectId       String @db.ObjectId
+  project         InstitutionalProject @relation(fields: [projectId], references: [id])
+  professorId     String @db.ObjectId
+  professor       User   @relation(fields: [professorId], references: [id])
+  academicCycleId String @db.ObjectId
+  academicCycle   AcademicCycle @relation(fields: [academicCycleId], references: [id])
+
+  status          Status   @default(ACTIVE)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?  @db.ObjectId
+  updatedBy       String?  @db.ObjectId
+
+  @@unique([projectId, professorId, academicCycleId]) 
+  @@map("project_assignments")
+}
+
+model ExternalWorkload {
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  version         Int    @default(0) @map("__v")
+
+  providerName    String   
+  amount          Float    
+  certainty       WorkloadCertainty 
+  observations    String?  
+  referenceCode   String?  
+
+  professorId     String @db.ObjectId
+  professor       User   @relation(fields: [professorId], references: [id])
+  academicCycleId String @db.ObjectId
+  academicCycle   AcademicCycle @relation(fields: [academicCycleId], references: [id])
+
+  status          Status   @default(ACTIVE)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?  @db.ObjectId
+  updatedBy       String?  @db.ObjectId
+
+  @@index([professorId, academicCycleId])
+  @@map("external_workloads")
+}
+
+
+// ===== MODELOS PARA GESTIÓN DE EVIDENCIAS SINAES =====
+
+model Dimension {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  version     Int    @default(0) @map("__v")
+
+  code        String @unique 
+  name        String
+  description String?
+  order       Int    
+
+  components  Component[] 
+
+  status      Status   @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?  @db.ObjectId
+  updatedBy   String?  @db.ObjectId
+
+  @@map("dimensions")
+}
+
+model Component {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  version     Int    @default(0) @map("__v")
+
+  code        String @unique 
+  name        String
+  description String?
+  order       Int    
+
+  dimensionId String @db.ObjectId
+  dimension   Dimension @relation(fields: [dimensionId], references: [id])
+  criteria    Criterion[] 
+
+  status      Status   @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?  @db.ObjectId
+  updatedBy   String?  @db.ObjectId
+
+  @@unique([dimensionId, code]) 
+  @@map("components")
+}
+
+model Criterion {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  version        Int    @default(0) @map("__v")
+
+  code           String @unique 
+  name           String
+  description    String?
+  order          Int    
+
+  componentId    String @db.ObjectId
+  component      Component @relation(fields: [componentId], references: [id])
+  evidenceCriteria EvidenceCriterion[] 
+
+  status         Status   @default(ACTIVE)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  createdBy      String?  @db.ObjectId
+  updatedBy      String?  @db.ObjectId
+
+  @@unique([componentId, code]) 
+  @@map("criteria")
+}
+
+model EvidenceDocument {
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  version         Int    @default(0) @map("__v")
+
+  title           String
+  description     String?
+  fileType        String   
+  fileSize        Int      
+  fileName        String   
+  
+  driveFileId     String @unique 
+  driveFileLink   String 
+  
+  year            Int      
+  month           Int?     
+  keywords        String[] 
+
+  careerIds       String[] @db.ObjectId
+  careers         Career[] @relation(fields: [careerIds], references: [id])
+  evidenceCriteria EvidenceCriterion[] 
+  changeHistory   EvidenceChangeLog[] 
+
+  status          Status   @default(ACTIVE)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?  @db.ObjectId
+  updatedBy       String?  @db.ObjectId
+
+  @@index([title, keywords])
+  @@index([year, month])
+  @@map("evidence_documents")
+}
+
+model EvidenceCriterion {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  version     Int    @default(0) @map("__v")
+
+  notes       String?  
+
+  evidenceId  String @db.ObjectId
+  evidence    EvidenceDocument @relation(fields: [evidenceId], references: [id])
+  criterionId String @db.ObjectId
+  criterion   Criterion @relation(fields: [criterionId], references: [id])
+
+  createdAt   DateTime @default(now()) 
+  updatedAt   DateTime @updatedAt
+  createdBy   String?  @db.ObjectId
+  updatedBy   String?  @db.ObjectId
+
+  @@unique([evidenceId, criterionId]) 
+  @@map("evidence_criteria")
+}
+
+model EvidenceChangeLog {
+  id            String @id @default(auto()) @map("_id") @db.ObjectId
+  version       Int    @default(0) @map("__v")
+
+  action        String 
+  description   String 
+  previousState Json?  
+  newState      Json?  
+
+  evidenceId    String @db.ObjectId
+  evidence      EvidenceDocument @relation(fields: [evidenceId], references: [id])
+  userId        String @db.ObjectId
+  user          User   @relation(fields: [userId], references: [id])
+
+  createdAt     DateTime @default(now()) 
+
+  @@map("evidence_change_logs")
+}
