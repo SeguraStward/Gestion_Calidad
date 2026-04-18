@@ -6,6 +6,24 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'
 
+export interface CareerAnnualSummary {
+  careerId: string
+  careerName: string
+  campusId: string
+  campusName: string
+  byCycle: Record<string, number>
+  repitencia: number
+  totalYear: number
+}
+
+export interface AnnualBalance {
+  year: number
+  jornadasDisponibles: number
+  jornadasDocencia: number
+  jornadasProyectos: number
+  saldo: number
+}
+
 export const TimesService = {
   /**
    *  Obtiene todas las asignaciones por campus (endpoint real)
@@ -59,6 +77,41 @@ export const TimesService = {
       return json?.data || json
     } catch (err) {
       console.error('Error en getActiveConfig:', err)
+      return null
+    }
+  },
+
+  /**
+   * Jornadas consumidas por carrera × ciclo para un año dado.
+   * Devuelve: [ { careerId, careerName, campusId, campusName, byCycle, repitencia, totalYear } ]
+   */
+  async getCareerSummary(year: number) {
+    try {
+      const res = await fetch(`${API_URL}/times/career-summary?year=${year}`, {
+        cache: 'no-store',
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error(`Error ${res.status}`)
+      return (await res.json()) as CareerAnnualSummary[]
+    } catch (err) {
+      console.error('Error en getCareerSummary:', err)
+      return []
+    }
+  },
+
+  /**
+   * Balance anual: disponibles vs consumidos vs saldo.
+   */
+  async getAnnualBalance(year: number) {
+    try {
+      const res = await fetch(`${API_URL}/times/annual-balance?year=${year}`, {
+        cache: 'no-store',
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error(`Error ${res.status}`)
+      return (await res.json()) as AnnualBalance
+    } catch (err) {
+      console.error('Error en getAnnualBalance:', err)
       return null
     }
   },

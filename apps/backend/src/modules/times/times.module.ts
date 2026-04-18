@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TimesController } from './times.controller';
 import { TimesService } from './times.service';
+import { PrismaModule } from '@src/prisma/prisma.module';
 
 import { AnnualJourneyTimeAllocationsModule } from '../annual-journey-time-allocations/annual-journey-time-allocations.module';
 import { CampusJourneyTimeAllocationsModule } from '../campus-journey-time-allocations/campus-journey-time-allocations.module';
@@ -15,6 +16,7 @@ import { ProfessorPortalModule } from '../professor-portal/professor-portal.modu
 
 @Module({
   imports: [
+    PrismaModule,
     AnnualJourneyTimeAllocationsModule,
     CampusJourneyTimeAllocationsModule,
     ProfessorAssignmentsModule,
