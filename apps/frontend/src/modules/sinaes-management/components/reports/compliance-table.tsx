@@ -113,6 +113,7 @@ export function ComplianceTable({ dimensions }: ComplianceTableProps) {
                         ) : (
                           <ChevronRight className="mr-1 h-3.5 w-3.5" />
                         )}
+                        <span className="text-xs font-mono text-blue-700 dark:text-blue-300 mr-1.5">{dimension.code}</span>
                         <span className="text-sm font-semibold">{dimension.name}</span>
                       </Button>
                     </TableCell>
@@ -153,6 +154,7 @@ export function ComplianceTable({ dimensions }: ComplianceTableProps) {
                               ) : (
                                 <ChevronRight className="mr-1 h-3 w-3" />
                               )}
+                              <span className="text-xs font-mono text-purple-700 dark:text-purple-300 mr-1.5">{component.code}</span>
                               <span className="text-sm font-medium">{component.name}</span>
                             </Button>
                           </TableCell>
@@ -193,6 +195,7 @@ export function ComplianceTable({ dimensions }: ComplianceTableProps) {
                                     ) : (
                                       <ChevronRight className="mr-1 h-2.5 w-2.5" />
                                     )}
+                                    <span className="text-[10px] font-mono text-gray-500 dark:text-gray-400 mr-1">{criterion.code}</span>
                                     <span className="text-xs">{criterion.name}</span>
                                   </Button>
                                 </TableCell>
@@ -221,7 +224,8 @@ export function ComplianceTable({ dimensions }: ComplianceTableProps) {
                                 criterion.evidences.map((evidence) => (
                                   <TableRow key={evidence.id} className="bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-800/30">
                                     <TableCell className="pl-24 py-1.5 text-muted-foreground">
-                                      <span className="text-xs">📄 {evidence.name}</span>
+                                      <span className="text-[10px] font-mono text-amber-700 dark:text-amber-400 mr-1">{evidence.code}</span>
+                                      <span className="text-xs">{evidence.name}</span>
                                     </TableCell>
                                     <TableCell className="text-center py-1.5 text-xs">1</TableCell>
                                     <TableCell className="text-center py-1.5 text-xs font-medium text-green-700 dark:text-green-400">

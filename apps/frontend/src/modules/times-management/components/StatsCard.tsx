@@ -46,11 +46,11 @@ export function StatsCard({ title, value, description, icon, trend, trendValue, 
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
-        {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
+        {description && <p className="text-xs opacity-70 mt-1">{description}</p>}
         {trend && trendValue && (
           <div className="flex items-center gap-1 mt-2">
             {getTrendIcon()}
-            <span className={`text-xs font-medium ${getTrendColor()}`}>{trendValue}</span>
+            <span className="text-xs font-medium opacity-75">{trendValue}</span>
           </div>
         )}
       </CardContent>

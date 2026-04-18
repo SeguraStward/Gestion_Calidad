@@ -10,7 +10,7 @@ SERVER_USER="root"
 SERVER_IP="138.197.211.207"
 SSH_KEY="/home/segurastward/Documents/ssh/gcalidad-ssh-keys/home/khl0e/.ssh/gcalidad/gcalidad-droplet-key"
 SERVER_PATH="/home/khloe/gestion-calidad"
-LOCAL_PATH="/home/segurastward/Documents/Projects/gestion-calidad"
+LOCAL_PATH="/home/segurastward/Documents/Workspace/Projects/gestion-calidad"
 
 # Colores para output
 RED='\033[0;31m'

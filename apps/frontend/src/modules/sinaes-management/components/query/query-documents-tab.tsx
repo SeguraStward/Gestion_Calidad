@@ -19,6 +19,7 @@ import { DeleteDocumentDialog } from './delete-document-dialog'
 import { ReplaceFileDialog } from './replace-file-dialog'
 import { useProofDocuments, type ProofDocumentFilters } from '../../services/proof-documents.service'
 import type { ProofDocument } from '../../types/proof-documents.types'
+import { DialogErrorBoundary } from '@/components/error-boundary/dialog-error-boundary'
 
 export const QueryDocumentsTab = () => {
   const [filters, setFilters] = useState<ProofDocumentFilters>({
@@ -170,11 +171,13 @@ export const QueryDocumentsTab = () => {
       />
 
       {/* Edit Document Dialog */}
-      <EditDocumentDialog
-        document={selectedDocument}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-      />
+      <DialogErrorBoundary>
+        <EditDocumentDialog
+          document={selectedDocument}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+        />
+      </DialogErrorBoundary>
 
       {/* Delete Document Dialog */}
       <DeleteDocumentDialog

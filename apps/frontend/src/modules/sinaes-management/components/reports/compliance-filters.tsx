@@ -96,6 +96,17 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
     return selectedComponent?.criteria || [];
   }, [componentId, components]);
 
+  const handleDimensionChange = (value: string) => {
+    setDimensionId(value);
+    setComponentId('');
+    setCriterionId('');
+  };
+
+  const handleComponentChange = (value: string) => {
+    setComponentId(value);
+    setCriterionId('');
+  };
+
   const handleGenerateReport = () => {
     const filters: GenerateReportFilters = {
       reportName: reportName || `Reporte ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`,
@@ -165,7 +176,7 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="dimension">Dimensión</Label>
-              <Select value={dimensionId} onValueChange={setDimensionId} disabled={isLoadingDimensions}>
+              <Select value={dimensionId} onValueChange={handleDimensionChange} disabled={isLoadingDimensions}>
                 <SelectTrigger id="dimension">
                   <SelectValue placeholder={isLoadingDimensions ? "Cargando dimensiones..." : "Todas las dimensiones"} />
                 </SelectTrigger>
@@ -184,7 +195,7 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
               <Label htmlFor="component">Componente</Label>
               <Select
                 value={componentId}
-                onValueChange={setComponentId}
+                onValueChange={handleComponentChange}
                 disabled={!dimensionId || dimensionId === 'all' || isLoadingDimensions}
               >
                 <SelectTrigger id="component">
@@ -261,7 +272,7 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
                     {dateFrom ? format(dateFrom, 'PPP', { locale: es }) : 'Seleccionar fecha'}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 min-w-[280px]" align="start">
                   <Calendar
                     mode="single"
                     selected={dateFrom}
@@ -289,7 +300,7 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
                     {dateTo ? format(dateTo, 'PPP', { locale: es }) : 'Seleccionar fecha'}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 min-w-[280px]" align="start">
                   <Calendar
                     mode="single"
                     selected={dateTo}

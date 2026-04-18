@@ -109,7 +109,7 @@ export class ProofDocumentsController extends GenericController<
   }
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Upload proof document to Google Drive with career associations' })
   @ApiBody({
@@ -147,7 +147,11 @@ export class ProofDocumentsController extends GenericController<
 
     // Validar archivo
     if (!file) {
-      throw new BadRequestException('File is required');
+      throw new BadRequestException('Se requiere un archivo para subir el documento');
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      throw new BadRequestException('El archivo supera el límite de 10MB permitido');
     }
 
     // Parsear careerIds si viene como string JSON
