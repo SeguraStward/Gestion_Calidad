@@ -19,7 +19,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Breadcrumbs } from '../components/Breadcrumbs'
 import { EmptyState } from '../components/EmptyState'
 import { StatsCard } from '../components/StatsCard'
+import CareerSummaryTable from '../components/CareerSummaryTable'
 import { useAnnualAllocationsStore } from '../store/useAnnualAllocationsStore'
+import { TimesService, type CareerAnnualSummary, type AnnualBalance } from '../services/times.service'
 
 interface CampusSummaryRow {
   campusId: string
@@ -77,6 +79,8 @@ export default function TimesSummaryPage() {
   const [requestError, setRequestError] = useState<string | null>(null)
   const [reloadVersion, setReloadVersion] = useState(0)
   const [expandedCampusId, setExpandedCampusId] = useState<string | null>(null)
+  const [careerSummary, setCareerSummary] = useState<CareerAnnualSummary[]>([])
+  const [annualBalance, setAnnualBalance] = useState<AnnualBalance | null>(null)
 
   const summary = yearSummary as AnnualSummaryData | null
 
@@ -103,6 +107,10 @@ export default function TimesSummaryPage() {
 
     loadSummary()
     setExpandedCampusId(null)
+
+    // Carga paralela del resumen por carrera
+    TimesService.getCareerSummary(selectedYear).then(setCareerSummary)
+    TimesService.getAnnualBalance(selectedYear).then(setAnnualBalance)
 
     return () => {
       isMounted = false
@@ -310,9 +318,19 @@ export default function TimesSummaryPage() {
             />
           </div>
 
+          {/* Vista estilo Excel de Erick: carrera × ciclo × repitencia → total Brunca + saldo */}
+          <div>
+            <h2 className="mb-3 text-lg font-semibold">Resumen por carrera</h2>
+            <CareerSummaryTable
+              rows={careerSummary}
+              balance={annualBalance}
+              year={selectedYear}
+            />
+          </div>
+
           <Card>
             <CardHeader>
-              <CardTitle>Desglose por campus</CardTitle>
+              <CardTitle>Desglose por campus (asignaciones)</CardTitle>
               <CardDescription>Distribucion anual de jornadas por sede, malla y ciclo academico.</CardDescription>
             </CardHeader>
             <CardContent>

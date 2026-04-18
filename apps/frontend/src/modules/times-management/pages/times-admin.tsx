@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@una-gc/ui/components/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
 import { AlertTriangle, ArrowLeft, ArrowRight, Banknote, BookOpen, Building2, Clock, Plus, Scale, Users } from 'lucide-react'
+
 import { toast } from 'sonner'
 
 import { Breadcrumbs } from '../components/Breadcrumbs'
@@ -32,7 +33,6 @@ export default function TimesAdminPage() {
 
   const [allocationDialogOpen, setAllocationDialogOpen] = useState(false)
   const [selectedCampus, setSelectedCampus] = useState<string | null>(null)
-  const [selectedCareer, setSelectedCareer] = useState<{ campus: string; career: string } | null>(null)
 
   const [cohortDialogOpen, setCohortDialogOpen] = useState(false)
   const [cohortForm, setCohortForm] = useState({ careerId: '', year: '2026', group: 'A', initialStudents: '' })
@@ -129,88 +129,12 @@ export default function TimesAdminPage() {
   }, [selectedCampus, transformedAllocations])
 
   const displayCampusCareers = useMemo(() => {
-    const cycleNames =
-      selectedCampusCareers.cycleNames.length > 0 ? selectedCampusCareers.cycleNames : ['Ciclo I', 'Ciclo II']
-
-    if (selectedCampusCareers.rows.length >= 4) {
-      return { cycleNames, rows: selectedCampusCareers.rows }
-    }
-
-    const templateCareers = [
-      { career: 'Ingenieria en Sistemas', values: [3.0, 2.5] },
-      { career: 'Turismo Sostenible', values: [2.5, 2.0] },
-      { career: 'Administracion', values: [1.75, 1.75] },
-      { career: 'Contaduria', values: [1.25, 1.5] }
-    ]
-
-    const usedNames = new Set(selectedCampusCareers.rows.map((row) => row.career))
-    const mockRows = templateCareers
-      .filter((row) => !usedNames.has(row.career))
-      .map((row) => {
-        const byCycle = cycleNames.reduce<Record<string, number>>((acc, cycle, index) => {
-          acc[cycle] = row.values[index] ?? row.values[row.values.length - 1] ?? 0
-          return acc
-        }, {})
-
-        return {
-          career: row.career,
-          byCycle,
-          total: Object.values(byCycle).reduce((sum, value) => sum + value, 0),
-          isMock: true
-        }
-      })
-
-    const realRows = selectedCampusCareers.rows.map((row) => ({ ...row, isMock: false }))
-
-    return {
-      cycleNames,
-      rows: [...realRows, ...mockRows].slice(0, 4)
-    }
+    const cycleNames = selectedCampusCareers.cycleNames
+    const rows = selectedCampusCareers.rows
+    return { cycleNames, rows }
   }, [selectedCampusCareers])
 
-  const selectedCareerCohorts = useMemo(() => {
-    if (!selectedCareer) return [] as Array<{ cohort: string; cycle: string; journey: number }>
-
-    const careerRow = selectedCampusCareers.rows.find((row) => row.career === selectedCareer.career)
-    const total = careerRow?.total || 0
-    const cycleLabels = selectedCampusCareers.cycleNames.length > 0 ? selectedCampusCareers.cycleNames : ['Ciclo I', 'Ciclo II']
-    const baseDistribution = [0.35, 0.3, 0.2, 0.15]
-    const raw = baseDistribution.map((ratio) => Number((total * ratio).toFixed(2)))
-    const diff = Number((total - raw.reduce((sum, value) => sum + value, 0)).toFixed(2))
-    raw[0] = Number(((raw[0] ?? 0) + diff).toFixed(2))
-
-    return [
-      { cohort: 'Generacion 2022', cycle: cycleLabels[0] || 'Ciclo I', journey: raw[0] },
-      { cohort: 'Generacion 2023', cycle: cycleLabels[1] || cycleLabels[0] || 'Ciclo II', journey: raw[1] },
-      { cohort: 'Generacion 2024', cycle: cycleLabels[0] || 'Ciclo I', journey: raw[2] },
-      { cohort: 'Repitencia', cycle: '-', journey: raw[3] }
-    ]
-  }, [selectedCareer, selectedCampusCareers])
-
-  const displayCareerCohorts = useMemo(() => {
-    if (!selectedCareer) return [] as Array<{ cohort: string; cycle: string; journey: number; isMock?: boolean }>
-
-    if (selectedCareerCohorts.length >= 5) {
-      return selectedCareerCohorts.map((row) => ({ ...row, isMock: false }))
-    }
-
-    const cycleLabels = displayCampusCareers.cycleNames.length > 0 ? displayCampusCareers.cycleNames : ['Ciclo I', 'Ciclo II']
-    const mockRows = [
-      { cohort: 'Generacion 2021', cycle: cycleLabels[1] || cycleLabels[0] || 'Ciclo II', journey: 0.75, isMock: true },
-      { cohort: 'Generacion 2022', cycle: cycleLabels[0] || 'Ciclo I', journey: 1.25, isMock: true },
-      { cohort: 'Generacion 2023', cycle: cycleLabels[1] || cycleLabels[0] || 'Ciclo II', journey: 1.25, isMock: true },
-      { cohort: 'Generacion 2024', cycle: cycleLabels[0] || 'Ciclo I', journey: 0.5, isMock: true },
-      { cohort: 'Repitencia', cycle: '-', journey: 0.25, isMock: true }
-    ]
-
-    const realRows = selectedCareerCohorts.map((row) => ({ ...row, isMock: false }))
-    const usedNames = new Set(realRows.map((row) => row.cohort))
-    const merged = [...realRows, ...mockRows.filter((row) => !usedNames.has(row.cohort))]
-
-    return merged.slice(0, 5)
-  }, [displayCampusCareers.cycleNames, selectedCareer, selectedCareerCohorts])
-
-  const totalAssignedJourney = useMemo(
+const totalAssignedJourney = useMemo(
     () => transformedAllocations.reduce((sum, item) => sum + item.totalHours, 0),
     [transformedAllocations]
   )
@@ -221,10 +145,6 @@ export default function TimesAdminPage() {
   const selectedCampusTotal = useMemo(
     () => displayCampusCareers.rows.reduce((sum, row) => sum + row.total, 0),
     [displayCampusCareers.rows]
-  )
-  const selectedCareerTotal = useMemo(
-    () => displayCareerCohorts.reduce((sum, row) => sum + (row.journey ?? 0), 0),
-    [displayCareerCohorts]
   )
 
   const transformedAssignments: ProfessorAssignmentRow[] = assignments.map((assignment) => ({
@@ -347,79 +267,6 @@ export default function TimesAdminPage() {
                   Todavia no hay asignaciones de campus registradas.
                 </CardContent>
               </Card>
-            ) : selectedCareer ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedCareer.campus} / {selectedCareer.career}
-                    </p>
-                    <h3 className="text-2xl font-semibold tracking-tight">Detalle por cohorte</h3>
-                  </div>
-                  <Button variant="outline" onClick={() => setSelectedCareer(null)}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Volver a carreras
-                  </Button>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Card>
-                    <CardContent className="p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Carrera</p>
-                      <p className="mt-2 text-lg font-semibold">{selectedCareer.career}</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Cohortes</p>
-                      <p className="mt-2 text-2xl font-semibold">{displayCareerCohorts.length}</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4">
-                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Total carrera</p>
-                      <p className="mt-2 text-2xl font-semibold">{selectedCareerTotal.toFixed(2)}j</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <div className="overflow-x-auto rounded-xl border bg-background">
-                  <table className="w-full">
-                    <thead className="bg-muted/60">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Cohorte</th>
-                        <th className="px-4 py-3 text-left text-sm font-semibold">Ciclo</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Jornadas</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {displayCareerCohorts.map((row) => (
-                        <tr
-                          key={row.cohort}
-                          className={`border-t transition-colors hover:bg-muted/30 ${
-                            row.cohort === 'Repitencia' ? 'bg-amber-50/60' : ''
-                          }`}
-                        >
-                          <td className="px-4 py-4 text-sm font-medium">
-                            <div className="flex items-center gap-2">
-                              <span>{row.cohort}</span>
-                              {(row as any).isMock ? (
-                                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                                  Demo
-                                </span>
-                              ) : null}
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 text-sm">{row.cycle}</td>
-                          <td className="px-4 py-4 text-right text-sm font-semibold tabular-nums">
-                            {(row.journey ?? 0).toFixed(2)}j
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
             ) : selectedCampus ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-3">
@@ -471,22 +318,12 @@ export default function TimesAdminPage() {
                           </th>
                         ))}
                         <th className="px-4 py-3 text-right text-sm font-semibold">Total anual</th>
-                        <th className="px-4 py-3 text-right text-sm font-semibold">Cohortes</th>
                       </tr>
                     </thead>
                     <tbody>
                       {displayCampusCareers.rows.map((row) => (
                         <tr key={row.career} className="border-t transition-colors hover:bg-muted/30">
-                          <td className="px-4 py-4 text-sm font-medium">
-                            <div className="flex items-center gap-2">
-                              <span>{row.career}</span>
-                              {(row as any).isMock ? (
-                                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                                  Demo
-                                </span>
-                              ) : null}
-                            </div>
-                          </td>
+                          <td className="px-4 py-4 text-sm font-medium">{row.career}</td>
                           {displayCampusCareers.cycleNames.map((cycle) => (
                             <td key={cycle} className="px-4 py-4 text-right text-sm tabular-nums">
                               {(row.byCycle[cycle] || 0).toFixed(2)}j
@@ -494,16 +331,6 @@ export default function TimesAdminPage() {
                           ))}
                           <td className="px-4 py-4 text-right text-sm font-semibold tabular-nums">
                             {row.total.toFixed(2)}j
-                          </td>
-                          <td className="px-4 py-4 text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedCareer({ campus: selectedCampus, career: row.career })}
-                            >
-                              Ver cohortes
-                              <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
                           </td>
                         </tr>
                       ))}
