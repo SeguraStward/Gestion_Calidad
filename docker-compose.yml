@@ -52,9 +52,6 @@ services:
     env_file:
       - ./apps/frontend/.env.production
 
-    depends_on:
-      - proxy
-
     networks:
       gcalidad-network:
         ipv4_address: 172.30.0.30
@@ -88,9 +85,6 @@ services:
     env_file:
       - ./apps/backend/.env.production
       - ./.env
-
-    depends_on:
-      - proxy
 
     networks:
       gcalidad-network:

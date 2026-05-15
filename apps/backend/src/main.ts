@@ -21,6 +21,7 @@ async function bootstrap() {
         'http://localhost',
         'http://localhost:3001',
         'https://gestion-calidad.arayaroma.software',
+        'https://gestion-calidad.seguracorporations.com',
       ];
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);

@@ -1,0 +1,22 @@
+networks:
+  botflow_default:
+    external: true
+
+services:
+  proxy:
+    profiles:
+      - disabled
+
+  frontend:
+    labels: []
+    networks:
+      gcalidad-network:
+        ipv4_address: 172.30.0.30
+      botflow_default: {}
+
+  backend:
+    labels: []
+    networks:
+      gcalidad-network:
+        ipv4_address: 172.30.0.20
+      botflow_default: {}

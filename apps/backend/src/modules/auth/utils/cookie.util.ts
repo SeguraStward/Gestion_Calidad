@@ -8,10 +8,9 @@ export class CookieUtil {
     const nodeEnv = this.configService.get<string>('NODE_ENV');
 
     if (nodeEnv == 'production') {
-      return process.env.DOMAIN || undefined;
+      return this.configService.get<string>('COOKIE_DOMAIN') || undefined;
     }
 
-    // En desarrollo local, no especificar dominio para que funcione con localhost
     return undefined;
   }
 
