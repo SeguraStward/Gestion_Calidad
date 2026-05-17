@@ -3,10 +3,12 @@ import {
   Controller,
   Logger,
   Post,
+  Patch,
   Get,
   Query,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
   Body,
   Req,
   UnauthorizedException,
@@ -14,7 +16,7 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiConsumes, ApiBody, ApiOperation, ApiQuery } from '@nestjs/swagger';
 
 import { ProofDocumentDto } from './dtos/proof-document.dto';
@@ -109,13 +111,21 @@ export class ProofDocumentsController extends GenericController<
   }
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FilesInterceptor('files', 10, { limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Upload proof document to Google Drive with career associations' })
+  @ApiOperation({
+    summary:
+      'Upload one or more proof document files to Google Drive with career associations',
+  })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
+        files: { type: 'array', items: { type: 'string', format: 'binary' } },
+        // Legacy single-file field — still accepted for compatibility with
+        // clients that have not been migrated to multi-file yet.
         file: { type: 'string', format: 'binary' },
         name: { type: 'string' },
         description: { type: 'string' },
@@ -123,11 +133,14 @@ export class ProofDocumentsController extends GenericController<
         proofDocumentTypeId: { type: 'string' },
         careerIds: { type: 'array', items: { type: 'string' } },
       },
-      required: ['file', 'name', 'evidenceId', 'proofDocumentTypeId', 'careerIds'],
+      required: ['name', 'evidenceId', 'proofDocumentTypeId', 'careerIds'],
     },
   })
   async uploadProofDocument(
-    @UploadedFile() file: any,
+    @UploadedFiles() filesArr: any[],
+    // Single-file fallback (old clients) — Nest accepts both interceptors
+    // mounted on the same endpoint when only one is used at a time.
+    @UploadedFile() singleFile: any,
     @Body('name') name: string,
     @Body('description') description: string,
     @Body('evidenceId') evidenceId: string,
@@ -137,7 +150,6 @@ export class ProofDocumentsController extends GenericController<
   ) {
     this.logger.log('📤 Uploading proof document with Google Drive integration');
 
-    // Validar usuario autenticado con Google
     const user = (request as any).user;
     if (!user?.googleAccessToken) {
       throw new UnauthorizedException(
@@ -145,16 +157,21 @@ export class ProofDocumentsController extends GenericController<
       );
     }
 
-    // Validar archivo
-    if (!file) {
-      throw new BadRequestException('Se requiere un archivo para subir el documento');
+    // Accept either `files[]` (multi) or legacy `file` (single).
+    const files: any[] =
+      filesArr && filesArr.length ? filesArr : singleFile ? [singleFile] : [];
+    if (files.length === 0) {
+      throw new BadRequestException('Se requiere al menos un archivo para subir el documento');
+    }
+    for (const f of files) {
+      if (f.size > 10 * 1024 * 1024) {
+        throw new BadRequestException(
+          `El archivo "${f.originalname}" supera el límite de 10MB permitido`,
+        );
+      }
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      throw new BadRequestException('El archivo supera el límite de 10MB permitido');
-    }
-
-    // Parsear careerIds si viene como string JSON
+    // careerIds may arrive as a JSON-encoded string from multipart forms.
     let parsedCareerIds: string[] = [];
     if (typeof careerIds === 'string') {
       try {
@@ -166,7 +183,6 @@ export class ProofDocumentsController extends GenericController<
       parsedCareerIds = careerIds;
     }
 
-    // Validar que haya al menos una carrera
     if (!parsedCareerIds || parsedCareerIds.length === 0) {
       throw new BadRequestException('At least one career must be specified');
     }
@@ -180,7 +196,7 @@ export class ProofDocumentsController extends GenericController<
     };
 
     return this.proofDocumentsService.uploadProofDocumentWithDrive(
-      file,
+      files,
       uploadDto,
       user.googleAccessToken,
       user.googleRefreshToken,
@@ -188,7 +204,10 @@ export class ProofDocumentsController extends GenericController<
   }
 
   @Post(':id/careers')
-  @ApiOperation({ summary: 'Update document careers' })
+  @ApiOperation({
+    summary:
+      'Replace ALL careers of a document with a new list (destructive). Prefer PATCH :id/careers/append for non-destructive merging.',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -216,6 +235,44 @@ export class ProofDocumentsController extends GenericController<
     return {
       success: true,
       message: 'Careers updated successfully',
+    };
+  }
+
+  @Patch(':id/careers/append')
+  @ApiOperation({
+    summary:
+      'Append careers to a document (union — existing careers are preserved). Use this when uploading additional careers for an already-existing document.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        careerIds: { type: 'array', items: { type: 'string' } },
+      },
+    },
+  })
+  async appendDocumentCareers(
+    @Req() req: Request,
+    @Body('careerIds') careerIds: string[],
+  ) {
+    const documentId = req.params.id;
+    if (!careerIds || careerIds.length === 0) {
+      throw new BadRequestException('At least one career must be specified');
+    }
+
+    const result = await this.proofDocumentsService.appendDocumentCareers(
+      documentId,
+      careerIds,
+    );
+
+    return {
+      success: true,
+      added: result.added,
+      alreadyPresent: result.alreadyPresent,
+      message:
+        result.added > 0
+          ? `${result.added} carrera(s) agregada(s)`
+          : 'No se agregaron carreras nuevas (ya estaban asociadas)',
     };
   }
 

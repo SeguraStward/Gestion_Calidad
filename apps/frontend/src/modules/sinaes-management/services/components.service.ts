@@ -23,5 +23,6 @@ export const {
     created: () => 'Componente creado con éxito',
     updated: () => 'Componente actualizado con éxito',
     deleted: () => 'Componente eliminado con éxito'
-  }
+  },
+  silent: { remove: { error: true } }
 })

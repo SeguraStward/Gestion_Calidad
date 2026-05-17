@@ -23,5 +23,6 @@ export const {
     created: () => 'Criterio creado con éxito',
     updated: () => 'Criterio actualizado con éxito',
     deleted: () => 'Criterio eliminado con éxito'
-  }
+  },
+  silent: { remove: { error: true } }
 })

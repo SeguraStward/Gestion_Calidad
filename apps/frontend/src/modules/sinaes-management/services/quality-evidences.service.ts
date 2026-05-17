@@ -23,5 +23,6 @@ export const {
     created: () => 'Evidencia de calidad creada con éxito',
     updated: () => 'Evidencia de calidad actualizada con éxito',
     deleted: () => 'Evidencia de calidad eliminada con éxito'
-  }
+  },
+  silent: { remove: { error: true } }
 })

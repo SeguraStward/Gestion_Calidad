@@ -12,7 +12,8 @@ import HttpClient from '@/lib/http-client'
  * - Creates career-proof-document relations
  */
 export interface UploadProofDocumentRequest {
-  file: File
+  /** One or more files to upload as part of the same "upload batch". */
+  files: File[]
   name: string
   description?: string
   evidenceId: string
@@ -29,7 +30,7 @@ export interface UploadProofDocumentResponse {
     code: string // Auto-generated: CONV-001, ACT-002, etc.
     name: string
     description?: string
-    fileUrl: string // Google Drive URL
+    fileUrl: string // Google Drive URL (primary file)
     fileName: string // CONV-001_original-name.pdf
     fileType: string
     fileSize: number
@@ -37,6 +38,8 @@ export interface UploadProofDocumentResponse {
     proofDocumentTypeId: string
     googleDriveFileId: string
     googleDriveFolderId: string
+    googleDriveTypeFolderId?: string
+    googleDriveUploadFolderId?: string
     status: string
     createdAt: string
   }
@@ -46,6 +49,10 @@ export interface UploadProofDocumentResponse {
     proofDocumentId: string
     createdAt: string
   }>
+  /** Drive path of the per-upload folder (e.g. ".../Convenio/CONV-001"). */
+  folderPath: string
+  /** All files uploaded as part of this batch. */
+  uploadedFiles: Array<{ id: string; name: string; url: string; size: number }>
 }
 
 class ProofDocumentUploadService {
@@ -69,9 +76,14 @@ class ProofDocumentUploadService {
     try {
       console.log('🚀 [ProofDocumentUploadService] Starting upload:', request.name)
 
-      // Build FormData for multipart/form-data request
+      // Build FormData for multipart/form-data request. The backend accepts
+      // multiple files under the `files` field (FilesInterceptor); a single
+      // `file` field is kept for legacy callers but new code should use the
+      // multi-file path.
       const formData = new FormData()
-      formData.append('file', request.file)
+      for (const f of request.files) {
+        formData.append('files', f)
+      }
       formData.append('name', request.name)
 
       if (request.description) {
@@ -92,21 +104,16 @@ class ProofDocumentUploadService {
         }
       })
 
-      console.log('✅ [ProofDocumentUploadService] Upload successful:', response.data)
+      // El backend envuelve la respuesta en { data: { proofDocument, careerRelations, ... } }
+      const actualData = response.data?.data ?? response.data
 
-      // El backend envuelve la respuesta en un objeto "data"
-      // Estructura: { data: { proofDocument, careerRelations, folderPath } }
-      const actualData = response.data?.data || response.data
+      if (!actualData?.proofDocument?.id || !Array.isArray(actualData?.careerRelations)) {
+        throw new Error(
+          'Respuesta inválida del servidor: falta proofDocument o careerRelations en el payload de upload'
+        )
+      }
 
-      console.log('✅ [ProofDocumentUploadService] Response structure:', {
-        hasData: !!response.data,
-        hasNestedData: !!response.data?.data,
-        hasProofDocument: !!actualData?.proofDocument,
-        proofDocumentCode: actualData?.proofDocument?.code,
-        fullResponse: JSON.stringify(response.data, null, 2)
-      })
-
-      return actualData
+      return actualData as UploadProofDocumentResponse
     } catch (error: any) {
       console.error('❌ [ProofDocumentUploadService] Upload failed:', error)
       console.error('❌ Error response:', error.response?.data)

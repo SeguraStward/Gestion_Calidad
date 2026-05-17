@@ -88,7 +88,9 @@ export const QueryDocumentsTab = () => {
   const totalPages = data?.meta?.totalPages || 1
   const currentPage = data?.meta?.page || 1
   const total = data?.meta?.total || 0
-  const limit = 5 // Fixed to 5 items per page
+  // Derive limit from the backend response so the displayed range matches the
+  // server's pagination contract; fall back to a sane default for the first render.
+  const limit = data?.meta?.limit || 5
 
   const startItem = total === 0 ? 0 : (currentPage - 1) * limit + 1
   const endItem = Math.min(currentPage * limit, total)

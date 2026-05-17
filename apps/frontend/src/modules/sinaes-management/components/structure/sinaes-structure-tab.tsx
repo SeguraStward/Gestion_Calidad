@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { ChevronRight, ChevronDown, Plus, PenLine, Trash2, Layers, Loader2, FileText } from 'lucide-react'
+import { createContext, useCallback, useContext, useState } from 'react'
+import { ChevronRight, ChevronDown, Plus, PenLine, Trash2, Layers, Loader2, FileText, AlertTriangle } from 'lucide-react'
 import { Button } from '@una-gc/ui/components/button'
 import { Badge } from '@una-gc/ui/components/badge'
 import {
@@ -15,7 +15,6 @@ import {
   AlertDialogTitle,
 } from '@una-gc/ui/components/alert-dialog'
 import { cn } from '@una-gc/ui/lib/utils'
-import { toast } from 'sonner'
 
 import { useDimensions, useDeleteDimension } from '../../services/dimensions.service'
 import { useComponents, useDeleteComponent } from '../../services/components.service'
@@ -68,6 +67,66 @@ function ConfirmDelete({ open, entityName, onConfirm, onCancel, isPending }: Con
           >
             {isPending ? 'Eliminando...' : 'Eliminar'}
           </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
+// ─── Delete Error Dialog (shared via context) ─────────────────────────────────
+//
+// The structure tab triggers many delete mutations from nested rows. Instead of
+// each row owning its own toast/dialog state, a single dialog is mounted at the
+// top of the tree and any row can report a delete error through this context.
+// The hook generic.hooks.ts is configured with `silent: { remove: { error: true } }`
+// for these entities, so this is the ONE place where delete errors surface.
+
+interface DeleteError {
+  /** The full backend message — already user-facing in Spanish (see backend FK config). */
+  message: string
+  /** What the user tried to delete (e.g. "la dimensión 'Docencia'"). */
+  entityLabel: string
+}
+
+const DeleteErrorReporter = createContext<(err: DeleteError) => void>(() => {})
+
+function useReportDeleteError() {
+  return useContext(DeleteErrorReporter)
+}
+
+/** Extracts a user-facing message from an axios/Nest error. */
+function extractDeleteErrorMessage(error: any, fallback: string): string {
+  const data = error?.response?.data
+  if (typeof data?.message === 'string' && data.message.trim()) return data.message
+  if (Array.isArray(data?.message) && data.message.length) {
+    const joined = data.message.filter((m: any) => typeof m === 'string').join(', ')
+    if (joined.trim()) return joined
+  }
+  if (typeof error?.message === 'string' && error.message.trim()) return error.message
+  return fallback
+}
+
+function DeleteErrorDialog({
+  error,
+  onClose,
+}: {
+  error: DeleteError | null
+  onClose: () => void
+}) {
+  return (
+    <AlertDialog open={!!error}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            No se pudo eliminar {error?.entityLabel}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="whitespace-pre-line">
+            {error?.message}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction onClick={onClose}>Entendido</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -165,6 +224,7 @@ interface StandardRowProps {
 function StandardRow({ standard, onEdit, onDelete, onAddEvidence }: StandardRowProps) {
   const [expanded, setExpanded] = useState(false)
   const cfg = levelConfig.standard
+  const reportDeleteError = useReportDeleteError()
 
   const { data: evidencesData, isLoading } = useQualityEvidences(
     { standardId: standard.id },
@@ -264,13 +324,15 @@ function StandardRow({ standard, onEdit, onDelete, onAddEvidence }: StandardRowP
         onCancel={() => setDeleteTarget(null)}
         onConfirm={async () => {
           if (!deleteTarget) return
+          const target = deleteTarget
+          setDeleteTarget(null)
           try {
-            await deleteEvidence.mutateAsync(deleteTarget.id)
-            toast.success('Evidencia eliminada')
+            await deleteEvidence.mutateAsync(target.id)
           } catch (e: any) {
-            toast.error(e?.response?.data?.message || 'No se pudo eliminar')
-          } finally {
-            setDeleteTarget(null)
+            reportDeleteError({
+              entityLabel: `la evidencia "${target.name}"`,
+              message: extractDeleteErrorMessage(e, 'No se pudo eliminar la evidencia.'),
+            })
           }
         }}
       />
@@ -293,6 +355,7 @@ function CriterionRow({ criterion, onEdit, onDelete }: CriterionRowProps) {
   const [editStandard, setEditStandard] = useState<Standard | null>(null)
   const [deleteStandard, setDeleteStandard] = useState<Standard | null>(null)
   const cfg = levelConfig.criterion
+  const reportDeleteError = useReportDeleteError()
 
   const { selectCriterion, selectStandard } = useSinaesNavigation()
 
@@ -445,13 +508,15 @@ function CriterionRow({ criterion, onEdit, onDelete }: CriterionRowProps) {
         onCancel={() => setDeleteStandard(null)}
         onConfirm={async () => {
           if (!deleteStandard) return
+          const target = deleteStandard
+          setDeleteStandard(null)
           try {
-            await deleteStandardMutation.mutateAsync(deleteStandard.id)
-            toast.success('Estándar eliminado')
+            await deleteStandardMutation.mutateAsync(target.id)
           } catch (e: any) {
-            toast.error(e?.response?.data?.message || 'No se pudo eliminar el estándar')
-          } finally {
-            setDeleteStandard(null)
+            reportDeleteError({
+              entityLabel: `el estándar "${target.name}"`,
+              message: extractDeleteErrorMessage(e, 'No se pudo eliminar el estándar.'),
+            })
           }
         }}
       />
@@ -463,13 +528,15 @@ function CriterionRow({ criterion, onEdit, onDelete }: CriterionRowProps) {
         onCancel={() => setDeleteEvidenceTarget(null)}
         onConfirm={async () => {
           if (!deleteEvidence) return
+          const target = deleteEvidence
+          setDeleteEvidenceTarget(null)
           try {
-            await deleteEvidenceMutation.mutateAsync(deleteEvidence.id)
-            toast.success('Evidencia eliminada')
+            await deleteEvidenceMutation.mutateAsync(target.id)
           } catch (e: any) {
-            toast.error(e?.response?.data?.message || 'No se pudo eliminar la evidencia')
-          } finally {
-            setDeleteEvidenceTarget(null)
+            reportDeleteError({
+              entityLabel: `la evidencia "${target.name}"`,
+              message: extractDeleteErrorMessage(e, 'No se pudo eliminar la evidencia.'),
+            })
           }
         }}
       />
@@ -491,6 +558,7 @@ function ComponentRow({ component, onEdit, onDelete }: ComponentRowProps) {
   const [editCriterion, setEditCriterion] = useState<Criterion | null>(null)
   const [deleteCriterion, setDeleteCriterion] = useState<Criterion | null>(null)
   const cfg = levelConfig.component
+  const reportDeleteError = useReportDeleteError()
 
   const { selectComponent, selectCriterion } = useSinaesNavigation()
 
@@ -580,13 +648,15 @@ function ComponentRow({ component, onEdit, onDelete }: ComponentRowProps) {
         onCancel={() => setDeleteCriterion(null)}
         onConfirm={async () => {
           if (!deleteCriterion) return
+          const target = deleteCriterion
+          setDeleteCriterion(null)
           try {
-            await deleteCriterionMutation.mutateAsync(deleteCriterion.id)
-            toast.success('Criterio eliminado')
+            await deleteCriterionMutation.mutateAsync(target.id)
           } catch (e: any) {
-            toast.error(e?.response?.data?.message || 'No se pudo eliminar el criterio')
-          } finally {
-            setDeleteCriterion(null)
+            reportDeleteError({
+              entityLabel: `el criterio "${target.name}"`,
+              message: extractDeleteErrorMessage(e, 'No se pudo eliminar el criterio.'),
+            })
           }
         }}
       />
@@ -608,6 +678,7 @@ function DimensionRow({ dimension, onEdit, onDelete }: DimensionRowProps) {
   const [editComponent, setEditComponent] = useState<Component | null>(null)
   const [deleteComponent, setDeleteComponent] = useState<Component | null>(null)
   const cfg = levelConfig.dimension
+  const reportDeleteError = useReportDeleteError()
 
   const { selectDimension, selectComponent } = useSinaesNavigation()
 
@@ -704,13 +775,15 @@ function DimensionRow({ dimension, onEdit, onDelete }: DimensionRowProps) {
         onCancel={() => setDeleteComponent(null)}
         onConfirm={async () => {
           if (!deleteComponent) return
+          const target = deleteComponent
+          setDeleteComponent(null)
           try {
-            await deleteComponentMutation.mutateAsync(deleteComponent.id)
-            toast.success('Componente eliminado')
+            await deleteComponentMutation.mutateAsync(target.id)
           } catch (e: any) {
-            toast.error(e?.response?.data?.message || 'No se pudo eliminar el componente')
-          } finally {
-            setDeleteComponent(null)
+            reportDeleteError({
+              entityLabel: `el componente "${target.name}"`,
+              message: extractDeleteErrorMessage(e, 'No se pudo eliminar el componente.'),
+            })
           }
         }}
       />
@@ -724,12 +797,15 @@ export const SinaesStructureTab = () => {
   const [showDimensionForm, setShowDimensionForm] = useState(false)
   const [editDimension, setEditDimension] = useState<Dimension | null>(null)
   const [deleteDimension, setDeleteDimension] = useState<Dimension | null>(null)
+  const [deleteError, setDeleteError] = useState<DeleteError | null>(null)
+  const reportDeleteError = useCallback((err: DeleteError) => setDeleteError(err), [])
 
   const { data: dimensionsData, isLoading } = useDimensions()
   const dimensions = dimensionsData?.data ?? []
   const deleteDimensionMutation = useDeleteDimension()
 
   return (
+    <DeleteErrorReporter.Provider value={reportDeleteError}>
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0">
@@ -815,16 +891,21 @@ export const SinaesStructureTab = () => {
         onCancel={() => setDeleteDimension(null)}
         onConfirm={async () => {
           if (!deleteDimension) return
+          const target = deleteDimension
+          setDeleteDimension(null)
           try {
-            await deleteDimensionMutation.mutateAsync(deleteDimension.id)
-            toast.success('Dimensión eliminada')
+            await deleteDimensionMutation.mutateAsync(target.id)
           } catch (e: any) {
-            toast.error(e?.response?.data?.message || 'No se pudo eliminar la dimensión')
-          } finally {
-            setDeleteDimension(null)
+            reportDeleteError({
+              entityLabel: `la dimensión "${target.name}"`,
+              message: extractDeleteErrorMessage(e, 'No se pudo eliminar la dimensión.'),
+            })
           }
         }}
       />
+
+      <DeleteErrorDialog error={deleteError} onClose={() => setDeleteError(null)} />
     </div>
+    </DeleteErrorReporter.Provider>
   )
 }

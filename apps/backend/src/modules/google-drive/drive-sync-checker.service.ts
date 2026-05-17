@@ -1,7 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { GoogleDriveService } from './google-drive.service';
-import { Cron, CronExpression } from '@nestjs/schedule';
 
 /**
  * Service to verify synchronization between database and Google Drive
@@ -17,10 +16,15 @@ export class DriveSyncCheckerService {
   ) { }
 
   /**
-   * Verify all active documents exist in Google Drive
-   * This can be run manually or scheduled via cron
+   * Verify all active documents exist in Google Drive.
+   * Requires the caller's Google OAuth tokens — we no longer accept a no-arg
+   * call because the previous implementation returned a stub `verified=total`
+   * without actually hitting Drive, which mislead admins.
    */
-  async verifyAllDocuments(): Promise<{
+  async verifyAllDocuments(
+    accessToken: string,
+    refreshToken?: string,
+  ): Promise<{
     total: number;
     verified: number;
     missing: number;
@@ -32,6 +36,12 @@ export class DriveSyncCheckerService {
       googleDriveFileId: string;
     }>;
   }> {
+    if (!accessToken) {
+      throw new BadRequestException(
+        'Google access token is required to verify Drive synchronization.',
+      );
+    }
+
     this.logger.log('🔍 Starting Google Drive sync verification...');
 
     const documents = await this.prisma.proofDocument.findMany({
@@ -49,6 +59,8 @@ export class DriveSyncCheckerService {
 
     this.logger.log(`📊 Found ${documents.length} active documents with Drive links`);
 
+    const drive = this.googleDriveService.createDriveClient(accessToken, refreshToken);
+
     let verified = 0;
     let missing = 0;
     let errors = 0;
@@ -61,27 +73,22 @@ export class DriveSyncCheckerService {
 
     for (const doc of documents) {
       try {
-        // Try to verify file exists in Drive
-        // Note: This requires a service account or user token
-        // For now, we'll mark the logic but actual implementation
-        // depends on having access tokens available
-
-        // TODO: Implement actual Drive verification
-        // For now, just log what would be checked
-        this.logger.debug(
-          `Would verify: ${doc.code} (Drive ID: ${doc.googleDriveFileId})`,
-        );
-
+        await drive.files.get({
+          fileId: doc.googleDriveFileId!,
+          fields: 'id',
+        });
         verified++;
       } catch (error: any) {
-        if (error.code === 404 || error.message?.includes('not found')) {
-          this.logger.warn(
-            `⚠️ Document ${doc.code} (${doc.name}) not found in Drive`,
-          );
+        const status = error.code ?? error.response?.status;
+        if (status === 404) {
+          this.logger.warn(`⚠️ Document ${doc.code} (${doc.name}) not found in Drive`);
           missing++;
-          missingDocuments.push(doc);
-
-          // Mark document as inconsistent
+          missingDocuments.push({
+            id: doc.id,
+            code: doc.code,
+            name: doc.name,
+            googleDriveFileId: doc.googleDriveFileId!,
+          });
           await this.markAsInconsistent(doc.id, doc.code);
         } else {
           this.logger.error(`❌ Error verifying ${doc.code}:`, error.message);
@@ -184,7 +191,7 @@ export class DriveSyncCheckerService {
 
       // Try to get file metadata from Drive
       try {
-        const drive = this.googleDriveService['createDriveClient'](
+        const drive = this.googleDriveService.createDriveClient(
           accessToken,
           refreshToken,
         );
@@ -259,21 +266,16 @@ export class DriveSyncCheckerService {
   }
 
   /**
-   * Optional: Run verification automatically every day at 2 AM
-   * Uncomment the @Cron decorator to enable
+   * Placeholder for scheduled verification.
+   *
+   * verifyAllDocuments() requires a user's Google OAuth tokens, so it cannot be
+   * driven by a cron without a service-account or a way to retrieve a stored
+   * admin token. Until that infrastructure exists, this method is intentionally
+   * a no-op.
    */
-  // @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async scheduledVerification(): Promise<void> {
-    this.logger.log('🕐 Running scheduled Drive sync verification...');
-
-    // Note: This requires having service account credentials
-    // or a way to access user tokens programmatically
-    // For now, this is just a placeholder
-
-    this.logger.log(
-      '⚠️ Scheduled verification requires service account setup',
+    this.logger.warn(
+      'scheduledVerification is a no-op: requires service-account credentials or a stored admin OAuth token.',
     );
-
-    // await this.verifyAllDocuments();
   }
 }

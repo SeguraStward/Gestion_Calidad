@@ -97,9 +97,21 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
     }
   }
 
+  /**
+   * Configuration used by `checkActiveRelations` to block deletion when an
+   * entity still has active children.
+   *
+   * - `errorMessage` can be either a static string (backward-compatible) or a
+   *   function that receives the entity and a per-field map of active children
+   *   counts, so concrete services can produce user-facing Spanish messages
+   *   with the entity name and counts (e.g. "No se puede eliminar la
+   *   dimensión 'Docencia' porque tiene 3 componente(s) activo(s)...").
+   */
   protected relationCheckConfig?: {
     relationFields: string[];
-    errorMessage: string;
+    errorMessage:
+      | string
+      | ((entity: any, activeCounts: Record<string, number>) => string);
   };
 
   private createIncludeRelations(): Record<string, boolean> {
@@ -117,32 +129,38 @@ export abstract class GenericService<E extends Record<string, any>, D, C = any, 
   private checkActiveRelations(entity: any, operationType: string = 'delete'): void {
     if (!this.relationCheckConfig) return;
 
+    // Compute active counts for every configured relation so the error message
+    // (when it's a function) can describe ALL blocking relations, not just the
+    // first one encountered.
+    const activeCounts: Record<string, number> = {};
     for (const relationField of this.relationCheckConfig.relationFields) {
       const relationData = (entity as any)[relationField];
-
       if (Array.isArray(relationData)) {
-        if (relationData.length > 0) {
-          const activeRelations = relationData.filter((item) => !item.status || item.status !== 'INACTIVE');
-
-          if (activeRelations.length > 0) {
-            throw new BadRequestException(
-              this.relationCheckConfig.errorMessage ||
-              `Cannot ${operationType}: Entity has related ${relationField} records`,
-            );
-          }
-        }
-        // Si es un array vacío, no hacer nada (está bien eliminar)
+        activeCounts[relationField] = relationData.filter(
+          (item) => !item.status || item.status !== 'INACTIVE',
+        ).length;
       } else if (relationData && typeof relationData === 'object') {
-        // Solo para relaciones 1-a-1 (no arrays)
         const isActive = !relationData.status || relationData.status !== 'INACTIVE';
-        if (isActive) {
-          throw new BadRequestException(
-            this.relationCheckConfig.errorMessage ||
-            `Cannot ${operationType}: Entity has a related ${relationField} record`,
-          );
-        }
+        activeCounts[relationField] = isActive ? 1 : 0;
+      } else {
+        activeCounts[relationField] = 0;
       }
     }
+
+    const hasBlocking = Object.values(activeCounts).some((n) => n > 0);
+    if (!hasBlocking) return;
+
+    const { errorMessage } = this.relationCheckConfig;
+    const message =
+      typeof errorMessage === 'function'
+        ? errorMessage(entity, activeCounts)
+        : errorMessage ||
+          `Cannot ${operationType}: Entity has related records (${Object.entries(activeCounts)
+            .filter(([, n]) => n > 0)
+            .map(([k, n]) => `${k}: ${n}`)
+            .join(', ')})`;
+
+    throw new BadRequestException(message);
   }
 
   async deleteById(id: string): Promise<boolean> {

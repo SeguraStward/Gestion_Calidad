@@ -14,7 +14,10 @@ export class StandardsService extends GenericService<Standard, StandardDto, Crea
 
   protected readonly relationCheckConfig = {
     relationFields: ['evidences', 'standardEvidences'],
-    errorMessage: 'Cannot delete Standard because it has associated evidences.',
+    errorMessage: (entity: any, counts: Record<string, number>) => {
+      const total = (counts.evidences || 0) + (counts.standardEvidences || 0);
+      return `No se puede eliminar el estándar "${entity?.name ?? ''}" porque tiene ${total} evidencia(s) activa(s) asociada(s). Elimina o desactiva las evidencias primero.`;
+    },
   };
 
   constructor(

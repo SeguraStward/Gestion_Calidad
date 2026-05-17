@@ -1,41 +1,41 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Search, GraduationCap } from 'lucide-react'
 import { Button, Checkbox, Input, ScrollArea } from '@una-gc/ui/components'
-import { useQuery } from '@tanstack/react-query'
 import { useDocumentAssignment } from '../../store/document-assignment.store'
-import { HttpClient } from '@/lib/http-client'
+import { useListCareersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useCareer'
 
 interface Career {
   id: string
   name: string
   code: string
-  status: 'ACTIVE' | 'INACTIVE'
+  status?: 'ACTIVE' | 'INACTIVE'
 }
 
 export const CareerSelector = () => {
   const { selectedCareerIds, setCareerIds } = useDocumentAssignment()
   const [searchTerm, setSearchTerm] = useState('')
 
-  const { data: careersData, isLoading } = useQuery<{ data: Career[]; meta: any }>({
-    queryKey: ['careers'],
-    queryFn: async () => {
-      const response = await HttpClient.get('/careers', {
-        params: { limit: 1000 }
-      })
-      return response.data
-    }
-  })
+  const { data: allCareers = [], isLoading } = useListCareersFlat()
 
-  const careers = careersData?.data || []
-
-  const filteredCareers = careers.filter(career =>
-    career.status === 'ACTIVE' && (
-      career.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      career.code.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  // Only ACTIVE careers participate in document assignment.
+  const careers = useMemo<Career[]>(
+    () =>
+      (allCareers as any[])
+        .filter((c) => !c.status || c.status === 'ACTIVE')
+        .map((c) => ({ id: c.id, name: c.name, code: c.code, status: c.status })),
+    [allCareers],
   )
+
+  const filteredCareers = useMemo(() => {
+    const term = searchTerm.toLowerCase()
+    return careers.filter(
+      (career) =>
+        career.name.toLowerCase().includes(term) ||
+        career.code.toLowerCase().includes(term),
+    )
+  }, [careers, searchTerm])
 
   const handleCareerToggle = (careerId: string) => {
     const newSelectedIds = selectedCareerIds.includes(careerId)
@@ -74,11 +74,14 @@ export const CareerSelector = () => {
     <div className="space-y-4">
       {/* Header con contador */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <GraduationCap className="h-5 w-5" />
           <span className="font-medium">Carreras</span>
           <span className="text-sm text-muted-foreground">
-            ({selectedCount} de {totalCount} seleccionadas)
+            {selectedCount} seleccionadas
+            {searchTerm
+              ? ` · ${totalCount} de ${careers.length} (filtradas)`
+              : ` · ${careers.length} activas en el sistema`}
           </span>
         </div>
         <div className="flex gap-2">

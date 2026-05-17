@@ -118,8 +118,13 @@ export const ProofDocumentsTable = ({
                 </span>
               </TableCell>
               <TableCell>
-                <div className="text-sm truncate max-w-[200px]" title={document.evidence?.name}>
-                  {document.evidence?.code} - {document.evidence?.name}
+                <div
+                  className="text-sm truncate max-w-[200px]"
+                  title={document.evidence?.name ?? 'Sin evidencia asociada'}
+                >
+                  {document.evidence
+                    ? `${document.evidence.code} - ${document.evidence.name}`
+                    : <span className="text-muted-foreground">Sin evidencia</span>}
                 </div>
               </TableCell>
               <TableCell>

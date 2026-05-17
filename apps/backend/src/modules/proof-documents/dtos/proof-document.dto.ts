@@ -75,11 +75,23 @@ export class ProofDocumentDto extends AuditFields {
   @IsOptional()
   googleDriveFileId?: string;
 
-  @ApiPropertyOptional({ description: 'Google Drive parent folder ID' })
+  @ApiPropertyOptional({ description: 'Google Drive parent folder ID (evidence folder)' })
   @Expose()
   @IsString()
   @IsOptional()
   googleDriveFolderId?: string;
+
+  @ApiPropertyOptional({ description: 'Google Drive folder ID for the document type' })
+  @Expose()
+  @IsString()
+  @IsOptional()
+  googleDriveTypeFolderId?: string;
+
+  @ApiPropertyOptional({ description: 'Google Drive folder ID for this specific upload' })
+  @Expose()
+  @IsString()
+  @IsOptional()
+  googleDriveUploadFolderId?: string;
 
   @ApiPropertyOptional({ description: 'Google Drive version for tracking updates' })
   @Expose()

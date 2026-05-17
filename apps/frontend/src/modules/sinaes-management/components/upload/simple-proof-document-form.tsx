@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -13,9 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@una-gc/ui/components'
 import { Checkbox } from '@una-gc/ui/components/checkbox'
 import { useProofDocumentTypes } from '../../services/proof-document-types.service'
 import { SinaesEvidenceSelector } from './sinaes-evidence-selector'
-import { useQuery } from '@tanstack/react-query'
-import { careerService } from '../../../academic-management/academic-maintenance/services/career.service'
-import type { ProofDocumentType } from '../../types/proof-document-types.types' 
+import { useListCareersFlat } from '@/modules/academic-management/academic-maintenance/hooks/useCareer'
+import type { ProofDocumentType } from '../../types/proof-document-types.types'
 import { useSinaesNavigation } from '../../store/sinaes-navigation.store'
 
 // Schema simplificado del formulario
@@ -24,7 +24,10 @@ const proofDocumentSchema = z.object({
   documentTypeId: z.string().min(1, 'Debe seleccionar un tipo de documento'),
   evidenceIds: z.array(z.string()).min(1, 'Debe seleccionar al menos una evidencia'),
   careerIds: z.array(z.string()).min(1, 'Debe seleccionar al menos una carrera'),
-  file: z.any().refine((file) => file instanceof File, 'Debe seleccionar un archivo')
+  files: z
+    .array(z.any())
+    .min(1, 'Debe seleccionar al menos un archivo')
+    .refine((arr) => arr.every((f) => f instanceof File), 'Todos los elementos deben ser archivos')
 })
 
 type FormData = z.infer<typeof proofDocumentSchema>
@@ -33,24 +36,41 @@ interface SimpleProofDocumentFormProps {
   onSubmit: (data: FormData) => Promise<void>
   isSubmitting: boolean
   uploadProgress?: number
+  /** Evidence to pre-select on first mount (deep-link from inventory). */
+  prefillEvidenceId?: string
+  /** Career to pre-select on first mount. */
+  prefillCareerId?: string
 }
 
-export function SimpleProofDocumentForm({ onSubmit, isSubmitting, uploadProgress }: SimpleProofDocumentFormProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+export function SimpleProofDocumentForm({
+  onSubmit,
+  isSubmitting,
+  uploadProgress,
+  prefillEvidenceId,
+  prefillCareerId,
+}: SimpleProofDocumentFormProps) {
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  // Guards against re-applying the prefill on every render. We only want it
+  // to fire ONCE per (evidenceId, careerId) combination — if the user clears
+  // the form manually, they shouldn't fight a useEffect that keeps re-setting.
+  const prefillAppliedRef = useRef<string | null>(null)
 
   // Store de navegación SINAES
   const { selectedDimension, selectedComponent, selectedCriterion, selectedStandard } = useSinaesNavigation()
 
   // Servicios de datos
   const { data: documentTypesResponse, isLoading: documentTypesLoading } = useProofDocumentTypes()
-  const { data: careersResponse, isLoading: careersLoading } = useQuery({
-    queryKey: ['careers'],
-    queryFn: () => careerService.list()
-  })
+  const { data: allCareers = [], isLoading: careersLoading } = useListCareersFlat()
+
+  // Filter to active careers only (the flat hook returns all statuses).
+  const activeCareers = useMemo(
+    () => allCareers.filter((c: any) => !c.status || c.status === 'ACTIVE'),
+    [allCareers],
+  )
 
   // Extraer datos de las respuestas
   const documentTypes: ProofDocumentType[] = documentTypesResponse?.data || []
-  const careers = careersResponse?.data || []
+  const careers = activeCareers
 
   const form = useForm<FormData>({
     resolver: zodResolver(proofDocumentSchema),
@@ -59,17 +79,65 @@ export function SimpleProofDocumentForm({ onSubmit, isSubmitting, uploadProgress
       documentTypeId: '',
       evidenceIds: [],
       careerIds: [],
-      file: undefined
+      files: []
     }
   })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setSelectedFile(file)
-      form.setValue('file', file)
-    }
+    const incoming = Array.from(e.target.files ?? [])
+    if (incoming.length === 0) return
+    // Append to the existing selection so the user can pick files in batches
+    // without losing previous choices. Duplicates are filtered by name+size.
+    setSelectedFiles((prev) => {
+      const merged = [...prev]
+      for (const f of incoming) {
+        if (!merged.some((m) => m.name === f.name && m.size === f.size)) {
+          merged.push(f)
+        }
+      }
+      form.setValue('files', merged, { shouldValidate: true })
+      return merged
+    })
+    // Reset the input so picking the same file again works.
+    e.target.value = ''
   }
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => {
+      const next = prev.filter((_, i) => i !== index)
+      form.setValue('files', next, { shouldValidate: true })
+      return next
+    })
+  }
+
+  // Pre-fill evidence + career when the user lands here via the inventory
+  // tab's "Subir aquí" deep link. The careers query must have resolved before
+  // we set the career value so the checkbox renders checked.
+  useEffect(() => {
+    if (!prefillEvidenceId && !prefillCareerId) return
+    if (careersLoading) return
+    const key = `${prefillEvidenceId ?? ''}|${prefillCareerId ?? ''}`
+    if (prefillAppliedRef.current === key) return
+
+    if (prefillEvidenceId) {
+      form.setValue('evidenceIds', [prefillEvidenceId], { shouldValidate: true })
+    }
+    if (prefillCareerId) {
+      // Only set it if the career is actually in the active list — otherwise
+      // we'd set a phantom value that the UI cannot toggle off.
+      if (careers.some((c: any) => c.id === prefillCareerId)) {
+        form.setValue('careerIds', [prefillCareerId], { shouldValidate: true })
+      }
+    }
+
+    prefillAppliedRef.current = key
+    toast.info('Datos pre-seleccionados desde el reporte de inventario', {
+      description:
+        'Se cargó la evidencia y la carrera. Completá nombre, tipo y archivo(s) para finalizar la subida.',
+      duration: 6000,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefillEvidenceId, prefillCareerId, careersLoading, careers.length])
 
   const handleSubmit = async (data: FormData) => {
     await onSubmit(data)
@@ -152,44 +220,70 @@ export function SimpleProofDocumentForm({ onSubmit, isSubmitting, uploadProgress
                     )}
                   />
 
-                  {/* Archivo */}
+                  {/* Archivos (uno o varios — todos se suben a la misma carpeta) */}
                   <FormField
                     control={form.control}
-                    name="file"
+                    name="files"
                     render={() => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <FileText className="h-4 w-4" />
-                          Archivo
+                        <FormLabel className="flex items-center justify-between gap-2">
+                          <span className="flex items-center gap-2">
+                            <FileText className="h-4 w-4" />
+                            Archivos
+                          </span>
+                          <span className="text-xs font-normal text-muted-foreground">
+                            {selectedFiles.length} seleccionado{selectedFiles.length === 1 ? '' : 's'}
+                          </span>
                         </FormLabel>
                         <FormControl>
-                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 space-y-3">
                             <Input
                               type="file"
+                              multiple
                               onChange={handleFileChange}
                               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                               className="hidden"
                               id="file-upload"
                             />
-                            <label htmlFor="file-upload" className="cursor-pointer">
-                              {selectedFile ? (
-                                <div className="space-y-2">
-                                  <FileText className="h-8 w-8 mx-auto text-green-500" />
-                                  <p className="text-sm font-medium">{selectedFile.name}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                                  </p>
-                                </div>
-                              ) : (
-                                <div className="space-y-2">
-                                  <Upload className="h-8 w-8 mx-auto text-gray-400" />
-                                  <p className="text-sm">Haga clic para seleccionar un archivo</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    PDF, DOC, XLS, PPT (máx. 10MB)
-                                  </p>
-                                </div>
-                              )}
+                            <label
+                              htmlFor="file-upload"
+                              className="block cursor-pointer text-center py-4"
+                            >
+                              <Upload className="h-8 w-8 mx-auto text-gray-400" />
+                              <p className="text-sm mt-2">
+                                Haga clic para seleccionar uno o varios archivos
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                PDF, DOC, XLS, PPT (máx. 10MB c/u). Todos los archivos seleccionados se subirán juntos en la misma carpeta del documento.
+                              </p>
                             </label>
+
+                            {selectedFiles.length > 0 && (
+                              <ul className="space-y-1 max-h-40 overflow-y-auto text-sm">
+                                {selectedFiles.map((file, idx) => (
+                                  <li
+                                    key={`${file.name}-${file.size}-${idx}`}
+                                    className="flex items-center justify-between gap-2 px-2 py-1 rounded bg-muted/50"
+                                  >
+                                    <span className="flex items-center gap-2 truncate">
+                                      <FileText className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                                      <span className="truncate">{file.name}</span>
+                                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                                      </span>
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeFile(idx)}
+                                      className="text-xs text-destructive hover:underline flex-shrink-0"
+                                      aria-label={`Quitar ${file.name}`}
+                                    >
+                                      Quitar
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -222,13 +316,24 @@ export function SimpleProofDocumentForm({ onSubmit, isSubmitting, uploadProgress
                   <FormField
                     control={form.control}
                     name="careerIds"
-                    render={() => (
+                    render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Users className="h-4 w-4" />
-                          Carreras Afectadas
+                        <FormLabel className="flex items-center justify-between gap-2">
+                          <span className="flex items-center gap-2">
+                            <Users className="h-4 w-4" />
+                            Carreras Afectadas
+                          </span>
+                          <span className="text-xs font-normal text-muted-foreground">
+                            {(field.value?.length ?? 0)} / {careers.length} seleccionadas ·
+                            {' '}{careers.length} activas en el sistema
+                          </span>
                         </FormLabel>
                         <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto border rounded-md p-3">
+                          {careers.length === 0 && (
+                            <p className="text-xs text-muted-foreground italic py-2">
+                              No hay carreras activas disponibles.
+                            </p>
+                          )}
                           {careers.map((career: any) => (
                             <FormField
                               key={career.id}

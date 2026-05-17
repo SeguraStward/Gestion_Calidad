@@ -14,7 +14,12 @@ export class QualityEvidencesService extends GenericService<QualityEvidence, Qua
 
   protected readonly relationCheckConfig = {
     relationFields: ['proofDocuments', 'standardEvidences'],
-    errorMessage: 'Cannot delete Quality Evidence because it has associated proof documents or standard evidences.',
+    errorMessage: (entity: any, counts: Record<string, number>) => {
+      const parts: string[] = [];
+      if (counts.proofDocuments > 0) parts.push(`${counts.proofDocuments} documento(s) probatorio(s)`);
+      if (counts.standardEvidences > 0) parts.push(`${counts.standardEvidences} asociación(es) a estándar`);
+      return `No se puede eliminar la evidencia "${entity?.name ?? ''}" porque tiene ${parts.join(' y ')} activa(s). Elimina o desactiva esos elementos primero.`;
+    },
   };
 
   constructor(

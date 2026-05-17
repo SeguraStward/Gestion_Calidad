@@ -215,11 +215,24 @@ export class ProofDocumentsService extends GenericService<ProofDocument, ProofDo
   }
 
   /**
-   * Upload proof document to Google Drive and create all necessary relations
-   * This is the main method that orchestrates the entire upload process
+   * Upload proof document(s) to Google Drive and create all necessary relations.
+   *
+   * Folder layout (new):
+   *   …/{Evidence}/{DocumentType}/{Code}/
+   *     ├── {Code}_<filename>.pdf  (one or more files in the same upload)
+   *     └── {Code}_carreras.txt    (regenerated from DB after relations are saved)
+   *
+   * Duplicate detection here is intentionally minimal — the `code @unique`
+   * constraint already prevents real collisions, and within a single upload
+   * each archive lives inside its own per-upload folder, so name collisions
+   * across uploads are impossible. Same-name uploads to the same evidence
+   * are now allowed (different documents, different codes).
+   *
+   * `files` is the canonical input; if a legacy caller passes the singular
+   * `file` field we still accept it.
    */
   async uploadProofDocumentWithDrive(
-    file: any,
+    fileOrFiles: any | any[],
     uploadDto: UploadProofDocumentDto,
     accessToken: string,
     refreshToken?: string,
@@ -227,166 +240,156 @@ export class ProofDocumentsService extends GenericService<ProofDocument, ProofDo
     proofDocument: ProofDocumentDto;
     careerRelations: any[];
     folderPath: string;
+    uploadedFiles: Array<{ id: string; name: string; url: string; size: number }>;
   }> {
-    this.logger.log('🚀 Starting proof document upload with Google Drive integration');
-    this.logger.debug('Upload DTO:', uploadDto);
+    const files: any[] = Array.isArray(fileOrFiles) ? fileOrFiles : [fileOrFiles];
+    if (files.length === 0) {
+      throw new BadRequestException('At least one file is required');
+    }
+
+    this.logger.log(
+      `🚀 Starting proof document upload (${files.length} file${files.length > 1 ? 's' : ''})`,
+    );
 
     try {
-      // 1. Validate evidence exists and get full hierarchy
-      this.logger.log('📋 Step 1: Validating evidence and getting hierarchy...');
+      // 1. Validate evidence and fetch hierarchy + document type in parallel.
+      const [hierarchy, documentType] = await Promise.all([
+        this.getEvidenceHierarchy(uploadDto.evidenceId),
+        this.prisma.proofDocumentType.findUnique({
+          where: { id: uploadDto.proofDocumentTypeId },
+          select: { id: true, name: true, prefix: true },
+        }),
+      ]);
 
-      // Get full hierarchy: Evidence -> Standard -> Criterion -> Component -> Dimension
-      const hierarchy = await this.getEvidenceHierarchy(uploadDto.evidenceId);
-      this.logger.log('✅ Hierarchy retrieved:', {
-        dimension: hierarchy.dimension?.code,
-        component: hierarchy.component?.code,
-        criterion: hierarchy.criterion?.code,
-        standard: hierarchy.standard?.code,
-        evidence: hierarchy.evidence.code,
-      });
-
-      // 2. Check for duplicate documents in the database
-      this.logger.log('🔍 Step 2: Checking for duplicate documents in database...');
-
-      // Extract original filename without extension for comparison
-      const originalFileName = file.originalname;
-      const fileNameWithoutExt = originalFileName.substring(0, originalFileName.lastIndexOf('.')) || originalFileName;
-
-      // Check if a document with similar name already exists in this evidence
-      const existingDocuments = await this.prisma.proofDocument.findMany({
-        where: {
-          evidenceId: uploadDto.evidenceId,
-          status: 'ACTIVE',
-          OR: [
-            { fileName: { contains: fileNameWithoutExt, mode: 'insensitive' } },
-            { name: { equals: uploadDto.name, mode: 'insensitive' } },
-          ],
-        },
-        select: {
-          id: true,
-          name: true,
-          code: true,
-          fileName: true,
-        },
-      });
-
-      if (existingDocuments.length > 0) {
-        const existing = existingDocuments[0];
-        this.logger.warn(`⚠️ Duplicate document found in database: ${existing.name} (${existing.code})`);
-        throw new BadRequestException(
-          `Ya existe un documento similar en esta evidencia:\n` +
-          `- Nombre: "${existing.name}"\n` +
-          `- Código: ${existing.code}\n` +
-          `- Archivo: ${existing.fileName}\n\n` +
-          `Por favor, usa un nombre diferente o elimina el documento existente primero.`
-        );
+      if (!documentType) {
+        throw new BadRequestException('Proof document type not found');
       }
 
-      this.logger.log('✅ No duplicate documents found in database');
+      this.logger.log('✅ Hierarchy + type retrieved', {
+        evidence: hierarchy.evidence.code,
+        documentType: documentType.name,
+      });
 
-      // 3. Get career names for the _carreras.txt file
-      this.logger.log('👥 Step 3: Getting career names...');
-      const careers = await Promise.all(
-        uploadDto.careerIds.map(async (careerId) => {
-          const career = await this.prisma.career.findUnique({
-            where: { id: careerId },
-            select: { name: true }
-          });
-          return career?.name || `Career ${careerId}`;
-        }),
+      // 2. Generate the document code FIRST so the folder is named after it.
+      //    DocumentCounter.upsert is atomic in Mongo, so concurrent uploads
+      //    each get a distinct code.
+      const documentCode = await this.proofDocumentsRepository.generateNextCode(
+        uploadDto.proofDocumentTypeId,
       );
-      this.logger.log(`✅ Found ${careers.length} careers:`, careers);
+      this.logger.log(`🔢 Generated code: ${documentCode}`);
 
-      // 4. Generate document code
-      this.logger.log('🔢 Step 4: Generating document code...');
-      const documentCode = await this.proofDocumentsRepository.generateNextCode(uploadDto.proofDocumentTypeId);
-      this.logger.log(`✅ Generated code: ${documentCode}`);
-
-      // 5. Create folder structure in Google Drive
-      this.logger.log('📁 Step 5: Creating folder structure in Google Drive...');
-      const folderStructure = {
-        dimensionCode: hierarchy.dimension?.code || 'DIM-00',
-        dimensionName: hierarchy.dimension?.name || 'Unknown',
-        componentCode: hierarchy.component?.code,
-        componentName: hierarchy.component?.name,
-        criterionCode: hierarchy.criterion?.code,
-        criterionName: hierarchy.criterion?.name,
-        standardCode: hierarchy.standard?.code,
-        standardName: hierarchy.standard?.name,
-        evidenceCode: hierarchy.evidence.code,
-        evidenceName: hierarchy.evidence.name,
-      };
-
+      // 3. Build the Drive folder tree, including type + per-upload folders.
       const driveFolder = await this.googleDriveService.createFolderStructure(
-        folderStructure,
+        {
+          dimensionCode: hierarchy.dimension?.code || 'DIM-00',
+          dimensionName: hierarchy.dimension?.name || 'Unknown',
+          componentCode: hierarchy.component?.code,
+          componentName: hierarchy.component?.name,
+          criterionCode: hierarchy.criterion?.code,
+          criterionName: hierarchy.criterion?.name,
+          standardCode: hierarchy.standard?.code,
+          standardName: hierarchy.standard?.name,
+          evidenceCode: hierarchy.evidence.code,
+          evidenceName: hierarchy.evidence.name,
+          documentTypeName: documentType.name,
+          documentCode,
+        },
         accessToken,
         refreshToken,
       );
-      this.logger.log(`✅ Folder created: ${driveFolder.path}`);
 
-      // 6. Rename file with document code
-      const fileExtension = file.originalname.split('.').pop();
-      const newFileName = `${documentCode}_${file.originalname.replace(/\s+/g, '-')}`;
+      const uploadFolderId = driveFolder.uploadFolderId ?? driveFolder.id;
+      this.logger.log(`📁 Upload folder ready: ${driveFolder.path} (${uploadFolderId})`);
 
-      // 7. Upload file to Google Drive (with duplicate check)
-      this.logger.log(`📤 Step 6: Uploading file to Google Drive: ${newFileName}`);
-      const uploadedFile = await this.googleDriveService.uploadFile(
-        { ...file, originalname: newFileName },
-        driveFolder.id,
-        careers,
-        accessToken,
-        refreshToken,
-      );
-      this.logger.log(`✅ File uploaded: ${uploadedFile.url}`);
+      // 4. Upload every file into the per-upload folder. Names are namespaced
+      //    with the document code so even after a future rename collisions
+      //    within Drive are visually obvious.
+      const uploadedFiles: Array<{ id: string; name: string; url: string; size: number }> = [];
+      let primaryUploaded: { id: string; name: string; url: string; size: number; mimeType: string } | undefined;
 
-      // 8. Create proof document in database
-      this.logger.log('💾 Step 7: Creating proof document in database...');
-      const proofDocumentData: CreateProofDocumentDto = {
+      for (const f of files) {
+        const newFileName = `${documentCode}_${f.originalname.replace(/\s+/g, '-')}`;
+        const result = await this.googleDriveService.uploadFile(
+          { ...f, originalname: newFileName },
+          uploadFolderId,
+          // We pass an empty list — the canonical `_carreras.txt` is
+          // regenerated from DB right after the document and relations exist.
+          [],
+          accessToken,
+          refreshToken,
+        );
+        uploadedFiles.push({
+          id: result.id,
+          name: result.name,
+          url: result.url,
+          size: result.size,
+        });
+        if (!primaryUploaded) primaryUploaded = result;
+      }
+
+      if (!primaryUploaded) {
+        throw new BadRequestException('No file could be uploaded');
+      }
+
+      // 5. Persist the proof document with the new folder IDs. Use the first
+      //    uploaded file as the primary `fileUrl` / `fileName` so the legacy
+      //    UI keeps working.
+      const fileExtension = primaryUploaded.name.split('.').pop();
+      const proofDocumentData: CreateProofDocumentDto & {
+        googleDriveTypeFolderId?: string;
+        googleDriveUploadFolderId?: string;
+      } = {
         name: uploadDto.name,
         description: uploadDto.description,
-        fileUrl: uploadedFile.url,
-        fileName: newFileName,
+        fileUrl: primaryUploaded.url,
+        fileName: primaryUploaded.name,
         fileType: fileExtension || 'unknown',
-        fileSize: uploadedFile.size,
+        fileSize: primaryUploaded.size,
         evidenceId: uploadDto.evidenceId,
         proofDocumentTypeId: uploadDto.proofDocumentTypeId,
-        googleDriveFileId: uploadedFile.id,
-        googleDriveFolderId: driveFolder.id,
+        googleDriveFileId: primaryUploaded.id,
+        googleDriveFolderId: driveFolder.evidenceFolderId ?? uploadFolderId,
+        googleDriveTypeFolderId: driveFolder.typeFolderId,
+        googleDriveUploadFolderId: driveFolder.uploadFolderId,
       };
 
-      const proofDocument = await this.save(proofDocumentData);
-      this.logger.log(`✅ Proof document created: ${JSON.stringify(proofDocument, null, 2)}`);
-      this.logger.log(`✅ Proof document ID: ${proofDocument?.id}, Code: ${proofDocument?.code}`);
+      const proofDocument = await this.save(proofDocumentData as CreateProofDocumentDto);
+      this.logger.log(`✅ Proof document persisted: ${proofDocument.code} (${proofDocument.id})`);
 
-      // 9. Create career-proof-document relations
-      this.logger.log('🔗 Step 8: Creating career-proof-document relations...');
+      // 6. Create career-proof-document relations. We don't enforce uniqueness
+      //    here because the upload is a fresh document; for the merge flow,
+      //    use `appendDocumentCareers`.
       const careerRelations = await Promise.all(
-        uploadDto.careerIds.map(async (careerId) => {
-          return this.prisma.careerProofDocument.create({
-            data: {
-              careerId: careerId,
-              proofDocumentId: proofDocument.id,
-            },
-          });
-        }),
+        uploadDto.careerIds.map((careerId) =>
+          this.prisma.careerProofDocument.create({
+            data: { careerId, proofDocumentId: proofDocument.id },
+          }),
+        ),
       );
-      this.logger.log(`✅ Created ${careerRelations.length} career relations`);
+
+      // 7. Now that the DB is the source of truth, write `_carreras.txt`
+      //    from it. We swallow failures so a metadata-file issue cannot
+      //    invalidate an otherwise successful upload.
+      try {
+        await this.googleDriveService.regenerateCarrerasFileFromDb(
+          proofDocument.id,
+          accessToken,
+          refreshToken,
+        );
+      } catch (err: any) {
+        this.logger.warn(`Could not regenerate _carreras.txt: ${err?.message || err}`);
+      }
 
       this.logger.log('🎉 Upload completed successfully!');
-
-      const result = {
+      return {
         proofDocument,
         careerRelations,
         folderPath: driveFolder.path,
+        uploadedFiles,
       };
-
-      this.logger.log('📦 Returning result:', JSON.stringify(result, null, 2));
-      this.logger.log('📦 ProofDocument in result:', !!result.proofDocument);
-      this.logger.log('📦 ProofDocument code:', result.proofDocument?.code);
-
-      return result;
     } catch (error: any) {
       this.logger.error('❌ Error uploading proof document:', error);
+      if (error instanceof BadRequestException) throw error;
       throw new BadRequestException(`Error uploading proof document: ${error.message}`);
     }
   }
@@ -639,95 +642,55 @@ export class ProofDocumentsService extends GenericService<ProofDocument, ProofDo
   }
 
   /**
-   * Update document careers (carreras asociadas)
+   * Replace ALL careers of a document with a new list.
+   * Use this when the user explicitly wants to *edit* the set.
+   * For non-destructive merging, prefer `appendDocumentCareers`.
    */
   async updateDocumentCareers(
     documentId: string,
     careerIds: string[],
   ): Promise<void> {
-    this.logger.log(`📋 Updating careers for document: ${documentId}`);
+    this.logger.log(`📋 Replacing careers for document: ${documentId}`);
 
-    // Get document info
     const document = await this.proofDocumentsRepository.findById(documentId);
     if (!document) {
       throw new BadRequestException(`Document with id ${documentId} not found`);
     }
 
-    // Get old careers for history logging
     const oldCareers = await this.prisma.careerProofDocument.findMany({
       where: { proofDocumentId: documentId },
       include: { career: true },
     });
 
-    // Delete existing relations
     await this.prisma.careerProofDocument.deleteMany({
       where: { proofDocumentId: documentId },
     });
 
-    // Create new relations
     await Promise.all(
       careerIds.map((careerId) =>
         this.prisma.careerProofDocument.create({
-          data: {
-            proofDocumentId: documentId,
-            careerId,
-          },
+          data: { proofDocumentId: documentId, careerId },
         }),
       ),
     );
 
-    // Get new career names
-    const newCareers = await this.prisma.career.findMany({
-      where: { id: { in: careerIds } },
-      select: { name: true },
-    });
-    const newCareerNames = newCareers.map((c) => c.name);
-
-    // Update _carreras.txt file in Google Drive
-    if (document.googleDriveFolderId && newCareerNames.length > 0) {
-      try {
-        this.logger.log('📁 Updating _carreras.txt file in Google Drive...');
-
-        // Get user's Google Drive tokens
-        const user = await this.prisma.user.findUnique({
-          where: { id: this.request.userId || '' },
-          select: {
-            googleAccessToken: true,
-            googleRefreshToken: true,
-          },
-        });
-
-        if (user?.googleAccessToken) {
-          await this.googleDriveService.updateCarrerasFile(
-            document.googleDriveFolderId,
-            document.code,
-            newCareerNames,
-            user.googleAccessToken,
-            user.googleRefreshToken || undefined,
-          );
-          this.logger.log('✅ _carreras.txt file updated in Google Drive');
-        } else {
-          this.logger.warn('⚠️ Cannot update _carreras.txt: User tokens not available');
-        }
-      } catch (error) {
-        this.logger.warn('⚠️ Failed to update _carreras.txt file in Drive:', error);
-        // Continue even if Drive update fails
-      }
-    }
+    await this.regenerateCarrerasFromDbSafe(documentId);
 
     // Log to history
     try {
       const oldCareerNames = oldCareers.map((c) => c.career?.name).join(', ');
-      const newCareerNamesStr = newCareerNames.join(', ');
-
+      const newCareers = await this.prisma.career.findMany({
+        where: { id: { in: careerIds } },
+        select: { name: true },
+      });
       await this.historyService.logChange({
         documentId,
         userId: this.request.userId || 'system',
         changeType: 'CAREERS_UPDATED',
         fieldChanged: 'careers',
         oldValue: oldCareerNames,
-        newValue: newCareerNamesStr,
-        description: `Carreras actualizadas`,
+        newValue: newCareers.map((c) => c.name).join(', '),
+        description: `Carreras actualizadas (reemplazo)`,
         ipAddress: this.request.ipAddress,
         userAgent: this.request.userAgent,
       });
@@ -735,7 +698,95 @@ export class ProofDocumentsService extends GenericService<ProofDocument, ProofDo
       this.logger.warn('Failed to log careers update to history:', error);
     }
 
-    this.logger.log('✅ Careers updated successfully');
+    this.logger.log('✅ Careers replaced successfully');
+  }
+
+  /**
+   * Append careers to a document without losing the existing ones (union).
+   * Used by the re-upload flow when the user uploads "more careers" against
+   * an already-existing document — we never want to drop relations silently.
+   * Returns the number of careers actually added (i.e. excluding duplicates).
+   */
+  async appendDocumentCareers(
+    documentId: string,
+    careerIds: string[],
+  ): Promise<{ added: number; alreadyPresent: number }> {
+    if (!careerIds.length) {
+      return { added: 0, alreadyPresent: 0 };
+    }
+
+    const document = await this.proofDocumentsRepository.findById(documentId);
+    if (!document) {
+      throw new BadRequestException(`Document with id ${documentId} not found`);
+    }
+
+    const existing = await this.prisma.careerProofDocument.findMany({
+      where: {
+        proofDocumentId: documentId,
+        careerId: { in: careerIds },
+      },
+      select: { careerId: true },
+    });
+    const existingIds = new Set(existing.map((r) => r.careerId));
+    const toAdd = careerIds.filter((id) => !existingIds.has(id));
+
+    if (toAdd.length === 0) {
+      this.logger.log(`appendDocumentCareers: all ${careerIds.length} careers already linked`);
+      return { added: 0, alreadyPresent: careerIds.length };
+    }
+
+    await Promise.all(
+      toAdd.map((careerId) =>
+        this.prisma.careerProofDocument.create({
+          data: { proofDocumentId: documentId, careerId },
+        }),
+      ),
+    );
+
+    await this.regenerateCarrerasFromDbSafe(documentId);
+
+    try {
+      const addedNames = await this.prisma.career.findMany({
+        where: { id: { in: toAdd } },
+        select: { name: true },
+      });
+      await this.historyService.logChange({
+        documentId,
+        userId: this.request.userId || 'system',
+        changeType: 'CAREERS_UPDATED',
+        fieldChanged: 'careers',
+        oldValue: '',
+        newValue: addedNames.map((c) => c.name).join(', '),
+        description: `Carreras agregadas (${toAdd.length})`,
+        ipAddress: this.request.ipAddress,
+        userAgent: this.request.userAgent,
+      });
+    } catch (error) {
+      this.logger.warn('Failed to log careers append to history:', error);
+    }
+
+    return { added: toAdd.length, alreadyPresent: careerIds.length - toAdd.length };
+  }
+
+  /** Helper that regenerates `_carreras.txt` using the current user's tokens. */
+  private async regenerateCarrerasFromDbSafe(documentId: string): Promise<void> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: this.request.userId || '' },
+        select: { googleAccessToken: true, googleRefreshToken: true },
+      });
+      if (!user?.googleAccessToken) {
+        this.logger.warn('Cannot regenerate _carreras.txt: user has no Google access token');
+        return;
+      }
+      await this.googleDriveService.regenerateCarrerasFileFromDb(
+        documentId,
+        user.googleAccessToken,
+        user.googleRefreshToken || undefined,
+      );
+    } catch (error: any) {
+      this.logger.warn(`regenerateCarrerasFromDbSafe failed: ${error?.message || error}`);
+    }
   }
 
   /**
@@ -755,23 +806,26 @@ export class ProofDocumentsService extends GenericService<ProofDocument, ProofDo
     }
 
     const oldFileName = document.fileName;
-    const oldFileUrl = document.fileUrl;
 
-    // Get current careers to maintain the _carreras.txt file
-    const currentCareers = await this.prisma.careerProofDocument.findMany({
-      where: { proofDocumentId: documentId },
-      include: { career: true },
-    });
-    const careerNames = currentCareers.map((c) => c.career?.name || '').filter(Boolean);
+    // Prefer the per-upload folder when present; fall back to the evidence
+    // folder for legacy documents that pre-date the new structure.
+    const targetFolderId =
+      (document as any).googleDriveUploadFolderId || document.googleDriveFolderId;
+    if (!targetFolderId) {
+      throw new BadRequestException(
+        'El documento no tiene una carpeta de Drive asociada; no se puede reemplazar el archivo.',
+      );
+    }
 
-    // Upload new file to Google Drive (same folder)
+    // Upload new file to Google Drive. We no longer pass careerNames here —
+    // _carreras.txt is regenerated from DB right after.
     const fileExtension = file.originalname.split('.').pop();
     const newFileName = `${document.code}_${file.originalname.replace(/\s+/g, '-')}`;
 
     const uploadedFile = await this.googleDriveService.uploadFile(
       { ...file, originalname: newFileName },
-      document.googleDriveFolderId!,
-      careerNames, // Pass current careers to maintain _carreras.txt
+      targetFolderId,
+      [],
       accessToken,
       refreshToken,
     );
@@ -802,6 +856,19 @@ export class ProofDocumentsService extends GenericService<ProofDocument, ProofDo
     };
 
     const updated = await this.update(documentId, updateData);
+
+    // Regenerate _carreras.txt from DB after replacing — the careers may
+    // have been edited between uploads, and the file lives next to the new
+    // upload now.
+    try {
+      await this.googleDriveService.regenerateCarrerasFileFromDb(
+        documentId,
+        accessToken,
+        refreshToken,
+      );
+    } catch (err: any) {
+      this.logger.warn(`Could not regenerate _carreras.txt after replace: ${err?.message || err}`);
+    }
 
     // Log to history
     try {

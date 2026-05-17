@@ -66,6 +66,16 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
       updated?: (e: T) => string
       deleted?: () => string
     }
+    /**
+     * Suppress the built-in toast notifications so the consumer can render
+     * its own UI (e.g. an AlertDialog with the full backend error message).
+     * Granular per mutation kind.
+     */
+    silent?: {
+      create?: { success?: boolean; error?: boolean }
+      update?: { success?: boolean; error?: boolean }
+      remove?: { success?: boolean; error?: boolean }
+    }
   }
 ) {
   /* ─────────────── Collection ─────────────── */
@@ -127,9 +137,12 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
           }
         })
 
-        toast.success(opts?.messages?.created?.(data) ?? 'Creado exitosamente') // User-facing: Spanish
+        if (!opts?.silent?.create?.success) {
+          toast.success(opts?.messages?.created?.(data) ?? 'Creado exitosamente') // User-facing: Spanish
+        }
       },
       onError: (error: any) => {
+        if (opts?.silent?.create?.error) return
         const errorMessage = getApiErrorMessage(error)
         toast.error(`Error al crear: ${errorMessage}`) // User-facing: Spanish
       }
@@ -162,11 +175,14 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
           })
         }
 
-        toast.success(opts?.messages?.updated?.(data) ?? 'Actualizado correctamente') // User-facing: Spanish
+        if (!opts?.silent?.update?.success) {
+          toast.success(opts?.messages?.updated?.(data) ?? 'Actualizado correctamente') // User-facing: Spanish
+        }
       },
       onError: (error: any) => {
-        const errorMessage = getApiErrorMessage(error)
         console.error('❌ Error en update mutation:', error.response?.data || error.message || error)
+        if (opts?.silent?.update?.error) return
+        const errorMessage = getApiErrorMessage(error)
         toast.error(`Error al actualizar: ${errorMessage}`) // User-facing: Spanish
       }
     })
@@ -182,11 +198,14 @@ export function createGenericHooks<T, CreateDTO, UpdateDTO = Partial<T>, Filters
           exact: false
         })
 
-        toast.success(opts?.messages?.deleted?.() ?? 'Eliminado correctamente') // User-facing: Spanish
+        if (!opts?.silent?.remove?.success) {
+          toast.success(opts?.messages?.deleted?.() ?? 'Eliminado correctamente') // User-facing: Spanish
+        }
       },
       onError: (error: any) => {
+        if (opts?.silent?.remove?.error) return
         const errorMessage = getApiErrorMessage(error)
-         toast.error(`Error al eliminar: ${errorMessage}`) // User-facing: Spanish
+        toast.error(`Error al eliminar: ${errorMessage}`) // User-facing: Spanish
       }
     })
   }

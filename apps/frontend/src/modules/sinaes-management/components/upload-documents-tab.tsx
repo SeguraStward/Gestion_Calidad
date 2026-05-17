@@ -15,7 +15,17 @@ import { proofDocumentUploadService } from '../services/proof-document-upload.se
  * - Career-proof-document relations
  */
 
-export const UploadDocumentsTab = () => {
+interface UploadDocumentsTabProps {
+  /** Evidence to pre-select on mount (deep-link from inventory "Subir aquí"). */
+  prefillEvidenceId?: string
+  /** Career to pre-select on mount. */
+  prefillCareerId?: string
+}
+
+export const UploadDocumentsTab = ({
+  prefillEvidenceId,
+  prefillCareerId,
+}: UploadDocumentsTabProps = {}) => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
 
@@ -24,85 +34,54 @@ export const UploadDocumentsTab = () => {
     setUploadProgress(0)
 
     try {
-      // Validar que se hayan seleccionado evidencias
       if (!data.evidenceIds || data.evidenceIds.length === 0) {
         toast.error('Debe seleccionar al menos una evidencia SINAES')
         return
       }
-
-      // Validar que haya al menos una carrera seleccionada
       if (!data.careerIds || data.careerIds.length === 0) {
         toast.error('Debe seleccionar al menos una carrera')
         return
       }
-
-      console.log('📤 [UploadDocumentsTab] Starting upload process for', data.evidenceIds.length, 'evidence(s)')
-      setUploadProgress(10)
-
-      // Subir documento para la primera evidencia usando endpoint integrado
-      // Este endpoint hace TODO: Drive upload, DB creation, relations, code generation
-      console.log('� [UploadDocumentsTab] Uploading for first evidence:', data.evidenceIds[0])
-
-      const result = await proofDocumentUploadService.uploadProofDocument({
-        file: data.file,
-        name: data.name,
-        description: data.description,
-        evidenceId: data.evidenceIds[0], // Primera evidencia
-        proofDocumentTypeId: data.documentTypeId,
-        careerIds: data.careerIds
-      })
-
-      console.log('✅ [UploadDocumentsTab] Upload result received:', result)
-      console.log('✅ [UploadDocumentsTab] Result type:', typeof result)
-      console.log('✅ [UploadDocumentsTab] Has proofDocument?', !!result?.proofDocument)
-      console.log('✅ [UploadDocumentsTab] ProofDocument:', result?.proofDocument)
-
-      if (!result || !result.proofDocument) {
-        console.error('❌ [UploadDocumentsTab] Invalid response structure:', result)
-        throw new Error('El servidor no devolvió el documento probatorio. Por favor, verifica los logs del backend.')
+      if (!Array.isArray(data.files) || data.files.length === 0) {
+        toast.error('Debe seleccionar al menos un archivo')
+        return
       }
 
-      console.log('✅ [UploadDocumentsTab] First document uploaded:', result.proofDocument.code)
-      setUploadProgress(50)
+      const totalEvidences: number = data.evidenceIds.length
+      setUploadProgress(5)
 
-      // Si hay múltiples evidencias, crear documentos adicionales
-      if (data.evidenceIds.length > 1) {
-        console.log('📚 [UploadDocumentsTab] Creating documents for', data.evidenceIds.length - 1, 'additional evidence(s)')
+      // Each evidence becomes its OWN proof document (with its own code and
+      // upload folder). Files in `data.files` are uploaded together inside
+      // each document's folder.
+      const results: Array<{ code: string; careers: number }> = []
+      for (let i = 0; i < totalEvidences; i++) {
+        const result = await proofDocumentUploadService.uploadProofDocument({
+          files: data.files,
+          name: data.name,
+          description: data.description,
+          evidenceId: data.evidenceIds[i],
+          proofDocumentTypeId: data.documentTypeId,
+          careerIds: data.careerIds,
+        })
+        results.push({
+          code: result.proofDocument.code,
+          careers: result.careerRelations.length,
+        })
+        setUploadProgress(Math.round(((i + 1) / totalEvidences) * 100))
+      }
 
-        const progressStep = 50 / (data.evidenceIds.length - 1)
-
-        for (let i = 1; i < data.evidenceIds.length; i++) {
-          console.log(`� [UploadDocumentsTab] Uploading for evidence ${i + 1}/${data.evidenceIds.length}:`, data.evidenceIds[i])
-
-          await proofDocumentUploadService.uploadProofDocument({
-            file: data.file,
-            name: data.name,
-            description: data.description,
-            evidenceId: data.evidenceIds[i],
-            proofDocumentTypeId: data.documentTypeId,
-            careerIds: data.careerIds
-          })
-
-          setUploadProgress(50 + (progressStep * i))
-        }
-
-        setUploadProgress(100)
-
-        toast.success(`¡${data.evidenceIds.length} documentos creados exitosamente!`, {
-          description: `Documento ${result.proofDocument.code} y ${data.evidenceIds.length - 1} más asociados a ${result.careerRelations.length} carrera(s)`,
-          duration: 7000
+      const firstCode = results[0]?.code ?? '?'
+      if (results.length > 1) {
+        toast.success(`¡${results.length} documentos creados exitosamente!`, {
+          description: `${firstCode} y ${results.length - 1} más, cada uno con ${data.files.length} archivo(s) asociado(s) a ${data.careerIds.length} carrera(s)`,
+          duration: 7000,
         })
       } else {
-        setUploadProgress(100)
-
         toast.success('¡Documento subido exitosamente!', {
-          description: `Documento ${result.proofDocument.code} creado y asociado a ${result.careerRelations.length} carrera(s)`,
-          duration: 5000
+          description: `${firstCode} con ${data.files.length} archivo(s), asociado a ${data.careerIds.length} carrera(s)`,
+          duration: 5000,
         })
       }
-
-      console.log('🎉 [UploadDocumentsTab] Upload process completed successfully')
-
     } catch (error: any) {
       console.error('❌ [UploadDocumentsTab] Upload failed:', error)
 
@@ -137,6 +116,8 @@ export const UploadDocumentsTab = () => {
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         uploadProgress={uploadProgress}
+        prefillEvidenceId={prefillEvidenceId}
+        prefillCareerId={prefillCareerId}
       />
     </div>
   )

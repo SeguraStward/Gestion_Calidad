@@ -14,9 +14,11 @@ model ProofDocument {
   proofDocumentTypeId String  @db.ObjectId
 
   // Google Drive metadata
-  googleDriveFileId   String? // Google Drive file ID
-  googleDriveFolderId String? // Parent folder ID in Google Drive
-  googleDriveVersion  String? // Version tracking for updates
+  googleDriveFileId         String? // Google Drive file ID
+  googleDriveFolderId       String? // Evidence folder ID in Google Drive (legacy + still set)
+  googleDriveTypeFolderId   String? // Folder for the document type (e.g. "Convenio/")
+  googleDriveUploadFolderId String? // Folder for this specific upload (e.g. "CONV-001/")
+  googleDriveVersion        String? // Version tracking for updates
 
   status Status @default(ACTIVE)
 

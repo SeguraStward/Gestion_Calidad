@@ -62,16 +62,17 @@ export const useDocumentAssignment = create<DocumentAssignmentState & DocumentAs
       selectedEvidences: state.selectedEvidences.filter(e => e.evidence.id !== evidenceId)
     })),
 
-  toggleEvidence: (evidence) => {
-    const state = get()
-    const isSelected = state.selectedEvidences.some(e => e.evidence.id === evidence.evidence.id)
-
-    if (isSelected) {
-      get().removeEvidence(evidence.evidence.id)
-    } else {
-      get().addEvidence(evidence)
-    }
-  },
+  toggleEvidence: (evidence) =>
+    set((state) => {
+      const isSelected = state.selectedEvidences.some(
+        (e) => e.evidence.id === evidence.evidence.id,
+      )
+      return {
+        selectedEvidences: isSelected
+          ? state.selectedEvidences.filter((e) => e.evidence.id !== evidence.evidence.id)
+          : [...state.selectedEvidences, evidence],
+      }
+    }),
 
   setCareerIds: (careerIds) => set({ selectedCareerIds: careerIds }),
 

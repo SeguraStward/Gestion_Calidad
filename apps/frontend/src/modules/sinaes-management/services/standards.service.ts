@@ -23,5 +23,6 @@ export const {
     created: () => 'Estándar creado con éxito',
     updated: () => 'Estándar actualizado con éxito',
     deleted: () => 'Estándar eliminado con éxito'
-  }
+  },
+  silent: { remove: { error: true } }
 })

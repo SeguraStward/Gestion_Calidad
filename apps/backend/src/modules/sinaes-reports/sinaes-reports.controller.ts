@@ -22,6 +22,8 @@ import { SinaesReportsService } from './sinaes-reports.service';
 import { PdfGeneratorService } from './pdf-generator.service';
 import { GenerateReportFiltersDto } from './dtos/generate-report-filters.dto';
 import { ComplianceReportDto } from './dtos/compliance-report.dto';
+import { DocumentsByCareerFiltersDto } from './dtos/documents-by-career-filters.dto';
+import { DocumentsByCareerReportDto } from './dtos/documents-by-career.dto';
 import { ResourceName } from '../auth/decorators/resource-name.decorator';
 import { JwtAuthGuard } from '@src/modules/auth/guards';
 
@@ -62,6 +64,48 @@ export class SinaesReportsController {
     const userId = user?.sub || user?.id;
 
     return this.sinaesReportsService.generateComplianceReport(filters, userId);
+  }
+
+  /**
+   * Inventory-style report by career. Returns counts (no compliance %) and
+   * the hierarchy locations where each career has documents — plus the
+   * gaps (evidences with zero documents for that career).
+   *
+   * `careerIds` may arrive as a comma-separated string from the query parser;
+   * it is split here before passing it to the service.
+   */
+  @Get('documents-by-career')
+  @ApiOperation({
+    summary:
+      'Documents-by-career inventory: counts per hierarchy location + list of gaps. No compliance percentages.',
+  })
+  @ApiQuery({ name: 'careerIds', required: false, description: 'Comma-separated career IDs. Omit to include all active careers.' })
+  @ApiQuery({ name: 'dimensionId', required: false })
+  @ApiQuery({ name: 'componentId', required: false })
+  @ApiQuery({ name: 'criterionId', required: false })
+  @ApiResponse({ status: 200, type: DocumentsByCareerReportDto })
+  async generateDocumentsByCareer(
+    @Query('careerIds') careerIdsRaw: string | undefined,
+    @Query() rest: DocumentsByCareerFiltersDto,
+    @Req() request: ExpressRequest & { user?: { sub?: string; id?: string } },
+  ): Promise<DocumentsByCareerReportDto> {
+    const userId = request.user?.sub || request.user?.id;
+    const careerIds = careerIdsRaw
+      ? careerIdsRaw
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : undefined;
+
+    return this.sinaesReportsService.generateDocumentsByCareer(
+      {
+        careerIds,
+        dimensionId: rest.dimensionId,
+        componentId: rest.componentId,
+        criterionId: rest.criterionId,
+      },
+      userId,
+    );
   }
 
   /**
@@ -210,6 +254,53 @@ export class SinaesReportsController {
         'Error generating PDF',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  /**
+   * Export the documents-by-career inventory as a PDF. Receives the already-
+   * generated report payload (no second DB round-trip), mirrors the pattern
+   * of `compliance/export-pdf-temp`.
+   */
+  @Post('documents-by-career/export-pdf-temp')
+  @ApiOperation({ summary: 'Export documents-by-career inventory as PDF' })
+  async exportInventoryPdf(
+    @Body() report: DocumentsByCareerReportDto,
+    @Res() res: ResponseType,
+  ): Promise<void> {
+    this.logger.log(
+      `📄 Exporting inventory PDF (${report?.careers?.length ?? 0} careers)`,
+    );
+
+    try {
+      const normalized: DocumentsByCareerReportDto = {
+        ...report,
+        generatedAt: report.generatedAt || new Date(),
+        summary: report.summary || {
+          totalCareers: 0,
+          totalDocuments: 0,
+          careersWithDocuments: 0,
+          careersWithoutDocuments: 0,
+          totalEvidences: 0,
+        },
+        careers: report.careers || [],
+        filters: report.filters || {},
+      };
+
+      const pdfBuffer = await this.pdfGeneratorService.generateInventoryPdf(normalized);
+      const filename = `Inventario_Documentos_por_Carrera_${new Date().toISOString().split('T')[0]}.pdf`;
+
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length': pdfBuffer.length,
+      });
+      res.send(pdfBuffer);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      const stack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`❌ Error exporting inventory PDF: ${message}`, stack);
+      throw new HttpException('Error generating inventory PDF', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

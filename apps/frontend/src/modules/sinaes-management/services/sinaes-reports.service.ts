@@ -6,6 +6,10 @@ import type {
   SavedComplianceReport,
   ReportsListResponse,
 } from '../types/sinaes-reports.types';
+import type {
+  DocumentsByCareerFilters,
+  DocumentsByCareerReport,
+} from '../types/documents-by-career.types';
 
 /**
  * Query keys para React Query
@@ -134,6 +138,27 @@ class SinaesReportsService {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
   }
+
+  /**
+   * Export the documents-by-career inventory as a PDF. Sends the already-
+   * computed report payload to the backend (mirrors `exportTempReportPdf`).
+   */
+  async downloadInventoryPdf(report: DocumentsByCareerReport): Promise<void> {
+    const response = await HttpClient.post(
+      '/sinaes-reports/documents-by-career/export-pdf-temp',
+      report,
+      { responseType: 'blob' },
+    );
+    const blob: Blob = response.data;
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Inventario_Documentos_por_Carrera_${new Date().toISOString().split('T')[0]}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
 }
 
 export const sinaesReportsService = new SinaesReportsService();
@@ -207,5 +232,43 @@ export function useExportTempReportPdf() {
   return useMutation({
     mutationFn: (report: ComplianceReport) =>
       sinaesReportsService.downloadTempReportPdf(report),
+  });
+}
+
+/**
+ * Hook: Exportar PDF del inventario por carrera.
+ */
+export function useExportInventoryPdf() {
+  return useMutation({
+    mutationFn: (report: DocumentsByCareerReport) =>
+      sinaesReportsService.downloadInventoryPdf(report),
+  });
+}
+
+/**
+ * Documents-by-career inventory (no compliance %; just counts and gaps).
+ * Runs whenever `filters` changes; it's a lightweight read-only report so we
+ * use `useQuery` rather than a mutation.
+ */
+export function useDocumentsByCareer(
+  filters: DocumentsByCareerFilters,
+  enabled: boolean = true,
+) {
+  return useQuery<DocumentsByCareerReport>({
+    queryKey: ['sinaes-reports', 'documents-by-career', filters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filters.careerIds?.length) params.append('careerIds', filters.careerIds.join(','));
+      if (filters.dimensionId) params.append('dimensionId', filters.dimensionId);
+      if (filters.componentId) params.append('componentId', filters.componentId);
+      if (filters.criterionId) params.append('criterionId', filters.criterionId);
+      const qs = params.toString();
+      const url = `/sinaes-reports/documents-by-career${qs ? `?${qs}` : ''}`;
+      const response = await HttpClient.get<DocumentsByCareerReport>(url);
+      return response.data;
+    },
+    enabled,
+    // Keep it fresh-ish but avoid spam — admins generate this on demand.
+    staleTime: 60_000,
   });
 }

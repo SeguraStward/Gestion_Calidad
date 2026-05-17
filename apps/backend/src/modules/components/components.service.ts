@@ -14,7 +14,8 @@ export class ComponentsService extends GenericService<Component, ComponentDto, C
 
   protected readonly relationCheckConfig = {
     relationFields: ['criteria'],
-    errorMessage: 'Cannot delete Component because it has associated criteria.',
+    errorMessage: (entity: any, counts: Record<string, number>) =>
+      `No se puede eliminar el componente "${entity?.name ?? ''}" porque tiene ${counts.criteria} criterio(s) activo(s) asociado(s). Elimina o desactiva los criterios primero.`,
   };
 
   constructor(

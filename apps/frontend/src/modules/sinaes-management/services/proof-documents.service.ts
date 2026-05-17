@@ -14,7 +14,10 @@ export interface ProofDocument {
   fileUrl: string
   fileName: string
   fileType: string
-  fileSize?: number
+  // Backend always returns fileSize on upload — kept required to match the
+  // canonical type in ../types/proof-documents.types.ts and avoid "N/A" cells
+  // for documents that actually have a size.
+  fileSize: number
   evidenceId: string
   proofDocumentTypeId: string
   googleDriveFileId?: string

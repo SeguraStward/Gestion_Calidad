@@ -14,7 +14,12 @@ export class CriteriaService extends GenericService<Criterion, CriterionDto, Cre
 
   protected readonly relationCheckConfig = {
     relationFields: ['standards', 'evidences'],
-    errorMessage: 'Cannot delete Criterion because it has associated standards or evidences.',
+    errorMessage: (entity: any, counts: Record<string, number>) => {
+      const parts: string[] = [];
+      if (counts.standards > 0) parts.push(`${counts.standards} estándar(es)`);
+      if (counts.evidences > 0) parts.push(`${counts.evidences} evidencia(s) directa(s)`);
+      return `No se puede eliminar el criterio "${entity?.name ?? ''}" porque tiene ${parts.join(' y ')} activo(s) asociado(s). Elimina o desactiva los elementos hijos primero.`;
+    },
   };
 
   constructor(

@@ -9,6 +9,18 @@ import {
   ComplianceStatisticsDto,
 } from './dtos/compliance-report.dto';
 import { GenerateReportFiltersDto } from './dtos/generate-report-filters.dto';
+import {
+  CareerDocumentRefDto,
+  CareerGapDto,
+  CareerInventoryDto,
+  ComponentInventoryDto,
+  CriterionInventoryDto,
+  DimensionInventoryDto,
+  DocumentsByCareerReportDto,
+  EvidenceInventoryDto,
+  StandardInventoryDto,
+} from './dtos/documents-by-career.dto';
+import { DocumentsByCareerFiltersDto } from './dtos/documents-by-career-filters.dto';
 
 /** Evidence with its proof documents from the Prisma query */
 interface EvidenceWithDocs {
@@ -515,5 +527,333 @@ export class SinaesReportsService {
       where: { id },
       data: { status: 'INACTIVE' },
     });
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  //  INVENTARIO POR CARRERA
+  //  Reporte que NO calcula cumplimiento — sólo cuenta documentos asociados
+  //  a cada carrera y los ubica en la jerarquía SINAES. Las "brechas" son
+  //  las evidencias donde la carrera tiene 0 documentos (dato crudo, sin
+  //  etiquetas de incumplimiento).
+  // ───────────────────────────────────────────────────────────────────────────
+
+  async generateDocumentsByCareer(
+    filters: DocumentsByCareerFiltersDto,
+    userId?: string,
+  ): Promise<DocumentsByCareerReportDto> {
+    this.logger.log('🔍 Generating documents-by-career inventory', filters);
+
+    // 1. Resolve target careers. When no `careerIds` is provided, every
+    //    ACTIVE career is included.
+    const careers = await this.prisma.career.findMany({
+      where: {
+        status: 'ACTIVE',
+        ...(filters.careerIds?.length ? { id: { in: filters.careerIds } } : {}),
+      },
+      select: { id: true, code: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+
+    if (careers.length === 0) {
+      return {
+        generatedAt: new Date(),
+        generatedBy: userId,
+        summary: {
+          totalCareers: 0,
+          totalDocuments: 0,
+          careersWithDocuments: 0,
+          careersWithoutDocuments: 0,
+          totalEvidences: 0,
+        },
+        careers: [],
+        filters: { ...filters },
+      };
+    }
+
+    const careerIdSet = new Set(careers.map((c) => c.id));
+
+    // 2. Fetch the full SINAES tree, scoped by the optional structural filters,
+    //    bringing every ACTIVE proof document at each evidence plus its
+    //    career associations. One round-trip; the rest is in-memory math.
+    const dimensions = await this.prisma.dimension.findMany({
+      where: filters.dimensionId ? { id: filters.dimensionId } : {},
+      include: {
+        components: {
+          where: filters.componentId ? { id: filters.componentId } : {},
+          orderBy: { order: 'asc' },
+          include: {
+            criteria: {
+              where: filters.criterionId ? { id: filters.criterionId } : {},
+              orderBy: { order: 'asc' },
+              include: {
+                evidences: {
+                  where: { status: 'ACTIVE' },
+                  orderBy: { code: 'asc' },
+                  include: {
+                    proofDocuments: {
+                      where: { status: 'ACTIVE' },
+                      include: {
+                        careerProofDocuments: {
+                          select: { careerId: true },
+                        },
+                      },
+                    },
+                  },
+                },
+                standards: {
+                  where: { status: 'ACTIVE' },
+                  orderBy: { code: 'asc' },
+                  include: {
+                    evidences: {
+                      where: { status: 'ACTIVE' },
+                      orderBy: { code: 'asc' },
+                      include: {
+                        proofDocuments: {
+                          where: { status: 'ACTIVE' },
+                          include: {
+                            careerProofDocuments: {
+                              select: { careerId: true },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { order: 'asc' },
+    });
+
+    // 3. For each career, walk the tree once and build counts + gaps.
+    const inventories: CareerInventoryDto[] = careers.map((career) =>
+      this.buildCareerInventory(career, dimensions),
+    );
+
+    // 4. Summary across all careers in the report.
+    const totalEvidences = this.countEvidencesInTree(dimensions);
+    const allDocIds = new Set<string>();
+    for (const dim of dimensions) {
+      for (const comp of dim.components) {
+        for (const crit of comp.criteria) {
+          for (const ev of crit.evidences) {
+            for (const doc of ev.proofDocuments) {
+              if (doc.careerProofDocuments.some((r) => careerIdSet.has(r.careerId))) {
+                allDocIds.add(doc.id);
+              }
+            }
+          }
+          for (const std of crit.standards) {
+            for (const ev of std.evidences) {
+              for (const doc of ev.proofDocuments) {
+                if (doc.careerProofDocuments.some((r) => careerIdSet.has(r.careerId))) {
+                  allDocIds.add(doc.id);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const careersWithDocuments = inventories.filter((c) => c.totalDocuments > 0).length;
+
+    return {
+      generatedAt: new Date(),
+      generatedBy: userId,
+      summary: {
+        totalCareers: inventories.length,
+        totalDocuments: allDocIds.size,
+        careersWithDocuments,
+        careersWithoutDocuments: inventories.length - careersWithDocuments,
+        totalEvidences,
+      },
+      careers: inventories,
+      filters: {
+        careerIds: filters.careerIds,
+        dimensionId: filters.dimensionId,
+        componentId: filters.componentId,
+        criterionId: filters.criterionId,
+      },
+    };
+  }
+
+  private countEvidencesInTree(dimensions: any[]): number {
+    let n = 0;
+    for (const dim of dimensions) {
+      for (const comp of dim.components) {
+        for (const crit of comp.criteria) {
+          n += crit.evidences.length;
+          for (const std of crit.standards) {
+            n += std.evidences.length;
+          }
+        }
+      }
+    }
+    return n;
+  }
+
+  private buildCareerInventory(
+    career: { id: string; code: string; name: string },
+    dimensions: any[],
+  ): CareerInventoryDto {
+    const gaps: CareerGapDto[] = [];
+    const seenDocIds = new Set<string>(); // dedup count per career
+    let evidencesCovered = 0;
+    let evidencesUncovered = 0;
+
+    const dimensionInventories: DimensionInventoryDto[] = [];
+
+    for (const dim of dimensions) {
+      const componentInventories: ComponentInventoryDto[] = [];
+      let dimDocCount = 0;
+
+      for (const comp of dim.components) {
+        const criterionInventories: CriterionInventoryDto[] = [];
+        let compDocCount = 0;
+
+        for (const crit of comp.criteria) {
+          // Direct evidences on the criterion
+          const directEvidenceInv: EvidenceInventoryDto[] = [];
+          for (const ev of crit.evidences) {
+            const inv = this.buildEvidenceInventory(ev, career.id);
+            directEvidenceInv.push(inv);
+            if (inv.documentCount > 0) {
+              evidencesCovered++;
+              for (const d of inv.documents) seenDocIds.add(d.id);
+            } else {
+              evidencesUncovered++;
+              gaps.push({
+                dimensionCode: dim.code,
+                dimensionName: dim.name,
+                componentCode: comp.code,
+                componentName: comp.name,
+                criterionCode: crit.code,
+                criterionName: crit.name,
+                evidenceId: ev.id,
+                evidenceCode: ev.code,
+                evidenceName: ev.name,
+              });
+            }
+          }
+
+          // Evidences nested under standards
+          const standardInventories: StandardInventoryDto[] = [];
+          for (const std of crit.standards) {
+            const stdEvidenceInv: EvidenceInventoryDto[] = [];
+            let stdDocCount = 0;
+
+            for (const ev of std.evidences) {
+              const inv = this.buildEvidenceInventory(ev, career.id);
+              stdEvidenceInv.push(inv);
+              stdDocCount += inv.documentCount;
+              if (inv.documentCount > 0) {
+                evidencesCovered++;
+                for (const d of inv.documents) seenDocIds.add(d.id);
+              } else {
+                evidencesUncovered++;
+                gaps.push({
+                  dimensionCode: dim.code,
+                  dimensionName: dim.name,
+                  componentCode: comp.code,
+                  componentName: comp.name,
+                  criterionCode: crit.code,
+                  criterionName: crit.name,
+                  standardCode: std.code,
+                  standardName: std.name,
+                  evidenceId: ev.id,
+                  evidenceCode: ev.code,
+                  evidenceName: ev.name,
+                });
+              }
+            }
+
+            standardInventories.push({
+              id: std.id,
+              code: std.code,
+              name: std.name,
+              documentCount: stdDocCount,
+              evidences: stdEvidenceInv,
+            });
+          }
+
+          const critDocCount =
+            directEvidenceInv.reduce((s, e) => s + e.documentCount, 0) +
+            standardInventories.reduce((s, st) => s + st.documentCount, 0);
+
+          criterionInventories.push({
+            id: crit.id,
+            code: crit.code,
+            name: crit.name,
+            documentCount: critDocCount,
+            directEvidences: directEvidenceInv,
+            standards: standardInventories,
+          });
+
+          compDocCount += critDocCount;
+        }
+
+        componentInventories.push({
+          id: comp.id,
+          code: comp.code,
+          name: comp.name,
+          documentCount: compDocCount,
+          criteria: criterionInventories,
+        });
+
+        dimDocCount += compDocCount;
+      }
+
+      dimensionInventories.push({
+        id: dim.id,
+        code: dim.code,
+        name: dim.name,
+        documentCount: dimDocCount,
+        components: componentInventories,
+      });
+    }
+
+    return {
+      id: career.id,
+      code: career.code,
+      name: career.name,
+      // totalDocuments is deduped per career — a single doc tagged to multiple
+      // evidences would otherwise inflate the count.
+      totalDocuments: seenDocIds.size,
+      evidencesCovered,
+      evidencesUncovered,
+      dimensions: dimensionInventories,
+      gaps,
+    };
+  }
+
+  private buildEvidenceInventory(
+    evidence: any,
+    careerId: string,
+  ): EvidenceInventoryDto {
+    const documents: CareerDocumentRefDto[] = [];
+    for (const doc of evidence.proofDocuments) {
+      if (doc.careerProofDocuments.some((r: any) => r.careerId === careerId)) {
+        documents.push({
+          id: doc.id,
+          code: doc.code,
+          name: doc.name,
+          fileUrl: doc.fileUrl,
+          fileName: doc.fileName,
+          createdAt: doc.createdAt,
+        });
+      }
+    }
+
+    return {
+      id: evidence.id,
+      code: evidence.code,
+      name: evidence.name,
+      documentCount: documents.length,
+      documents,
+    };
   }
 }

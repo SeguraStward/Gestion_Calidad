@@ -1,6 +1,22 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
 import { ComplianceReportDto, DimensionComplianceDto, ComponentComplianceDto, CriterionComplianceDto } from './dtos/compliance-report.dto';
+import {
+  CareerInventoryDto,
+  DimensionInventoryDto,
+  DocumentsByCareerReportDto,
+} from './dtos/documents-by-career.dto';
+
+/** Escapes a string for safe inclusion in HTML. */
+function escapeHtml(s: unknown): string {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 @Injectable()
 export class PdfGeneratorService {
@@ -689,5 +705,274 @@ export class PdfGeneratorService {
         background-color: #dc3545;
       }
     `;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  //  INVENTARIO POR CARRERA
+  //  PDF distinto — sólo conteos y brechas, sin métricas de cumplimiento.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  async generateInventoryPdf(report: DocumentsByCareerReportDto): Promise<Buffer> {
+    this.logger.log(`Generando PDF de inventario por carrera (${report.careers.length} carreras)`);
+
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu',
+      ],
+    });
+
+    try {
+      const page = await browser.newPage();
+      await page.setViewport({ width: 1200, height: 800 });
+      await page.setContent(this.generateInventoryHtml(report), { waitUntil: 'networkidle0' });
+
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' },
+        displayHeaderFooter: true,
+        headerTemplate: `
+          <div style="font-size: 9px; padding: 5px 15mm; width: 100%; text-align: center; color: #666;">
+            <span>Inventario de Documentos Probatorios por Carrera — SINAES</span>
+          </div>
+        `,
+        footerTemplate: `
+          <div style="font-size: 9px; padding: 5px 15mm; width: 100%; text-align: center; color: #666;">
+            <span>Página <span class="pageNumber"></span> de <span class="totalPages"></span></span>
+            <span style="margin-left: 20px;">Generado el ${new Date(report.generatedAt).toLocaleString('es-CR', { timeZone: 'America/Costa_Rica' })}</span>
+          </div>
+        `,
+      });
+
+      this.logger.log('PDF de inventario generado');
+      return Buffer.from(pdfBuffer);
+    } finally {
+      await browser.close();
+    }
+  }
+
+  private generateInventoryHtml(report: DocumentsByCareerReportDto): string {
+    const { summary, careers, generatedAt } = report;
+
+    const summaryRows = [
+      ['Carreras incluidas', summary.totalCareers],
+      ['Documentos asociados', summary.totalDocuments],
+      ['Carreras con documentos', summary.careersWithDocuments],
+      ['Carreras sin documentos', summary.careersWithoutDocuments],
+      ['Evidencias en alcance', summary.totalEvidences],
+    ]
+      .map(
+        ([k, v]) => `
+          <tr>
+            <td style="padding: 6px 10px; border: 1px solid #ddd;">${escapeHtml(k)}</td>
+            <td style="padding: 6px 10px; border: 1px solid #ddd; text-align: right; font-weight: 600;">${v}</td>
+          </tr>
+        `,
+      )
+      .join('');
+
+    const careersHtml = careers.map((c) => this.renderCareerInventory(c)).join('');
+
+    return `
+      <!DOCTYPE html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Inventario por Carrera</title>
+        <style>
+          * { box-sizing: border-box; }
+          body { font-family: Arial, Helvetica, sans-serif; color: #222; font-size: 11px; line-height: 1.4; }
+          h1 { font-size: 18px; margin: 0 0 4px 0; }
+          h2 { font-size: 13px; margin: 12px 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+          h3 { font-size: 12px; margin: 10px 0 4px 0; }
+          .meta { color: #555; font-size: 10px; margin-bottom: 16px; }
+          table.summary { border-collapse: collapse; width: 60%; margin-bottom: 16px; }
+          .career { break-inside: avoid; page-break-inside: avoid; margin: 18px 0; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; }
+          .career-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #eee; padding-bottom: 6px; margin-bottom: 8px; }
+          .career-code { font-family: monospace; color: #1d4ed8; font-size: 10px; margin-right: 8px; }
+          .career-name { font-weight: 600; font-size: 13px; }
+          .career-meta { font-size: 10px; color: #555; }
+          .badge { display: inline-block; padding: 1px 6px; border-radius: 8px; background: #eef; color: #333; font-size: 10px; margin-left: 6px; }
+          ul.tree { list-style: none; padding-left: 14px; margin: 4px 0; }
+          ul.tree li { margin: 2px 0; }
+          .dim-code { color: #1d4ed8; font-family: monospace; }
+          .comp-code { color: #6d28d9; font-family: monospace; }
+          .crit-code { color: #555; font-family: monospace; }
+          .std-code { color: #b45309; font-family: monospace; }
+          .ev-code { color: #15803d; font-family: monospace; }
+          .doc-row { color: #444; font-size: 10px; }
+          .doc-code { font-family: monospace; }
+          .gaps-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 10px; }
+          .gaps-table th, .gaps-table td { border: 1px solid #ddd; padding: 4px 6px; text-align: left; }
+          .gaps-table th { background: #fafafa; font-weight: 600; }
+          .empty { color: #777; font-style: italic; }
+        </style>
+      </head>
+      <body>
+        <h1>Inventario de Documentos Probatorios por Carrera</h1>
+        <p class="meta">Generado el ${new Date(generatedAt).toLocaleString('es-CR', { timeZone: 'America/Costa_Rica' })}</p>
+
+        <h2>Resumen</h2>
+        <table class="summary">${summaryRows}</table>
+
+        <h2>Detalle por Carrera</h2>
+        ${careersHtml || '<p class="empty">No hay carreras en el alcance del reporte.</p>'}
+      </body>
+      </html>
+    `;
+  }
+
+  private renderCareerInventory(c: CareerInventoryDto): string {
+    const treeHtml = c.dimensions.length
+      ? c.dimensions.map((d) => this.renderDimensionForPdf(d)).join('')
+      : '<p class="empty">Sin dimensiones en el alcance.</p>';
+
+    const gapsHtml = c.gaps.length
+      ? `
+        <table class="gaps-table">
+          <thead>
+            <tr>
+              <th>Dimensión</th>
+              <th>Componente</th>
+              <th>Criterio</th>
+              <th>Estándar</th>
+              <th>Evidencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${c.gaps
+              .map(
+                (g) => `
+                  <tr>
+                    <td><span class="dim-code">${escapeHtml(g.dimensionCode)}</span> ${escapeHtml(g.dimensionName)}</td>
+                    <td><span class="comp-code">${escapeHtml(g.componentCode)}</span> ${escapeHtml(g.componentName)}</td>
+                    <td><span class="crit-code">${escapeHtml(g.criterionCode)}</span> ${escapeHtml(g.criterionName)}</td>
+                    <td>${g.standardCode ? `<span class="std-code">${escapeHtml(g.standardCode)}</span> ${escapeHtml(g.standardName)}` : '—'}</td>
+                    <td><span class="ev-code">${escapeHtml(g.evidenceCode)}</span> ${escapeHtml(g.evidenceName)}</td>
+                  </tr>
+                `,
+              )
+              .join('')}
+          </tbody>
+        </table>
+      `
+      : '<p class="empty">Esta carrera tiene documentos en todas las evidencias del alcance.</p>';
+
+    return `
+      <div class="career">
+        <div class="career-header">
+          <div>
+            <span class="career-code">${escapeHtml(c.code)}</span>
+            <span class="career-name">${escapeHtml(c.name)}</span>
+          </div>
+          <div class="career-meta">
+            ${c.totalDocuments} documento(s) · ${c.evidencesCovered} evidencia(s) cubierta(s) · ${c.evidencesUncovered} sin documentos
+          </div>
+        </div>
+
+        <h3>Documentos por ubicación en la jerarquía</h3>
+        ${treeHtml}
+
+        <h3>Ubicaciones sin documentos para esta carrera (${c.gaps.length})</h3>
+        ${gapsHtml}
+      </div>
+    `;
+  }
+
+  private renderDimensionForPdf(d: DimensionInventoryDto): string {
+    return `
+      <ul class="tree">
+        <li>
+          <span class="dim-code">${escapeHtml(d.code)}</span>
+          <strong>${escapeHtml(d.name)}</strong>
+          <span class="badge">${d.documentCount} doc(s)</span>
+          ${
+            d.components.length
+              ? `<ul class="tree">${d.components
+                  .map(
+                    (comp) => `
+                      <li>
+                        <span class="comp-code">${escapeHtml(comp.code)}</span> ${escapeHtml(comp.name)}
+                        <span class="badge">${comp.documentCount}</span>
+                        ${
+                          comp.criteria.length
+                            ? `<ul class="tree">${comp.criteria
+                                .map(
+                                  (crit) => `
+                                    <li>
+                                      <span class="crit-code">${escapeHtml(crit.code)}</span> ${escapeHtml(crit.name)}
+                                      <span class="badge">${crit.documentCount}</span>
+                                      ${this.renderLeafEvidencesForPdf(crit)}
+                                    </li>
+                                  `,
+                                )
+                                .join('')}</ul>`
+                            : ''
+                        }
+                      </li>
+                    `,
+                  )
+                  .join('')}</ul>`
+              : ''
+          }
+        </li>
+      </ul>
+    `;
+  }
+
+  private renderLeafEvidencesForPdf(
+    crit: { directEvidences: any[]; standards: any[] },
+  ): string {
+    const directs = crit.directEvidences
+      .map(
+        (ev) => `
+          <li>
+            <span class="ev-code">${escapeHtml(ev.code)}</span> ${escapeHtml(ev.name)}
+            <span class="badge">${ev.documentCount}</span>
+            ${this.renderDocsForPdf(ev.documents)}
+          </li>
+        `,
+      )
+      .join('');
+
+    const stds = crit.standards
+      .map(
+        (std) => `
+          <li>
+            <span class="std-code">${escapeHtml(std.code)}</span> ${escapeHtml(std.name)}
+            <span class="badge">${std.documentCount}</span>
+            <ul class="tree">
+              ${std.evidences
+                .map(
+                  (ev: any) => `
+                    <li>
+                      <span class="ev-code">${escapeHtml(ev.code)}</span> ${escapeHtml(ev.name)}
+                      <span class="badge">${ev.documentCount}</span>
+                      ${this.renderDocsForPdf(ev.documents)}
+                    </li>
+                  `,
+                )
+                .join('')}
+            </ul>
+          </li>
+        `,
+      )
+      .join('');
+
+    return `<ul class="tree">${directs}${stds}</ul>`;
+  }
+
+  private renderDocsForPdf(docs: { code: string; name: string }[]): string {
+    if (!docs?.length) return '';
+    return `<ul class="tree">${docs
+      .map(
+        (d) => `<li class="doc-row"><span class="doc-code">${escapeHtml(d.code)}</span> — ${escapeHtml(d.name)}</li>`,
+      )
+      .join('')}</ul>`;
   }
 }

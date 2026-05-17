@@ -49,10 +49,20 @@ export class CreateProofDocumentDto {
   @IsOptional()
   googleDriveFileId?: string;
 
-  @ApiPropertyOptional({ description: 'Google Drive parent folder ID' })
+  @ApiPropertyOptional({ description: 'Google Drive parent folder ID (evidence folder)' })
   @IsString()
   @IsOptional()
   googleDriveFolderId?: string;
+
+  @ApiPropertyOptional({ description: 'Google Drive folder ID for the document type (e.g. "Convenio/")' })
+  @IsString()
+  @IsOptional()
+  googleDriveTypeFolderId?: string;
+
+  @ApiPropertyOptional({ description: 'Google Drive folder ID for this specific upload (e.g. "CONV-001/")' })
+  @IsString()
+  @IsOptional()
+  googleDriveUploadFolderId?: string;
 
   @ApiPropertyOptional({ description: 'Google Drive version for tracking updates' })
   @IsString()

@@ -14,7 +14,8 @@ export class DimensionsService extends GenericService<Dimension, DimensionDto, C
 
   protected readonly relationCheckConfig = {
     relationFields: ['components'],
-    errorMessage: 'Cannot delete Dimension because it has associated components.',
+    errorMessage: (entity: any, counts: Record<string, number>) =>
+      `No se puede eliminar la dimensión "${entity?.name ?? ''}" porque tiene ${counts.components} componente(s) activo(s) asociado(s). Elimina o desactiva los componentes primero.`,
   };
 
   constructor(

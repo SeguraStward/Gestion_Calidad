@@ -5,10 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-
 import { Button } from '@una-gc/ui/components/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@una-gc/ui/components/tabs';
 import { Alert, AlertDescription } from '@una-gc/ui/components/alert';
-import { Download, FileBarChart, History, Loader2, ShieldAlert, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, FileBarChart, History, Loader2, ShieldAlert, ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
 import { ComplianceFilters } from '@/modules/sinaes-management/components/reports/compliance-filters';
 import { ComplianceSummary } from '@/modules/sinaes-management/components/reports/compliance-summary';
 import { ComplianceTable } from '@/modules/sinaes-management/components/reports/compliance-table';
+import { CareerInventoryTab } from '@/modules/sinaes-management/components/reports/career-inventory-tab';
 import {
   useGenerateReport,
   useExportPdf,
@@ -131,6 +132,10 @@ export default function SinaesReportsPage() {
             <FileBarChart className="h-4 w-4" />
             Resultados
           </TabsTrigger>
+          <TabsTrigger value="inventory" className="flex items-center gap-2">
+            <GraduationCap className="h-4 w-4" />
+            Inventario por Carrera
+          </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="h-4 w-4" />
             Historial
@@ -224,6 +229,11 @@ export default function SinaesReportsPage() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Tab: Inventario por Carrera */}
+        <TabsContent value="inventory" className="max-h-[calc(100vh-200px)] overflow-y-auto">
+          <CareerInventoryTab />
         </TabsContent>
 
         {/* Tab: Historial */}

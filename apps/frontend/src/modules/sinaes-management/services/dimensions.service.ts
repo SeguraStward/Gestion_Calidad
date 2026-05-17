@@ -109,7 +109,10 @@ export const {
     created: () => 'Dimensión creada con éxito',
     updated: () => 'Dimensión actualizada con éxito',
     deleted: () => 'Dimensión eliminada con éxito'
-  }
+  },
+  // Delete errors (FK violations with child components) are handled via
+  // AlertDialog in the structure tab — suppress the default toast.
+  silent: { remove: { error: true } }
 })
 
 // Custom hooks for extended functionality
