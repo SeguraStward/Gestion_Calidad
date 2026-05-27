@@ -160,11 +160,20 @@ export abstract class GenericPrismaRepository<T, CreateInput, UpdateInput, Where
         where: { id },
       });
       return true;
-    } catch (error) {
-      if (error === 'P2025') {
+    } catch (error: any) {
+      // BUG fix: the previous version did `error === 'P2025'` which is always
+      // false (error is an object). It then swallowed every real DB error and
+      // returned `false`, leaving the controller responding 204 No Content
+      // while the row was never actually deleted. Now we inspect the proper
+      // Prisma code field and re-throw anything else so the caller can react.
+      if (error?.code === 'P2025') {
         throw new NotFoundException(`${this.modelName} with id ${id} not found`);
       }
-      return false;
+      this.internalLogger.error(
+        `[${this.modelName}] deleteById(${id}) failed`,
+        error,
+      );
+      throw error;
     }
   }
 

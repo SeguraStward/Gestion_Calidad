@@ -86,7 +86,9 @@ export class SinaesReportsController {
   @ApiResponse({ status: 200, type: DocumentsByCareerReportDto })
   async generateDocumentsByCareer(
     @Query('careerIds') careerIdsRaw: string | undefined,
-    @Query() rest: DocumentsByCareerFiltersDto,
+    @Query('dimensionId') dimensionId: string | undefined,
+    @Query('componentId') componentId: string | undefined,
+    @Query('criterionId') criterionId: string | undefined,
     @Req() request: ExpressRequest & { user?: { sub?: string; id?: string } },
   ): Promise<DocumentsByCareerReportDto> {
     const userId = request.user?.sub || request.user?.id;
@@ -97,15 +99,21 @@ export class SinaesReportsController {
           .filter(Boolean)
       : undefined;
 
-    return this.sinaesReportsService.generateDocumentsByCareer(
-      {
-        careerIds,
-        dimensionId: rest.dimensionId,
-        componentId: rest.componentId,
-        criterionId: rest.criterionId,
-      },
-      userId,
-    );
+    try {
+      return await this.sinaesReportsService.generateDocumentsByCareer(
+        { careerIds, dimensionId, componentId, criterionId },
+        userId,
+      );
+    } catch (err: any) {
+      // Re-wrap with a useful message so the frontend can show *why* it
+      // failed instead of a generic 500. Stack stays in the server log.
+      const detail = err?.message || 'Unknown error';
+      this.logger.error(`documents-by-career failed: ${detail}`, err?.stack);
+      throw new HttpException(
+        { message: `No se pudo generar el inventario: ${detail}` },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   /**
@@ -269,22 +277,29 @@ export class SinaesReportsController {
     @Res() res: ResponseType,
   ): Promise<void> {
     this.logger.log(
-      `📄 Exporting inventory PDF (${report?.careers?.length ?? 0} careers)`,
+      `📄 Exporting inventory PDF (${report?.careers?.length ?? 0} careers, ${report?.summary?.totalDocuments ?? 0} docs)`,
     );
 
     try {
+      // The frontend sometimes posts the unwrapped payload, sometimes the
+      // wrapped { data: {...} } if the response interceptor was hit before
+      // forwarding. Unwrap defensively so either shape works.
+      const raw: any = report;
+      const source: DocumentsByCareerReportDto =
+        raw?.summary || raw?.careers ? raw : raw?.data || raw;
+
       const normalized: DocumentsByCareerReportDto = {
-        ...report,
-        generatedAt: report.generatedAt || new Date(),
-        summary: report.summary || {
+        ...source,
+        generatedAt: source?.generatedAt || new Date(),
+        summary: source?.summary || {
           totalCareers: 0,
           totalDocuments: 0,
           careersWithDocuments: 0,
           careersWithoutDocuments: 0,
           totalEvidences: 0,
         },
-        careers: report.careers || [],
-        filters: report.filters || {},
+        careers: source?.careers || [],
+        filters: source?.filters || {},
       };
 
       const pdfBuffer = await this.pdfGeneratorService.generateInventoryPdf(normalized);
@@ -300,7 +315,12 @@ export class SinaesReportsController {
       const message = error instanceof Error ? error.message : 'Unknown error';
       const stack = error instanceof Error ? error.stack : undefined;
       this.logger.error(`❌ Error exporting inventory PDF: ${message}`, stack);
-      throw new HttpException('Error generating inventory PDF', HttpStatus.INTERNAL_SERVER_ERROR);
+      // Send the real reason as JSON so the frontend can show it instead of
+      // a generic 500.
+      throw new HttpException(
+        { message: `No se pudo generar el PDF: ${message}` },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

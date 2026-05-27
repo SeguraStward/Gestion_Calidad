@@ -5,7 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-
 import { Button } from '@una-gc/ui/components/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@una-gc/ui/components/tabs';
 import { Alert, AlertDescription } from '@una-gc/ui/components/alert';
-import { Download, FileBarChart, History, Loader2, ShieldAlert, ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
+import { Download, FileBarChart, History, Loader2, ShieldAlert, ChevronLeft, ChevronRight, GraduationCap, Trash2, AlertTriangle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@una-gc/ui/components/alert-dialog';
 import { ComplianceFilters } from '@/modules/sinaes-management/components/reports/compliance-filters';
 import { ComplianceSummary } from '@/modules/sinaes-management/components/reports/compliance-summary';
 import { ComplianceTable } from '@/modules/sinaes-management/components/reports/compliance-table';
@@ -15,6 +25,7 @@ import {
   useExportPdf,
   useExportTempReportPdf,
   useReportsList,
+  useDeleteReport,
 } from '@/modules/sinaes-management/services/sinaes-reports.service';
 import { useAuth } from '@/modules/auth/hooks';
 import { toast } from 'sonner';
@@ -37,7 +48,30 @@ export default function SinaesReportsPage() {
   const generateReportMutation = useGenerateReport();
   const exportPdfMutation = useExportPdf();
   const exportTempReportPdfMutation = useExportTempReportPdf();
+  const deleteReportMutation = useDeleteReport();
   const { data: savedReports, isLoading: isLoadingReports } = useReportsList(historyPage, historyLimit);
+
+  // Confirm dialog state for delete (kept here so it sits outside the loop).
+  const [reportToDelete, setReportToDelete] = useState<SavedComplianceReport | null>(null);
+
+  const handleConfirmDelete = async () => {
+    if (!reportToDelete) return;
+    const target = reportToDelete;
+    setReportToDelete(null);
+    try {
+      await deleteReportMutation.mutateAsync(target.id);
+      // If the deleted report is the one currently displayed in Results,
+      // clear it to avoid showing stale data.
+      if (currentReport?.id === target.id) {
+        setCurrentReport(null);
+      }
+      toast.success('Reporte eliminado del historial');
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message || err?.message || 'No se pudo eliminar el reporte';
+      toast.error(msg);
+    }
+  };
 
   // Protección de ruta: solo administradores
   if (!isAuthenticated || !isAdmin) {
@@ -283,8 +317,19 @@ export default function SinaesReportsPage() {
                               reportName: report.reportName,
                             })
                           }
+                          title="Descargar PDF"
                         >
                           <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setReportToDelete(report)}
+                          disabled={deleteReportMutation.isPending}
+                          title="Eliminar reporte"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
@@ -329,6 +374,32 @@ export default function SinaesReportsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Confirm delete dialog for saved reports */}
+      <AlertDialog open={!!reportToDelete} onOpenChange={(open) => !open && setReportToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              ¿Eliminar reporte del historial?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará el reporte <strong>{reportToDelete?.reportName}</strong> de forma permanente.
+              Esta acción no afecta los documentos ni la estructura SINAES, solo el reporte guardado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteReportMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleteReportMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteReportMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

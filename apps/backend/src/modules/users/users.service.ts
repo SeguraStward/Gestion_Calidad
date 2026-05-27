@@ -424,7 +424,7 @@ export class UsersService extends GenericService<User, UserDto, UserDto, UpdateU
    * Creates or updates users with PROFESSOR role based on nationalId
    */
   async bulkImportProfessors(
-    professors: Array<{ cedula: string; nombre: string }>,
+    professors: Array<{ cedula: string; nombre: string; email?: string }>,
   ): Promise<{
     created: number;
     updated: number;
@@ -449,9 +449,15 @@ export class UsersService extends GenericService<User, UserDto, UserDto, UpdateU
       throw new Error('Role PROFESOR not found in database');
     }
 
+    // Lightweight email validation. We don't want to fail an entire import on a
+    // malformed email for a single row — instead we record the row as an error.
+    const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
     for (const prof of professors) {
       try {
-        const { cedula, nombre } = prof;
+        const cedula = prof.cedula?.trim();
+        const nombre = prof.nombre?.trim();
+        const providedEmail = prof.email?.trim();
 
         if (!cedula || !nombre) {
           errors++;
@@ -459,40 +465,92 @@ export class UsersService extends GenericService<User, UserDto, UserDto, UpdateU
           continue;
         }
 
+        // Optional email — validate format only when provided. We treat an
+        // invalid format as a row error rather than silently dropping it.
+        if (providedEmail && !isValidEmail(providedEmail)) {
+          errors++;
+          errorDetails.push(`Fila ${cedula}: el correo "${providedEmail}" no es un formato válido`);
+          continue;
+        }
+
         // Check if user already exists by nationalId
         const existingUser = await this.prisma.user.findFirst({
-          where: { nationalId: cedula.trim() },
+          where: { nationalId: cedula },
         });
 
         if (existingUser) {
-          // Update existing user - add PROFESSOR role if not present
-          const hasRole = existingUser.roleIds.includes(professorRole.id);
-
-          if (!hasRole) {
-            await this.prisma.user.update({
-              where: { id: existingUser.id },
-              data: {
-                roleIds: [...existingUser.roleIds, professorRole.id],
-                fullName: nombre.trim(), // Update name if needed
-              },
+          // If a real email is provided, make sure it isn't already taken by
+          // a DIFFERENT user — otherwise we'd violate the email unique index.
+          if (providedEmail && providedEmail.toLowerCase() !== existingUser.email.toLowerCase()) {
+            const conflict = await this.prisma.user.findFirst({
+              where: { email: providedEmail, id: { not: existingUser.id } },
             });
+            if (conflict) {
+              errors++;
+              errorDetails.push(
+                `Fila ${cedula}: el correo "${providedEmail}" ya pertenece a otro usuario`,
+              );
+              continue;
+            }
+          }
+
+          const updates: Record<string, any> = {};
+          let mutated = false;
+
+          // Add PROFESSOR role if missing
+          if (!existingUser.roleIds.includes(professorRole.id)) {
+            updates.roleIds = [...existingUser.roleIds, professorRole.id];
+            mutated = true;
+          }
+          // Refresh display name from the Excel row
+          if (existingUser.fullName !== nombre) {
+            updates.fullName = nombre;
+            mutated = true;
+          }
+          // Adopt the real email when it differs from a previously-generated
+          // temporary one (or when the user simply provided a corrected one).
+          if (providedEmail && providedEmail.toLowerCase() !== existingUser.email.toLowerCase()) {
+            updates.email = providedEmail;
+            mutated = true;
+          }
+
+          if (mutated) {
+            await this.prisma.user.update({ where: { id: existingUser.id }, data: updates });
             updated++;
             userIds.push(existingUser.id);
-            this.logger.debug(`[bulkImportProfessors] Updated user ${existingUser.id} with PROFESSOR role`);
+            this.logger.debug(`[bulkImportProfessors] Updated user ${existingUser.id}`);
           } else {
-            // User already has PROFESSOR role, skip
-            this.logger.debug(`[bulkImportProfessors] User ${existingUser.id} already has PROFESSOR role`);
+            this.logger.debug(`[bulkImportProfessors] User ${existingUser.id} unchanged`);
           }
         } else {
-          // Create new user with PROFESSOR role
-          // Generate a temporary email based on nationalId
-          const tempEmail = `profesor.${cedula}@una.cr`;
+          // Same conflict check on the create path — the email unique index
+          // would throw otherwise, and a single bad row would abort the loop
+          // via the catch below (worse UX than a per-row error).
+          if (providedEmail) {
+            const conflict = await this.prisma.user.findFirst({
+              where: { email: providedEmail },
+            });
+            if (conflict) {
+              errors++;
+              errorDetails.push(
+                `Fila ${cedula}: el correo "${providedEmail}" ya está registrado para otro usuario`,
+              );
+              continue;
+            }
+          }
+
+          // Use the Excel-provided email when present, fall back to the
+          // deterministic placeholder otherwise. Lower-cased to keep the
+          // email column normalized.
+          const email = providedEmail
+            ? providedEmail.toLowerCase()
+            : `profesor.${cedula}@una.cr`;
 
           const newUser = await this.prisma.user.create({
             data: {
-              email: tempEmail,
-              fullName: nombre.trim(),
-              nationalId: cedula.trim(),
+              email,
+              fullName: nombre,
+              nationalId: cedula,
               roleIds: [professorRole.id],
               status: UserStatus.PRE_REGISTRATION,
             },

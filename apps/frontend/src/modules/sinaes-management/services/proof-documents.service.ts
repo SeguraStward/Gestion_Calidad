@@ -112,6 +112,42 @@ export const {
 })
 
 /**
+ * Shape returned by `GET /proof-documents/:id/deletion-preview`.
+ * Mirrors the DTO in proof-documents.service.ts (backend).
+ */
+export interface ProofDocumentDeletionPreview {
+  document: { id: string; code: string; name: string; fileName: string }
+  careerCount: number
+  careerNames: string[]
+  driveFiles: Array<{ id: string; name: string; mimeType: string; isFolder: boolean }>
+  uploadFolder: { id: string | null; willBeDeleted: boolean }
+  typeFolder: { id: string | null; willBeDeleted: boolean }
+  isLegacyDocument: boolean
+}
+
+/**
+ * Loads a description of the side-effects an `eliminar` action would have on
+ * Drive + DB. Runs only when an id is provided AND `enabled` is true (so we
+ * don't fire on every render of the table).
+ */
+export const useProofDocumentDeletionPreview = (
+  documentId: string | undefined,
+  enabled = true,
+) => {
+  return useQuery<ProofDocumentDeletionPreview>({
+    queryKey: ['proof-documents', documentId, 'deletion-preview'],
+    queryFn: async () => {
+      const response = await HttpClient.get<ProofDocumentDeletionPreview>(
+        `/proof-documents/${documentId}/deletion-preview`,
+      )
+      return response.data
+    },
+    enabled: !!documentId && enabled,
+    staleTime: 0, // always fresh — the user is about to act on it
+  })
+}
+
+/**
  * Custom hook for searching proof documents using the /search endpoint
  */
 export const useProofDocuments = (filters?: ProofDocumentFilters) => {

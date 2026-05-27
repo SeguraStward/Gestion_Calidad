@@ -45,10 +45,11 @@ export interface ProofDocumentSearchFilters {
 export class ProofDocumentsService extends GenericService<ProofDocument, ProofDocumentDto, CreateProofDocumentDto, UpdateProofDocumentDto> {
   protected readonly logger = new Logger(ProofDocumentsService.name);
 
-  protected readonly relationCheckConfig = {
-    relationFields: ['careerProofDocuments'],
-    errorMessage: 'Cannot delete Proof Document because it has associated career proof documents.',
-  };
+  // No relationCheckConfig here. `careerProofDocuments` is an N:N join table
+  // (every uploaded document always has at least one career row), and
+  // `documentHistory` is an audit log — neither should block deletion. We
+  // cascade-clean them ourselves in `deleteById` below before handing off
+  // to the base service so Prisma's required FKs don't reject the delete.
 
   constructor(
     protected readonly proofDocumentsRepository: ProofDocumentsRepository,
@@ -142,11 +143,109 @@ export class ProofDocumentsService extends GenericService<ProofDocument, ProofDo
     return result;
   }
 
+  /**
+   * Preview what would be removed if this document is deleted. The dialog in
+   * the UI calls this before showing the confirm button so the user knows the
+   * blast radius (extra files in the upload folder, careers that lose the
+   * link, whether the type folder will also be cleaned up).
+   *
+   * Pure read-only — never mutates DB or Drive.
+   */
+  async getDeletionPreview(id: string): Promise<{
+    document: { id: string; code: string; name: string; fileName: string };
+    careerCount: number;
+    careerNames: string[];
+    driveFiles: Array<{ id: string; name: string; mimeType: string; isFolder: boolean }>;
+    uploadFolder: { id: string | null; willBeDeleted: boolean };
+    typeFolder: { id: string | null; willBeDeleted: boolean };
+    isLegacyDocument: boolean;
+  }> {
+    const document = await this.prisma.proofDocument.findUnique({
+      where: { id },
+      include: {
+        careerProofDocuments: {
+          include: { career: { select: { name: true } } },
+        },
+      },
+    });
+    if (!document) {
+      throw new BadRequestException(`Document with id ${id} not found`);
+    }
+
+    const careerNames = document.careerProofDocuments
+      .map((rel) => rel.career?.name)
+      .filter((n): n is string => !!n);
+
+    const uploadFolderId = (document as any).googleDriveUploadFolderId as string | null;
+    const typeFolderId = (document as any).googleDriveTypeFolderId as string | null;
+    const isLegacyDocument = !uploadFolderId;
+
+    let driveFiles: Array<{ id: string; name: string; mimeType: string; isFolder: boolean }> = [];
+    let typeFolderWillBeDeleted = false;
+
+    // Only inspect Drive when we have user tokens AND a per-upload folder.
+    // Legacy documents (no upload folder) only get their main file removed,
+    // so there's nothing to preview at folder level.
+    if (uploadFolderId) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: this.request.userId || '' },
+        select: { googleAccessToken: true, googleRefreshToken: true },
+      });
+      if (user?.googleAccessToken) {
+        try {
+          driveFiles = await this.googleDriveService.listFolderChildren(
+            uploadFolderId,
+            user.googleAccessToken,
+            user.googleRefreshToken || undefined,
+          );
+
+          if (typeFolderId) {
+            // The type folder will be cleaned up only if removing the upload
+            // folder leaves it empty. We check the siblings of the upload
+            // folder (children of the type folder, excluding this upload).
+            const typeSiblings = await this.googleDriveService.listFolderChildren(
+              typeFolderId,
+              user.googleAccessToken,
+              user.googleRefreshToken || undefined,
+            );
+            typeFolderWillBeDeleted =
+              typeSiblings.filter((c) => c.id !== uploadFolderId).length === 0;
+          }
+        } catch (err: any) {
+          // Best-effort preview — surface the data we already have.
+          this.logger.warn(
+            `getDeletionPreview: could not list Drive contents for ${uploadFolderId}: ${err?.message || err}`,
+          );
+        }
+      }
+    }
+
+    return {
+      document: {
+        id: document.id,
+        code: document.code,
+        name: document.name,
+        fileName: document.fileName,
+      },
+      careerCount: document.careerProofDocuments.length,
+      careerNames,
+      driveFiles,
+      uploadFolder: {
+        id: uploadFolderId,
+        willBeDeleted: !!uploadFolderId,
+      },
+      typeFolder: {
+        id: typeFolderId,
+        willBeDeleted: typeFolderWillBeDeleted,
+      },
+      isLegacyDocument,
+    };
+  }
+
   // Sobrescribir el método deleteById para registrar eliminación y eliminar de Google Drive
   async deleteById(id: string): Promise<boolean> {
     this.logger.debug(`Deleting proof document: ${id}`);
 
-    // Get document info before deletion
     try {
       const document = await this.proofDocumentsRepository.findById(id);
 
@@ -154,60 +253,97 @@ export class ProofDocumentsService extends GenericService<ProofDocument, ProofDo
         throw new BadRequestException(`Document with id ${id} not found`);
       }
 
-      // Delete from Google Drive if exists
-      if (document.googleDriveFileId) {
-        try {
-          this.logger.log(`🗑️ Attempting to delete file from Google Drive: ${document.googleDriveFileId}`);
+      const uploadFolderId = (document as any).googleDriveUploadFolderId as string | null;
+      const typeFolderId = (document as any).googleDriveTypeFolderId as string | null;
 
-          // Get user's Google Drive tokens
-          // TODO: Get actual user tokens from database/session
-          // For now, log a warning - in production, fetch from user's stored credentials
-          const user = await this.prisma.user.findUnique({
-            where: { id: this.request.userId || '' },
-            select: {
-              googleAccessToken: true,
-              googleRefreshToken: true,
-            },
-          });
+      // 1. Drive cleanup. We do this BEFORE the DB delete so a Drive-side
+      //    failure surfaces while the row still exists (the user can retry).
+      //    Any Drive error is logged but does not abort the DB deletion —
+      //    the user has explicitly asked to delete, and a leftover Drive
+      //    artifact is recoverable manually; a stranded DB row is worse.
+      const user = await this.prisma.user.findUnique({
+        where: { id: this.request.userId || '' },
+        select: { googleAccessToken: true, googleRefreshToken: true },
+      });
 
-          if (user?.googleAccessToken) {
+      if (user?.googleAccessToken) {
+        const accessToken = user.googleAccessToken;
+        const refreshToken = user.googleRefreshToken || undefined;
+
+        if (uploadFolderId) {
+          // New-style: every upload owns its own folder. Removing the folder
+          // wipes the main file, _carreras.txt, and any extra files that
+          // came in the same multi-file upload — exactly what the user
+          // saw in the deletion preview.
+          try {
+            await this.googleDriveService.deleteFolder(uploadFolderId, accessToken, refreshToken);
+          } catch (err) {
+            this.logger.warn(`Failed to delete upload folder ${uploadFolderId}:`, err);
+          }
+
+          // Best-effort: if the type folder is now empty (no sibling uploads
+          // remain), drop it too. Drive returns an error if the folder isn't
+          // empty — we treat that as "another doc still lives there" and
+          // silently skip.
+          if (typeFolderId) {
+            try {
+              const remaining = await this.googleDriveService.listFolderChildren(
+                typeFolderId,
+                accessToken,
+                refreshToken,
+              );
+              if (remaining.length === 0) {
+                await this.googleDriveService.deleteFolder(typeFolderId, accessToken, refreshToken);
+              }
+            } catch (err) {
+              this.logger.warn(
+                `Skipping type folder cleanup for ${typeFolderId}: ${(err as any)?.message || err}`,
+              );
+            }
+          }
+        } else if (document.googleDriveFileId) {
+          // Legacy fallback: pre-Fase-2 documents don't have a per-upload
+          // folder. We can only delete the main file; the evidence folder
+          // is shared with other docs and must stay.
+          try {
             await this.googleDriveService.deleteFile(
               document.googleDriveFileId,
-              user.googleAccessToken,
-              user.googleRefreshToken || undefined
+              accessToken,
+              refreshToken,
             );
-            this.logger.log('✅ File successfully deleted from Google Drive');
-          } else {
-            this.logger.warn('⚠️ Cannot delete from Google Drive: User tokens not available');
+          } catch (err) {
+            this.logger.warn(`Failed to delete legacy file ${document.googleDriveFileId}:`, err);
           }
-        } catch (error) {
-          this.logger.warn('⚠️ Failed to delete file from Google Drive:', error);
-          // Continue with database deletion even if Drive deletion fails
         }
+      } else {
+        this.logger.warn('⚠️ Skipping Drive cleanup: user has no Google access token');
       }
 
-      // Perform deletion (soft delete)
-      const result = await super.deleteById(id);
-
-      // Log deletion to history
-      if (result) {
-        try {
-          await this.historyService.logChange({
-            documentId: id,
-            userId: this.request.userId || 'system',
-            changeType: 'DELETED',
-            description: `Documento eliminado: ${document.name} (${document.code})`,
-            ipAddress: this.request.ipAddress,
-            userAgent: this.request.userAgent,
-          });
-          this.logger.debug(`📝 History logged for document deletion: ${id}`);
-        } catch (error) {
-          this.logger.warn('Failed to log document deletion to history:', error);
-          // Don't fail the operation if history logging fails
-        }
+      // 2. Audit log entry for the deletion (before we wipe the history rows).
+      try {
+        await this.historyService.logChange({
+          documentId: id,
+          userId: this.request.userId || 'system',
+          changeType: 'DELETED',
+          description: `Documento eliminado: ${document.name} (${document.code})`,
+          ipAddress: this.request.ipAddress,
+          userAgent: this.request.userAgent,
+        });
+      } catch (error) {
+        this.logger.warn('Failed to log document deletion to history:', error);
       }
 
-      return result;
+      // 3. Cascade-clean required-FK dependents in DB.
+      const [careerLinks, history] = await Promise.all([
+        this.prisma.careerProofDocument.deleteMany({ where: { proofDocumentId: id } }),
+        this.prisma.sinaesDocumentHistory.deleteMany({ where: { documentId: id } }),
+      ]);
+      this.logger.debug(
+        `Cleaned ${careerLinks.count} career link(s) and ${history.count} history row(s) for ${id}`,
+      );
+
+      // 4. Finally remove the proof document itself.
+      return await super.deleteById(id);
     } catch (error) {
       this.logger.error(`Error deleting document ${id}:`, error);
       throw error;

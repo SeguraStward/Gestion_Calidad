@@ -11,7 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@una-gc/ui/components/select';
-import { CalendarIcon, FileBarChart, Loader2 } from 'lucide-react';
+import { CalendarIcon, FileBarChart, Loader2, X } from 'lucide-react';
+import { Badge } from '@una-gc/ui/components/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@una-gc/ui/components/popover';
 import { Calendar } from '@una-gc/ui/components/calendar';
 import { format } from 'date-fns';
@@ -133,16 +134,35 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
     setDateTo(undefined);
   };
 
+  // Number of structural/date filters that are actually narrowing the report.
+  // Used as a visual cue in the header so the user knows what is being applied.
+  const activeFilterCount =
+    (dimensionId && dimensionId !== 'all' ? 1 : 0) +
+    (componentId && componentId !== 'all' ? 1 : 0) +
+    (criterionId && criterionId !== 'all' ? 1 : 0) +
+    (careerId && careerId !== 'all' ? 1 : 0) +
+    (dateFrom ? 1 : 0) +
+    (dateTo ? 1 : 0);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileBarChart className="h-5 w-5" />
-          Filtros de Reporte de Cumplimiento
-        </CardTitle>
-        <CardDescription>
-          Configure los filtros para generar un reporte de cumplimiento SINAES personalizado
-        </CardDescription>
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2">
+              <FileBarChart className="h-5 w-5" />
+              Filtros de Reporte de Cumplimiento
+            </CardTitle>
+            <CardDescription>
+              Configure los filtros para generar un reporte de cumplimiento SINAES personalizado
+            </CardDescription>
+          </div>
+          {activeFilterCount > 0 && (
+            <Badge variant="secondary" className="flex-shrink-0">
+              {activeFilterCount} filtro{activeFilterCount === 1 ? '' : 's'} activo{activeFilterCount === 1 ? '' : 's'}
+            </Badge>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Información básica del reporte */}
@@ -259,59 +279,85 @@ export function ComplianceFilters({ onGenerateReport, isGenerating = false }: Co
           <div className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
               <Label>Desde</Label>
-              <Popover>
-                <PopoverTrigger asChild>
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'flex-1 justify-start text-left font-normal',
+                        !dateFrom && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateFrom ? format(dateFrom, 'PPP', { locale: es }) : 'Seleccionar fecha'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 min-w-[280px]" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateFrom}
+                      onSelect={setDateFrom}
+                      locale={es}
+                      weekStartsOn={1}
+                      autoFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                {dateFrom && (
                   <Button
-                    variant="outline"
-                    className={cn(
-                      'w-full justify-start text-left font-normal',
-                      !dateFrom && 'text-muted-foreground'
-                    )}
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDateFrom(undefined)}
+                    aria-label="Limpiar fecha desde"
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateFrom ? format(dateFrom, 'PPP', { locale: es }) : 'Seleccionar fecha'}
+                    <X className="h-4 w-4" />
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 min-w-[280px]" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateFrom}
-                    onSelect={setDateFrom}
-                    locale={es}
-                    weekStartsOn={1}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+                )}
+              </div>
             </div>
 
             <div className="grid gap-2">
               <Label>Hasta</Label>
-              <Popover>
-                <PopoverTrigger asChild>
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        'flex-1 justify-start text-left font-normal',
+                        !dateTo && 'text-muted-foreground'
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateTo ? format(dateTo, 'PPP', { locale: es }) : 'Seleccionar fecha'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 min-w-[280px]" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateTo}
+                      onSelect={setDateTo}
+                      locale={es}
+                      weekStartsOn={1}
+                      autoFocus
+                      disabled={(date: Date) => dateFrom ? date < dateFrom : false}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {dateTo && (
                   <Button
-                    variant="outline"
-                    className={cn(
-                      'w-full justify-start text-left font-normal',
-                      !dateTo && 'text-muted-foreground'
-                    )}
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDateTo(undefined)}
+                    aria-label="Limpiar fecha hasta"
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateTo ? format(dateTo, 'PPP', { locale: es }) : 'Seleccionar fecha'}
+                    <X className="h-4 w-4" />
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 min-w-[280px]" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateTo}
-                    onSelect={setDateTo}
-                    locale={es}
-                    weekStartsOn={1}
-                    initialFocus
-                    disabled={(date: Date) => dateFrom ? date < dateFrom : false}
-                  />
-                </PopoverContent>
-              </Popover>
+                )}
+              </div>
             </div>
           </div>
         </div>

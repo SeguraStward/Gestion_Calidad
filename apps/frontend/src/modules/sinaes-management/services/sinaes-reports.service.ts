@@ -142,22 +142,46 @@ class SinaesReportsService {
   /**
    * Export the documents-by-career inventory as a PDF. Sends the already-
    * computed report payload to the backend (mirrors `exportTempReportPdf`).
+   *
+   * Errors are tricky with `responseType: 'blob'` — axios delivers the error
+   * body as a Blob too, hiding the JSON `{ message }` from the caller. We
+   * read it manually and re-throw with the real reason so the UI toast can
+   * show something useful instead of "request failed".
    */
   async downloadInventoryPdf(report: DocumentsByCareerReport): Promise<void> {
-    const response = await HttpClient.post(
-      '/sinaes-reports/documents-by-career/export-pdf-temp',
-      report,
-      { responseType: 'blob' },
-    );
-    const blob: Blob = response.data;
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Inventario_Documentos_por_Carrera_${new Date().toISOString().split('T')[0]}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    try {
+      const response = await HttpClient.post(
+        '/sinaes-reports/documents-by-career/export-pdf-temp',
+        report,
+        { responseType: 'blob' },
+      );
+      const blob: Blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Inventario_Documentos_por_Carrera_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      const data = err?.response?.data;
+      if (data instanceof Blob) {
+        try {
+          const text = await data.text();
+          try {
+            const parsed = JSON.parse(text);
+            throw new Error(parsed?.message || parsed?.error || text);
+          } catch {
+            throw new Error(text || 'Error generando el PDF');
+          }
+        } catch (innerErr) {
+          if (innerErr instanceof Error) throw innerErr;
+          throw new Error('Error generando el PDF');
+        }
+      }
+      throw err;
+    }
   }
 }
 
@@ -264,8 +288,13 @@ export function useDocumentsByCareer(
       if (filters.criterionId) params.append('criterionId', filters.criterionId);
       const qs = params.toString();
       const url = `/sinaes-reports/documents-by-career${qs ? `?${qs}` : ''}`;
-      const response = await HttpClient.get<DocumentsByCareerReport>(url);
-      return response.data;
+      const response = await HttpClient.get<any>(url);
+      // The backend's global HttpResponseInterceptor wraps every GET payload
+      // as { data: <real-payload>, meta? }. Unwrap defensively in case the
+      // contract ever changes (some endpoints answer directly).
+      const payload =
+        response.data?.data !== undefined ? response.data.data : response.data;
+      return payload as DocumentsByCareerReport;
     },
     enabled,
     // Keep it fresh-ish but avoid spam — admins generate this on demand.

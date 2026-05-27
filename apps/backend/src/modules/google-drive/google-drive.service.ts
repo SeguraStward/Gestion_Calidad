@@ -605,6 +605,64 @@ Generado automáticamente por el Sistema de Gestión de Calidad - UNA
   }
 
   /**
+   * Lists immediate children (files + sub-folders) of a Drive folder. Used by
+   * the deletion-preview flow so the user sees exactly what will be removed,
+   * and by the cascade cleanup to know whether a parent folder is empty.
+   */
+  async listFolderChildren(
+    folderId: string,
+    accessToken: string,
+    refreshToken?: string,
+  ): Promise<Array<{ id: string; name: string; mimeType: string; isFolder: boolean }>> {
+    try {
+      const drive = this.createDriveClient(accessToken, refreshToken);
+      const response = await drive.files.list({
+        q: `'${folderId}' in parents and trashed=false`,
+        fields: 'files(id, name, mimeType)',
+        spaces: 'drive',
+        pageSize: 1000,
+      });
+      const files = response.data.files || [];
+      return files.map((f) => ({
+        id: f.id!,
+        name: f.name!,
+        mimeType: f.mimeType || 'application/octet-stream',
+        isFolder: f.mimeType === 'application/vnd.google-apps.folder',
+      }));
+    } catch (error: any) {
+      this.handleDriveError(error, 'listFolderChildren');
+    }
+  }
+
+  /**
+   * Deletes a folder. Drive removes a folder *and all its contents recursively*
+   * with a single `files.delete` call, so we don't need to enumerate children
+   * ourselves. We also drop the metadata row in our DB so we don't leave a
+   * GoogleDriveFolder pointing at a Drive id that no longer exists.
+   */
+  async deleteFolder(
+    folderId: string,
+    accessToken: string,
+    refreshToken?: string,
+  ): Promise<void> {
+    try {
+      const drive = this.createDriveClient(accessToken, refreshToken);
+      await drive.files.delete({ fileId: folderId });
+      this.logger.log(`🗑️ Folder deleted from Drive: ${folderId}`);
+    } catch (error: any) {
+      this.handleDriveError(error, 'deleteFolder');
+    }
+
+    try {
+      await this.prisma.googleDriveFolder.deleteMany({
+        where: { googleFolderId: folderId },
+      });
+    } catch (err: any) {
+      this.logger.warn(`Could not remove googleDriveFolder metadata for ${folderId}: ${err?.message || err}`);
+    }
+  }
+
+  /**
    * Updates the _carreras.txt file for a specific document.
    * Used by legacy/replace flows that already know the careers and folder.
    * Prefer `regenerateCarrerasFileFromDb` for new code so the DB is the

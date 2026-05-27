@@ -260,7 +260,7 @@ export class UsersController extends GenericController<UserDto, UserDto> {
   })
   @AuthorizedEndpoint(PermissionType.CREATE)
   async bulkImportProfessors(
-    @Body() importDto: { professors: Array<{ cedula: string; nombre: string }> },
+    @Body() importDto: { professors: Array<{ cedula: string; nombre: string; email?: string }> },
   ) {
     this.logger.log(`Starting bulk import of ${importDto.professors.length} professors`);
     const result = await this.usersService.bulkImportProfessors(importDto.professors);

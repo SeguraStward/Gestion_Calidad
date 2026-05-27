@@ -757,14 +757,25 @@ export class PdfGeneratorService {
   }
 
   private generateInventoryHtml(report: DocumentsByCareerReportDto): string {
-    const { summary, careers, generatedAt } = report;
+    // Defensive defaults — the frontend now sends an unwrapped payload, but
+    // missing summaries/careers should still render a valid PDF instead of
+    // throwing inside `.map()` and surfacing as a 500.
+    const summary = report.summary || {
+      totalCareers: 0,
+      totalDocuments: 0,
+      careersWithDocuments: 0,
+      careersWithoutDocuments: 0,
+      totalEvidences: 0,
+    };
+    const careers = report.careers || [];
+    const generatedAt = report.generatedAt || new Date();
 
     const summaryRows = [
-      ['Carreras incluidas', summary.totalCareers],
-      ['Documentos asociados', summary.totalDocuments],
-      ['Carreras con documentos', summary.careersWithDocuments],
-      ['Carreras sin documentos', summary.careersWithoutDocuments],
-      ['Evidencias en alcance', summary.totalEvidences],
+      ['Carreras incluidas', summary.totalCareers ?? 0],
+      ['Documentos asociados', summary.totalDocuments ?? 0],
+      ['Carreras con documentos', summary.careersWithDocuments ?? 0],
+      ['Carreras sin documentos', summary.careersWithoutDocuments ?? 0],
+      ['Evidencias en alcance', summary.totalEvidences ?? 0],
     ]
       .map(
         ([k, v]) => `
@@ -828,11 +839,13 @@ export class PdfGeneratorService {
   }
 
   private renderCareerInventory(c: CareerInventoryDto): string {
-    const treeHtml = c.dimensions.length
-      ? c.dimensions.map((d) => this.renderDimensionForPdf(d)).join('')
+    const dims = c.dimensions || [];
+    const gaps = c.gaps || [];
+    const treeHtml = dims.length
+      ? dims.map((d) => this.renderDimensionForPdf(d)).join('')
       : '<p class="empty">Sin dimensiones en el alcance.</p>';
 
-    const gapsHtml = c.gaps.length
+    const gapsHtml = gaps.length
       ? `
         <table class="gaps-table">
           <thead>
@@ -845,7 +858,7 @@ export class PdfGeneratorService {
             </tr>
           </thead>
           <tbody>
-            ${c.gaps
+            ${gaps
               .map(
                 (g) => `
                   <tr>
@@ -871,42 +884,44 @@ export class PdfGeneratorService {
             <span class="career-name">${escapeHtml(c.name)}</span>
           </div>
           <div class="career-meta">
-            ${c.totalDocuments} documento(s) · ${c.evidencesCovered} evidencia(s) cubierta(s) · ${c.evidencesUncovered} sin documentos
+            ${c.totalDocuments ?? 0} documento(s) · ${c.evidencesCovered ?? 0} evidencia(s) cubierta(s) · ${c.evidencesUncovered ?? 0} sin documentos
           </div>
         </div>
 
         <h3>Documentos por ubicación en la jerarquía</h3>
         ${treeHtml}
 
-        <h3>Ubicaciones sin documentos para esta carrera (${c.gaps.length})</h3>
+        <h3>Ubicaciones sin documentos para esta carrera (${gaps.length})</h3>
         ${gapsHtml}
       </div>
     `;
   }
 
   private renderDimensionForPdf(d: DimensionInventoryDto): string {
+    const components = d.components || [];
     return `
       <ul class="tree">
         <li>
           <span class="dim-code">${escapeHtml(d.code)}</span>
           <strong>${escapeHtml(d.name)}</strong>
-          <span class="badge">${d.documentCount} doc(s)</span>
+          <span class="badge">${d.documentCount ?? 0} doc(s)</span>
           ${
-            d.components.length
-              ? `<ul class="tree">${d.components
-                  .map(
-                    (comp) => `
+            components.length
+              ? `<ul class="tree">${components
+                  .map((comp) => {
+                    const criteria = comp.criteria || [];
+                    return `
                       <li>
                         <span class="comp-code">${escapeHtml(comp.code)}</span> ${escapeHtml(comp.name)}
-                        <span class="badge">${comp.documentCount}</span>
+                        <span class="badge">${comp.documentCount ?? 0}</span>
                         ${
-                          comp.criteria.length
-                            ? `<ul class="tree">${comp.criteria
+                          criteria.length
+                            ? `<ul class="tree">${criteria
                                 .map(
                                   (crit) => `
                                     <li>
                                       <span class="crit-code">${escapeHtml(crit.code)}</span> ${escapeHtml(crit.name)}
-                                      <span class="badge">${crit.documentCount}</span>
+                                      <span class="badge">${crit.documentCount ?? 0}</span>
                                       ${this.renderLeafEvidencesForPdf(crit)}
                                     </li>
                                   `,
@@ -915,8 +930,8 @@ export class PdfGeneratorService {
                             : ''
                         }
                       </li>
-                    `,
-                  )
+                    `;
+                  })
                   .join('')}</ul>`
               : ''
           }
@@ -926,34 +941,34 @@ export class PdfGeneratorService {
   }
 
   private renderLeafEvidencesForPdf(
-    crit: { directEvidences: any[]; standards: any[] },
+    crit: { directEvidences?: any[]; standards?: any[] },
   ): string {
-    const directs = crit.directEvidences
+    const directs = (crit.directEvidences || [])
       .map(
         (ev) => `
           <li>
             <span class="ev-code">${escapeHtml(ev.code)}</span> ${escapeHtml(ev.name)}
-            <span class="badge">${ev.documentCount}</span>
-            ${this.renderDocsForPdf(ev.documents)}
+            <span class="badge">${ev.documentCount ?? 0}</span>
+            ${this.renderDocsForPdf(ev.documents || [])}
           </li>
         `,
       )
       .join('');
 
-    const stds = crit.standards
+    const stds = (crit.standards || [])
       .map(
         (std) => `
           <li>
             <span class="std-code">${escapeHtml(std.code)}</span> ${escapeHtml(std.name)}
-            <span class="badge">${std.documentCount}</span>
+            <span class="badge">${std.documentCount ?? 0}</span>
             <ul class="tree">
-              ${std.evidences
+              ${(std.evidences || [])
                 .map(
                   (ev: any) => `
                     <li>
                       <span class="ev-code">${escapeHtml(ev.code)}</span> ${escapeHtml(ev.name)}
-                      <span class="badge">${ev.documentCount}</span>
-                      ${this.renderDocsForPdf(ev.documents)}
+                      <span class="badge">${ev.documentCount ?? 0}</span>
+                      ${this.renderDocsForPdf(ev.documents || [])}
                     </li>
                   `,
                 )

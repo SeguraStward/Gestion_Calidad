@@ -136,6 +136,8 @@ export interface UserFilters {
 export interface ProfessorRowDto {
   cedula: string
   nombre: string
+  /** Optional. When present, used as the professor's login email instead of the auto-generated one. */
+  email?: string
 }
 
 export interface BulkImportProfessorsDto {

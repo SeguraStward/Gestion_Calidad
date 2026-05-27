@@ -69,9 +69,11 @@ export default function BulkImportProfessorsPage() {
           return
         }
 
-        // Parse data starting from row 1 (skip header row 0)
+        // Parse data starting from row 1 (skip header row 0).
+        // Columns: A = cédula (required), B = nombre (required), C = email (optional).
         const professors: ProfessorRowDto[] = []
         const parseErrors: string[] = []
+        const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 
         for (let i = 1; i < jsonData.length; i++) {
           const row = jsonData[i]
@@ -81,6 +83,7 @@ export default function BulkImportProfessorsPage() {
 
           const cedula = String(row[0] || '').trim()
           const nombre = String(row[1] || '').trim()
+          const emailRaw = row[2] !== undefined && row[2] !== null ? String(row[2]).trim() : ''
 
           // Validate required fields
           if (!cedula) {
@@ -92,7 +95,18 @@ export default function BulkImportProfessorsPage() {
             continue
           }
 
-          professors.push({ cedula, nombre })
+          // Optional email — only validate when something was typed. An empty
+          // cell is fine; the backend will generate a placeholder address.
+          const professor: ProfessorRowDto = { cedula, nombre }
+          if (emailRaw) {
+            if (!isValidEmail(emailRaw)) {
+              parseErrors.push(`Fila ${i + 1}: el correo "${emailRaw}" no tiene un formato válido`)
+              continue
+            }
+            professor.email = emailRaw
+          }
+
+          professors.push(professor)
         }
 
         if (parseErrors.length > 0) {
@@ -143,7 +157,7 @@ export default function BulkImportProfessorsPage() {
           <h1 className="text-3xl font-bold">Importación Masiva de Profesores</h1>
         </div>
         <p className="text-muted-foreground">
-          Importa múltiples profesores desde un archivo Excel con las columnas: <strong>cedula</strong> y <strong>nombre</strong>
+          Importa múltiples profesores desde un archivo Excel con las columnas: <strong>cedula</strong>, <strong>nombre</strong> y opcionalmente <strong>correo</strong>
         </p>
       </div>
 
@@ -159,17 +173,31 @@ export default function BulkImportProfessorsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
+          <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
             <div>
-              <strong>Columna A:</strong> cedula (ej: 123456789)
+              <strong>Columna A:</strong> cedula <span className="text-destructive">*</span> (ej: 123456789)
             </div>
             <div>
-              <strong>Columna B:</strong> nombre (ej: Juan Pérez)
+              <strong>Columna B:</strong> nombre <span className="text-destructive">*</span> (ej: Juan Pérez)
+            </div>
+            <div>
+              <strong>Columna C:</strong> correo (ej: juan.perez@una.cr)
             </div>
           </div>
           <p className="text-sm text-muted-foreground mt-4">
-            <strong>Nota:</strong> Se creará un usuario con email temporal <code>profesor.[cedula]@una.cr</code> y se asignará el rol de PROFESOR.
+            <strong>Notas:</strong>
           </p>
+          <ul className="text-sm text-muted-foreground ml-5 list-disc">
+            <li>Las columnas marcadas con <span className="text-destructive">*</span> son obligatorias.</li>
+            <li>
+              Si no se proporciona correo, se asignará uno temporal con el formato{' '}
+              <code>profesor.[cedula]@una.cr</code>.
+            </li>
+            <li>
+              Si el profesor ya existe (misma cédula) y proporcionas un correo distinto, se actualiza al nuevo.
+            </li>
+            <li>Se asignará automáticamente el rol <strong>PROFESOR</strong>.</li>
+          </ul>
         </CardContent>
       </Card>
 
@@ -213,6 +241,7 @@ export default function BulkImportProfessorsPage() {
                     <th className="px-4 py-2 text-left">#</th>
                     <th className="px-4 py-2 text-left">Cédula</th>
                     <th className="px-4 py-2 text-left">Nombre</th>
+                    <th className="px-4 py-2 text-left">Correo</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -221,6 +250,15 @@ export default function BulkImportProfessorsPage() {
                       <td className="px-4 py-2">{index + 1}</td>
                       <td className="px-4 py-2">{professor.cedula}</td>
                       <td className="px-4 py-2">{professor.nombre}</td>
+                      <td className="px-4 py-2">
+                        {professor.email ? (
+                          <span>{professor.email}</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic">
+                            (se generará automático)
+                          </span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

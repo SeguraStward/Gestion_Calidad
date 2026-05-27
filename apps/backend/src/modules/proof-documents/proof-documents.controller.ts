@@ -52,6 +52,16 @@ export class ProofDocumentsController extends GenericController<
     super(proofDocumentsService);
   }
 
+  @Get(':id/deletion-preview')
+  @ApiOperation({
+    summary:
+      'Preview what would be deleted (Drive files, career links, type folder cleanup) before confirming.',
+  })
+  async getDeletionPreview(@Req() req: Request) {
+    const id = req.params.id;
+    return this.proofDocumentsService.getDeletionPreview(id);
+  }
+
   @Get('search')
   @ApiOperation({ summary: 'Search proof documents with advanced filters' })
   @ApiQuery({ name: 'search', required: false, description: 'Search by name or code' })

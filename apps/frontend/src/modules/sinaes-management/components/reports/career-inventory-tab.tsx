@@ -94,16 +94,38 @@ export function CareerInventoryTab() {
   }
 
   if (isError) {
+    // Surface the most specific message we can find. Backend Nest errors
+    // arrive as { message } inside the axios response, not on Error.message.
+    const anyErr = error as any
+    const msg =
+      anyErr?.response?.data?.message ||
+      anyErr?.response?.data?.error ||
+      anyErr?.message ||
+      'Error desconocido'
+    const status = anyErr?.response?.status
     return (
       <Card>
-        <CardContent className="p-8 text-center text-destructive">
-          Error al cargar el inventario: {(error as any)?.message || 'Desconocido'}
+        <CardContent className="p-8 space-y-2 text-center">
+          <p className="text-destructive font-medium">No se pudo cargar el inventario por carrera</p>
+          <p className="text-sm text-muted-foreground">
+            {status ? `(HTTP ${status}) ` : ''}{msg}
+          </p>
         </CardContent>
       </Card>
     )
   }
 
-  if (!data) return null
+  // Defend against shapes that don't match the contract (server-side bug,
+  // older deploys still up, etc). Avoids cryptic "cannot read summary" errors.
+  if (!data || !data.summary || !Array.isArray(data.careers)) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center text-muted-foreground">
+          El servidor devolvió una respuesta inesperada. Revisa los logs del backend.
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <div className="space-y-4">

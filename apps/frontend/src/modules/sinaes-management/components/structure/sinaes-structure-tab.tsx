@@ -113,13 +113,16 @@ function DeleteErrorDialog({
   error: DeleteError | null
   onClose: () => void
 }) {
+  // The backend message already includes the entity name + the reason
+  // ("No se puede eliminar la dimensión 'X' porque tiene N componentes...").
+  // The title stays generic so we don't repeat the entity name twice.
   return (
     <AlertDialog open={!!error}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
-            No se pudo eliminar {error?.entityLabel}
+            No se pudo eliminar
           </AlertDialogTitle>
           <AlertDialogDescription className="whitespace-pre-line">
             {error?.message}
@@ -189,12 +192,14 @@ function EvidenceRow({ evidence, onEdit, onDelete }: EvidenceRowProps) {
       <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0 font-mono flex-shrink-0', cfg.badge)}>
         {evidence.code}
       </Badge>
-      <span className={cn('flex-1 truncate', cfg.label)}>{evidence.name}</span>
-      {evidence.description && (
-        <span className="text-xs text-muted-foreground truncate max-w-[200px] hidden md:block">
-          {evidence.description}
-        </span>
-      )}
+      <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,max-content)_minmax(0,1fr)] gap-x-3 items-baseline">
+        <span className={cn('truncate', cfg.label)}>{evidence.name}</span>
+        {evidence.description && (
+          <span className="text-xs text-muted-foreground truncate">
+            {evidence.description}
+          </span>
+        )}
+      </div>
       <div className="flex gap-1 flex-shrink-0">
         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => onEdit(evidence)}>
           <PenLine className="h-3 w-3" />
@@ -259,12 +264,14 @@ function StandardRow({ standard, onEdit, onDelete, onAddEvidence }: StandardRowP
         <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0 font-mono flex-shrink-0', cfg.badge)}>
           {standard.code}
         </Badge>
-        <span className={cn('flex-1 truncate', cfg.label)}>{standard.name}</span>
-        {standard.description && (
-          <span className="text-xs text-muted-foreground truncate max-w-[200px] hidden md:block">
-            {standard.description}
-          </span>
-        )}
+        <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,max-content)_minmax(0,1fr)] gap-x-3 items-baseline">
+          <span className={cn('truncate', cfg.label)}>{standard.name}</span>
+          {standard.description && (
+            <span className="text-xs text-muted-foreground truncate">
+              {standard.description}
+            </span>
+          )}
+        </div>
         <div className="flex gap-1 flex-shrink-0">
           <Button
             variant="ghost" size="sm" className="h-6 px-1.5 text-xs gap-1"
@@ -585,12 +592,14 @@ function ComponentRow({ component, onEdit, onDelete }: ComponentRowProps) {
         <Badge variant="outline" className={cn('text-xs px-1.5 py-0 font-mono flex-shrink-0', cfg.badge)}>
           {component.code}
         </Badge>
-        <span className={cn('flex-1 truncate', cfg.label)}>{component.name}</span>
-        {component.description && (
-          <span className="text-xs text-muted-foreground truncate max-w-[200px] hidden md:block">
-            {component.description}
-          </span>
-        )}
+        <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,max-content)_minmax(0,1fr)] gap-x-3 items-baseline">
+          <span className={cn('truncate', cfg.label)}>{component.name}</span>
+          {component.description && (
+            <span className="text-xs text-muted-foreground truncate">
+              {component.description}
+            </span>
+          )}
+        </div>
         <div className="flex gap-1 flex-shrink-0">
           <Button
             variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1"
@@ -712,12 +721,14 @@ function DimensionRow({ dimension, onEdit, onDelete }: DimensionRowProps) {
         <Badge variant="outline" className={cn('text-xs px-2 py-0.5 font-mono font-bold flex-shrink-0', cfg.badge)}>
           {dimension.code}
         </Badge>
-        <span className={cn('flex-1 truncate', cfg.label)}>{dimension.name}</span>
-        {dimension.description && (
-          <span className="text-xs text-muted-foreground truncate max-w-[250px] hidden lg:block">
-            {dimension.description}
-          </span>
-        )}
+        <div className="flex-1 min-w-0 grid grid-cols-[minmax(0,max-content)_minmax(0,1fr)] gap-x-3 items-baseline">
+          <span className={cn('truncate', cfg.label)}>{dimension.name}</span>
+          {dimension.description && (
+            <span className="text-xs text-muted-foreground truncate">
+              {dimension.description}
+            </span>
+          )}
+        </div>
         <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
           <Button
             variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1"
