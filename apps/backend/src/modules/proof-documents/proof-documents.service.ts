@@ -1,6 +1,6 @@
 import { GenericService } from '@core/common/interfaces/generic.service';
 import { DtoValidator } from '@core/common/dto-validator';
-import { Injectable, Logger, BadRequestException, Inject, Scope } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, UnauthorizedException, Inject, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 
 import { ProofDocumentDto } from './dtos/proof-document.dto';
@@ -1025,5 +1025,228 @@ export class ProofDocumentsService extends GenericService<ProofDocument, ProofDo
 
     this.logger.log('✅ File replaced successfully');
     return updated;
+  }
+
+  /** Reads the current request user's Google Drive tokens from the DB. */
+  private async getUserDriveTokens(): Promise<{ accessToken?: string; refreshToken?: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: this.request.userId || '' },
+      select: { googleAccessToken: true, googleRefreshToken: true },
+    });
+    return {
+      accessToken: user?.googleAccessToken || undefined,
+      refreshToken: user?.googleRefreshToken || undefined,
+    };
+  }
+
+  /** Maps the document's primary DB file into the file-list shape. */
+  private primaryFileFromDb(document: ProofDocument) {
+    return document.googleDriveFileId
+      ? [
+          {
+            id: document.googleDriveFileId,
+            name: document.fileName,
+            size: document.fileSize ?? 0,
+            url: document.fileUrl,
+            mimeType: document.fileType || 'application/octet-stream',
+            isPrimary: true,
+          },
+        ]
+      : [];
+  }
+
+  /**
+   * List every file stored in a document's Drive folder so the UI can manage
+   * them individually (download / delete / add). New-style documents own a
+   * per-upload folder; legacy ones only expose their single primary file.
+   * The internal `_carreras.txt` is never surfaced — it is managed automatically.
+   */
+  async listDocumentFiles(id: string): Promise<{
+    files: Array<{ id: string; name: string; size: number; url: string; mimeType: string; isPrimary: boolean }>;
+    isLegacy: boolean;
+    /** True when we couldn't reach Drive (e.g. expired Google token) and only the DB primary is shown. */
+    driveUnavailable: boolean;
+  }> {
+    const document = await this.proofDocumentsRepository.findById(id);
+    if (!document) {
+      throw new BadRequestException(`Document with id ${id} not found`);
+    }
+
+    const uploadFolderId = (document as any).googleDriveUploadFolderId as string | null;
+
+    // Legacy documents (no per-upload folder) live in a shared evidence folder,
+    // so we can only safely expose the primary file recorded in the DB.
+    if (!uploadFolderId) {
+      return { files: this.primaryFileFromDb(document), isLegacy: true, driveUnavailable: false };
+    }
+
+    const { accessToken, refreshToken } = await this.getUserDriveTokens();
+    if (!accessToken) {
+      // Without tokens we can't inspect Drive; fall back to the primary only.
+      return { files: this.primaryFileFromDb(document), isLegacy: false, driveUnavailable: true };
+    }
+
+    // If Drive is unreachable (commonly an expired Google token with no refresh
+    // token), degrade gracefully: show the primary file from the DB and flag it,
+    // instead of failing the whole dialog with an opaque error.
+    let driveFiles: Array<{ id: string; name: string; url: string; size: number; mimeType: string }>;
+    try {
+      driveFiles = await this.googleDriveService.getFolderFiles(uploadFolderId, accessToken, refreshToken);
+    } catch (err: any) {
+      this.logger.warn(`listDocumentFiles: Drive unavailable for ${id}: ${err?.message || err}`);
+      return { files: this.primaryFileFromDb(document), isLegacy: false, driveUnavailable: true };
+    }
+
+    const carrerasFileName = `${document.code}_carreras.txt`;
+    const files = driveFiles
+      .filter((f) => f.mimeType !== 'application/vnd.google-apps.folder')
+      .filter((f) => f.name !== carrerasFileName)
+      .map((f) => ({
+        id: f.id,
+        name: f.name,
+        size: f.size,
+        url: f.url,
+        mimeType: f.mimeType,
+        isPrimary: f.id === document.googleDriveFileId,
+      }));
+
+    return { files, isLegacy: false, driveUnavailable: false };
+  }
+
+  /**
+   * Delete a single file from a document's Drive folder. Deleting the primary
+   * file promotes another content file as the new primary (updating the DB);
+   * deleting the only remaining content file is rejected (delete the document
+   * instead). The internal `_carreras.txt` cannot be deleted here.
+   */
+  async deleteDocumentFile(id: string, fileId: string): Promise<{ promotedNewPrimary: boolean }> {
+    const document = await this.proofDocumentsRepository.findById(id);
+    if (!document) {
+      throw new BadRequestException(`Document with id ${id} not found`);
+    }
+
+    const uploadFolderId = (document as any).googleDriveUploadFolderId as string | null;
+    if (!uploadFolderId) {
+      throw new BadRequestException(
+        'Este documento no admite gestión de archivos individuales (subido con el sistema anterior). Para eliminarlo, usa "Eliminar documento".',
+      );
+    }
+
+    const { accessToken, refreshToken } = await this.getUserDriveTokens();
+    if (!accessToken) {
+      throw new UnauthorizedException(
+        'Se requiere autenticación con Google Drive. Cierra sesión y vuelve a iniciar con Google.',
+      );
+    }
+
+    const carrerasFileName = `${document.code}_carreras.txt`;
+    const folderFiles = await this.googleDriveService.getFolderFiles(
+      uploadFolderId,
+      accessToken,
+      refreshToken,
+    );
+    const contentFiles = folderFiles
+      .filter((f) => f.mimeType !== 'application/vnd.google-apps.folder')
+      .filter((f) => f.name !== carrerasFileName);
+
+    const target = contentFiles.find((f) => f.id === fileId);
+    if (!target) {
+      throw new BadRequestException('El archivo no pertenece a este documento o no se puede eliminar.');
+    }
+
+    const isPrimary = fileId === document.googleDriveFileId;
+
+    if (isPrimary) {
+      // Promote another content file as the new primary before removing this one.
+      const replacement = contentFiles.find((f) => f.id !== fileId);
+      if (!replacement) {
+        throw new BadRequestException(
+          'Es el único archivo del documento; elimina el documento completo en su lugar.',
+        );
+      }
+      // Point the document at the replacement FIRST so a Drive failure can only
+      // leave a recoverable orphan file — never a DB row pointing at a deleted file.
+      const fileExtension = replacement.name.split('.').pop();
+      await this.update(id, {
+        fileUrl: replacement.url,
+        fileName: replacement.name,
+        fileType: fileExtension || document.fileType,
+        fileSize: replacement.size,
+        googleDriveFileId: replacement.id,
+      } as any);
+      await this.googleDriveService.deleteFile(fileId, accessToken, refreshToken);
+    } else {
+      await this.googleDriveService.deleteFile(fileId, accessToken, refreshToken);
+    }
+
+    try {
+      await this.historyService.logChange({
+        documentId: id,
+        userId: this.request.userId || 'system',
+        changeType: 'FILE_DELETED',
+        fieldChanged: 'file',
+        oldValue: target.name,
+        newValue: '',
+        description: `Archivo eliminado: ${target.name}`,
+        ipAddress: this.request.ipAddress,
+        userAgent: this.request.userAgent,
+      });
+    } catch (error) {
+      this.logger.warn('Failed to log file deletion to history:', error);
+    }
+
+    return { promotedNewPrimary: isPrimary };
+  }
+
+  /**
+   * Add an extra file to a document's Drive folder (does not touch the primary
+   * file nor `_carreras.txt`). Mirrors the naming + folder resolution used by
+   * `replaceDocumentFile`.
+   */
+  async addDocumentFile(
+    id: string,
+    file: any,
+    accessToken: string,
+    refreshToken?: string,
+  ): Promise<{ id: string; name: string; url: string; size: number }> {
+    const document = await this.proofDocumentsRepository.findById(id);
+    if (!document) {
+      throw new BadRequestException(`Document with id ${id} not found`);
+    }
+
+    const targetFolderId =
+      (document as any).googleDriveUploadFolderId || document.googleDriveFolderId;
+    if (!targetFolderId) {
+      throw new BadRequestException(
+        'El documento no tiene una carpeta de Drive asociada; no se puede agregar el archivo.',
+      );
+    }
+
+    const newFileName = `${document.code}_${file.originalname.replace(/\s+/g, '-')}`;
+    const uploaded = await this.googleDriveService.uploadFile(
+      { ...file, originalname: newFileName },
+      targetFolderId,
+      [],
+      accessToken,
+      refreshToken,
+    );
+
+    try {
+      await this.historyService.logChange({
+        documentId: id,
+        userId: this.request.userId || 'system',
+        changeType: 'FILE_ADDED',
+        fieldChanged: 'file',
+        oldValue: '',
+        newValue: newFileName,
+        description: `Archivo agregado: ${newFileName}`,
+        ipAddress: this.request.ipAddress,
+        userAgent: this.request.userAgent,
+      });
+    } catch (error) {
+      this.logger.warn('Failed to log file addition to history:', error);
+    }
+
+    return { id: uploaded.id, name: uploaded.name, url: uploaded.url, size: uploaded.size };
   }
 }

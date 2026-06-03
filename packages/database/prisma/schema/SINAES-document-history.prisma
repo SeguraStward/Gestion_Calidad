@@ -42,5 +42,7 @@ enum ChangeType {
   STATUS_CHANGED // Cambio de estado
   CAREERS_UPDATED // Carreras asociadas actualizadas
   FILE_REPLACED // Archivo reemplazado
+  FILE_ADDED // Archivo individual agregado a la carpeta del documento
+  FILE_DELETED // Archivo individual eliminado de la carpeta del documento
   METADATA_UPDATED // Metadatos actualizados
 }

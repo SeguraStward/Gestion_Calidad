@@ -5,6 +5,8 @@ import {
   Post,
   Patch,
   Get,
+  Delete,
+  Param,
   Query,
   UseInterceptors,
   UploadedFile,
@@ -318,6 +320,58 @@ export class ProofDocumentsController extends GenericController<
     }
 
     return this.proofDocumentsService.replaceDocumentFile(
+      documentId,
+      file,
+      user.googleAccessToken,
+      user.googleRefreshToken,
+    );
+  }
+
+  @Get(':id/files')
+  @ApiOperation({
+    summary: "List all files inside a document's Drive folder (for per-file management).",
+  })
+  async listDocumentFiles(@Param('id') id: string) {
+    return this.proofDocumentsService.listDocumentFiles(id);
+  }
+
+  @Delete(':id/files/:fileId')
+  @ApiOperation({
+    summary:
+      'Delete a single file from a document. Promotes another file as primary if the deleted one was primary.',
+  })
+  async deleteDocumentFile(
+    @Param('id') id: string,
+    @Param('fileId') fileId: string,
+  ) {
+    return this.proofDocumentsService.deleteDocumentFile(id, fileId);
+  }
+
+  @Post(':id/files')
+  @ApiOperation({ summary: "Add an extra file to a document's Drive folder" })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary', description: 'File to add' },
+      },
+    },
+  })
+  async addDocumentFile(@Req() req: any, @UploadedFile() file: any) {
+    const documentId = req.params.id;
+
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
+    const user = req.user;
+    if (!user?.googleAccessToken) {
+      throw new UnauthorizedException('Google Drive authentication required');
+    }
+
+    return this.proofDocumentsService.addDocumentFile(
       documentId,
       file,
       user.googleAccessToken,

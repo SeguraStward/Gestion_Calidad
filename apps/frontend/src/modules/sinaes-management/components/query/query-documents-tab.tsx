@@ -166,11 +166,13 @@ export const QueryDocumentsTab = () => {
       </Card>
 
       {/* Document Details Dialog with History */}
-      <DocumentDetailsDialog
-        document={selectedDocument}
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-      />
+      <DialogErrorBoundary>
+        <DocumentDetailsDialog
+          document={selectedDocument}
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+        />
+      </DialogErrorBoundary>
 
       {/* Edit Document Dialog */}
       <DialogErrorBoundary>

@@ -172,6 +172,78 @@ export const downloadProofDocument = (document: { fileUrl: string }) => {
 }
 
 /**
+ * A single file living inside a document's Drive folder.
+ * Mirrors the shape returned by `GET /proof-documents/:id/files`.
+ */
+export interface ProofDocumentFile {
+  id: string
+  name: string
+  size: number
+  url: string
+  mimeType: string
+  isPrimary: boolean
+}
+
+export interface ProofDocumentFilesResponse {
+  files: ProofDocumentFile[]
+  /** Legacy documents only expose their single primary file (no per-upload folder). */
+  isLegacy: boolean
+  /** True when Drive couldn't be reached (e.g. expired Google token); only the primary is shown. */
+  driveUnavailable?: boolean
+}
+
+/**
+ * Lists every file stored in a document's Drive folder so the detail view can
+ * manage them individually. Runs only when an id is provided AND `enabled`.
+ */
+export const useProofDocumentFiles = (documentId: string | undefined, enabled = true) => {
+  return useQuery<ProofDocumentFilesResponse>({
+    queryKey: ['proof-documents', documentId, 'files'],
+    queryFn: async () => {
+      const response = await HttpClient.get<ProofDocumentFilesResponse>(
+        `/proof-documents/${documentId}/files`,
+      )
+      return response.data
+    },
+    enabled: !!documentId && enabled,
+    staleTime: 0,
+  })
+}
+
+/**
+ * Delete a single file from a document's Drive folder.
+ */
+export const deleteProofDocumentFile = async (
+  documentId: string,
+  fileId: string,
+): Promise<{ promotedNewPrimary: boolean }> => {
+  const response = await HttpClient.delete<{ promotedNewPrimary: boolean }>(
+    `/proof-documents/${documentId}/files/${fileId}`,
+  )
+  return response.data
+}
+
+/**
+ * Add an extra file to a document's Drive folder.
+ */
+export const addProofDocumentFile = async (
+  documentId: string,
+  file: File,
+): Promise<ProofDocumentFile> => {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await HttpClient.post<ProofDocumentFile>(
+    `/proof-documents/${documentId}/files`,
+    formData,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    },
+  )
+  return response.data
+}
+
+/**
  * Update document careers
  */
 export const updateDocumentCareers = async (

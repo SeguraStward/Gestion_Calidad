@@ -18,8 +18,6 @@ import { Button } from '@una-gc/ui/components/button';
 import { Input } from '@una-gc/ui/components/input';
 import { Label } from '@una-gc/ui/components/label';
 import { Textarea } from '@una-gc/ui/components/textarea';
-import { Checkbox } from '@una-gc/ui/components/checkbox';
-import { ScrollArea } from '@una-gc/ui/components/scroll-area';
 import { Loader2, GraduationCap, Search } from 'lucide-react';
 import { useUpdateProofDocument, updateDocumentCareers } from '../../services/proof-documents.service';
 import type { ProofDocument } from '../../types/proof-documents.types';
@@ -53,7 +51,8 @@ export function EditDocumentDialog({
 
   const updateMutation = useUpdateProofDocument();
 
-  // Fetch careers
+  // Fetch careers. `staleTime` evita refetches innecesarios (foco de ventana,
+  // remontajes) que provocan renders extra del diálogo sin necesidad.
   const { data: careersData, isLoading: careersLoading } = useQuery<{ data: Career[]; meta: any }>({
     queryKey: ['careers'],
     queryFn: async () => {
@@ -62,20 +61,26 @@ export function EditDocumentDialog({
       });
       return response.data;
     },
+    staleTime: 5 * 60_000,
   });
 
   const careers = careersData?.data || [];
 
-  // Sincronizar estado con el documento seleccionado
+  // Sincronizar estado con el documento seleccionado. Dependemos del `id`
+  // (primitivo estable) y de `open`, NO del objeto `document`: si la prop
+  // recibe una nueva referencia con el mismo id (p. ej. tras un refetch de la
+  // lista), el efecto no debe re-ejecutarse — eso es lo que dispara el loop
+  // "Maximum update depth exceeded" (React #185).
   React.useEffect(() => {
-    if (document) {
+    if (open && document) {
       setName(document.name);
       setDescription(document.description || '');
       // Extraer IDs de carreras del documento
       const careerIds = document.careerProofDocuments?.map(cp => cp.careerId) || [];
       setSelectedCareerIds(careerIds);
     }
-  }, [document]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [document?.id, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -246,7 +251,7 @@ export function EditDocumentDialog({
                   ))}
                 </div>
               ) : (
-                <ScrollArea className="h-[250px] border rounded-lg">
+                <div className="h-[250px] overflow-y-auto border rounded-lg">
                   <div className="p-4 space-y-2">
                     {filteredCareers.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
@@ -259,11 +264,14 @@ export function EditDocumentDialog({
                           className="flex items-center gap-3 p-3 hover:bg-muted rounded-lg cursor-pointer"
                           onClick={() => !isSubmitting && handleCareerToggle(career.id)}
                         >
-                          <Checkbox
+                          <input
+                            type="checkbox"
                             checked={selectedCareerIds.includes(career.id)}
-                            onCheckedChange={() => handleCareerToggle(career.id)}
+                            onChange={() => handleCareerToggle(career.id)}
+                            onClick={(e) => e.stopPropagation()}
                             id={`career-${career.id}`}
                             disabled={isSubmitting}
+                            className="h-4 w-4 shrink-0 rounded border-primary accent-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                           />
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
@@ -277,7 +285,7 @@ export function EditDocumentDialog({
                       ))
                     )}
                   </div>
-                </ScrollArea>
+                </div>
               )}
 
               {/* Resumen de selección */}

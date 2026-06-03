@@ -88,26 +88,26 @@ export function SimpleProofDocumentForm({
     if (incoming.length === 0) return
     // Append to the existing selection so the user can pick files in batches
     // without losing previous choices. Duplicates are filtered by name+size.
-    setSelectedFiles((prev) => {
-      const merged = [...prev]
-      for (const f of incoming) {
-        if (!merged.some((m) => m.name === f.name && m.size === f.size)) {
-          merged.push(f)
-        }
+    // NOTE: compute the next list here (event handler) and call both setters
+    // directly. Calling form.setValue() INSIDE a setState updater runs it
+    // during React's render phase, which triggers the "Cannot update a
+    // component while rendering a different component" warning.
+    const merged = [...selectedFiles]
+    for (const f of incoming) {
+      if (!merged.some((m) => m.name === f.name && m.size === f.size)) {
+        merged.push(f)
       }
-      form.setValue('files', merged, { shouldValidate: true })
-      return merged
-    })
+    }
+    setSelectedFiles(merged)
+    form.setValue('files', merged, { shouldValidate: true })
     // Reset the input so picking the same file again works.
     e.target.value = ''
   }
 
   const removeFile = (index: number) => {
-    setSelectedFiles((prev) => {
-      const next = prev.filter((_, i) => i !== index)
-      form.setValue('files', next, { shouldValidate: true })
-      return next
-    })
+    const next = selectedFiles.filter((_, i) => i !== index)
+    setSelectedFiles(next)
+    form.setValue('files', next, { shouldValidate: true })
   }
 
   // Pre-fill evidence + career when the user lands here via the inventory

@@ -60,6 +60,18 @@ const changeTypeConfig = {
     className: 'bg-yellow-600 hover:bg-yellow-700 text-white',
     icon: FileUp,
   },
+  [DocumentChangeType.FILE_ADDED]: {
+    label: 'Archivo Agregado',
+    variant: 'default' as const,
+    className: 'bg-emerald-500 hover:bg-emerald-600 text-white',
+    icon: FileUp,
+  },
+  [DocumentChangeType.FILE_DELETED]: {
+    label: 'Archivo Eliminado',
+    variant: 'default' as const,
+    className: 'bg-rose-500 hover:bg-rose-600 text-white',
+    icon: Trash2,
+  },
   [DocumentChangeType.METADATA_UPDATED]: {
     label: 'Metadatos Actualizados',
     variant: 'default' as const,
@@ -68,8 +80,18 @@ const changeTypeConfig = {
   },
 };
 
+// Fallback for any change type not present in the map above (e.g. a new
+// backend ChangeType the frontend hasn't been updated for yet). Prevents a
+// crash like reading `.icon` of undefined.
+const fallbackConfig = {
+  label: 'Cambio',
+  variant: 'secondary' as const,
+  className: 'bg-gray-500 hover:bg-gray-600 text-white',
+  icon: FileEdit,
+};
+
 export function ChangeTypeBadge({ changeType, size = 'md', iconOnly = false }: ChangeTypeBadgeProps) {
-  const config = changeTypeConfig[changeType];
+  const config = changeTypeConfig[changeType] ?? fallbackConfig;
   const Icon = config.icon;
 
   const sizeClasses = {
