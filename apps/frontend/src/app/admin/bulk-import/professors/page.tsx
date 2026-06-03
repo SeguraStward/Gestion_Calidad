@@ -198,6 +198,34 @@ export default function BulkImportProfessorsPage() {
             </li>
             <li>Se asignará automáticamente el rol <strong>PROFESOR</strong>.</li>
           </ul>
+
+          {/* Ejemplo de cómo se ve una fila del Excel */}
+          <div className="space-y-2 mt-4">
+            <p className="text-sm font-semibold">Ejemplo:</p>
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full text-xs">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-semibold">Cédula</th>
+                    <th className="px-3 py-2 text-left font-semibold">Nombre</th>
+                    <th className="px-3 py-2 text-left font-semibold">Correo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t">
+                    <td className="px-3 py-2 font-mono">123456789</td>
+                    <td className="px-3 py-2">Juan Pérez Mora</td>
+                    <td className="px-3 py-2 font-mono">juan.perez@una.cr</td>
+                  </tr>
+                  <tr className="border-t bg-muted/30">
+                    <td className="px-3 py-2 font-mono">987654321</td>
+                    <td className="px-3 py-2">María Solano Vargas</td>
+                    <td className="px-3 py-2 italic text-muted-foreground">(vacío — se generará automáticamente)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -350,7 +378,11 @@ export default function BulkImportProfessorsPage() {
         </Button>
         <Button
           onClick={handleImport}
-          disabled={parsedData.length === 0 || errors.length > 0 || importMutation.isPending}
+          // Rows that failed validation never make it into parsedData, so we
+          // intentionally don't gate on `errors.length` — letting the admin
+          // import the good rows is preferable to blocking everything because
+          // of a single malformed cell.
+          disabled={parsedData.length === 0 || importMutation.isPending}
         >
           <Upload className="mr-2 h-4 w-4" />
           {importMutation.isPending ? 'Importando...' : `Importar ${parsedData.length} Profesores`}

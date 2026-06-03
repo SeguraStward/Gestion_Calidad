@@ -65,7 +65,7 @@ export const OptimizedDataTable = memo(function OptimizedDataTable<T>({
         data={memoizedData}
         columns={memoizedColumns}
         isLoading={isLoading}
-        searchPlaceholder={searchPlaceholder ?? ''}
+        searchPlaceholder={searchPlaceholder}
         newButton={memoizedNewButton}
         className={className ?? ''}
       />

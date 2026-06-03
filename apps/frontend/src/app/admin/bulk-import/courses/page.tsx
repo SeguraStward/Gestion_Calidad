@@ -213,6 +213,49 @@ export default function BulkImportCoursesPage() {
                 La primera fila debe contener los encabezados de las columnas. Los datos deben empezar en la fila 2.
               </AlertDescription>
             </Alert>
+
+            {/* Ejemplo de cómo se ve una fila del Excel */}
+            <div className="space-y-2 mt-4">
+              <p className="text-sm font-semibold">Ejemplo:</p>
+              <div className="overflow-x-auto rounded-lg border">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-semibold">Código</th>
+                      <th className="px-3 py-2 text-left font-semibold">Nombre</th>
+                      <th className="px-3 py-2 text-left font-semibold">Créditos</th>
+                      <th className="px-3 py-2 text-left font-semibold">Nivel</th>
+                      <th className="px-3 py-2 text-left font-semibold">H. Contacto</th>
+                      <th className="px-3 py-2 text-left font-semibold">H. Independ.</th>
+                      <th className="px-3 py-2 text-left font-semibold">Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t">
+                      <td className="px-3 py-2 font-mono">EIF400</td>
+                      <td className="px-3 py-2">Fundamentos de Informática</td>
+                      <td className="px-3 py-2">4</td>
+                      <td className="px-3 py-2">1</td>
+                      <td className="px-3 py-2">4</td>
+                      <td className="px-3 py-2">6</td>
+                      <td className="px-3 py-2 text-muted-foreground">Curso introductorio de programación</td>
+                    </tr>
+                    <tr className="border-t bg-muted/30">
+                      <td className="px-3 py-2 font-mono">DEX321</td>
+                      <td className="px-3 py-2">Desarrollo Web Avanzado</td>
+                      <td className="px-3 py-2">3</td>
+                      <td className="px-3 py-2">3</td>
+                      <td className="px-3 py-2">3</td>
+                      <td className="px-3 py-2 italic text-muted-foreground">(vacío)</td>
+                      <td className="px-3 py-2 italic text-muted-foreground">(vacío)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Las celdas marcadas como <em>(vacío)</em> son opcionales; dejá la columna en blanco si no aplica.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

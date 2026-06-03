@@ -663,6 +663,56 @@ Generado automáticamente por el Sistema de Gestión de Calidad - UNA
   }
 
   /**
+   * Coordinated cleanup for a deleted proof document:
+   *
+   *   1. Removes the per-upload folder (e.g. `Convenio/CONV-001/`) which
+   *      drags every file inside it — the main file, every multi-file
+   *      sibling, and `_carreras.txt` — in a single recursive Drive call.
+   *   2. If a `typeFolderId` is supplied AND that folder is now empty
+   *      (no other documents share it), also removes the type folder.
+   *
+   * Failures are logged but never propagated: the DB delete must succeed
+   * even if Drive misbehaves, otherwise the row gets stranded.
+   */
+  async deleteUploadFolder(
+    uploadFolderId: string,
+    typeFolderId: string | null | undefined,
+    accessToken: string,
+    refreshToken?: string,
+  ): Promise<void> {
+    if (!uploadFolderId) return;
+
+    try {
+      await this.deleteFolder(uploadFolderId, accessToken, refreshToken);
+    } catch (error: any) {
+      this.logger.warn(
+        `deleteUploadFolder: could not delete upload folder ${uploadFolderId}: ${error?.message || error}`,
+      );
+    }
+
+    // Best-effort: if the type folder is now empty, drop it too. We don't
+    // want a stale `Convenio/` sitting around after the last convenio of
+    // an evidence is removed. `listFolderChildren` may throw if the folder
+    // was already gone; we treat any failure as "skip cleanup".
+    if (!typeFolderId) return;
+    try {
+      const children = await this.listFolderChildren(
+        typeFolderId,
+        accessToken,
+        refreshToken,
+      );
+      if (children.length === 0) {
+        await this.deleteFolder(typeFolderId, accessToken, refreshToken);
+        this.logger.log(`Type folder ${typeFolderId} was empty — deleted.`);
+      }
+    } catch (error: any) {
+      this.logger.warn(
+        `deleteUploadFolder: type folder cleanup skipped (${error?.message || error})`,
+      );
+    }
+  }
+
+  /**
    * Updates the _carreras.txt file for a specific document.
    * Used by legacy/replace flows that already know the careers and folder.
    * Prefer `regenerateCarrerasFileFromDb` for new code so the DB is the

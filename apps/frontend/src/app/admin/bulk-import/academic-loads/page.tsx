@@ -107,7 +107,11 @@ export default function BulkImportAcademicLoadsPage() {
           if (!nrc) parseErrors.push(`Fila ${i + 1}: NRC es requerido`)
           if (!profesorCedula) parseErrors.push(`Fila ${i + 1}: Cédula del profesor es requerida`)
 
-          if (parseErrors.length > 10) break // Stop if too many errors
+          // Previously we `break`-ed when parseErrors > 10. That left valid
+          // rows AFTER the bad ones silently dropped from the import — the
+          // admin would see "10 errores" and lose the remaining good data
+          // without knowing. We now keep parsing every row and just truncate
+          // the error list at render time.
 
           if (campus && ciclo && cupoDisponible && cupoMatricula && cupoMaximo && curso && grupo && nrc && profesorCedula) {
             loads.push({
@@ -210,9 +214,65 @@ export default function BulkImportAcademicLoadsPage() {
               <li>El <strong>curso</strong> se buscará por código (ej: DEX321)</li>
               <li>El <strong>profesor</strong> se buscará por cédula (debe estar registrado previamente)</li>
               <li>El <strong>grupo</strong> se creará automáticamente si no existe</li>
-              <li>Si el <strong>horario</strong> no existe, se creará automáticamente</li>
+              <li>El <strong>horario</strong> es un texto libre (ej: "Lunes 8:00 - 10:00"). Si el nombre exacto ya existe se reutiliza; si no, se crea uno nuevo con ese nombre.</li>
               <li>Si el <strong>NRC</strong> ya existe, se actualizará la carga académica</li>
             </ul>
+          </div>
+
+          {/* Ejemplo de cómo se ve una fila del Excel */}
+          <div className="space-y-2 mt-6">
+            <p className="text-sm font-semibold">Ejemplo:</p>
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full text-xs">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-2 py-2 text-left font-semibold">Núm. Aula</th>
+                    <th className="px-2 py-2 text-left font-semibold">Campus</th>
+                    <th className="px-2 py-2 text-left font-semibold">Ciclo</th>
+                    <th className="px-2 py-2 text-left font-semibold">Cupo Disp.</th>
+                    <th className="px-2 py-2 text-left font-semibold">Cupo Mat.</th>
+                    <th className="px-2 py-2 text-left font-semibold">Cupo Máx.</th>
+                    <th className="px-2 py-2 text-left font-semibold">Curso</th>
+                    <th className="px-2 py-2 text-left font-semibold">Grupo</th>
+                    <th className="px-2 py-2 text-left font-semibold">Horario</th>
+                    <th className="px-2 py-2 text-left font-semibold">NRC</th>
+                    <th className="px-2 py-2 text-left font-semibold">Cédula Profesor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t">
+                    <td className="px-2 py-2 font-mono">201</td>
+                    <td className="px-2 py-2">Sede Central</td>
+                    <td className="px-2 py-2">Ciclo I</td>
+                    <td className="px-2 py-2">25</td>
+                    <td className="px-2 py-2">0</td>
+                    <td className="px-2 py-2">30</td>
+                    <td className="px-2 py-2 font-mono">EIF400</td>
+                    <td className="px-2 py-2">01</td>
+                    <td className="px-2 py-2">Lunes 8:00 - 10:00</td>
+                    <td className="px-2 py-2 font-mono">12345</td>
+                    <td className="px-2 py-2 font-mono">123456789</td>
+                  </tr>
+                  <tr className="border-t bg-muted/30">
+                    <td className="px-2 py-2 italic text-muted-foreground">(vacío)</td>
+                    <td className="px-2 py-2">Sede Brunca</td>
+                    <td className="px-2 py-2">Ciclo II</td>
+                    <td className="px-2 py-2">20</td>
+                    <td className="px-2 py-2">15</td>
+                    <td className="px-2 py-2">25</td>
+                    <td className="px-2 py-2 font-mono">DEX321</td>
+                    <td className="px-2 py-2">02</td>
+                    <td className="px-2 py-2 italic text-muted-foreground">(vacío)</td>
+                    <td className="px-2 py-2 font-mono">12346</td>
+                    <td className="px-2 py-2 font-mono">987654321</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Las celdas marcadas como <em>(vacío)</em> son opcionales — dejá la columna en blanco si no aplica.
+              El <strong>horario</strong> se guarda como aparece en el Excel; conviene mantener un formato consistente para que se reutilice.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -382,7 +442,10 @@ export default function BulkImportAcademicLoadsPage() {
         </Button>
         <Button
           onClick={handleImport}
-          disabled={parsedData.length === 0 || errors.length > 0 || importMutation.isPending}
+          // Same rationale as the professors page: bad rows never enter
+          // parsedData, so blocking the import on `errors.length > 0` punishes
+          // the admin for partial errors. The backend re-validates per row.
+          disabled={parsedData.length === 0 || importMutation.isPending}
         >
           <Upload className="mr-2 h-4 w-4" />
           {importMutation.isPending ? 'Importando...' : `Importar ${parsedData.length} Cargas`}

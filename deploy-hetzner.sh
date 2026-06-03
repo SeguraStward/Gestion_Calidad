@@ -35,7 +35,10 @@ build_and_up() {
     local component="$1"
     log_step "Construyendo y levantando en servidor..."
 
-    if [ "$component" == "all" ]; then
+    # Use `=` (POSIX) instead of `==` so the script also runs under `sh`/`dash`,
+    # not only bash — otherwise `dash` chokes on `==` and silently falls
+    # through to the else branch, trying to build a service called "all".
+    if [ "$component" = "all" ]; then
         BUILD_CMD="$COMPOSE build --no-cache frontend backend && $COMPOSE up -d"
     else
         BUILD_CMD="$COMPOSE build --no-cache $component && $COMPOSE up -d $component"
@@ -48,10 +51,10 @@ build_and_up() {
 show_status() {
     local component="$1"
     ssh "$SERVER" "cd $SERVER_PATH && echo '' && $COMPOSE ps && echo ''"
-    if [ "$component" == "frontend" ] || [ "$component" == "all" ]; then
+    if [ "$component" = "frontend" ] || [ "$component" = "all" ]; then
         ssh "$SERVER" "echo '=== Frontend ===' && docker logs agr-frontend --tail 15"
     fi
-    if [ "$component" == "backend" ] || [ "$component" == "all" ]; then
+    if [ "$component" = "backend" ] || [ "$component" = "all" ]; then
         ssh "$SERVER" "echo '=== Backend ===' && docker logs agr-backend --tail 15"
     fi
 }

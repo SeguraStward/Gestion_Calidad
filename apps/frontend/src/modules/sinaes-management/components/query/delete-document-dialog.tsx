@@ -82,6 +82,13 @@ export function DeleteDocumentDialog({
     (f) => f.id !== document.googleDriveFileId,
   )
 
+  // The preview can arrive partial (e.g. an older backend that doesn't return
+  // `typeFolder`). Read every nested field through safe locals so a missing
+  // property never throws during render and crashes the whole page.
+  const typeFolderWillBeDeleted = preview?.typeFolder?.willBeDeleted ?? false
+  const careerNames = preview?.careerNames ?? []
+  const careerCount = preview?.careerCount ?? careerNames.length
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
@@ -160,7 +167,7 @@ export function DeleteDocumentDialog({
               )}
 
               {/* Type-folder cleanup notice */}
-              {preview.typeFolder.willBeDeleted && (
+              {typeFolderWillBeDeleted && (
                 <Alert>
                   <Folder className="h-4 w-4" />
                   <AlertDescription className="ml-2 text-xs">
@@ -184,19 +191,19 @@ export function DeleteDocumentDialog({
                 <div className="flex items-center gap-2 text-sm">
                   <GraduationCap className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">
-                    {preview.careerCount} carrera{preview.careerCount === 1 ? '' : 's'} perderá{preview.careerCount === 1 ? '' : 'n'} la vinculación
+                    {careerCount} carrera{careerCount === 1 ? '' : 's'} perderá{careerCount === 1 ? '' : 'n'} la vinculación
                   </span>
                 </div>
-                {preview.careerNames.length > 0 && (
+                {careerNames.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {preview.careerNames.slice(0, 6).map((name) => (
+                    {careerNames.slice(0, 6).map((name) => (
                       <Badge key={name} variant="secondary" className="text-[10px]">
                         {name}
                       </Badge>
                     ))}
-                    {preview.careerNames.length > 6 && (
+                    {careerNames.length > 6 && (
                       <Badge variant="outline" className="text-[10px]">
-                        +{preview.careerNames.length - 6} más
+                        +{careerNames.length - 6} más
                       </Badge>
                     )}
                   </div>
@@ -215,7 +222,7 @@ export function DeleteDocumentDialog({
                 {preview && extraFiles.length > 0 ? ` (${extraFiles.length + 1} en total)` : ''}
               </li>
               <li>
-                Se desvincularán {preview?.careerCount ?? 'las'} carrera{(preview?.careerCount ?? 2) === 1 ? '' : 's'}
+                Se desvincularán {preview ? careerCount : 'las'} carrera{(preview ? careerCount : 2) === 1 ? '' : 's'}
               </li>
               <li>Se registrará la eliminación en el historial</li>
             </ul>

@@ -135,7 +135,6 @@ export function PermissionTable({
       data={data || []}
       columns={columns}
       isLoading={isLoading}
-      searchPlaceholder="Buscar permisos..."
       currentPage={currentPage}
       totalPages={totalPages}
       totalItems={totalItems}

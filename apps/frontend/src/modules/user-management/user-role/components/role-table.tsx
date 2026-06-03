@@ -143,7 +143,6 @@ export function RoleTable({
       data={data || []}
       columns={columns}
       isLoading={isLoading}
-      searchPlaceholder="Buscar roles..."
       currentPage={currentPage}
       totalPages={totalPages}
       totalItems={totalItems}

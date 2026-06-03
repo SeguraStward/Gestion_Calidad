@@ -35,7 +35,10 @@ interface DataTableProps<TData, TValue> {
 export function DataTable<TData, TValue>({
   columns,
   data,
-  searchPlaceholder = 'Buscar...',
+  // Optional: when omitted the search input is not rendered at all. Previously
+  // it defaulted to "Buscar...", which left dead inputs in tables that don't
+  // wire up a search handler.
+  searchPlaceholder,
   newButton,
   isLoading,
   currentPage = 1,
@@ -95,21 +98,27 @@ export function DataTable<TData, TValue>({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="relative max-w-sm flex-1">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <Search className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <Input
-            placeholder={searchPlaceholder}
-            value={inputValue}
-            onChange={handleSearchChange}
-            className="pl-10"
-            disabled={isLoading}
-          />
+      {(searchPlaceholder !== undefined || newButton) && (
+        <div className="flex items-center justify-between mb-4">
+          {searchPlaceholder !== undefined ? (
+            <div className="relative max-w-sm flex-1">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <Input
+                placeholder={searchPlaceholder}
+                value={inputValue}
+                onChange={handleSearchChange}
+                className="pl-10"
+                disabled={isLoading}
+              />
+            </div>
+          ) : (
+            <div />
+          )}
+          {newButton}
         </div>
-        {newButton}
-      </div>
+      )}
       <div className="rounded-md border">
         <Table>
           <TableHeader>

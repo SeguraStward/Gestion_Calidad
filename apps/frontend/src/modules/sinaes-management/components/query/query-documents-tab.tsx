@@ -182,11 +182,13 @@ export const QueryDocumentsTab = () => {
       </DialogErrorBoundary>
 
       {/* Delete Document Dialog */}
-      <DeleteDocumentDialog
-        document={selectedDocument}
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-      />
+      <DialogErrorBoundary>
+        <DeleteDocumentDialog
+          document={selectedDocument}
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+        />
+      </DialogErrorBoundary>
 
       {/* Replace File Dialog */}
       <ReplaceFileDialog

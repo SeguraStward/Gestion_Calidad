@@ -150,13 +150,11 @@ export function UserTable({
       data={data || []}
       columns={columns}
       isLoading={isLoading}
-      searchPlaceholder="Buscar usuarios..."
       currentPage={currentPage}
       totalPages={totalPages}
       totalItems={totalItems}
       pageSize={pageSize}
       onPageChange={onPageChange}
-      serverSideFiltering={true}
     />
   )
 }

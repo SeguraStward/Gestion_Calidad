@@ -47,7 +47,7 @@ export const VirtualizedDataTable = memo(function VirtualizedDataTable<T>({
         data={filteredData}
         columns={columns}
         isLoading={isLoading}
-        searchPlaceholder={searchPlaceholder ?? 'Buscar...'}
+        searchPlaceholder={searchPlaceholder}
         newButton={newButton}
       />
     )
