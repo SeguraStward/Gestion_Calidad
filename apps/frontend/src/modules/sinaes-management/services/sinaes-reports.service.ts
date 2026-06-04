@@ -47,16 +47,24 @@ class SinaesReportsService {
     if (filters.description) queryParams.append('description', filters.description);
 
     const url = `${this.baseUrl}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    const response = await HttpClient.get<ComplianceReport>(url);
-    return response.data;
+    const response = await HttpClient.get<any>(url);
+    // The backend's global HttpResponseInterceptor wraps every GET payload as
+    // { data: <real-payload> }. Unwrap it; without this `currentReport` ends up
+    // as { data: {...} } and reportName/statistics/dimensions read as undefined,
+    // so the Results tab shows nothing.
+    const payload =
+      response.data?.data !== undefined ? response.data.data : response.data;
+    return payload as ComplianceReport;
   }
 
   /**
    * Obtener reporte guardado por ID
    */
   async getReportById(id: string): Promise<SavedComplianceReport> {
-    const response = await HttpClient.get<SavedComplianceReport>(`${this.baseUrl}/${id}`);
-    return response.data;
+    const response = await HttpClient.get<any>(`${this.baseUrl}/${id}`);
+    const payload =
+      response.data?.data !== undefined ? response.data.data : response.data;
+    return payload as SavedComplianceReport;
   }
 
   /**

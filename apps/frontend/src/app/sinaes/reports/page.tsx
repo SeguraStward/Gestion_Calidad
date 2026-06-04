@@ -302,7 +302,14 @@ export default function SinaesReportsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            setCurrentReport(report);
+                            // Saved records nest the full report under `reportData`;
+                            // flatten it (keeping id/name) so Results can read
+                            // dimensions/statistics. Fall back to the record itself.
+                            const data = (report as any).reportData;
+                            const full = data
+                              ? { ...data, id: report.id, reportName: report.reportName }
+                              : report;
+                            setCurrentReport(full as ComplianceReport);
                             setActiveTab('results');
                           }}
                         >

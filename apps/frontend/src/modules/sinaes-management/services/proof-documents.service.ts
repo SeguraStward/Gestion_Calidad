@@ -6,6 +6,19 @@ import type { QualityEvidence } from '../types/quality-evidences.types'
 import type { ProofDocumentType } from '../types/proof-document-types.types'
 import type { ProofDocumentsResponse } from '../types/proof-documents.types'
 
+/**
+ * The backend wraps every non-DELETE response in `{ data: <payload> }` via
+ * HttpResponseInterceptor. Paginated lists keep a `meta` sibling; plain objects
+ * don't. Direct HttpClient calls (that bypass GenericService) must unwrap that
+ * envelope to read the real payload.
+ */
+function unwrapData<T>(body: any): T {
+  if (body && typeof body === 'object' && 'data' in body && !('meta' in body)) {
+    return body.data as T
+  }
+  return body as T
+}
+
 export interface ProofDocument {
   id: string
   code: string
@@ -137,10 +150,10 @@ export const useProofDocumentDeletionPreview = (
   return useQuery<ProofDocumentDeletionPreview>({
     queryKey: ['proof-documents', documentId, 'deletion-preview'],
     queryFn: async () => {
-      const response = await HttpClient.get<ProofDocumentDeletionPreview>(
+      const response = await HttpClient.get(
         `/proof-documents/${documentId}/deletion-preview`,
       )
-      return response.data
+      return unwrapData<ProofDocumentDeletionPreview>(response.data)
     },
     enabled: !!documentId && enabled,
     staleTime: 0, // always fresh — the user is about to act on it
@@ -200,10 +213,10 @@ export const useProofDocumentFiles = (documentId: string | undefined, enabled = 
   return useQuery<ProofDocumentFilesResponse>({
     queryKey: ['proof-documents', documentId, 'files'],
     queryFn: async () => {
-      const response = await HttpClient.get<ProofDocumentFilesResponse>(
+      const response = await HttpClient.get(
         `/proof-documents/${documentId}/files`,
       )
-      return response.data
+      return unwrapData<ProofDocumentFilesResponse>(response.data)
     },
     enabled: !!documentId && enabled,
     staleTime: 0,
@@ -233,14 +246,14 @@ export const addProofDocumentFile = async (
   const formData = new FormData()
   formData.append('file', file)
 
-  const response = await HttpClient.post<ProofDocumentFile>(
+  const response = await HttpClient.post(
     `/proof-documents/${documentId}/files`,
     formData,
     {
       headers: { 'Content-Type': 'multipart/form-data' },
     },
   )
-  return response.data
+  return unwrapData<ProofDocumentFile>(response.data)
 }
 
 /**
