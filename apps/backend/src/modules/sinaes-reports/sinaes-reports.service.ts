@@ -216,6 +216,18 @@ export class SinaesReportsService {
       }
     }
 
+    // Resolve a readable name for "Generado por" instead of the raw user id.
+    // The DB column `generatedBy` still stores the user id (FK) in saveReport;
+    // this only affects the report payload the UI displays.
+    let generatedByName: string | undefined = userId;
+    if (userId) {
+      const reporter = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { fullName: true, email: true },
+      });
+      generatedByName = reporter?.fullName || reporter?.email || userId;
+    }
+
     // 6. Build final report
     const report: ComplianceReportDto = {
       reportName: filters.reportName,
@@ -229,7 +241,7 @@ export class SinaesReportsService {
         dateTo: filters.dateTo ? new Date(filters.dateTo) : undefined,
       },
       generatedAt: new Date(),
-      generatedBy: userId,
+      generatedBy: generatedByName,
       statistics,
       dimensions: processedDimensions,
       career: careerInfo,

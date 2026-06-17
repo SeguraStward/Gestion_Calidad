@@ -193,7 +193,7 @@ export default function SinaesReportsPage() {
         </TabsContent>
 
         {/* Tab: Resultados */}
-        <TabsContent value="results" className="max-h-[calc(100vh-200px)] overflow-y-auto space-y-6">
+        <TabsContent value="results" className="max-h-[calc(100vh-150px)] overflow-y-auto space-y-6 pb-20 pr-1">
           {currentReport ? (
             <>
               {/* Información del reporte */}
