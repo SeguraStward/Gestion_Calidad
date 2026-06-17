@@ -24,5 +24,11 @@ export const {
     updated: () => 'Estándar actualizado con éxito',
     deleted: () => 'Estándar eliminado con éxito'
   },
-  silent: { remove: { error: true } }
+  // create/update toasts are shown by StandardForm itself; silence the generic
+  // hook's so only one toast appears. Delete is toasted by the hook.
+  silent: {
+    create: { success: true, error: true },
+    update: { success: true, error: true },
+    remove: { error: true },
+  }
 })

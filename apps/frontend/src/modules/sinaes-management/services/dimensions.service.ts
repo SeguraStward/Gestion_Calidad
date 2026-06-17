@@ -110,9 +110,14 @@ export const {
     updated: () => 'Dimensión actualizada con éxito',
     deleted: () => 'Dimensión eliminada con éxito'
   },
-  // Delete errors (FK violations with child components) are handled via
-  // AlertDialog in the structure tab — suppress the default toast.
-  silent: { remove: { error: true } }
+  // create/update toasts are shown by DimensionForm itself; silence the generic
+  // hook's so only one toast appears. Delete errors (FK violations with child
+  // components) are handled via AlertDialog in the structure tab.
+  silent: {
+    create: { success: true, error: true },
+    update: { success: true, error: true },
+    remove: { error: true },
+  }
 })
 
 // Custom hooks for extended functionality

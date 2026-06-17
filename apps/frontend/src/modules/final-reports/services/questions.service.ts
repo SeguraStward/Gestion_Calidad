@@ -45,7 +45,10 @@ export const {
       created: (question) => `Pregunta "${question.question}" creada exitosamente.`,
       updated: (question) => `Pregunta "${question.question}" actualizada correctamente.`,
       deleted: () => 'Pregunta eliminada.'
-    }
+    },
+    // Delete toasts are shown by questions-management (custom messages); silence
+    // the hook's remove toast so only one appears.
+    silent: { remove: { success: true, error: true } }
   }
 )
 

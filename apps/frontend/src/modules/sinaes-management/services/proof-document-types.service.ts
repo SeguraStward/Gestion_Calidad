@@ -23,5 +23,8 @@ export const {
     created: () => 'Tipo de documento probatorio creado con éxito',
     updated: () => 'Tipo de documento probatorio actualizado con éxito',
     deleted: () => 'Tipo de documento probatorio eliminado con éxito'
-  }
+  },
+  // Delete success + error toasts are shown by document-types-tab (with a custom
+  // "no se puede eliminar..." message); silence the hook's so only one appears.
+  silent: { remove: { success: true, error: true } }
 })

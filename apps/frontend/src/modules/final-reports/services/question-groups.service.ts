@@ -57,7 +57,10 @@ export const {
       created: (group) => `Grupo de preguntas "${group.name}" creado exitosamente.`,
       updated: (group) => `Grupo de preguntas "${group.name}" actualizado correctamente.`,
       deleted: () => 'Grupo de preguntas eliminado.'
-    }
+    },
+    // Delete toasts are shown by question-groups-management (custom messages);
+    // silence the hook's remove toast so only one appears.
+    silent: { remove: { success: true, error: true } }
   }
 )
 
