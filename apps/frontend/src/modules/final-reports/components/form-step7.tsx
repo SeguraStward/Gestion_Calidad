@@ -5,7 +5,6 @@ import { UseFormReturn, FormProvider } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
 import { Activity, AlertTriangle, Loader2, MessageSquareText } from 'lucide-react'
 import { RadioGroup, RadioGroupItem } from '@una-gc/ui/components/radio-group'
-import { Checkbox } from '@una-gc/ui/components/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
 import { Input } from '@una-gc/ui/components/input'
 import { Textarea } from '@una-gc/ui/components/textarea'
@@ -301,15 +300,18 @@ export function Step7Form({
 
                       return (
                         <div key={option.value} className="flex items-center space-x-2">
-                          <Checkbox
+                          <input
+                            type="checkbox"
                             id={`${question.id}-${option.value}`}
                             checked={isChecked}
-                            onCheckedChange={(checked) => {
+                            onChange={(e) => {
+                              const checked = e.target.checked
                               const newValues = checked
                                 ? [...currentValues.filter(v => v), option.value]
                                 : currentValues.filter(v => v !== option.value)
                               field.onChange(newValues.join(','))
                             }}
+                            className="h-4 w-4 shrink-0 rounded border-primary accent-primary cursor-pointer"
                           />
                           <label
                             htmlFor={`${question.id}-${option.value}`}

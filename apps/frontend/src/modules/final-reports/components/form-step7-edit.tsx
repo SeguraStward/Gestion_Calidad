@@ -11,7 +11,6 @@ import { Separator } from '@una-gc/ui/components/separator'
 import { Input } from '@una-gc/ui/components/input'
 import { Textarea } from '@una-gc/ui/components/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@una-gc/ui/components/select'
-import { Checkbox } from '@una-gc/ui/components/checkbox'
 import { Activity, Loader2 } from 'lucide-react'
 import type { FullFinalReport, FinalReportEvaluationFE, ReportType } from '@/modules/final-reports/types/final-reports.types'
 import { useQuestionsByStep } from '@/modules/final-reports/services/questions.service'
@@ -330,15 +329,18 @@ export function Step7EditForm({
 
                     return (
                       <div key={option.value} className="flex items-center space-x-2">
-                        <Checkbox
+                        <input
+                          type="checkbox"
                           id={`${question.questionId}-${option.value}`}
                           checked={isChecked}
-                          onCheckedChange={(checked: boolean) => {
+                          onChange={(e) => {
+                            const checked = e.target.checked
                             const newValues = checked
                               ? [...currentValues.filter((v) => v), option.value]
                               : currentValues.filter((v) => v !== option.value)
                             field.onChange(newValues.join(','))
                           }}
+                          className="h-4 w-4 shrink-0 rounded border-primary accent-primary cursor-pointer"
                         />
                         <label htmlFor={`${question.questionId}-${option.value}`} className="text-sm font-normal cursor-pointer">
                           {option.label}

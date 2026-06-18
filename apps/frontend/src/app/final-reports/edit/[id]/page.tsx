@@ -257,6 +257,24 @@ function EditFinalReportContent() {
     setCurrentStep((prev) => Math.max(1, prev - 1))
   }
 
+  // Header step navigation (parity with the "new report" flow). When editing,
+  // every step has data loaded from the report, so all are reachable.
+  const completedSteps = [
+    !!step1Data,
+    !!step2Data,
+    !!step3Data,
+    !!step4Data,
+    !!step5Data,
+    !!step6Data,
+    !!step7Data
+  ]
+
+  const handleGoToStep = (step: number) => {
+    if (step <= currentStep || completedSteps[step - 1]) {
+      setCurrentStep(step)
+    }
+  }
+
   const handleSubmitAllSteps = async () => {
     const currentStep7ValuesFromForm = formStep7Methods.getValues()
 
@@ -623,7 +641,9 @@ function EditFinalReportContent() {
         stepLabels={STEP_LABELS_SPANISH}
         currentStep={currentStep}
         backButton={{ href: backUrl, text: 'Volver a lista de informes' }}
-      // nrc={step1Data?.nrc || fetchedReport?.academicLoad?.nrc} // Opcional, si quieres mostrar NRC
+        nrc={step1Data?.nrc ?? fetchedReport?.academicLoad?.nrc ?? null}
+        onGoToStep={handleGoToStep}
+        completedSteps={completedSteps}
       />
       <main className="flex-grow flex flex-col items-center overflow-hidden pt-2 pb-6 md:pt-4">
         <Card className="shadow-lg border-border/50 w-full max-w-5xl flex flex-col flex-grow overflow-hidden rounded-lg">

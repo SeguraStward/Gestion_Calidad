@@ -9,6 +9,7 @@ import { Input } from '@una-gc/ui/components/input'
 import { UseFormReturn, FormProvider } from 'react-hook-form'
 import { Loader2 } from 'lucide-react'
 import { useAcademicLoadsByProfessor } from '@/modules/academic-loads/service/academic-loads.service'
+import { useFinalReportsByProfessor } from '@/modules/final-reports/service/final-reports.service'
 import type { FullAcademicLoad } from '@/modules/academic-loads/types/academic-loads.types'
 import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types'
 import { useSessionStore } from '@/modules/auth/sessionStore'
@@ -97,9 +98,28 @@ export function Step1Form({
   } = useAcademicLoadsByProfessor(
     currentProfessorId,
     {
-      include: 'course,academicCycle,professor,group'
+      include: 'course,academicCycle,professor,group',
+      limit: 1000, // fetch every load, not just the first page
     },
     { enabled: !!currentProfessorId && isAuthenticated() }
+  )
+
+  // Reports the professor has already submitted. Used to hide courses that are
+  // already done — only in the "new report" flow; when editing we keep the
+  // current course selectable (handled below via initialData).
+  const { data: existingReports } = useFinalReportsByProfessor(
+    currentProfessorId,
+    { limit: 1000 },
+    { enabled: !!currentProfessorId && isAuthenticated() && !isEditing },
+  )
+  const reportedLoadIds = useMemo(
+    () =>
+      new Set(
+        (existingReports?.data ?? [])
+          .map((r) => r.academicLoadId)
+          .filter(Boolean),
+      ),
+    [existingReports],
   )
 
   const availableCourses = useMemo((): TransformedAcademicLoad[] => {
@@ -115,6 +135,13 @@ export function Step1Form({
         groupLevel: load.course?.level ? String(load.course.level) : '', // Default to empty string
         enrolledCapacity: load.enrolledCapacity || 0 // Default to 0
       }))
+    }
+
+    // New-report flow: hide courses that already have a final report so the
+    // professor only sees pending ones. When editing we keep all (the report's
+    // own course is re-added below).
+    if (!isEditing) {
+      courses = courses.filter((c) => !reportedLoadIds.has(c.id))
     }
 
     // Si estamos editando y tenemos datos iniciales, y la carga del informe no está en la lista
@@ -153,7 +180,7 @@ export function Step1Form({
     }
 
     return uniqueCourses
-  }, [paginatedAcademicLoads, isEditing, initialData])
+  }, [paginatedAcademicLoads, isEditing, initialData, reportedLoadIds])
 
   const selectedNrc = watch('nrc')
   const selectedAcademicLoadId = watch('academicLoadId')
@@ -275,6 +302,12 @@ export function Step1Form({
               {/* Section 1: Selección de Curso */}
               <div className="space-y-4 border border-border/20 p-4 rounded-lg bg-card/50">
                 <h3 className="text-base font-medium">Selección de Curso</h3>
+                {!isEditing && !isLoadingAcademicLoads && availableCourses.length === 0 && (
+                  <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+                    No hay cursos pendientes de informe. Ya completaste el informe
+                    final de todos tus cursos, o no tenés cursos asignados este ciclo.
+                  </div>
+                )}
                 <FormField
                   control={control}
                   name="nrc"

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Download, Edit, Eye, FileText, Search, Filter } from 'lucide-react'
 import { Button } from '@una-gc/ui/components/button'
@@ -23,6 +23,7 @@ import {
 import { Badge } from '@una-gc/ui/components/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-gc/ui/components/card'
 import { useFinalReportsForAdmin, useUpdateFinalReport } from '@/modules/final-reports/service/final-reports.service'
+import { useUsersByRole } from '@/shared/hooks/useUser'
 import type { FinalReportStatusFE, FullFinalReport } from '@/modules/final-reports/types/final-reports.types'
 import { pdf } from '@react-pdf/renderer'
 import { FinalReportPDFDocument } from '@/modules/final-reports/components/final-report-pdf'
@@ -51,8 +52,19 @@ export default function AdminFinalReportsPage() {
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<FinalReportStatusFE | 'ALL'>('ALL')
   const [professorFilter, setProfessorFilter] = useState('all')
+
+  // Debounce the search so we fire one query when the user stops typing instead
+  // of one per keystroke. Resetting to page 1 keeps results visible.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+      setPage(1)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [searchTerm])
 
   // Filtros para la query
   const filters = useMemo(() => {
@@ -60,8 +72,8 @@ export default function AdminFinalReportsPage() {
     if (statusFilter !== 'ALL') {
       f.status = statusFilter
     }
-    if (searchTerm) {
-      f.search = searchTerm
+    if (debouncedSearch) {
+      f.search = debouncedSearch
     }
     if (professorFilter && professorFilter !== 'all') {
       f.professorId = professorFilter
@@ -71,22 +83,14 @@ export default function AdminFinalReportsPage() {
 
     console.log('🔍 Admin Filters:', f)
     return f
-  }, [page, limit, statusFilter, searchTerm, professorFilter])
+  }, [page, limit, statusFilter, debouncedSearch, professorFilter])
 
   const { data, isLoading, refetch } = useFinalReportsForAdmin(filters)
   const updateMutation = useUpdateFinalReport()
 
-  // Extract unique professors for filter
-  const professors = useMemo(() => {
-    if (!data?.data) return []
-    const uniqueProfessors = new Map()
-    data.data.forEach((report) => {
-      if (report.professor) {
-        uniqueProfessors.set(report.professor.id, report.professor)
-      }
-    })
-    return Array.from(uniqueProfessors.values())
-  }, [data])
+  // All professors (role PROFESOR) so the filter lists everyone — not just the
+  // professors that happen to appear on the current page of results.
+  const { data: professors = [] } = useUsersByRole('PROFESOR', 'ACTIVE', 1, 1000)
 
   const handleStatusChange = async (reportId: string, newStatus: FinalReportStatusFE) => {
     try {
@@ -164,7 +168,6 @@ export default function AdminFinalReportsPage() {
                 value={searchTerm}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setSearchTerm(e.target.value)
-                  setPage(1) // Reset to first page on search
                 }}
                 className="pl-9"
               />
@@ -203,7 +206,7 @@ export default function AdminFinalReportsPage() {
                 <SelectItem value="all">Todos los profesores</SelectItem>
                 {professors.map((prof) => (
                   <SelectItem key={prof.id} value={prof.id}>
-                    {prof.fullName}
+                    {prof.name}
                   </SelectItem>
                 ))}
               </SelectContent>
