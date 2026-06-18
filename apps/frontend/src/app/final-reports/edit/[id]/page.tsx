@@ -35,6 +35,7 @@ import { Step7EditForm, Step7FormData, step7Schema } from '@/modules/final-repor
 import { step5QuestionsMock, step6QuestionsPageMock, step7QuestionsPageMock } from '@/modules/final-reports/mocks/questions'
 
 import { useFinalReport, useUpdateFinalReport } from '@/modules/final-reports/service/final-reports.service'
+import { useQuestionsByStep } from '@/modules/final-reports/services/questions.service'
 import {
   FinalReportEvaluationFE,
   FullFinalReport,
@@ -132,6 +133,11 @@ function EditFinalReportContent() {
   const updateReportHook = useUpdateFinalReport()
   const { mutateAsync: updateReportMutation } = updateReportHook
   const isUpdatingReport = updateReportHook.status === 'pending'
+
+  // Admin-managed questions for steps 5 & 7 (same source as the creation flow).
+  // Needed so questions left blank at creation can be answered while editing.
+  const { data: step5QuestionsDB } = useQuestionsByStep(5, reportType)
+  const { data: step7QuestionsDB } = useQuestionsByStep(7, reportType)
 
   const formStep1Methods = useForm<Step1FormData>({ resolver: zodResolver(step1Schema) })
   const formStep2Methods = useForm<Step2FormData>({ resolver: zodResolver(step2Schema) })
@@ -307,133 +313,133 @@ function EditFinalReportContent() {
       // Build evaluation data preserving all question information from the original report
       const evaluationData: FinalReportEvaluationFE[] = []
 
-      // Step 5 questions
-      if (step5Data?.respuestas && fetchedReport?.evaluation) {
-        step5Data.respuestas.forEach((resp) => {
-          const originalQuestion = fetchedReport.evaluation?.find(e => e.questionId === resp.idPregunta)
-          if (originalQuestion) {
-            // Determine the value to save based on question type
-            let responseToSave: string | undefined = undefined
-            let multipleResponseToSave: string[] = []
+      // Step 5 questions. Build each entry from the original report when present,
+      // otherwise from the admin-managed DB catalog — so a question left blank at
+      // creation can be answered while editing (before, those answers were
+      // silently dropped). Only answered questions are saved.
+      if (step5Data?.respuestas) {
+        step5Data.respuestas
+          .filter((resp) => resp.respuesta && resp.respuesta.trim() !== '')
+          .forEach((resp) => {
+            const original = fetchedReport?.evaluation?.find((e) => e.questionId === resp.idPregunta)
+            const dbQ = step5QuestionsDB?.find((q) => q.id === resp.idPregunta)
+            const options = original?.options ?? dbQ?.options ?? []
+            const responseType = (original?.responseType ?? dbQ?.responseType ?? 'TEXT') as any
+            const isMultiSelect = responseType === 'MULTISELECT' || responseType === 'SELECCION_MULTIPLE'
 
-            // Check if it's a multiple selection question
-            const isMultiSelect = originalQuestion.responseType === 'MULTISELECT' ||
-              (originalQuestion.responseType as string) === 'SELECCION_MULTIPLE'
-
-            if (isMultiSelect && resp.respuesta && resp.respuesta.trim() !== '') {
-              // For MULTISELECT questions, split comma-separated values and convert to labels
-              const selectedValues = resp.respuesta.split(',').map(v => v.trim()).filter(v => v)
-
-              multipleResponseToSave = selectedValues.map(value => {
-                const option = originalQuestion.options?.find(opt => opt.value === value)
-                const label = option?.label || value
-                console.log(`  - Edit Step 5 MULTISELECT: Converting "${value}" → "${label}"`)
-                return label
-              })
-
-              console.log('💾 Edit - Saving Step 5 Multiple Selection:', {
-                questionId: originalQuestion.questionId,
-                selectedValues,
-                convertedToLabels: multipleResponseToSave
-              })
-            } else if (resp.respuesta && resp.respuesta.trim() !== '' && originalQuestion.options && originalQuestion.options.length > 0) {
-              // For SELECT questions with options, convert value back to label for storage
-              const selectedOption = originalQuestion.options.find((opt) => opt.value === resp.respuesta)
-              if (selectedOption) {
-                responseToSave = selectedOption.label
-              } else {
-                // If option not found, keep the original value (backwards compatibility)
-                responseToSave = resp.respuesta
-              }
+            let response: string | undefined = undefined
+            let multipleResponse: string[] = []
+            if (isMultiSelect) {
+              const values = resp.respuesta.split(',').map((v) => v.trim()).filter(Boolean)
+              multipleResponse = values.map((v) => options.find((o) => o.value === v)?.label || v)
+            } else if (options.length > 0) {
+              response = options.find((o) => o.value === resp.respuesta)?.label || resp.respuesta
             } else {
-              // For TEXT and other types
-              responseToSave = resp.respuesta
+              response = resp.respuesta
             }
 
             evaluationData.push({
-              ...originalQuestion,
-              response: responseToSave,
-              multipleResponse: multipleResponseToSave.length > 0 ? multipleResponseToSave : (originalQuestion.multipleResponse || [])
-            })
-          }
-        })
+              ...(original ?? {}),
+              questionId: resp.idPregunta,
+              question: original?.question ?? dbQ?.question ?? resp.idPregunta,
+              questionGroup: original?.questionGroup ?? (dbQ as any)?.group?.name ?? 'evaluacion_general_curso',
+              responseType,
+              stepNumber: 5,
+              options: options.map((o) => ({ value: o.value, label: o.label, category: (o as any).category })),
+              response,
+              multipleResponse,
+              otherResponse: undefined
+            } as FinalReportEvaluationFE)
+          })
       }
 
-      // Step 6 questions (herramientas)
-      if (step6Data && fetchedReport?.evaluation) {
+      // Step 6 questions (herramientas). Build the entries even when the
+      // original report didn't have them yet — otherwise tools the professor
+      // adds/types while editing would be silently dropped (the previous code
+      // required the question to already exist in the report). Metadata comes
+      // from the step-6 catalog when the original entry is missing.
+      if (step6Data) {
         // Main tools question (multiselect)
         const mainToolsData = step6Data.respuestasMultiples?.[0]
         if (mainToolsData?.respuestasSeleccionadas) {
-          const mainToolsQuestion = fetchedReport.evaluation?.find(
-            e => e.questionId === mainToolsData.idPregunta
-          )
-          if (mainToolsQuestion) {
-            // Convert values back to labels before saving
-            const multipleResponseLabels = (mainToolsData.respuestasSeleccionadas || []).map(value => {
-              const option = mainToolsQuestion.options?.find(opt => opt.value === value)
-              return option?.label || value // Use label if found, otherwise fallback to value
-            })
+          const original = fetchedReport?.evaluation?.find((e) => e.questionId === mainToolsData.idPregunta)
+          const mock = step6QuestionsPageMock.find((q) => q.questionId === mainToolsData.idPregunta)
+          const optionList = original?.options ?? mock?.options ?? []
+          const multipleResponseLabels = (mainToolsData.respuestasSeleccionadas || []).map((value) => {
+            const option = optionList.find((opt) => opt.value === value)
+            return option?.label || value // label if found, else fall back to value
+          })
 
-            console.log('💾 Edit - Saving Step 6:', {
-              questionId: mainToolsQuestion.questionId,
-              selectedValues: mainToolsData.respuestasSeleccionadas,
-              convertedToLabels: multipleResponseLabels
-            })
-
-            evaluationData.push({
-              ...mainToolsQuestion,
-              response: undefined,
-              multipleResponse: multipleResponseLabels // ✅ Save labels instead of values
-            })
-          }
+          evaluationData.push({
+            ...(original ?? {}),
+            questionId: mainToolsData.idPregunta,
+            question: original?.question ?? mock?.question ?? 'Herramientas utilizadas',
+            questionGroup: original?.questionGroup ?? (mock as any)?.group ?? 'herramientas',
+            responseType: original?.responseType ?? ('SELECCION_MULTIPLE' as any),
+            stepNumber: 6,
+            options: optionList.map((op) => ({ value: op.value, label: op.label, category: (op as any).category })),
+            response: undefined,
+            multipleResponse: multipleResponseLabels,
+            otherResponse: undefined
+          } as FinalReportEvaluationFE)
         }
 
-        // Other tools question (text)
+        // Other tools question (free text)
         if (step6Data.otrasHerramientas && step6Data.otrasHerramientas.trim() !== '') {
-          const otherToolsQuestion = fetchedReport.evaluation?.find(
-            e => e.questionId === OTHER_TOOLS_QUESTION_ID
-          )
-          if (otherToolsQuestion) {
-            evaluationData.push({
-              ...otherToolsQuestion,
-              response: step6Data.otrasHerramientas,
-              multipleResponse: []
-            })
-          }
+          const original = fetchedReport?.evaluation?.find((e) => e.questionId === OTHER_TOOLS_QUESTION_ID)
+          const mock = step6QuestionsPageMock.find((q) => q.questionId === OTHER_TOOLS_QUESTION_ID)
+
+          evaluationData.push({
+            ...(original ?? {}),
+            questionId: OTHER_TOOLS_QUESTION_ID,
+            question: original?.question ?? mock?.question ?? 'Otras herramientas utilizadas (opcional)',
+            questionGroup: original?.questionGroup ?? (mock as any)?.group ?? 'herramientas',
+            responseType: 'TEXT' as any,
+            stepNumber: 6,
+            options: [],
+            response: step6Data.otrasHerramientas,
+            multipleResponse: [],
+            otherResponse: undefined
+          } as FinalReportEvaluationFE)
         }
       }
 
-      // Step 7 questions
-      if (currentStep7ValuesFromForm?.respuestasRadio && fetchedReport?.evaluation) {
-        currentStep7ValuesFromForm.respuestasRadio.forEach((resp) => {
-          const originalQuestion = fetchedReport.evaluation?.find(e => e.questionId === resp.idPregunta)
-          if (originalQuestion) {
-            // Determine the value to save based on question type
-            let responseLabelToSend: string | undefined = undefined
+      // Step 7 questions. Same approach as step 5 — fall back to the DB catalog
+      // so newly answered questions are saved instead of dropped.
+      if (currentStep7ValuesFromForm?.respuestasRadio) {
+        currentStep7ValuesFromForm.respuestasRadio
+          .filter((resp) => resp.respuesta && resp.respuesta.trim() !== '')
+          .forEach((resp) => {
+            const original = fetchedReport?.evaluation?.find((e) => e.questionId === resp.idPregunta)
+            const dbQ = step7QuestionsDB?.find((q) => q.id === resp.idPregunta)
+            const options = original?.options ?? dbQ?.options ?? []
+            const responseType = (original?.responseType ?? dbQ?.responseType ?? 'SELECT') as any
+            const isMultiSelect = responseType === 'MULTISELECT' || responseType === 'SELECCION_MULTIPLE'
 
-            if (resp.respuesta && resp.respuesta.trim() !== '') {
-              // For SELECT questions with options, convert value back to label for storage
-              if (originalQuestion.options && originalQuestion.options.length > 0) {
-                const selectedOption = originalQuestion.options.find((opt) => opt.value === resp.respuesta)
-                if (selectedOption) {
-                  responseLabelToSend = selectedOption.label
-                } else {
-                  // Fallback: if option not found, use the value directly (backwards compatibility)
-                  responseLabelToSend = resp.respuesta
-                }
-              } else {
-                // For TEXT, NUMBER, BOOLEAN questions (no options), use the value directly
-                responseLabelToSend = resp.respuesta
-              }
+            let response: string | undefined = undefined
+            let multipleResponse: string[] = []
+            if (isMultiSelect) {
+              const values = resp.respuesta.split(',').map((v) => v.trim()).filter(Boolean)
+              multipleResponse = values.map((v) => options.find((o) => o.value === v)?.label || v)
+            } else if (options.length > 0) {
+              response = options.find((o) => o.value === resp.respuesta)?.label || resp.respuesta
+            } else {
+              response = resp.respuesta
             }
 
             evaluationData.push({
-              ...originalQuestion,
-              response: responseLabelToSend,
-              multipleResponse: []
-            })
-          }
-        })
+              ...(original ?? {}),
+              questionId: resp.idPregunta,
+              question: original?.question ?? dbQ?.question ?? resp.idPregunta,
+              questionGroup: original?.questionGroup ?? (dbQ as any)?.group?.name ?? 'percepcion_calidad',
+              responseType,
+              stepNumber: 7,
+              options: options.map((o) => ({ value: o.value, label: o.label, category: (o as any).category })),
+              response,
+              multipleResponse,
+              otherResponse: undefined
+            } as FinalReportEvaluationFE)
+          })
       }
 
       const updatePayload: UpdateFinalReportDto = {

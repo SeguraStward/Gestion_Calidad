@@ -6,7 +6,10 @@ import { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@una-gc/ui/components/button'
 import { MoreHorizontal, FileDown, Edit, Trash2, PlusCircle, Loader2 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@una-gc/ui/components/dropdown-menu'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@una-gc/ui/components/tabs'
+import { ClipboardList, CheckCircle2 } from 'lucide-react'
 import { DataTable } from '@/app/(components)/ui/data-table'
+import { useAcademicLoadsByProfessor } from '@/modules/academic-loads/service/academic-loads.service'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { pdf } from '@react-pdf/renderer'
@@ -45,8 +48,10 @@ export default function FinalReportsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isGeneratingPdfId, setIsGeneratingPdfId] = useState<string | null>(null)
 
-  // Debounce del lado del servidor para la búsqueda
-  const [debouncedSearchQuery] = useDebounce(searchQuery, 300)
+  // Debounce del lado del servidor para la búsqueda. `useDebounce` devuelve el
+  // valor directo (no un array): destructurarlo tomaba solo el primer carácter,
+  // por eso la búsqueda parecía no funcionar.
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
   // Resetear la página a 1 cuando cambia la búsqueda
   useEffect(() => {
@@ -75,6 +80,27 @@ export default function FinalReportsPage() {
 
   const totalItems = paginatedFinalReports?.meta?.total || 0
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+
+  // Pending reports: the professor's academic loads that do NOT have a final
+  // report yet, so they can see which ones they still need to complete.
+  const { data: allLoadsData } = useAcademicLoadsByProfessor(
+    professorId,
+    { include: 'course,academicCycle,group', limit: 1000 },
+    { enabled: !!professorId && isAuthenticated() }
+  )
+  const { data: allReportsData } = useFinalReportsByProfessor(
+    professorId,
+    { limit: 1000 },
+    { enabled: !!professorId && isAuthenticated() }
+  )
+  const reportedLoadIds = useMemo(
+    () => new Set((allReportsData?.data ?? []).map((r) => r.academicLoadId).filter(Boolean)),
+    [allReportsData]
+  )
+  const pendingLoads = useMemo(
+    () => (allLoadsData?.data ?? []).filter((l) => !reportedLoadIds.has(l.id)),
+    [allLoadsData, reportedLoadIds]
+  )
 
   const handlePageChange = useCallback((newPage: number) => {
     setCurrentPage(newPage)
@@ -304,22 +330,76 @@ export default function FinalReportsPage() {
         </div>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={finalReportsData}
-        isLoading={isLoading}
-        searchPlaceholder="Buscar por NRC, curso, nombre..."
-        newButton={newReportButton}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={totalItems}
-        pageSize={pageSize}
-        onPageChange={handlePageChange}
-        // Nuevas props para filtrado del lado del servidor
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-        serverSideFiltering={true}
-      />
+      <Tabs defaultValue="pending">
+        <TabsList>
+          <TabsTrigger value="pending" className="flex items-center gap-2">
+            <ClipboardList className="h-4 w-4" />
+            Pendientes de realizar ({pendingLoads.length})
+          </TabsTrigger>
+          <TabsTrigger value="done" className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4" />
+            Realizados ({totalItems})
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Pending: academic loads without a final report yet */}
+        <TabsContent value="pending" className="mt-4">
+          <p className="text-sm text-muted-foreground mb-3">
+            Cursos asignados a su carga académica que aún no tienen informe final.
+          </p>
+          {pendingLoads.length === 0 ? (
+            <div className="rounded-lg border p-8 text-center text-muted-foreground">
+              No tiene cursos pendientes de informe. ¡Está al día!
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {pendingLoads.map((load) => (
+                <div key={load.id} className="rounded-lg border p-4 flex flex-col gap-3">
+                  <div>
+                    <div className="font-semibold">NRC {load.nrc}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {load.course?.code ? `${load.course.code} - ` : ''}
+                      {load.course?.name || 'Curso'}
+                    </div>
+                    {load.academicCycle?.name && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {load.academicCycle.name}
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    className="mt-auto w-full"
+                    onClick={() => router.push('/final-reports/new')}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" /> Crear informe
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Done: reports already submitted */}
+        <TabsContent value="done" className="mt-4">
+          <DataTable
+            columns={columns}
+            data={finalReportsData}
+            isLoading={isLoading}
+            searchPlaceholder="Buscar por NRC, curso, nombre..."
+            newButton={newReportButton}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            // Nuevas props para filtrado del lado del servidor
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            serverSideFiltering={true}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
