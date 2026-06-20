@@ -154,7 +154,7 @@ export function Step2Form({
     <div className="p-4 md:p-6 h-full flex flex-col">
       <div className="mb-4 md:mb-6">
         <h2 className="text-xl font-semibold">
-          Paso 2 de {totalSteps}: Estadísticas del Curso {isEditing ? '(Editando)' : ''}
+          Estadísticas del Curso
         </h2>
         <p className="text-muted-foreground text-sm">
           Ingrese las estadísticas finales del curso. El total de matriculados se carga automáticamente.
@@ -186,7 +186,7 @@ export function Step2Form({
             }
             className="px-8"
           >
-            Siguiente
+            Continuar
           </Button>
         </div>
       </div>

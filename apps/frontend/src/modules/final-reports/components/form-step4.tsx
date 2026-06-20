@@ -109,8 +109,7 @@ export function Step4Form({
         {/* Consistent margin */}
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Settings className="w-5 h-5" />
-          Paso {totalSteps > 0 ? `4 de ${totalSteps}: ` : ''} {/* Corrected Step number */}
-          {tituloPaso} {isEditing ? '(Editando)' : ''}
+          {tituloPaso}
         </h2>
         <p className="text-muted-foreground text-sm">Estudiantes que requirieron algún tipo de adecuación o apoyo pedagógico.</p>
       </div>
@@ -122,7 +121,7 @@ export function Step4Form({
             Anterior
           </Button>
           <Button type="submit" form="step4-form" className="px-8">
-            Siguiente
+            Continuar
           </Button>
         </div>
       </div>

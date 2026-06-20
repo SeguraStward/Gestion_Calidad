@@ -109,14 +109,16 @@ export function Step1Form({
   // current course selectable (handled below via initialData).
   const { data: existingReports } = useFinalReportsByProfessor(
     currentProfessorId,
-    { limit: 1000 },
+    { limit: 1000, include: 'academicLoad' },
     { enabled: !!currentProfessorId && isAuthenticated() && !isEditing },
   )
   const reportedLoadIds = useMemo(
     () =>
       new Set(
         (existingReports?.data ?? [])
-          .map((r) => r.academicLoadId)
+          // Match by the scalar FK or the loaded relation id (the API doesn't
+          // always serialize the scalar academicLoadId).
+          .map((r) => r.academicLoadId ?? (r as any).academicLoad?.id)
           .filter(Boolean),
       ),
     [existingReports],
@@ -164,20 +166,6 @@ export function Step1Form({
 
     // Eliminar duplicados por NRC (mantener el primero)
     const uniqueCourses = courses.filter((course, index, self) => index === self.findIndex((c) => c.nrc === course.nrc))
-
-    // Debug: verificar duplicados
-    console.log('Available courses:', uniqueCourses)
-    const nrcCounts = uniqueCourses.reduce(
-      (acc, course) => {
-        acc[course.nrc] = (acc[course.nrc] || 0) + 1
-        return acc
-      },
-      {} as Record<string, number>
-    )
-    const duplicateNRCs = Object.entries(nrcCounts).filter(([_, count]) => count > 1)
-    if (duplicateNRCs.length > 0) {
-      console.warn('Duplicate NRCs found:', duplicateNRCs)
-    }
 
     return uniqueCourses
   }, [paginatedAcademicLoads, isEditing, initialData, reportedLoadIds])
@@ -263,7 +251,7 @@ export function Step1Form({
     <div className="h-full flex flex-col">
       <div className="mb-4 md:mb-6">
         <h2 className="text-xl font-semibold">
-          {isEditing ? 'Información del Curso (Edición)' : `Paso 1 de ${totalSteps}: Información del Curso`}
+          Información del Curso
         </h2>
         <p className="text-muted-foreground text-sm">
           {isEditing
@@ -289,7 +277,7 @@ export function Step1Form({
             disabled={!selectedAcademicLoadId || formState.isSubmitting}
             className="px-8"
           >
-            {isEditing ? 'Guardar y Continuar' : 'Siguiente'}
+            Continuar
           </Button>
         </div>
       </div>

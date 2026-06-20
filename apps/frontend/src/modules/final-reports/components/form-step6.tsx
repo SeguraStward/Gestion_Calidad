@@ -11,6 +11,7 @@ import { MoveRight, MoveLeft, Settings2, AlertTriangle } from 'lucide-react'
 
 // Import centralized mock data and types
 import { step6QuestionsPageMock } from '../mocks/questions' // Corrected path
+import type { FullFinalReport } from '@/modules/final-reports/types/final-reports.types'
 
 // Schema for a single multiple response item
 const multipleResponseSchema = z.object({
@@ -50,6 +51,31 @@ export const step6Schema = z
   )
 
 export type Step6FormData = z.infer<typeof step6Schema>
+
+export const OTHER_TOOLS_QUESTION_ID = 'otras_herramientas_utilizadas'
+const MAIN_TOOLS_QUESTION_ID_INTERNAL = 'herramientas_utilizadas'
+
+/**
+ * Build step-6 form data from a saved report (used by the edit flow to pre-fill
+ * the now-shared component). Converts the stored tool labels back to values.
+ */
+export function transformReportToStep6Data(report: FullFinalReport): Step6FormData | null {
+  const herramientasEval = report.evaluation?.find((e) => e.questionId === MAIN_TOOLS_QUESTION_ID_INTERNAL)
+  const otrasHerramientasEval = report.evaluation?.find((e) => e.questionId === OTHER_TOOLS_QUESTION_ID)
+
+  let respuestasSeleccionadas: string[] = []
+  if (herramientasEval?.multipleResponse && herramientasEval.multipleResponse.length > 0) {
+    respuestasSeleccionadas = herramientasEval.multipleResponse.map((label) => {
+      const option = herramientasEval.options?.find((opt) => opt.label === label)
+      return option ? option.value : label
+    })
+  }
+
+  return {
+    respuestasMultiples: [{ idPregunta: MAIN_TOOLS_QUESTION_ID_INTERNAL, respuestasSeleccionadas }],
+    otrasHerramientas: otrasHerramientasEval?.response || ''
+  }
+}
 
 interface Step6FormProps {
   formMethods: UseFormReturn<Step6FormData>
@@ -162,7 +188,6 @@ export function Step6Form({
       <div className="mb-4">
         <h2 className="text-xl font-semibold flex items-center gap-3">
           <Settings2 className="w-5 h-5 text-foreground/70" />
-          Paso {totalSteps > 0 ? `6 de ${totalSteps}: ` : ''}
           Herramientas Tecnológicas y Metodologías
         </h2>
         <p className="text-muted-foreground text-sm mt-1">
@@ -177,7 +202,7 @@ export function Step6Form({
             Anterior
           </Button>
           <Button type="submit" form="step6-form" className="px-8">
-            Siguiente
+            Continuar
           </Button>
         </div>
       </div>

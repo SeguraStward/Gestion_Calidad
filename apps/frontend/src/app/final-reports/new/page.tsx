@@ -294,16 +294,6 @@ export default function NewFinalReportPage() {
             // Use questions from DB instead of mocks
             const questionDetails = step5QuestionsDB?.find((p) => p.id === r.idPregunta)
 
-            console.log('💾 Saving Step 5 Question:', {
-              id: r.idPregunta,
-              hasQuestionDetails: !!questionDetails,
-              questionText: questionDetails?.question,
-              responseType: questionDetails?.responseType,
-              optionsCount: questionDetails?.options?.length || 0,
-              stepNumber: 5,
-              respuesta: r.respuesta
-            })
-
             // For MULTISELECT/SELECCION_MULTIPLE, convert values to labels
             let multipleResponseLabels: string[] = []
             let responseToSave: string | undefined = undefined
@@ -320,14 +310,7 @@ export default function NewFinalReportPage() {
               multipleResponseLabels = selectedValues.map(value => {
                 const option = questionDetails?.options?.find(opt => opt.value === value)
                 const label = option?.label || value
-                console.log(`  - Step 5 MULTISELECT: Converting "${value}" → "${label}"`)
                 return label
-              })
-
-              console.log('💾 Step 5 Multiple Selection:', {
-                questionId: r.idPregunta,
-                selectedValues,
-                convertedToLabels: multipleResponseLabels
               })
             } else if (questionDetails?.responseType === 'SELECT' && questionDetails.options) {
               // For SELECT fields, convert value to label before saving
@@ -361,12 +344,6 @@ export default function NewFinalReportPage() {
           const multipleResponseLabels = (r.respuestasSeleccionadas || []).map(value => {
             const option = questionDetails?.options?.find(opt => opt.value === value)
             return option?.label || value // Use label if found, otherwise fallback to value
-          })
-
-          console.log('💾 Saving Step 6 Multiple Choice:', {
-            questionId: r.idPregunta,
-            selectedValues: r.respuestasSeleccionadas,
-            convertedToLabels: multipleResponseLabels
           })
 
           return {
@@ -410,16 +387,6 @@ export default function NewFinalReportPage() {
             // Use questions from DB instead of mocks
             const questionDetails = step7QuestionsDB?.find((p) => p.id === r.idPregunta)
             const resolvedResponseType = questionDetails?.responseType || ('SELECT' as const)
-
-            console.log('💾 Saving Step 7 Question:', {
-              id: r.idPregunta,
-              hasQuestionDetails: !!questionDetails,
-              questionText: questionDetails?.question?.substring(0, 50),
-              responseType: resolvedResponseType,
-              optionsCount: questionDetails?.options?.length || 0,
-              response: r.respuesta,
-              stepNumber: 7
-            })
 
             const selectedOption = questionDetails?.options?.find((opt) => opt.value === r.respuesta)
             const responseValueToSend = selectedOption?.label || r.respuesta

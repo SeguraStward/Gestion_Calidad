@@ -114,8 +114,7 @@ export function Step3Form({
         {/* Consistent margin */}
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Users className="w-5 h-5" />
-          Paso {totalSteps > 0 ? `3 de ${totalSteps}: ` : ''} {/* Step number */}
-          {tituloPaso} {isEditing ? '(Editando)' : ''}
+          {tituloPaso}
         </h2>
         <p className="text-muted-foreground text-sm">
           Registre la información de los estudiantes{' '}
@@ -130,7 +129,7 @@ export function Step3Form({
             Anterior
           </Button>
           <Button type="submit" form="step3-form" className="px-8">
-            Siguiente
+            Continuar
           </Button>
         </div>
       </div>

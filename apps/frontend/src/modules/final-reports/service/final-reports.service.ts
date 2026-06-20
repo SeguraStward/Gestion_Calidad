@@ -81,6 +81,14 @@ export const {
       created: (report) => `Informe final para NRC ${report.academicLoad?.nrc || ''} creado exitosamente.`,
       updated: (report) => `Informe final para NRC ${report.academicLoad?.nrc || ''} actualizado correctamente.`,
       deleted: () => 'Informe final eliminado.'
+    },
+    // Update toasts are shown by the edit page and the admin page with their own
+    // contextual messages ("Informe actualizado", "Estado actualizado"), so
+    // silence the hook's update toast to avoid duplicates. Create errors are also
+    // toasted by the new-report page; create success keeps the hook's toast.
+    silent: {
+      create: { error: true },
+      update: { success: true, error: true }
     }
   }
 )

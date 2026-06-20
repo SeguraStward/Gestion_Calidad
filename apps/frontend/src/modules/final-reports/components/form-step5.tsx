@@ -13,14 +13,15 @@ import { Separator } from '@una-gc/ui/components/separator'
 import { MessageSquareText, AlertTriangle, Loader2 } from 'lucide-react'
 import { cn } from '@una-gc/ui/lib/utils'
 import { useQuestionGroupsWithQuestionsByStep } from '@/modules/final-reports/services/question-groups.service'
-import type { ReportType } from '@/modules/final-reports/types/final-reports.types'
+import type { ReportType, FullFinalReport } from '@/modules/final-reports/types/final-reports.types'
 import type { Question, QuestionOption } from '@/modules/final-reports/types/question-management.types'
 
 const respuestaSchema = z.object({
   idPregunta: z.string(),
-  respuesta: z.string().min(1, 'Este campo es requerido.').refine((val) => val.trim().length > 0, {
-    message: 'Este campo es requerido.'
-  })
+  // Allowed to be empty: a question can be left blank. Required questions are
+  // enforced separately (validateRequiredQuestions). Keeping the schema lenient
+  // lets create and edit share the exact same component and render every question.
+  respuesta: z.string()
 })
 
 export const step5Schema = z.object({
@@ -28,6 +29,35 @@ export const step5Schema = z.object({
 })
 
 export type Step5FormData = z.infer<typeof step5Schema>
+
+/**
+ * Build step-5 form data from a saved report's evaluation (used by the edit flow
+ * to pre-fill the now-shared component). MULTISELECT answers are stored as labels
+ * → convert back to values joined by comma. SELECT label→value conversion is done
+ * in the form init using the live question catalog.
+ */
+export function transformReportToStep5Data(report: FullFinalReport): Step5FormData | null {
+  const step5Evaluations = (report.evaluation ?? []).filter(
+    (e) =>
+      e.questionGroup !== 'herramientas' &&
+      e.questionGroup !== 'percepcion_calidad' &&
+      e.questionGroup !== 'percepcion_general'
+  )
+  const respuestas = step5Evaluations.map((evaluation) => {
+    const isMultiSelect =
+      evaluation.responseType === 'MULTISELECT' ||
+      (evaluation.responseType as string) === 'SELECCION_MULTIPLE'
+    if (isMultiSelect && evaluation.multipleResponse?.length) {
+      const values = evaluation.multipleResponse.map((label) => {
+        const option = evaluation.options?.find((opt) => opt.label === label)
+        return option ? option.value : label
+      })
+      return { idPregunta: evaluation.questionId, respuesta: values.join(',') }
+    }
+    return { idPregunta: evaluation.questionId, respuesta: evaluation.response || '' }
+  })
+  return { respuestas }
+}
 
 // Neutral color function for radio options
 const getOptionColors = (value: string, isSelected: boolean): string => {
@@ -58,7 +88,7 @@ export function Step5Form({
   isEditing = false,
   reportType = 'TODOS'
 }: Step5FormProps) {
-  const { control, handleSubmit, reset, register, formState, getValues } = formMethods
+  const { control, handleSubmit, reset, register, formState, getValues, watch } = formMethods
 
   // Cargar grupos de preguntas para el paso 5
   const {
@@ -88,19 +118,53 @@ export function Step5Form({
     }
   }, [questionGroupsData])
 
+  // Live "answered" counter for the step header progress indicator.
+  const watchedRespuestas = watch('respuestas')
+  const answeredCount = React.useMemo(
+    () =>
+      (watchedRespuestas ?? []).filter(
+        (r) => r?.respuesta && String(r.respuesta).trim() !== ''
+      ).length,
+    [watchedRespuestas]
+  )
+  const progressPct = allQuestions.length
+    ? Math.round((answeredCount / allQuestions.length) * 100)
+    : 0
+
+  // Build the form from the FULL question catalog (in order), pre-filling each
+  // answer from initialData by questionId (not by position). This makes create
+  // and edit identical: every question always renders, and in edit the ones left
+  // blank at creation appear too (and stay answerable).
   useEffect(() => {
-    if (allQuestions.length > 0) {
-      if (initialData) {
-        reset(initialData)
-      } else if (!isEditing) {
-        const initialFormValues = allQuestions.map((q) => ({
-          idPregunta: q.id!,
-          respuesta: ''
-        }))
-        reset({ respuestas: initialFormValues })
+    if (allQuestions.length === 0) return
+    const prior = initialData?.respuestas ?? []
+    const respuestas = allQuestions.map((q) => {
+      const existing = prior.find((r) => r.idPregunta === q.id)
+      let respuesta = existing?.respuesta ?? ''
+      // Stored selects/multiselects may arrive as labels — convert back to values
+      // so the controls reflect the right selection.
+      if (respuesta && q.options && q.options.length > 0) {
+        const isMulti =
+          q.responseType === 'MULTISELECT' || (q.responseType as string) === 'SELECCION_MULTIPLE'
+        if (isMulti) {
+          respuesta = respuesta
+            .split(',')
+            .map((tok) => {
+              const t = tok.trim()
+              if (q.options!.some((o) => o.value === t)) return t
+              const byLabel = q.options!.find((o) => o.label === t)
+              return byLabel ? byLabel.value : t
+            })
+            .join(',')
+        } else if (!q.options.some((o) => o.value === respuesta)) {
+          const byLabel = q.options.find((o) => o.label === respuesta)
+          if (byLabel) respuesta = byLabel.value
+        }
       }
-    }
-  }, [allQuestions, initialData, isEditing, reset])
+      return { idPregunta: q.id!, respuesta }
+    })
+    reset({ respuestas })
+  }, [allQuestions, initialData, reset])
 
   const handlePreviousClick = () => {
     const currentData = getValues()
@@ -152,7 +216,7 @@ export function Step5Form({
         control={control}
         name={`respuestas.${index}.respuesta`}
         render={({ field, fieldState }) => {
-          switch (question.responseType) {
+          switch (question.responseType as string) {
             case 'TEXT':
               return (
                 <FormControl>
@@ -353,14 +417,30 @@ export function Step5Form({
 
   return (
     <div className="p-4 md:p-6 h-full flex flex-col">
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold flex items-center gap-3">
-          <MessageSquareText className="w-5 h-5 text-foreground/70" />
-          Paso {totalSteps > 0 ? `5 de ${totalSteps}: ` : ''} Reflexión y Análisis del Curso
-        </h2>
-        <p className="text-muted-foreground text-sm mt-1">
-          Responda las siguientes preguntas sobre el desarrollo y resultados del curso.
-        </p>
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold flex items-center gap-3">
+            <MessageSquareText className="w-5 h-5 text-foreground/70" />
+            Reflexión y Análisis del Curso
+          </h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            Responda las siguientes preguntas sobre el desarrollo y resultados del curso.
+          </p>
+        </div>
+        {allQuestions.length > 0 && (
+          <div className="shrink-0 text-right">
+            <div className="text-xs text-muted-foreground">Respondidas</div>
+            <div className="text-sm font-semibold tabular-nums">
+              {answeredCount} / {allQuestions.length}
+            </div>
+            <div className="mt-1 h-1.5 w-24 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {formError && (
@@ -377,7 +457,7 @@ export function Step5Form({
             Anterior
           </Button>
           <Button type="submit" form="step5-form" className="px-8">
-            Siguiente
+            Continuar
           </Button>
         </div>
       </div>

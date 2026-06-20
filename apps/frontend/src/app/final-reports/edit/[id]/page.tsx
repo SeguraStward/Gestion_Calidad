@@ -18,21 +18,21 @@ import { Step2Form, Step2FormData, step2Schema, transformReportToStep2Data } fro
 import { Step3Form, Step3FormData, step3Schema, transformReportToStep3Data } from '@/modules/final-reports/components/form-step3'
 import { Step4Form, Step4FormData, step4Schema, transformReportToStep4Data } from '@/modules/final-reports/components/form-step4'
 import {
-  Step5EditForm,
+  Step5Form,
   Step5FormData,
   step5Schema,
   transformReportToStep5Data
-} from '@/modules/final-reports/components/form-step5-edit'
+} from '@/modules/final-reports/components/form-step5'
 import {
   OTHER_TOOLS_QUESTION_ID,
-  Step6EditForm,
+  Step6Form,
   Step6FormData,
   step6Schema,
   transformReportToStep6Data
-} from '@/modules/final-reports/components/form-step6-edit'
-import { Step7EditForm, Step7FormData, step7Schema } from '@/modules/final-reports/components/form-step7-edit'
+} from '@/modules/final-reports/components/form-step6'
+import { Step7Form, Step7FormData, step7Schema, transformReportToStep7Data } from '@/modules/final-reports/components/form-step7'
 
-import { step5QuestionsMock, step6QuestionsPageMock, step7QuestionsPageMock } from '@/modules/final-reports/mocks/questions'
+import { step6QuestionsPageMock } from '@/modules/final-reports/mocks/questions'
 
 import { useFinalReport, useUpdateFinalReport } from '@/modules/final-reports/service/final-reports.service'
 import { useQuestionsByStep } from '@/modules/final-reports/services/questions.service'
@@ -47,52 +47,6 @@ const TOTAL_STEPS = 7
 
 const STEP_LABELS_SPANISH = ['Información', 'Estadísticas', 'Salvaguarda', 'Ajustes', 'Evaluación', 'Herramientas', 'Calidad']
 
-function transformReportToStep7Data(report: FullFinalReport, currentReportType: ReportType): Step7FormData | null {
-  const filteredQuestions = step7QuestionsPageMock.filter((q) => {
-    if (Array.isArray(q.appliesTo)) {
-      return q.appliesTo.includes(currentReportType) || q.appliesTo.includes('TODOS')
-    }
-    return false
-  })
-
-  const step7Responses = filteredQuestions.map((p) => {
-    const existingEvaluation = report.evaluation?.find((e) => e.questionId === p.questionId)
-    let formResponseValue = ''
-
-    if (existingEvaluation) {
-      const questionDetails = step7QuestionsPageMock.find((mockQuestion) => mockQuestion.questionId === p.questionId)
-
-      // Check if it's a MULTISELECT question
-      const isMultiSelect = existingEvaluation.responseType === 'MULTISELECT' ||
-        (existingEvaluation.responseType as string) === 'SELECCION_MULTIPLE'
-
-      if (isMultiSelect && existingEvaluation.multipleResponse && existingEvaluation.multipleResponse.length > 0) {
-        // For MULTISELECT questions, convert stored labels back to values
-        const values = existingEvaluation.multipleResponse.map(label => {
-          const option = questionDetails?.options?.find(opt => opt.label === label)
-          return option ? option.value : label
-        })
-        formResponseValue = values.join(',')
-      } else if (questionDetails && questionDetails.options) {
-        // For SELECT questions, find the value from the label
-        const matchedOption = questionDetails.options.find((opt) => opt.label === existingEvaluation.response)
-        if (matchedOption) {
-          formResponseValue = matchedOption.value
-        }
-      } else {
-        // For TEXT and other types
-        formResponseValue = existingEvaluation.response || ''
-      }
-    }
-
-    return {
-      idPregunta: p.questionId,
-      respuesta: formResponseValue
-    }
-  })
-  return { respuestasRadio: step7Responses }
-}
-
 function EditFinalReportContent() {
   const router = useRouter()
   const params = useParams()
@@ -102,8 +56,6 @@ function EditFinalReportContent() {
   // Determine where to redirect based on returnTo parameter
   const returnTo = searchParams.get('returnTo')
   const backUrl = returnTo === 'admin' ? '/admin/final-reports' : '/final-reports'
-
-  console.log('🔍 EditFinalReportContent - returnTo:', returnTo, 'backUrl:', backUrl)
 
   const queryClient = useQueryClient()
 
@@ -173,9 +125,8 @@ function EditFinalReportContent() {
         formStep4Methods.reset(initialStep4)
       }
 
-      // Para el paso 5, necesitamos cargar las preguntas primero
-      // Por ahora usamos un array vacío como placeholder ya que las preguntas
-      // se cargarán dinámicamente en el componente Step5EditForm
+      // Step 5 pre-fill. The shared Step5Form renders the full question catalog
+      // and aligns these answers by questionId, so blank questions also appear.
       const initialStep5 = transformReportToStep5Data(fetchedReport)
       if (initialStep5) {
         setStep5Data(initialStep5)
@@ -188,7 +139,7 @@ function EditFinalReportContent() {
         formStep6Methods.reset(initialStep6)
       }
 
-      const initialStep7 = transformReportToStep7Data(fetchedReport, reportType)
+      const initialStep7 = transformReportToStep7Data(fetchedReport)
       if (initialStep7) {
         setStep7Data(initialStep7)
         formStep7Methods.reset(initialStep7)
@@ -582,7 +533,7 @@ function EditFinalReportContent() {
         )
       case 5:
         return (
-          <Step5EditForm
+          <Step5Form
             formMethods={formStep5Methods}
             onSaveAndNext={(data) => handleUpdateStepData(5, data)}
             onPrevious={(data) => {
@@ -592,13 +543,12 @@ function EditFinalReportContent() {
             totalSteps={TOTAL_STEPS}
             initialData={step5Data}
             isEditing={true}
-            report={fetchedReport}
             reportType={'TODOS'}
           />
         )
       case 6:
         return (
-          <Step6EditForm
+          <Step6Form
             formMethods={formStep6Methods}
             onSaveAndNext={(data) => handleUpdateStepData(6, data)}
             onPrevious={(data) => {
@@ -612,7 +562,7 @@ function EditFinalReportContent() {
         )
       case 7:
         return (
-          <Step7EditForm
+          <Step7Form
             formMethods={formStep7Methods}
             onSaveAndNext={(dataFromStep7Form) => {
               setStep7Data(dataFromStep7Form)
@@ -626,7 +576,6 @@ function EditFinalReportContent() {
             isEditing={true}
             reportType={reportType}
             onFinalSubmit={handleSubmitAllSteps}
-            report={fetchedReport}
           />
         )
       default:

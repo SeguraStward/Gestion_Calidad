@@ -81,7 +81,6 @@ export default function AdminFinalReportsPage() {
     // Use comma-separated string format for include
     f.include = 'professor,academicLoad,academicLoad.course,academicLoad.academicCycle,academicLoad.campus'
 
-    console.log('🔍 Admin Filters:', f)
     return f
   }, [page, limit, statusFilter, debouncedSearch, professorFilter])
 
@@ -132,7 +131,6 @@ export default function AdminFinalReportsPage() {
   const handleEdit = (reportId: string) => {
     // Pass returnTo parameter to indicate this is from admin view
     const editUrl = `/final-reports/edit/${reportId}?returnTo=admin`
-    console.log('🔗 Admin page - Navigating to:', editUrl)
     router.push(editUrl)
   }
 

@@ -13,7 +13,7 @@ import { Button } from '@una-gc/ui/components/button'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@una-gc/ui/components/form'
 import * as z from 'zod'
 import { cn } from '@una-gc/ui/lib/utils'
-import type { ReportType } from '../types/final-reports.types'
+import type { ReportType, FullFinalReport } from '../types/final-reports.types'
 import { useQuestionGroupsWithQuestionsByStep } from '@/modules/final-reports/services/question-groups.service'
 import type { Question, QuestionOption, QuestionGroupWithQuestions } from '@/modules/final-reports/types/question-management.types'
 
@@ -30,6 +30,28 @@ export const step7Schema = z.object({
 
 export type Step7FormData = z.infer<typeof step7Schema>
 
+/**
+ * Build step-7 form data from a saved report (used by the edit flow to pre-fill
+ * the now-shared component). Reads the report's step-7 evaluations directly by
+ * questionId; label→value conversion for the controls happens in the form init.
+ */
+export function transformReportToStep7Data(report: FullFinalReport): Step7FormData | null {
+  const step7Evals = (report.evaluation ?? []).filter((e) => (e as any).stepNumber === 7)
+  const respuestasRadio = step7Evals.map((e) => {
+    const isMulti =
+      e.responseType === 'MULTISELECT' || (e.responseType as string) === 'SELECCION_MULTIPLE'
+    if (isMulti && e.multipleResponse?.length) {
+      const values = e.multipleResponse.map((label) => {
+        const opt = e.options?.find((o) => o.label === label)
+        return opt ? opt.value : label
+      })
+      return { idPregunta: e.questionId, respuesta: values.join(',') }
+    }
+    return { idPregunta: e.questionId, respuesta: e.response || '' }
+  })
+  return { respuestasRadio }
+}
+
 interface Step7FormProps {
   formMethods: UseFormReturn<Step7FormData>
   onSaveAndNext: (data: Step7FormData) => void | Promise<void>
@@ -39,6 +61,8 @@ interface Step7FormProps {
   isSubmitting?: boolean
   initialData?: Step7FormData | null
   isEditing?: boolean
+  /** Edit flow: called after saving step-7 form data, to persist the whole report. */
+  onFinalSubmit?: () => void | Promise<void>
 }
 
 // Neutral color function for radio options
@@ -59,7 +83,8 @@ export function Step7Form({
   reportType = 'TODOS',
   isSubmitting,
   initialData,
-  isEditing = false
+  isEditing = false,
+  onFinalSubmit
 }: Step7FormProps) {
   const router = useRouter()
   const { control, watch, setValue, getValues, handleSubmit, formState, register, reset } = formMethods
@@ -107,6 +132,19 @@ export function Step7Form({
     }
   }, [questionGroupsData, reportType])
 
+  // Live "answered" counter for the step header progress indicator.
+  const watchedRadio = watch('respuestasRadio')
+  const answeredCount = useMemo(
+    () =>
+      (watchedRadio ?? []).filter(
+        (r) => r?.respuesta && String(r.respuesta).trim() !== ''
+      ).length,
+    [watchedRadio]
+  )
+  const progressPct = flatDisplayedQuestionList.length
+    ? Math.round((answeredCount / flatDisplayedQuestionList.length) * 100)
+    : 0
+
   useEffect(() => {
     const defaultFormValuesBasedOnCurrentQuestions = {
       respuestasRadio: flatDisplayedQuestionList.map((q) => ({
@@ -117,11 +155,28 @@ export function Step7Form({
 
     if (initialData && initialData.respuestasRadio) {
       const mergedRespuestasRadio = flatDisplayedQuestionList.map((q) => {
-        const existingResponse = initialData.respuestasRadio.find((r) => r.idPregunta === q.id!)
-        return {
-          idPregunta: q.id!,
-          respuesta: existingResponse ? existingResponse.respuesta : ''
+        const existing = initialData.respuestasRadio.find((r) => r.idPregunta === q.id!)
+        let respuesta = existing?.respuesta ?? ''
+        // Stored selects/multiselects may arrive as labels — convert to values.
+        if (respuesta && q.options && q.options.length > 0) {
+          const isMulti =
+            q.responseType === 'MULTISELECT' || (q.responseType as string) === 'SELECCION_MULTIPLE'
+          if (isMulti) {
+            respuesta = respuesta
+              .split(',')
+              .map((tok) => {
+                const t = tok.trim()
+                if (q.options!.some((o) => o.value === t)) return t
+                const byLabel = q.options!.find((o) => o.label === t)
+                return byLabel ? byLabel.value : t
+              })
+              .join(',')
+          } else if (!q.options.some((o) => o.value === respuesta)) {
+            const byLabel = q.options.find((o) => o.label === respuesta)
+            if (byLabel) respuesta = byLabel.value
+          }
         }
+        return { idPregunta: q.id!, respuesta }
       })
       reset({ respuestasRadio: mergedRespuestasRadio })
     } else if (!isEditing) {
@@ -129,8 +184,12 @@ export function Step7Form({
     }
   }, [initialData, isEditing, flatDisplayedQuestionList, reset, reportType])
 
-  const handleFormSubmitSuccess = (data: Step7FormData) => {
+  const handleFormSubmitSuccess = async (data: Step7FormData) => {
     onSaveAndNext(data)
+    // In the edit flow the final button persists the whole report.
+    if (isEditing && onFinalSubmit) {
+      await onFinalSubmit()
+    }
   }
 
   const handleFormSubmitError = (errorsFromSubmitHandler: any) => {
@@ -362,14 +421,30 @@ export function Step7Form({
 
   return (
     <div className="flex flex-col">
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold flex items-center gap-3">
-          <Activity className="w-5 h-5 text-foreground/70" />
-          Paso {totalSteps > 0 ? `7 de ${totalSteps}: ` : ''} Percepción General y Desempeño
-        </h2>
-        <p className="text-muted-foreground text-sm mt-1">
-          Complete la evaluación y percepción general del curso{isEditing ? ' (Editando)' : ''}.
-        </p>
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold flex items-center gap-3">
+            <Activity className="w-5 h-5 text-foreground/70" />
+            Percepción General y Desempeño
+          </h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            Complete la evaluación y percepción general del curso{isEditing ? ' (Editando)' : ''}.
+          </p>
+        </div>
+        {flatDisplayedQuestionList.length > 0 && (
+          <div className="shrink-0 text-right">
+            <div className="text-xs text-muted-foreground">Respondidas</div>
+            <div className="text-sm font-semibold tabular-nums">
+              {answeredCount} / {flatDisplayedQuestionList.length}
+            </div>
+            <div className="mt-1 h-1.5 w-24 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Fixed Navigation Buttons at Top */}

@@ -90,11 +90,18 @@ export default function FinalReportsPage() {
   )
   const { data: allReportsData } = useFinalReportsByProfessor(
     professorId,
-    { limit: 1000 },
+    { limit: 1000, include: 'academicLoad' },
     { enabled: !!professorId && isAuthenticated() }
   )
   const reportedLoadIds = useMemo(
-    () => new Set((allReportsData?.data ?? []).map((r) => r.academicLoadId).filter(Boolean)),
+    () =>
+      new Set(
+        (allReportsData?.data ?? [])
+          // Match by either the scalar FK or the loaded relation id — the API
+          // doesn't always serialize the scalar `academicLoadId`.
+          .map((r) => r.academicLoadId ?? (r as any).academicLoad?.id)
+          .filter(Boolean)
+      ),
     [allReportsData]
   )
   const pendingLoads = useMemo(
