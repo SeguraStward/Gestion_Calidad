@@ -57,6 +57,17 @@ export const ProofDocumentsFilters = ({
   const { data: documentTypes } = useProofDocumentTypes()
   const { data: careers } = useListCareersFlat()
 
+  // Solo carreras activas para el filtro. `useListCareersFlat` devuelve un
+  // arreglo plano; se normaliza por si llega envuelto.
+  const activeCareers = useMemo(() => {
+    const list = Array.isArray(careers) ? careers : []
+    return list.filter((c: any) => c.status === 'ACTIVE')
+  }, [careers])
+
+  // El filtro de documentos por carrera es de selección única (el usuario quiere
+  // ver los documentos de UNA carrera específica); se guarda como careerIds[].
+  const selectedCareerId = filters.careerIds?.[0] || 'all'
+
   const handleChange = (key: keyof ProofDocumentFilters, value: any) => {
     const newFilters = { ...filters, [key]: value }
 
@@ -234,6 +245,29 @@ export const ProofDocumentsFilters = ({
                 {documentTypes?.data?.map((type) => (
                   <SelectItem key={type.id} value={type.id}>
                     {type.prefix} - {type.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Career */}
+          <div className="space-y-2">
+            <Label>Carrera</Label>
+            <Select
+              value={selectedCareerId}
+              onValueChange={(value) =>
+                handleChange('careerIds', value === 'all' ? undefined : [value])
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Todas las carreras" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las carreras</SelectItem>
+                {activeCareers.map((career: any) => (
+                  <SelectItem key={career.id} value={career.id}>
+                    {career.code ? `${career.code} - ${career.name}` : career.name}
                   </SelectItem>
                 ))}
               </SelectContent>

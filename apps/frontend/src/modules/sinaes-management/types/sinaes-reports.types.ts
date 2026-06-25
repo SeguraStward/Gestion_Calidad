@@ -110,6 +110,23 @@ export interface ComplianceStatistics {
 }
 
 /**
+ * Evidencia sin documentos, aplanada con su ruta jerárquica completa.
+ * Se usa para el panel accionable de "evidencias faltantes" y el botón
+ * "Subir aquí". Coincide con MissingEvidenceDto del backend.
+ */
+export interface MissingEvidence {
+  dimensionCode: string;
+  dimensionName: string;
+  componentCode: string;
+  componentName: string;
+  criterionCode: string;
+  criterionName: string;
+  evidenceId: string;
+  evidenceCode: string;
+  evidenceName: string;
+}
+
+/**
  * Información de filtros aplicados
  */
 export interface AppliedFilters {
@@ -133,6 +150,8 @@ export interface ComplianceReport {
   filters: AppliedFilters;
   statistics?: ComplianceStatistics;
   dimensions?: DimensionCompliance[];
+  /** Evidencias sin documentos (ya aplanadas) — base del panel de faltantes. */
+  missingEvidences?: MissingEvidence[];
   career?: {
     id: string;
     name: string;

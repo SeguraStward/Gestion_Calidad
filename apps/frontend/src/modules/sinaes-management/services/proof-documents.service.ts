@@ -167,8 +167,16 @@ export const useProofDocuments = (filters?: ProofDocumentFilters) => {
   return useQuery<ProofDocumentsResponse>({
     queryKey: ['proof-documents', 'search', filters],
     queryFn: async () => {
+      // The backend's /search reads `careerIds` as a comma-separated string
+      // (@Query('careerIds').split(',')). Serialize the array here so axios
+      // doesn't send it as `careerIds[]=...`, which the controller wouldn't read.
+      const { careerIds, ...rest } = filters ?? {}
+      const params: Record<string, unknown> = { ...rest }
+      if (careerIds && careerIds.length > 0) {
+        params.careerIds = careerIds.join(',')
+      }
       const response = await HttpClient.get<ProofDocumentsResponse>('/proof-documents/search', {
-        params: filters
+        params
       })
       return response.data
     },

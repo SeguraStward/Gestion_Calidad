@@ -7,6 +7,7 @@ import {
   CriterionComplianceDto,
   EvidenceComplianceDto,
   ComplianceStatisticsDto,
+  MissingEvidenceDto,
 } from './dtos/compliance-report.dto';
 import { GenerateReportFiltersDto } from './dtos/generate-report-filters.dto';
 import {
@@ -21,6 +22,11 @@ import {
   StandardInventoryDto,
 } from './dtos/documents-by-career.dto';
 import { DocumentsByCareerFiltersDto } from './dtos/documents-by-career-filters.dto';
+import {
+  buildDimensionWhere,
+  buildHierarchyInclude,
+  buildComplianceProofDocsWhere,
+} from './hierarchy/hierarchy-query';
 
 /** Evidence with its proof documents from the Prisma query */
 interface EvidenceWithDocs {
@@ -83,85 +89,19 @@ export class SinaesReportsService {
   ): Promise<ComplianceReportDto> {
     this.logger.log('🔍 Generating compliance report with filters:', filters);
 
-    // 1. Build where clause for filtering dimensions/components/criteria
-    const whereClause: any = {};
-
-    if (filters.dimensionId) {
-      whereClause.id = filters.dimensionId;
-    }
-
-    // 2. Fetch dimensions with full hierarchy
-    const dimensions = await this.prisma.dimension.findMany({
-      where: whereClause,
-      include: {
-        components: {
-          where: filters.componentId && filters.componentId !== 'all' ? { id: filters.componentId } : {},
-          orderBy: { order: 'asc' },
-          include: {
-            criteria: {
-              where: filters.criterionId && filters.criterionId !== 'all' ? { id: filters.criterionId } : {},
-              orderBy: { order: 'asc' },
-              include: {
-                evidences: {
-                  where: { status: 'ACTIVE' },
-                  include: {
-                    proofDocuments: {
-                      where: {
-                        status: 'ACTIVE',
-                        ...(filters.careerId && {
-                          careerProofDocuments: {
-                            some: { careerId: filters.careerId },
-                          },
-                        }),
-                        ...(filters.dateFrom && {
-                          createdAt: { gte: new Date(filters.dateFrom) },
-                        }),
-                        ...(filters.dateTo && {
-                          createdAt: {
-                            ...(filters.dateFrom && { gte: new Date(filters.dateFrom) }),
-                            lte: new Date(filters.dateTo),
-                          },
-                        }),
-                      },
-                    },
-                  },
-                },
-                standards: {
-                  where: { status: 'ACTIVE' },
-                  include: {
-                    evidences: {
-                      where: { status: 'ACTIVE' },
-                      include: {
-                        proofDocuments: {
-                          where: {
-                            status: 'ACTIVE',
-                            ...(filters.careerId && {
-                              careerProofDocuments: {
-                                some: { careerId: filters.careerId },
-                              },
-                            }),
-                            ...(filters.dateFrom && {
-                              createdAt: { gte: new Date(filters.dateFrom) },
-                            }),
-                            ...(filters.dateTo && {
-                              createdAt: {
-                                ...(filters.dateFrom && { gte: new Date(filters.dateFrom) }),
-                                lte: new Date(filters.dateTo),
-                              },
-                            }),
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+    // Fetch the full SINAES hierarchy down to each evidence's proof documents.
+    // The tree shape lives in `buildHierarchyInclude` (shared with the
+    // documents-by-career report); here we only describe how to load the
+    // proof documents (ACTIVE + optional career/date scope).
+    const dimensions = (await this.prisma.dimension.findMany({
+      where: buildDimensionWhere(filters.dimensionId),
+      include: buildHierarchyInclude({
+        proofDocumentsArgs: { where: buildComplianceProofDocsWhere(filters) },
+        componentId: filters.componentId,
+        criterionId: filters.criterionId,
+      }),
       orderBy: { order: 'asc' },
-    });
+    })) as unknown as DimensionWithHierarchy[];
 
     this.logger.log(`✅ Found ${dimensions.length} dimensions to process`);
 
@@ -190,16 +130,15 @@ export class SinaesReportsService {
       }
     }
 
-    // 3. Process each dimension and calculate compliance
-    const processedDimensions: DimensionComplianceDto[] = [];
+    // 3. Process each dimension and calculate compliance (pure in-memory math)
+    const processedDimensions = dimensions.map((dimension) =>
+      this.processDimension(dimension),
+    );
 
-    for (const dimension of dimensions) {
-      const dimensionData = await this.processDimension(dimension);
-      processedDimensions.push(dimensionData);
-    }
-
-    // 4. Calculate overall statistics
+    // 4. Calculate overall statistics + flatten the evidences that have no
+    //    documents (the actionable "what's missing" list for the UI).
     const statistics = this.calculateOverallStatistics(processedDimensions);
+    const missingEvidences = this.collectMissingEvidences(processedDimensions);
 
     // 5. Get career info if filtered
     let careerInfo = undefined;
@@ -244,6 +183,7 @@ export class SinaesReportsService {
       generatedBy: generatedByName,
       statistics,
       dimensions: processedDimensions,
+      missingEvidences,
       career: careerInfo,
     };
 
@@ -259,13 +199,10 @@ export class SinaesReportsService {
   /**
    * Process a dimension and calculate compliance for all its components
    */
-  private async processDimension(dimension: DimensionWithHierarchy): Promise<DimensionComplianceDto> {
-    const components: ComponentComplianceDto[] = [];
-
-    for (const component of dimension.components) {
-      const componentData = await this.processComponent(component);
-      components.push(componentData);
-    }
+  private processDimension(dimension: DimensionWithHierarchy): DimensionComplianceDto {
+    const components = dimension.components.map((component) =>
+      this.processComponent(component),
+    );
 
     // Calculate dimension totals
     const totalComponents = components.length;
@@ -295,13 +232,10 @@ export class SinaesReportsService {
   /**
    * Process a component and calculate compliance for all its criteria
    */
-  private async processComponent(component: ComponentWithCriteria): Promise<ComponentComplianceDto> {
-    const criteria: CriterionComplianceDto[] = [];
-
-    for (const criterion of component.criteria) {
-      const criterionData = await this.processCriterion(criterion);
-      criteria.push(criterionData);
-    }
+  private processComponent(component: ComponentWithCriteria): ComponentComplianceDto {
+    const criteria = component.criteria.map((criterion) =>
+      this.processCriterion(criterion),
+    );
 
     // Calculate component totals
     const totalCriteria = criteria.length;
@@ -331,7 +265,7 @@ export class SinaesReportsService {
    * Collects evidences from both direct criterion evidences AND standards,
    * using a Map to avoid counting the same evidence twice.
    */
-  private async processCriterion(criterion: CriterionWithHierarchy): Promise<CriterionComplianceDto> {
+  private processCriterion(criterion: CriterionWithHierarchy): CriterionComplianceDto {
     const evidenceMap = new Map<string, EvidenceComplianceDto>();
 
     // Process direct evidences (criterion → evidence)
@@ -425,6 +359,40 @@ export class SinaesReportsService {
       overallCompliance: Math.round(overallCompliance * 10) / 10,
       overallStatus: this.getComplianceStatus(overallCompliance),
     };
+  }
+
+  /**
+   * Flatten every evidence with zero documents into a single list carrying its
+   * full hierarchy path. Walks the already-processed tree (so it reuses the
+   * same dedup the criterion processing did) and keeps the report's order.
+   */
+  private collectMissingEvidences(
+    dimensions: DimensionComplianceDto[],
+  ): MissingEvidenceDto[] {
+    const missing: MissingEvidenceDto[] = [];
+
+    for (const dim of dimensions) {
+      for (const comp of dim.components) {
+        for (const crit of comp.criteria) {
+          for (const ev of crit.evidences) {
+            if (ev.hasDocuments) continue;
+            missing.push({
+              dimensionCode: dim.code,
+              dimensionName: dim.name,
+              componentCode: comp.code,
+              componentName: comp.name,
+              criterionCode: crit.code,
+              criterionName: crit.name,
+              evidenceId: ev.id,
+              evidenceCode: ev.code,
+              evidenceName: ev.name,
+            });
+          }
+        }
+      }
+    }
+
+    return missing;
   }
 
   /**
@@ -587,58 +555,21 @@ export class SinaesReportsService {
     // 2. Fetch the full SINAES tree, scoped by the optional structural filters,
     //    bringing every ACTIVE proof document at each evidence plus its
     //    career associations. One round-trip; the rest is in-memory math.
-    const dimensions = await this.prisma.dimension.findMany({
-      where: filters.dimensionId ? { id: filters.dimensionId } : {},
-      include: {
-        components: {
-          where: filters.componentId ? { id: filters.componentId } : {},
-          orderBy: { order: 'asc' },
-          include: {
-            criteria: {
-              where: filters.criterionId ? { id: filters.criterionId } : {},
-              orderBy: { order: 'asc' },
-              include: {
-                evidences: {
-                  where: { status: 'ACTIVE' },
-                  orderBy: { code: 'asc' },
-                  include: {
-                    proofDocuments: {
-                      where: { status: 'ACTIVE' },
-                      include: {
-                        careerProofDocuments: {
-                          select: { careerId: true },
-                        },
-                      },
-                    },
-                  },
-                },
-                standards: {
-                  where: { status: 'ACTIVE' },
-                  orderBy: { code: 'asc' },
-                  include: {
-                    evidences: {
-                      where: { status: 'ACTIVE' },
-                      orderBy: { code: 'asc' },
-                      include: {
-                        proofDocuments: {
-                          where: { status: 'ACTIVE' },
-                          include: {
-                            careerProofDocuments: {
-                              select: { careerId: true },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
+    //    Same tree shape as the compliance report (see buildHierarchyInclude);
+    //    only the proof-document load differs — here we keep all active docs
+    //    and pull their career links so we can attribute them per career.
+    const dimensions = (await this.prisma.dimension.findMany({
+      where: buildDimensionWhere(filters.dimensionId),
+      include: buildHierarchyInclude({
+        proofDocumentsArgs: {
+          where: { status: 'ACTIVE' },
+          include: { careerProofDocuments: { select: { careerId: true } } },
         },
-      },
+        componentId: filters.componentId,
+        criterionId: filters.criterionId,
+      }),
       orderBy: { order: 'asc' },
-    });
+    })) as any[];
 
     // 3. For each career, walk the tree once and build counts + gaps.
     const inventories: CareerInventoryDto[] = careers.map((career) =>

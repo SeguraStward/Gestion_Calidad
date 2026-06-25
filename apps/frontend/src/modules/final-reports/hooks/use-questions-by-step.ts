@@ -1,7 +1,8 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { questionService, questionGroupService } from '../services'
+import { questionService } from '../services/questions.service'
+import { questionGroupService } from '../services/question-groups.service'
 import type { Question, QuestionGroup } from '../types/question-management.types'
 
 export interface QuestionsByStepData {
@@ -16,8 +17,8 @@ export function useQuestionsByStep(stepNumber: number, reportType?: string) {
     queryFn: async (): Promise<QuestionsByStepData> => {
       // Obtener grupos y preguntas para el paso específico
       const [groups, questions] = await Promise.all([
-        questionGroupService.getQuestionGroupsByStep(stepNumber),
-        questionService.getQuestionsByStep(stepNumber)
+        questionGroupService.getByStep(stepNumber),
+        questionService.getByStep(stepNumber)
       ])
 
       // Filtrar por tipo de informe si se especifica

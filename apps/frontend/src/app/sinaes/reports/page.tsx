@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@una-
 import { Button } from '@una-gc/ui/components/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@una-gc/ui/components/tabs';
 import { Alert, AlertDescription } from '@una-gc/ui/components/alert';
-import { Download, FileBarChart, History, Loader2, ShieldAlert, ChevronLeft, ChevronRight, GraduationCap, Trash2, AlertTriangle } from 'lucide-react';
+import { Download, FileBarChart, History, Loader2, ShieldAlert, ChevronLeft, ChevronRight, GraduationCap, Trash2, AlertTriangle, Info, FileSpreadsheet } from 'lucide-react';
+import { exportComplianceToExcel } from '@/modules/sinaes-management/utils/report-excel.export';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,7 @@ import {
 import { ComplianceFilters } from '@/modules/sinaes-management/components/reports/compliance-filters';
 import { ComplianceSummary } from '@/modules/sinaes-management/components/reports/compliance-summary';
 import { ComplianceTable } from '@/modules/sinaes-management/components/reports/compliance-table';
+import { ComplianceMissingPanel } from '@/modules/sinaes-management/components/reports/compliance-missing-panel';
 import { CareerInventoryTab } from '@/modules/sinaes-management/components/reports/career-inventory-tab';
 import {
   useGenerateReport,
@@ -99,6 +101,20 @@ export default function SinaesReportsPage() {
     }
   };
 
+  const handleExportExcel = () => {
+    if (!currentReport) {
+      toast.warning('No hay reporte para exportar');
+      return;
+    }
+    try {
+      exportComplianceToExcel(currentReport);
+      toast.success('Excel exportado exitosamente');
+    } catch (error) {
+      console.error('Error exportando Excel:', error);
+      toast.error('Error al exportar el Excel. Por favor intente nuevamente.');
+    }
+  };
+
   const handleExportPdf = async () => {
     if (!currentReport) {
       toast.warning('No hay reporte para exportar');
@@ -136,22 +152,28 @@ export default function SinaesReportsPage() {
           </p>
         </div>
         {currentReport && (
-          <Button
-            onClick={handleExportPdf}
-            disabled={exportPdfMutation.isPending || exportTempReportPdfMutation.isPending}
-          >
-            {(exportPdfMutation.isPending || exportTempReportPdfMutation.isPending) ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Exportando...
-              </>
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" />
-                Exportar PDF
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExportExcel}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Exportar Excel
+            </Button>
+            <Button
+              onClick={handleExportPdf}
+              disabled={exportPdfMutation.isPending || exportTempReportPdfMutation.isPending}
+            >
+              {(exportPdfMutation.isPending || exportTempReportPdfMutation.isPending) ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Exportando...
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exportar PDF
+                </>
+              )}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -220,8 +242,36 @@ export default function SinaesReportsPage() {
                 </CardContent>
               </Card>
 
+              {/* Aviso: el reporte está filtrado por carrera, el % es relativo a ella */}
+              {currentReport.career && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    Este reporte está filtrado por la carrera{' '}
+                    <strong>{currentReport.career.name}</strong>. Los porcentajes y el
+                    conteo de documentos reflejan únicamente la evidencia asociada a
+                    esta carrera.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Resumen de estadísticas */}
               <ComplianceSummary statistics={currentReport.statistics} />
+
+              {/* Panel accionable de evidencias faltantes. Solo se muestra cuando
+                  el reporte trae el campo (reportes generados con esta versión);
+                  los reportes guardados antiguos lo omiten en vez de mostrar un
+                  estado de "todo completo" engañoso. */}
+              {currentReport.missingEvidences !== undefined &&
+                currentReport.dimensions &&
+                currentReport.dimensions.length > 0 && (
+                  <ComplianceMissingPanel
+                    missingEvidences={currentReport.missingEvidences}
+                    careerId={currentReport.career?.id}
+                    careerCode={currentReport.career?.code}
+                    careerName={currentReport.career?.name}
+                  />
+                )}
 
               {/* Tabla de detalles */}
               {currentReport.dimensions && currentReport.dimensions.length > 0 ? (

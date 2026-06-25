@@ -81,8 +81,8 @@ export default function InstitutionalProjectForm({
       ...data,
       description: data.description?.trim() || undefined,
       objectives: data.objectives?.trim() || undefined,
-      startDate: data.startDate || undefined,
-      endDate: data.endDate || undefined,
+      startDate: data.startDate,
+      endDate: data.endDate,
       requiredJourneyTime: Number(data.requiredJourneyTime),
       assignedJourneyTime: Number(data.assignedJourneyTime || 0)
     }

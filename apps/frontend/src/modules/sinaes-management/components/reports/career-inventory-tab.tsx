@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronRight,
   Download,
+  FileSpreadsheet,
   FileText,
   FileX,
   GraduationCap,
@@ -32,6 +33,7 @@ import {
   useDocumentsByCareer,
   useExportInventoryPdf,
 } from '../../services/sinaes-reports.service'
+import { exportInventoryToExcel } from '../../utils/report-excel.export'
 import type {
   CareerInventory,
   CriterionInventory,
@@ -66,6 +68,18 @@ export function CareerInventoryTab() {
       toast.success('PDF generado')
     } catch (err: any) {
       toast.error('Error al exportar el PDF', {
+        description: err?.message || 'Intenta de nuevo en unos segundos.',
+      })
+    }
+  }
+
+  const handleExportExcel = () => {
+    if (!data) return
+    try {
+      exportInventoryToExcel(data)
+      toast.success('Excel generado')
+    } catch (err: any) {
+      toast.error('Error al exportar el Excel', {
         description: err?.message || 'Intenta de nuevo en unos segundos.',
       })
     }
@@ -168,6 +182,15 @@ export function CareerInventoryTab() {
                   className="pl-8 h-9"
                 />
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportExcel}
+                disabled={data.careers.length === 0}
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+                Exportar Excel
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

@@ -42,6 +42,15 @@ describe('SinaesReportsModule (Modular)', () => {
       count: jest.fn(),
       update: jest.fn(),
     },
+    // El servicio resuelve el nombre de "Generado por" (user) y la info de la
+    // carrera filtrada (career); ambos modelos deben existir en el mock o la
+    // generación del reporte revienta con 500.
+    user: {
+      findUnique: jest.fn().mockResolvedValue({ fullName: 'Admin', email: 'admin@una.cr' }),
+    },
+    career: {
+      findUnique: jest.fn(),
+    },
     $transaction: jest.fn((callback) => callback(prisma)),
   };
 

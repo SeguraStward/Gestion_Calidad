@@ -44,19 +44,7 @@ export const STATUS_CONFIG = {
     color: 'gray',
     bgColor: 'bg-gray-100',
     textColor: 'text-gray-800'
-  },
-  // Agregar configuración para ARCHIVED si existe en el enum Status
-  ...(Status.ARCHIVED
-    ? {
-        [Status.ARCHIVED]: {
-          label: 'Archivado',
-          variant: 'outline' as const,
-          color: 'amber',
-          bgColor: 'bg-amber-100',
-          textColor: 'text-amber-800'
-        }
-      }
-    : {})
+  }
 } as const
 
 // Corrección para manejar todos los valores posibles del enum Status

@@ -61,8 +61,9 @@ export default function CampusAllocationForm({ onSuccess, onCancel }: CampusAllo
   }, [clearError])
 
   useEffect(() => {
-    if (!cohortYear && cohortYearOptions.length > 0) {
-      setCohortYear(cohortYearOptions[0].value)
+    const firstOption = cohortYearOptions[0]
+    if (!cohortYear && firstOption) {
+      setCohortYear(firstOption.value)
     }
   }, [cohortYear, cohortYearOptions])
 

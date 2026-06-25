@@ -278,7 +278,6 @@ const totalAssignedJourney = useMemo(
                     variant="outline"
                     onClick={() => {
                       setSelectedCampus(null)
-                      setSelectedCareer(null)
                     }}
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />

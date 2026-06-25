@@ -194,6 +194,40 @@ export class ComplianceStatisticsDto {
 }
 
 /**
+ * A single evidence with NO proof documents, flattened with its full hierarchy
+ * path so the UI can render an actionable "what's missing / upload here" list
+ * without having to re-walk the nested dimension tree.
+ */
+export class MissingEvidenceDto {
+  @ApiProperty()
+  dimensionCode: string;
+
+  @ApiProperty()
+  dimensionName: string;
+
+  @ApiProperty()
+  componentCode: string;
+
+  @ApiProperty()
+  componentName: string;
+
+  @ApiProperty()
+  criterionCode: string;
+
+  @ApiProperty()
+  criterionName: string;
+
+  @ApiProperty({ description: 'Evidence id — used to deep-link the upload form' })
+  evidenceId: string;
+
+  @ApiProperty()
+  evidenceCode: string;
+
+  @ApiProperty()
+  evidenceName: string;
+}
+
+/**
  * Complete compliance report DTO
  */
 export class ComplianceReportDto {
@@ -227,6 +261,14 @@ export class ComplianceReportDto {
 
   @ApiProperty({ description: 'Dimension data with full hierarchy', type: [DimensionComplianceDto] })
   dimensions: DimensionComplianceDto[];
+
+  @ApiProperty({
+    description:
+      'Flat list of evidences with no proof documents (across the whole report scope). When the report is filtered by career, these are the gaps for that career.',
+    type: [MissingEvidenceDto],
+    required: false,
+  })
+  missingEvidences?: MissingEvidenceDto[];
 
   @ApiProperty({ description: 'Career information if filtered by career', required: false })
   career?: {

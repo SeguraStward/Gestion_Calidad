@@ -16,7 +16,6 @@ import { ProofDocumentsTable } from './proof-documents-table'
 import { DocumentDetailsDialog } from './document-details-dialog'
 import { EditDocumentDialog } from './edit-document-dialog'
 import { DeleteDocumentDialog } from './delete-document-dialog'
-import { ReplaceFileDialog } from './replace-file-dialog'
 import { useProofDocuments, type ProofDocumentFilters } from '../../services/proof-documents.service'
 import type { ProofDocument } from '../../types/proof-documents.types'
 import { DialogErrorBoundary } from '@/components/error-boundary/dialog-error-boundary'
@@ -34,7 +33,6 @@ export const QueryDocumentsTab = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [isReplaceFileDialogOpen, setIsReplaceFileDialogOpen] = useState(false)
 
   // Fetch documents with current filters
   const { data, isLoading, refetch } = useProofDocuments(filters)
@@ -80,11 +78,6 @@ export const QueryDocumentsTab = () => {
     setIsDeleteDialogOpen(true)
   }, [])
 
-  const handleReplaceFile = useCallback((document: ProofDocument) => {
-    setSelectedDocument(document)
-    setIsReplaceFileDialogOpen(true)
-  }, [])
-
   const totalPages = data?.meta?.totalPages || 1
   const currentPage = data?.meta?.page || 1
   const total = data?.meta?.total || 0
@@ -127,7 +120,6 @@ export const QueryDocumentsTab = () => {
             onViewDetails={handleViewDetails}
             onEdit={handleEdit}
             onDelete={handleDelete}
-            onReplaceFile={handleReplaceFile}
           />
         </div>
 
@@ -191,13 +183,6 @@ export const QueryDocumentsTab = () => {
           onOpenChange={setIsDeleteDialogOpen}
         />
       </DialogErrorBoundary>
-
-      {/* Replace File Dialog */}
-      <ReplaceFileDialog
-        document={selectedDocument}
-        open={isReplaceFileDialogOpen}
-        onOpenChange={setIsReplaceFileDialogOpen}
-      />
     </div>
   )
 }

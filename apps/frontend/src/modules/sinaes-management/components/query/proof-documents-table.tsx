@@ -11,7 +11,7 @@ import {
 } from '@una-gc/ui/components/table'
 import { Button } from '@una-gc/ui/components/button'
 import { Badge } from '@una-gc/ui/components/badge'
-import { Download, Eye, FileText, Calendar, Edit, Trash2, FileUp } from 'lucide-react'
+import { Download, Eye, FileText, Calendar, Edit, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import type { ProofDocument } from '../../types/proof-documents.types'
@@ -23,7 +23,6 @@ interface ProofDocumentsTableProps {
   onViewDetails?: (document: ProofDocument) => void
   onEdit?: (document: ProofDocument) => void
   onDelete?: (document: ProofDocument) => void
-  onReplaceFile?: (document: ProofDocument) => void
 }
 
 export const ProofDocumentsTable = ({
@@ -31,8 +30,7 @@ export const ProofDocumentsTable = ({
   isLoading,
   onViewDetails,
   onEdit,
-  onDelete,
-  onReplaceFile
+  onDelete
 }: ProofDocumentsTableProps) => {
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return 'N/A'
@@ -47,15 +45,6 @@ export const ProofDocumentsTable = ({
     } catch {
       return dateString
     }
-  }
-
-  const getFileIcon = (fileType: string) => {
-    const type = fileType.toLowerCase()
-    if (type.includes('pdf')) return '📄'
-    if (type.includes('doc')) return '📝'
-    if (type.includes('xls') || type.includes('sheet')) return '📊'
-    if (type.includes('image') || type.includes('png') || type.includes('jpg')) return '🖼️'
-    return '📎'
   }
 
   if (isLoading) {
@@ -129,7 +118,7 @@ export const ProofDocumentsTable = ({
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">{getFileIcon(document.fileType)}</span>
+                  <FileText className="h-4 w-4 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground uppercase">
                     {document.fileType}
                   </span>
@@ -171,17 +160,6 @@ export const ProofDocumentsTable = ({
                       title="Editar documento"
                     >
                       <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {onReplaceFile && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => onReplaceFile(document)}
-                      className="h-8 w-8 p-0 hover:bg-purple-50 hover:text-purple-600"
-                      title="Reemplazar archivo"
-                    >
-                      <FileUp className="h-4 w-4" />
                     </Button>
                   )}
                   <Button
